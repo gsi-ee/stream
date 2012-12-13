@@ -1,0 +1,116 @@
+21.11.2012  
+Start of project, first line of code
+
+23.11.2012 
+First checkin in repository
+
+26.11.2012
+Group all new classes in one directory and one library 
+
+27.11.2012 
+Change to the two-scan algorithm. Exactly two full scan of data are required.
+This simplifies logic how all kind of intermediate data can be processed.  
+As consequence, many events can be produced by scan of next buffer.
+Each processor fills its own subevent, which are than collected together in 
+common event.
+Provide Event and SubEvent classes. Implement event building.
+Code shows reasonable results with ROC data from CERN beamtime.
+
+27.11.2012 
+Remove user source class from go4wrapper. 
+Now event production works inside normal processor of the first 
+step and one can normally configure it with all available go4 sources.
+Many input events can be queued internally, many output events can
+be produced via SetKeepInputEvent() logic. 
+Thus N->M problematic is fully implemented! 
+
+27.11.2012
+Introduce simple typedefs for GlobalStamp_t and LocalStamp_t
+Provide local/global time for each buffer, liner interpolation of
+time between two sync markers, helper index to locate faster region 
+between two syncs.
+
+27.11.2012
+First test with cern-gem12 data, where aux2 on ROC4 was used as trigger.
+One need to implement special kind of "flush" trigger when no reference signals 
+for long time to avoid over-fill of all queues. Anyhow, first reasonable results! 
+
+28.11.2012
+Master time now can be assigned, by default processor with trigger source is used. 
+Flush trigger is implemented, it allows to avoid situation when many data without 
+trigger must be accumulated in the queues. Flush trigger generated about once 
+per buffer in master processor. cern-gem12 starts to look very reasonable. As next
+step, normal region-of-interest selection should be implemented, no-trigger-mode and
+configurable message sorting.    
+
+29.11.2012 
+Define trigger marker as time interval - first step direction Region-of-Interest
+concept. Later one could not only select events, but rather intervals which are
+than delivered to next steps. As next iteration, forwarding of complete data stream
+with regular time intervals (like 1 ms) should be implemented. 
+Message time sorting is implemented.  
+
+30.11.2012
+Attempt to implement last-epoch bit correction, many other side-effects are discovered
+with nXYTER/Optic readout, especially for CERN/SPS 2012 beamtime. Many open questions
+are remained. Allow to specify initialization script name - like setup_get4.C or 
+setup_cern_oct12.C. Calling arguments are:
+go4analysis -file file.lmd -args setup_get4.C
+Primary classes for GET4 analysis. 
+Possibility of raw analysis only.
+
+3.12.2012
+First test with running GET4 v1.0 setup. 
+Implement several basic histograms for GET4.
+
+7.12.2012
+Add reference channel for simple reference calculations
+in GET4 processor.
+Add second level for histogram prefixes like ROC0/GET4_2/Ch2
+
+10.12.2012
+One another method for last-epoch correction.
+While main problem is CERN/SPS beamtime, make heuristic for exactly
+this data. Seems to be, MSB bits gives us the best possibility for selection.
+With some other checks 99.5% of corrupted data can be repaired. 
+Rest are other errors (next-epoch problem or wrong bits is time stamp) 
+do not have any chance to be correctly fixed. My estimation gives 
+about 0.1% of such nasty messages.  
+
+11.12.2012
+First step to non-synchronized data streams. Any number of SYNCs can be
+produced now, simple algorithm looks for the same SYNC id to set global
+times and introduce time calibrations. Works with run87 of CERN/SPS beamtime.
+Fix problem with time uncertainty parameter for NX processing.
+Implement two-dimensional histograms. Add such in NX processing.
+One need to make histogram filling optional - can take significant amount of time. 
+Without filling current NX code works 2x times faster
+
+12.12.2012
+1) Reorganize libraries and code in newmonitor - introduce second step in analysis chain. 
+   At the moment this step will be go4-based code, one could make later same logic as with 
+   first step. Major difference to first step that in second step events are already defined
+   and one do not require any complex queueing of input data.
+   Second step also should be reinitialized via separate macro - named second.C.
+   There all sub-processors should be instantiated.  
+2) Introduce skeleton for get4test code, based on two-step approach.      
+3) Introduce SysCoreProc class, which should be base for all kind of ROC-based analysis.
+   Aim not to introduce common message loop (as in very first go4monitor) but
+   rather common structures and histograms.
+4) Add possibility to skip time synchronization for some streams. It is
+   useful when the only stream is used or when streams synchronized anyway,
+   like in optic case.
+5) Add possibility to define regions-of-interests in get4 based on some ref channel. 
+   For a now primitive (only single channel), later one could apply trigger-like 
+   logic to several Get4 channels (like in GSI beamtime nov-2012). 
+   Very preliminary, seems to be work with latest test data.  
+   
+13.12.2012
+1) Create message and iterator classes for nx and get4 analysis. 
+   These were last connection to ROClib. Therefore from this point:     
+2) Move further development from ROClib to go4/app repository.
+   Main motivation - there are parts which could be interesting not only for CBM/ROC users.
+3) Rename to "stream" project. Name will probably change, but main idea - 
+   it is flexible stream-based analysis.
+4) Reorganize folder structure. Separate framework, go4engine and application.
+   Introduce project-wide build rules and Makefiles.
