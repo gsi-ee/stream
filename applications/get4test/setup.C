@@ -1,4 +1,4 @@
-{
+void setup() {
    // base::ProcMgr::instance()->SetRawAnalysis(false);
 
    get4::Processor* proc = new get4::Processor(0, 0x5);
@@ -11,6 +11,12 @@
 
    // use this window to extract signals around reference
    proc->SetTriggerWindow(-1000., 1000.);
+
+//   double msgtm = 3.607101958; // 18 hits
+//   double msgtm = 3.611034118; // 22 hits
+   double msgtm = 11.744051718; // 17 hits
+
+   proc->SetPrint(100000, msgtm - 1e-5, msgtm + 1e-5);
 }
 
 

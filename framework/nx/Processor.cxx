@@ -458,37 +458,18 @@ bool nx::Processor::FirstBufferScan(const base::Buffer& buf)
       }
 
 
-      if (fNumPrintMessages > 0) {
-
-         bool doprint = true;
-
-         if ((fPrintLeft>0) && (fPrintLeft < fPrintRight)) {
-            double safety = fAnyPrinted ? 0.0001 : 0.;
-            doprint = (msgtm >= fPrintLeft-safety) && (msgtm <= fPrintRight+safety);
-            if (!doprint && fAnyPrinted) {
-               fNumPrintMessages = 0;
-
-               printf("Stop printing while message time is %9.6f\n", msgtm);
-
-            }
+      if (CheckPrint(msgtm, 0.00001)) {
+         switch (isok) {
+            case 1:  printf(" ok "); break;
+            case -1: printf("err "); break;
+            case -2: printf("nxt "); break;
+            case -3: printf("oth "); break;
+            case -4: printf("dff "); break;
+            case -5: printf("msb "); break;
+            default: printf("    "); break;
          }
-
-         if (doprint) {
-
-            fNumPrintMessages--;
-            fAnyPrinted = true;
-            if (isok==0)  printf("    "); else
-            if (isok==1)  printf(" ok "); else
-            if (isok==-1) printf("err "); else
-            if (isok==-2) printf("nxt "); else
-            if (isok==-3) printf("oth "); else
-            if (isok==-4) printf("dff "); else
-            if (isok==-5) printf("msb ");
-            fIter.printMessage(base::msg_print_Human);
-         }
-         //fIter.printMessage();
+         fIter.printMessage(base::msg_print_Human);
       }
-
    }
 
    FillMsgPerBrdHist(msgcnt);

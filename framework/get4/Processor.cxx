@@ -15,9 +15,10 @@ get4::Get4Rec::Get4Rec() :
    fChannels(0)
 {
    for(unsigned n=0;n<NumChannels;n++) {
-      fRisTm[n] = 0;
-      fFalTm[n] = 0;
-      lastRisingEdge[0] = 0;
+      fRisCoarseTm[n] = 0;
+      fFalCoarseTm[n] = 0;
+      fRisFineTm[n] = 0;
+      fFalFineTm[n] = 0;
    }
 }
 
@@ -52,18 +53,13 @@ get4::Processor::Processor(unsigned rocid, unsigned get4mask) :
       for(unsigned n=0;n<NumChannels;n++) {
          SetSubPrefix("GET4_", get4, "Ch", n);
 
-         GET4[get4].fRisTm[n] = MakeH1("RisingTm", "rising edge time", 1024*8, 0, 1024.*512, "bin");
+         GET4[get4].fRisCoarseTm[n] = MakeH1("RisingCoarse", "rising edge coarse time", 4096, 0, 4096., "bin");
 
-         GET4[get4].fRisFineTm[n] = MakeH1("RisingFine", "rising fine time", 128, 0, 128, "bin");
+         GET4[get4].fRisFineTm[n] = MakeH1("RisingFine", "rising edge fine time", 128, 0, 128, "bin");
 
-         GET4[get4].fFalTm[n] = MakeH1("FallingTm", "falling edge time", 1024*8, 0, 1024.*512, "bin");
+         GET4[get4].fFalCoarseTm[n] = MakeH1("FallingCoarse", "falling edge coarse time", 4096, 0, 4096., "bin");
 
          GET4[get4].fFalFineTm[n] = MakeH1("FallingFine", "falling fine time", 128, 0, 128, "bin");
-
-         GET4[get4].fWidth[n] = MakeH1("Width", "time-over-threshold", 1024, 0, 1024, "bin");
-
-         GET4[get4].fRisRef[n] = 0;
-         GET4[get4].fFalRef[n] = 0;
       }
    }
 
@@ -76,36 +72,17 @@ get4::Processor::Processor(unsigned rocid, unsigned get4mask) :
 
    fRefGet4 = 9999;
    fRefChannel = NumChannels;
-
-   fNumHits = 0;
-   fNumBadHits = 0;
 }
 
 get4::Processor::~Processor()
 {
-   //printf("ROC%u   NumHits %7d  NumBad %7d rel = %5.3f\n",
-   //      fRocId, fNumHits, fNumBadHits, fNumHits > 0 ? 1.* fNumBadHits / fNumHits : 0.);
-
-   printf("get4::Processor::~Processor\n");
+   // printf("get4::Processor::~Processor\n");
 }
 
 void get4::Processor::setRefChannel(unsigned ref_get4, unsigned ref_ch)
 {
    fRefGet4 = ref_get4;
    fRefChannel = ref_ch;
-   if (!isRefChannel()) return;
-
-   for (unsigned get4=0; get4<GET4.size(); get4++) {
-      if (!GET4[get4].used) continue;
-
-      for(unsigned ch=0;ch<NumChannels;ch++) {
-         SetSubPrefix("GET4_", get4, "Ch", ch);
-
-         GET4[get4].fRisRef[ch] = MakeH1("Rising_to_Ref", "difference to ref signal, rising edge", 1024*8, -4096., 4096., "bin");
-         GET4[get4].fFalRef[ch] = MakeH1("Falling_to_Ref", "difference to ref signal, falling edge", 1024*8, -4096., 4096., "bin");
-      }
-   }
-
 }
 
 
@@ -174,6 +151,8 @@ bool get4::Processor::FirstBufferScan(const base::Buffer& buf)
 
       FillH1(fALLt, msgtm);
 
+      if (CheckPrint(msgtm, 1e-6))
+         fIter.printMessage(base::msg_print_Human);
 
       switch (msg.getMessageType()) {
 
@@ -215,45 +194,12 @@ bool get4::Processor::FirstBufferScan(const base::Buffer& buf)
 
             }
 
-
-            if ((get4==fRefGet4) && (ch == fRefChannel)) {
-               // remember time of reference signal
-               if (edge==0)
-                  fLastRefRising = fulltm;
-               else
-                  fLastRefFalling = fulltm;
-               // recalculate all differences
-
-               for (unsigned ii=0; ii<GET4.size(); ii++) {
-                  if (!GET4[ii].used) continue;
-
-                  for(unsigned jj=0;jj<NumChannels;jj++) {
-                     if (edge==0)
-                        FillH1(GET4[ii].fRisRef[jj], Get4TimeDiff(fLastRefRising, GET4[ii].lastRisingEdge[jj]));
-                     else
-                        FillH1(GET4[ii].fFalRef[jj], Get4TimeDiff(fLastRefFalling, GET4[ii].lastFallingEdge[jj]));
-                  }
-               }
-
-            }
-
             if (edge==0) {
-               FillH1(GET4[get4].fRisTm[ch], ts);
+               FillH1(GET4[get4].fRisCoarseTm[ch], ts / 128);
                FillH1(GET4[get4].fRisFineTm[ch], ts % 128);
-               GET4[get4].lastRisingEdge[ch] = fulltm;
-
-               if (isRefChannel())
-                  FillH1(GET4[get4].fRisRef[ch], Get4TimeDiff(fLastRefRising, fulltm));
-
             } else {
-               FillH1(GET4[get4].fFalTm[ch], ts);
+               FillH1(GET4[get4].fFalCoarseTm[ch], ts / 128);
                FillH1(GET4[get4].fFalFineTm[ch], ts % 128);
-               GET4[get4].lastFallingEdge[ch] = fulltm;
-
-               FillH1(GET4[get4].fWidth[ch], GET4[get4].lastFallingEdge[ch] - GET4[get4].lastRisingEdge[ch]);
-
-               if (isRefChannel())
-                  FillH1(GET4[get4].fFalRef[ch], Get4TimeDiff(fLastRefFalling, fulltm));
             }
 
 

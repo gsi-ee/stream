@@ -16,16 +16,10 @@ namespace get4 {
 
       base::H1handle fChannels;  //! histogram with system types
 
-      base::H1handle fRisTm[NumChannels]; //! histograms of rising stamp for each channel
-      base::H1handle fFalTm[NumChannels]; //! histograms of falling stamp for each channel
+      base::H1handle fRisCoarseTm[NumChannels]; //! histograms of rising stamp for each channel
+      base::H1handle fFalCoarseTm[NumChannels]; //! histograms of falling stamp for each channel
       base::H1handle fRisFineTm[NumChannels]; //! histograms of rising stamp for each channel
       base::H1handle fFalFineTm[NumChannels]; //! histograms of falling stamp for each channel
-      base::H1handle fWidth[NumChannels]; //! histograms of signal width on every channel
-      base::H1handle fRisRef[NumChannels]; //! time relative to reference signal, rising edge
-      base::H1handle fFalRef[NumChannels]; //! time relative to reference signal, falling edge
-
-      uint64_t lastFallingEdge[NumChannels];
-      uint64_t lastRisingEdge[NumChannels];
 
       Get4Rec();
    };
@@ -42,14 +36,8 @@ namespace get4 {
 
          std::vector<get4::Get4Rec> GET4;      //! usage masks for nxyters
 
-         int fNumHits;
-         int fNumBadHits;
-
          unsigned fRefGet4;
          unsigned fRefChannel;
-
-         uint64_t fLastRefRising;         //!<  time used for ref calculation
-         uint64_t fLastRefFalling;        //!<  time used for ref calculation
 
          bool get4_in_use(unsigned id) { return id < GET4.size() ? GET4[id].used : false; }
 

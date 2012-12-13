@@ -41,3 +41,28 @@ void base::SysCoreProc::CreateBasicHistograms()
    fSYNCt[0] = MakeH1("SYNC0_t", "Time distribution of SYNC0 signal", 10000, 0., 1000., "s");
    fSYNCt[1] = MakeH1("SYNC1_t", "Time distribution of SYNC1 signal", 10000, 0., 1000., "s");
 }
+
+
+bool base::SysCoreProc::CheckPrint(double msgtm, double safetymargin)
+{
+   if (fNumPrintMessages <= 0) return false;
+
+   bool doprint = true;
+
+   if ((fPrintLeft>0) && (fPrintLeft < fPrintRight)) {
+      if (!fAnyPrinted) safetymargin = 0.;
+      doprint = (msgtm >= fPrintLeft-safetymargin) && (msgtm <= fPrintRight+safetymargin);
+      if (!doprint && fAnyPrinted) {
+         fNumPrintMessages = 0;
+         printf("Stop printing while message time is %9.6f\n", msgtm);
+         return false;
+      }
+   }
+
+   if (doprint) {
+      fNumPrintMessages--;
+      fAnyPrinted = true;
+   }
+
+   return doprint;
+}

@@ -40,6 +40,8 @@ namespace base {
 
          void FillMsgPerBrdHist(unsigned cnt) { FillH1(fMsgPerBrd, GetBoardId(), cnt); }
 
+         bool CheckPrint(double msgtm, double safetymargin = 1e-6);
+
       public:
 
          SysCoreProc(const char* name, unsigned brdid);
