@@ -1,6 +1,9 @@
 #include "base/SysCoreProc.h"
 
+#include <stdio.h>
+
 #include "base/ProcMgr.h"
+
 
 unsigned base::SysCoreProc::fMaxBrdId = 16;
 

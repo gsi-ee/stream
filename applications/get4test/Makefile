@@ -3,7 +3,7 @@ $(error Go4 not found  - call '. go4login' before compilation !!!)
 endif
 
 ifndef STREAMSYS
-$(error STREAMSYS packet not found - call '. roclogin' before compilation !!!)
+$(error STREAMSYS packet not found - call '. streamlogin' before compilation !!!)
 endif
 
 -include $(GO4SYS)/Makefile.config
