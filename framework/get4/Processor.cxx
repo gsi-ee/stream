@@ -336,7 +336,7 @@ bool get4::Processor::SecondBufferScan(const base::Buffer& buf)
 
             unsigned indx = TestHitTime(globaltm, get4_in_use(msg.getGet4Number()));
 
-            if ((indx < fGlobalTrig.size()) && !fGlobalTrig[indx].isflush) {
+            if (indx < fGlobalTrig.size()) {
                get4::SubEvent* ev = (get4::SubEvent*) fGlobalTrig[indx].subev;
 
                if (ev==0) {

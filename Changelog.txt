@@ -123,4 +123,6 @@ Without filling current NX code works 2x times faster
    Is a case with corrupted GET4 data. Now one can set minimal margin between
    two consequent events. Implemented for both GET4 and NX.
 2) In get4test create summary histogram to see which channels have problems
+3) Ensure that cern-gem12 analysis works without SYNC usage.
+   Data flushing was activated for such case. Results histograms are the same. 
    

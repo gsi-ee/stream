@@ -537,7 +537,7 @@ bool nx::Processor::SecondBufferScan(const base::Buffer& buf)
 
             unsigned indx = TestHitTime(globaltm, isnxmsg);
 
-            if ((indx < fGlobalTrig.size()) && !fGlobalTrig[indx].isflush) {
+            if (indx < fGlobalTrig.size()) {
                nx::SubEvent* ev = (nx::SubEvent*) fGlobalTrig[indx].subev;
 
                if (ev==0) {

@@ -330,6 +330,8 @@ base::GlobalTime_t base::StreamProc::ProvidePotentialFlushTime(GlobalTime_t last
    // approach is simple - one propose as flush time begin of nbuf-2
    // make it little bit more complex - use buffers with time stamps
 
+//   printf("ProvidePotentialFlushTime queue size %u scan indx %u \n", fQueue.size(), fQueueScanIndexTm);
+
    if (fQueueScanIndexTm<3) return 0.;
 
    for (unsigned n=1; n<fQueueScanIndexTm-2; n++)
@@ -533,7 +535,7 @@ unsigned base::StreamProc::TestHitTime(const base::GlobalTime_t& hittime, bool n
 {
    double dist(0.), best_dist(-1e15), best_trigertm(-1e15);
 
-   unsigned res_trigindx = fGlobalTrig.size();
+   unsigned res_indx(fGlobalTrig.size()), best_indx(fGlobalTrig.size());
 
    for (unsigned indx=fGlobalTrigScanIndex; indx<fGlobalTrigRightIndex; indx++) {
 
@@ -544,15 +546,21 @@ unsigned base::StreamProc::TestHitTime(const base::GlobalTime_t& hittime, bool n
 
        int test = fGlobalTrig[indx].TestHitTime(hittime, &dist);
 
-       // remember best distance for
-       if (fGlobalTrig[indx].normal() && (fabs(best_dist) > fabs(dist))) {
-          best_dist = dist;
-          best_trigertm = hittime - fGlobalTrig[indx].globaltm;
-       }
+       // remember best distance for normal trigger,
+       // message can go inside only for normal trigger
+       // but we need to check position relative to trigger to be able perform flushing
 
-       if (test==0) {
-          res_trigindx = indx;
-          break;
+       if (fGlobalTrig[indx].normal()){
+          if (fabs(best_dist) > fabs(dist)) {
+             best_dist = dist;
+             best_trigertm = hittime - fGlobalTrig[indx].globaltm;
+             best_indx = indx;
+          }
+
+          if (test==0) {
+             res_indx = indx;
+             break;
+          }
        }
 
        if (test>0) {
@@ -579,12 +587,12 @@ unsigned base::StreamProc::TestHitTime(const base::GlobalTime_t& hittime, bool n
        }
     }
 
-   if (normal_hit && (best_trigertm>-1e15)) {
+   if (normal_hit && (best_indx<fGlobalTrig.size())) {
       FillH1(fTriggerTm, best_trigertm);
       //printf("Test message %12.9f again trigger %12.9f test = %d dist = %9.0f\n", globaltm*1e-9, fGlobalTrig[indx].globaltm*1e-9, test, dist);
    }
 
-   return normal_hit ? res_trigindx : fGlobalTrig.size();
+   return normal_hit ? res_indx : fGlobalTrig.size();
 }
 
 bool base::StreamProc::ScanDataForNewTriggers()
@@ -618,7 +626,7 @@ bool base::StreamProc::ScanDataForNewTriggers()
    }
 
    if (fGlobalTrigRightIndex==0) {
-      printf("No triggers are select for scanning\n");
+      // printf("No triggers are select for scanning\n");
       return true;
    }
 

@@ -276,11 +276,13 @@ bool base::ProcMgr::CollectNewTriggers()
 
    // create flush event when master has already two buffers and
    // time is reached by all sub-systems
-   if (fTimeMasterIndex < fProc.size()) {
+   if (fProc.size() > 0) {
+
+      unsigned use_indx = fTimeMasterIndex < fProc.size() ? fTimeMasterIndex : 0;
 
       // if we request flush time, it should be bigger than last trigger marker
       GlobalTime_t flush_time =
-            fProc[fTimeMasterIndex]->ProvidePotentialFlushTime(fTriggers.size() > 0 ? fTriggers.back().globaltm : 0.);
+            fProc[use_indx]->ProvidePotentialFlushTime(fTriggers.size() > 0 ? fTriggers.back().globaltm : 0.);
 
       // now verify that each processor is accept such flushtime
       // important that every component obtained and analyzed this region,
@@ -294,7 +296,7 @@ bool base::ProcMgr::CollectNewTriggers()
 //      flush_time = 0.;
 
       if (flush_time != 0.) {
-         // printf("FLUSH: %12.9f\n", flush_time*1e-9);
+//         printf("FLUSH: %12.9f\n", flush_time*1e-9);
          fTriggers.push_back(GlobalTriggerMarker(flush_time));
          fTriggers.back().isflush = true;
       }

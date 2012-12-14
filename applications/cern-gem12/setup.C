@@ -4,20 +4,28 @@
 
 //   base::ProcMgr::instance()->SetRawAnalysis(true);
 
+   unsigned sync_src = 99; // disable SYNC at all
+
    nx::Processor* proc0 = new nx::Processor(0);
    proc0->SetTriggerWindow(300, 800);
+   proc0->SetSyncSource(sync_src);
+
    //proc0->SetPrint(10000);
 
    nx::Processor* proc1 = new nx::Processor(1);
    proc1->SetTriggerWindow(100, 600);
+   proc1->SetSyncSource(sync_src);
    //proc1->SetPrint(10000);
 
    nx::Processor* proc2 = new nx::Processor(2);
    proc2->SetTriggerWindow(100, 600);
+   proc2->SetSyncSource(sync_src);
    //proc2->SetPrint(10000);
 
    nx::Processor* proc3 = new nx::Processor(3);
    proc3->SetTriggerWindow(100, 600);
+   proc3->SetSyncSource(sync_src);
+
  //  proc3->SetPrint(1000000, 513.2, 513.8);
    //proc3->SetPrint(10000);
 
@@ -26,6 +34,8 @@
    nx::Processor* proc4 = new nx::Processor(4);
    proc4->SetTriggerSignal(1); // use AUX1 as trigger signal
    proc4->SetTriggerWindow(100, 600);
+   proc4->SetSyncSource(sync_src);
+
    //proc4->SetPrint(10000);
 
 
