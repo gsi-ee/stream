@@ -17,6 +17,8 @@ TGet4TestProc::TGet4TestProc(const char* name) :
    TUserProcessor(name)
 {
    fMultipl = MakeTH1('I', "GET4TEST/Get4TestMultipl", "Number of messages in event", 32, 0., 32.);
+   fEvPerCh = 0;
+   fBadPerCh = 0;
 }
 
 
@@ -36,6 +38,24 @@ void TGet4TestProc::Add(unsigned rocid, unsigned get4id, unsigned chid)
    rec.fWidth = MakeTH1('I', (prefix+"Width").Data(), (TString("Signal width on ") + info).Data(), 4096, 0., 4096.);
 }
 
+void TGet4TestProc::MakeHistos()
+{
+   if ((fEvPerCh!=0) || (fMap.size()==0)) return;
+
+   fEvPerCh = MakeTH1('I', "GET4TEST/EvPerCh", "Number of good events per channel", fMap.size(), 0, fMap.size());
+   fBadPerCh = MakeTH1('I', "GET4TEST/BadPerCh", "Number of bad events per channel", fMap.size(), 0, fMap.size());
+   fHitPerCh = MakeTH1('I', "GET4TEST/HitPerCh", "Number of hits per channel", fMap.size(), 0, fMap.size());
+
+   unsigned n = 0;
+   for (TGet4TestMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++) {
+      TString lbl = Form("%u_%u_%u", iter->second.rocid, iter->second.get4id, iter->second.chid);
+      fEvPerCh->GetXaxis()->SetBinLabel(1 + n, lbl.Data());
+      fBadPerCh->GetXaxis()->SetBinLabel(1 + n, lbl.Data());
+      fHitPerCh->GetXaxis()->SetBinLabel(1 + n, lbl.Data());
+      n++;
+   }
+
+}
 
 void TGet4TestProc::Process(TStreamEvent* ev)
 {
@@ -62,6 +82,7 @@ void TGet4TestProc::Process(TStreamEvent* ev)
 
 
           TGet4TestRec& rec = iter->second;
+          rec.hitcnt++;
 
           if (msg.getGet4Edge() == 0) {
              rec.lastrising = msg.getGet4Ts();
@@ -71,7 +92,25 @@ void TGet4TestProc::Process(TStreamEvent* ev)
              rec.fWidth->Fill(rec.lastfalling - rec.lastrising);
           }
        }
+
     } else {
        TGo4Log::Error("Not found GET4 data for ROC0 in event %10.9f", ev->GetTriggerTime()*1e-9);
     }
+
+    unsigned indx=0;
+    if (fEvPerCh && fBadPerCh)
+       for (TGet4TestMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++) {
+          TGet4TestRec& rec = iter->second;
+
+          // TODO: once can configure more complex conditions
+          if (rec.hitcnt == 2)
+             fEvPerCh->Fill(indx);
+          else
+             fBadPerCh->Fill(indx);
+
+          if (fHitPerCh) fHitPerCh->Fill(indx, rec.hitcnt);
+
+          indx++;
+       }
+
 }

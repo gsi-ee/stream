@@ -122,4 +122,5 @@ Without filling current NX code works 2x times faster
 1) Avoid local-trigger duplication or very close distance between them.
    Is a case with corrupted GET4 data. Now one can set minimal margin between
    two consequent events. Implemented for both GET4 and NX.
+2) In get4test create summary histogram to see which channels have problems
    

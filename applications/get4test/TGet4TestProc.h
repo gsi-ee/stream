@@ -14,12 +14,14 @@ struct TGet4TestRec {
 
    unsigned lastrising;
    unsigned lastfalling;
+   unsigned hitcnt;
 
    TGet4TestRec() : rocid(0), get4id(0), chid(0), fWidth(0) {}
 
    void reset() {
       lastrising = 0;
       lastfalling = 0;
+      hitcnt = 0;
    }
 
 };
@@ -30,7 +32,10 @@ class TGet4TestProc : public TUserProcessor {
 
    protected:
 
-      TH1* fMultipl;  //!
+      TH1* fMultipl;   //!
+      TH1* fEvPerCh;   //!  events per channel
+      TH1* fBadPerCh;  //!  bad events per channel
+      TH1* fHitPerCh;  //!  bad events per channel
 
       TGet4TestMap fMap; //! all channels which should be present
 
@@ -48,7 +53,11 @@ class TGet4TestProc : public TUserProcessor {
             Add(rocid, get4id, indx);
       }
 
+      /** Register specific get4 channel for testing */
       void Add(unsigned rocid, unsigned get4id, unsigned chid);
+
+      /** Create common histograms for all channels */
+      void MakeHistos();
 
       virtual void Process(TStreamEvent*);
 
