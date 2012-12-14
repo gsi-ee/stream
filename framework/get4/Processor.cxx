@@ -70,8 +70,13 @@ get4::Processor::Processor(unsigned rocid, unsigned get4mask) :
    SetNoSyncSource(); // use not SYNC at all
    SetNoTriggerSignal();
 
-   fRefGet4 = 9999;
-   fRefChannel = NumChannels;
+   // require at least 100 ns interval between two trigger candidates
+   SetTriggerMargin(100);
+
+   fRefId = 99; // impossible combination
+
+   printf("Create GET4 processor for board %u\n", GetBoardId());
+
 }
 
 get4::Processor::~Processor()
@@ -79,10 +84,10 @@ get4::Processor::~Processor()
    // printf("get4::Processor::~Processor\n");
 }
 
-void get4::Processor::setRefChannel(unsigned ref_get4, unsigned ref_ch)
+void get4::Processor::setRefChannel(unsigned ref_get4, unsigned ref_ch, unsigned ref_edge)
 {
-   fRefGet4 = ref_get4;
-   fRefChannel = ref_ch;
+   // keep all ids in one word
+   fRefId = ref_get4 * 100 + ref_ch*10 + ref_edge;
 }
 
 
@@ -183,9 +188,9 @@ bool get4::Processor::FirstBufferScan(const base::Buffer& buf)
             // fill rising and falling edges together
             FillH1(GET4[get4].fChannels, ch + edge*0.5);
 
-            if ((get4==fRefGet4) && (ch == fRefChannel) && (edge==0)) {
+            if (fRefId == get4 * 100 + ch*10 + edge) {
                base::LocalTriggerMarker marker;
-               marker.localid = 1000 + get4*16 + ch*2 + edge;
+               marker.localid = (get4+1) * 100 + ch*10 + edge;
                marker.localtm = fIter.getMsgFullTimeD();
 
                // printf("Select TRIGGER: %10.9f\n", marker.localtm*1e-9);

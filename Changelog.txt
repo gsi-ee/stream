@@ -117,3 +117,9 @@ Without filling current NX code works 2x times faster
 5) In get4test application make analysis of selected hits. 
    First produce only widths. Cleanup code of basic get4::Processor class.
    Implement printing for get4, handle it via central SysCoreProc class  
+   
+14.12.2012
+1) Avoid local-trigger duplication or very close distance between them.
+   Is a case with corrupted GET4 data. Now one can set minimal margin between
+   two consequent events. Implemented for both GET4 and NX.
+   

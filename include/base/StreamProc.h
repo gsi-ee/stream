@@ -36,7 +36,7 @@ namespace base {
 
 
    struct LocalTriggerMarker {
-      GlobalTime_t localtm;     //!< local time in ns,
+      GlobalTime_t  localtm;     //!< local time in ns,
       unsigned      localid;     //!< arbitrary id, like aux number or sync number
       unsigned      bufid;       //!< use it for keep reference from which buffer it is
 
@@ -101,6 +101,8 @@ namespace base {
          bool            fSyncFlag;               //!< boolean, used in sync adjustment procedure
 
          LocalTriggerMarksQueue fLocalTrig;       //!< list of local triggers
+         double          fTriggerAcceptMaring;    //!< time margin (in local time) to accept new trigger
+         GlobalTime_t    fLastLocalTriggerTm;     //!< time of last local trigger
 
          GlobalTriggerMarksQueue fGlobalTrig;     //!< list of global triggers in work
 
@@ -137,7 +139,10 @@ namespace base {
 
          void AddSyncMarker(SyncMarker& marker);
 
-         void AddTriggerMarker(LocalTriggerMarker& marker);
+         /** Add new local trigger.
+           * Method first proves that new trigger marker stays in time order
+           *  and have minimal distance to previous trigger */
+         bool AddTriggerMarker(LocalTriggerMarker& marker, double tm_range = 0.);
 
          double local_time_dist(GlobalTime_t tm1, GlobalTime_t tm2) { return tm2-tm1; }
 
@@ -177,11 +182,13 @@ namespace base {
          void SetTimeSorting(bool on) { fTimeSorting = on; }
          bool IsTimeSorting() const { return fTimeSorting; }
 
+         /** Set minimal distance between two triggers */
+         void SetTriggerMargin(double margin = 0.) { fTriggerAcceptMaring = margin; }
 
+         /** Set window relative to some reference signal, which will be used as
+          * region-of-interest interval to select messages from the stream */
          void SetTriggerWindow(double left, double right)
-         {
-            ChangeC1(triggerWindow, left, right);
-         }
+         { ChangeC1(triggerWindow, left, right); }
 
 
          /** Method indicate if any kind of time-synchronization technique
@@ -205,19 +212,6 @@ namespace base {
          /** Force processor to skip buffers from input */
          virtual bool SkipBuffers(unsigned cnt);
 
-
-         /** Central method to scan new data in the queue
-          * This should include:
-          *   - data indexing;
-          *   - raw histogram filling;
-          *   - search for special time markers;
-          *   - multiplicity histogramming (if necessary) */
-         virtual bool FirstBufferScan(const base::Buffer& buf) { return false; }
-
-         /** Second generic scan of buffer
-          * Here selection of data for region-of-interest should be performed */
-         virtual bool SecondBufferScan(const base::Buffer& buf) { return false; }
-
          /** Returns total number of sync markers */
          unsigned numSyncs() const { return fSyncs.size(); }
          SyncMarker& getSync(unsigned n) { return fSyncs[n]; }
@@ -232,13 +226,27 @@ namespace base {
          virtual bool DistributeTriggers(const GlobalTriggerMarksQueue& queue);
 
          /** Here each processor should scan data again for new triggers */
-         virtual bool ScanDataForNewTriggers();
+         bool ScanDataForNewTriggers();
 
          /** Returns number of already build events */
          unsigned NumReadySubevents() const { return fGlobalTrigScanIndex; }
 
          /** Append data for first trigger to the main event */
          virtual bool AppendSubevent(base::Event* evt);
+
+
+
+         /** Central method to scan new data in the queue
+          * This should include:
+          *   - data indexing;
+          *   - raw histogram filling;
+          *   - search for special time markers;
+          *   - multiplicity histogramming (if necessary) */
+         virtual bool FirstBufferScan(const base::Buffer& buf) { return false; }
+
+         /** Second generic scan of buffer
+          * Here selection of data for region-of-interest should be performed */
+         virtual bool SecondBufferScan(const base::Buffer& buf) { return false; }
    };
 
 }

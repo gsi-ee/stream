@@ -47,6 +47,9 @@ base::StreamProc::StreamProc(const char* name, int indx) :
    fIsSynchronisationRequired(true),
    fSyncs(),
    fSyncScanIndex(0),
+   fLocalTrig(),
+   fTriggerAcceptMaring(0.),
+   fLastLocalTriggerTm(0.),
    fGlobalTrig(),
    fGlobalTrigScanIndex(0),
    fTimeSorting(false),
@@ -361,11 +364,27 @@ void base::StreamProc::AddSyncMarker(base::SyncMarker& marker)
    fSyncs.push_back(marker);
 }
 
-
-void base::StreamProc::AddTriggerMarker(LocalTriggerMarker& marker)
+bool base::StreamProc::AddTriggerMarker(LocalTriggerMarker& marker, double tm_range)
 {
+   // TODO: one could keep time of last produced trigger
+
+   if (fLastLocalTriggerTm != 0.) {
+
+      if (tm_range==0.) tm_range = fTriggerAcceptMaring;
+
+      double dist = local_time_dist(fLastLocalTriggerTm, marker.localtm);
+
+      // make very simple rule - distance should be bigger than specified range
+      if (dist <= tm_range) return false;
+   }
+
    marker.bufid = fQueueScanIndex;
    fLocalTrig.push_back(marker);
+
+   // keep time of last trigger
+   fLastLocalTriggerTm = marker.localtm;
+
+   return true;
 }
 
 

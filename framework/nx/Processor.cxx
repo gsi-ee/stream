@@ -245,6 +245,8 @@ nx::Processor::Processor(unsigned rocid, unsigned nxmask) :
 
    SetNoTriggerSignal();
 
+   SetTriggerMargin(100);
+
    fNumHits = 0;
    fNumBadHits = 0;
    fNumCorrHits = 0;

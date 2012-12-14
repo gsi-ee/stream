@@ -66,7 +66,8 @@ namespace base {
 
          /** Set signal kind which should be used for data selection
           *  Values 0..3 are for AUX0 - AUX3
-          *  Values 10,11 are for SYNC0, SYNC1 */
+          *  Values 10,11 are for SYNC0, SYNC1
+          *  Other values can be used in derived classed */
          void SetTriggerSignal(unsigned id) { fTriggerSignal = id; }
 
          /** Disable any trigger generation */

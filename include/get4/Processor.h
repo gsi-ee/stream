@@ -36,8 +36,7 @@ namespace get4 {
 
          std::vector<get4::Get4Rec> GET4;      //! usage masks for nxyters
 
-         unsigned fRefGet4;
-         unsigned fRefChannel;
+         unsigned fRefId;
 
          bool get4_in_use(unsigned id) { return id < GET4.size() ? GET4[id].used : false; }
 
@@ -63,8 +62,7 @@ namespace get4 {
          Processor(unsigned rocid, unsigned nxmask = 0x5);
          virtual ~Processor();
 
-         void setRefChannel(unsigned ref_get4, unsigned ref_ch);
-         bool isRefChannel() const { return fRefChannel < NumChannels; }
+         void setRefChannel(unsigned ref_get4, unsigned ref_ch, unsigned ref_edge = 0);
 
          /** Scan all messages, find reference signals */
          virtual bool FirstBufferScan(const base::Buffer& buf);

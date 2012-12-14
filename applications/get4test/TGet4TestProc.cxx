@@ -71,7 +71,7 @@ void TGet4TestProc::Process(TStreamEvent* ev)
              rec.fWidth->Fill(rec.lastfalling - rec.lastrising);
           }
        }
+    } else {
+       TGo4Log::Error("Not found GET4 data for ROC0 in event %10.9f", ev->GetTriggerTime()*1e-9);
     }
-    else
-       TGo4Log::Error("Not found GET4 data for ROC0");
 }
