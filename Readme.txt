@@ -50,7 +50,7 @@ Current state:
 2) First try for nXYTER problem correction
 2) Capable to correctly resolve multiple AUX problem!
 3) Runs with lmd files from beamtimes. 
-   See setup.C macros in applications directory
+   See first.C macros in applications directory
 
 
 To be done in near future:
@@ -62,13 +62,33 @@ To be done in near future:
 5) I/O for event data
 
 
-How to use:
-1) checkout repository with command
-  svn co https://subversion.gsi.de/go4/app/stream stream
-2) If required, configure ROOT and Go4
-3) Compile project
-   make all
-4) Use generated streamlogin script to set variables
-5) Run any example from applications subdirectory with go4
-    go4analysis -file your_file_name.lmd
+How to use package
+
+1. Checkout repository with command
+
+  [shell] svn co https://subversion.gsi.de/go4/app/stream stream
+  
+2) If required, configure ROOT and Go4 shell variables.
+   Typically one should call go4login initialization script
+   
+   [shell] . go4login 
     
+3) Compile project:
+
+   [shell] cd stream;
+   [shell] make all
+   
+4) Use generated streamlogin script to set variables:
+
+   [shell] . streamlogin
+
+5) Run any example from applications subdirectory with go4
+   If necessary, compile additional code there:
+
+   [shell] cd applications/get4test
+   [shell] make all
+   [shell] go4analysis -file your_file_name.lmd
+
+6) Results histogram can be seen from autosave file
+
+   [shell] go4 Go4AnalysisASF.root    

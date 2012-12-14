@@ -1,4 +1,4 @@
-void setup() {
+{
    // base::ProcMgr::instance()->SetRawAnalysis(false);
 
    get4::Processor* proc = new get4::Processor(0, 0x5);

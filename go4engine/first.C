@@ -1,4 +1,4 @@
-void setup()
+void first()
 {
    base::ProcMgr::instance()->SetRawAnalysis(true);
 

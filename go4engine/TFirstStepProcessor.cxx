@@ -16,7 +16,7 @@
 //#include "TGo4EventEndException.h"
 
 
-TString TFirstStepProcessor::fDfltSetupScript = "setup.C";
+TString TFirstStepProcessor::fDfltSetupScript = "first.C";
 
 
 TFirstStepProcessor::TFirstStepProcessor():

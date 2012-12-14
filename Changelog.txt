@@ -125,4 +125,4 @@ Without filling current NX code works 2x times faster
 2) In get4test create summary histogram to see which channels have problems
 3) Ensure that cern-gem12 analysis works without SYNC usage.
    Data flushing was activated for such case. Results histograms are the same. 
-   
+4) Implement cern-gem12 code.    

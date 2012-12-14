@@ -1,4 +1,4 @@
-void second() {
+{
    TGo4Log::Info("Create get4 test classes");
 
    // gSystem->Load("libGet4Test");

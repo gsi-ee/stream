@@ -56,11 +56,16 @@ namespace base {
             fMap[name] = ev;
          }
 
+         /** Return subevent by name */
          base::SubEvent* GetSubEvent(const std::string& name) const
          {
             EventsMap::const_iterator iter = fMap.find(name);
             return (iter != fMap.end()) ? iter->second : 0;
          }
+
+         /** Return subevent by name with index
+          * GetSubEvent("ROC",2) is same as GetSubEvent("ROC2") */
+         base::SubEvent* GetSubEvent(const std::string& name, unsigned subindx) const;
 
    };
 
