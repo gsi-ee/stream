@@ -187,7 +187,7 @@ namespace base {
 
          /** Set window relative to some reference signal, which will be used as
           * region-of-interest interval to select messages from the stream */
-         void SetTriggerWindow(double left, double right)
+         virtual void SetTriggerWindow(double left, double right)
          { ChangeC1(triggerWindow, left, right); }
 
 

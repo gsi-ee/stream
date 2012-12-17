@@ -126,3 +126,13 @@ Without filling current NX code works 2x times faster
 3) Ensure that cern-gem12 analysis works without SYNC usage.
    Data flushing was activated for such case. Results histograms are the same. 
 4) Implement cern-gem12 code.    
+
+17.12.2012
+1) Preliminary HADAQ code - only raw data scan at the moment
+2) Distribute code between TrbProcessor and TdcProcessor.  
+3) TrbProcessor navigates over TRB events-subevents and CTS data,
+4) TdcProcessor is special treatment of data from FPGA-TDC. 
+   It is sub-sub-processor relative to central manager. It is done while
+   for each TDC time synchronization should be performed separately.
+5) One can only see statistic over TDC channels, next step is TdcHit and TdcEvent
+   structures 
