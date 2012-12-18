@@ -213,7 +213,13 @@ namespace hadaq {
 
          uint32_t GetTrigNr() const { return Value(&subEvtTrigNr); }
 
-         /** swapsave access to any data. stolen from hadtu.h */
+         /** Return pointer on data by index - user should care itself about swapping */
+         uint32_t* GetDataPtr(unsigned indx) const
+         {
+            return (uint32_t*) (this) + sizeof(RawSubevent)/sizeof(uint32_t) + indx;
+         }
+
+         /** swap-save access to any data. stolen from hadtu.h */
          uint32_t Data(unsigned idx) const
          {
             const void* my= (char*) (this) + sizeof(RawSubevent);

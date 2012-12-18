@@ -82,7 +82,7 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
 //   buf().datalen
 
 
-//   printf("Start TRB processing len %u \n", buf().datalen);
+//   printf("*********** Start TRB processing len %u ************ \n", buf().datalen);
 
    hadaq::TrbIterator iter(buf().buf, buf().datalen);
 
@@ -91,7 +91,7 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
 
    while ((ev = iter.nextEvent()) != 0) {
 
-//      printf("Find event len %u \n", ev->GetSize());
+//      printf("************ Find event len %u *********** \n", ev->GetSize());
 
       FillH1(fEvSize, ev->GetSize());
 
@@ -99,7 +99,7 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
 
       while ((sub = iter.nextSubevent()) != 0) {
 
-//         printf("Find subevent len %u \n", sub->GetSize());
+//         printf("************ Find subevent len %u ********** \n", sub->GetSize());
 
          FillH1(fSubevSize, sub->GetSize());
 

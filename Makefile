@@ -1,9 +1,11 @@
 
+ifndef STREAMSYS
 STREAMSYS := $(CURDIR)
+endif
 
 LOGINFILE = streamlogin
 FASTRULES = clean
-LIBDIR    = $(STREAMSYS)/lib 
+LIBDIR    = lib 
 
 
 .PHONY:    all baselib go4lib $(FASTRULES)
@@ -33,11 +35,11 @@ all: baselib go4lib
 
 
 baselib: $(LIBDIR) $(LOGINFILE)
-	cd framework; $(MAKE) STREAMSYS=$(STREAMSYS)
+	cd framework; $(MAKE) STREAMSYS=..
 
 go4lib: baselib
 ifdef IS_GO4
-	cd go4engine; $(MAKE) STREAMSYS=$(STREAMSYS)
+	cd go4engine; $(MAKE) STREAMSYS=..
 else
 	@echo "Go4 not configured - not able to build go4 engine"
 endif
@@ -45,9 +47,9 @@ endif
 
 clean:
 ifdef IS_GO4
-	cd go4engine; $(MAKE) clean STREAMSYS=$(STREAMSYS)
+	cd go4engine; $(MAKE) clean STREAMSYS=..
 endif
-	cd framework; $(MAKE) clean STREAMSYS=$(STREAMSYS)
+	cd framework; $(MAKE) clean STREAMSYS=..
 	@rm -rf $(LIBDIR) $(LOGINFILE)
 	@echo "stream project clean done"
 

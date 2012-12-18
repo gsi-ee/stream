@@ -136,3 +136,8 @@ Without filling current NX code works 2x times faster
    for each TDC time synchronization should be performed separately.
 5) One can only see statistic over TDC channels, next step is TdcHit and TdcEvent
    structures 
+   
+18.12.2012
+1) Introduce TdcMessage and TdcIterator classes. They are basic classes
+   for navigation via FPGA-TDC raw data.      
+   

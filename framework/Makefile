@@ -9,6 +9,8 @@ CXXOPT        = -O2 -fPIC $(INCLUDES:%=-I%)
 LD            = g++
 CXX           = g++
 
+INCLUDES      = $(STREAMSYS)/include
+
 NEWLIB = $(STREAMSYS)/lib/libStream.so
 
 NEWLIB_HEADERS = $(wildcard $(STREAMSYS)/include/base/*.h) \
@@ -67,8 +69,6 @@ dict:
 	@echo "ROOT not available, dictionary for $(NEWLIB) cannot be generated"
 
 endif
-
-$(NEWLIB_OBJS): INCLUDES += $(STREAMSYS)/include
 
 $(NEWLIB) : $(NEWLIB_OBJS)
 	@echo 'Building: $@'

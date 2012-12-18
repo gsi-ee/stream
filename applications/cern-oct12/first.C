@@ -1,6 +1,9 @@
 {
    base::ProcMgr::instance()->SetRawAnalysis(true);
 
+   nx::Processor::SetDisorderTm(5000);
+   nx::Processor::SetLastEpochCorr(true);
+
    nx::Processor* proc0 = new nx::Processor(0);
    proc0->SetTriggerSignal(10); // define SYNC0 as main reference time
    proc0->SetTriggerWindow(500, 1200);
