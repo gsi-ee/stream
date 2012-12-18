@@ -75,6 +75,13 @@ namespace hadaq {
             return true;
          }
 
+         /** Returns 39-bit value, which combines epoch and coarse counter.
+          * Time bin is 5 ns  */
+         uint64_t getMsgStampCoarse() const
+         {
+            return (isCurEpoch() ? ((uint64_t) fCurEpoch) << 11 : 0) | (fMsg.isHitMsg() ? fMsg.getHitTmCoarse() : 0);
+         }
+
          hadaq::TdcMessage& msg() { return fMsg; }
 
          /** Returns true, if current epoch was assigned */

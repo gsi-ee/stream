@@ -1,4 +1,4 @@
-{
+void first() {
    base::ProcMgr::instance()->SetRawAnalysis(true);
 
    nx::Processor::SetDisorderTm(5000);
@@ -14,6 +14,19 @@
    nx::Processor* proc2 = new nx::Processor(2);
    proc2->SetTriggerWindow(500, 1200);
 
+//   nx::Processor* proc3 = new nx::Processor(3);
+//   proc3->SetTriggerWindow(500, 1200);
+
+   nx::Processor* proc4 = new nx::Processor(4);
+   proc4->SetTriggerWindow(500, 1200);
+
+   nx::Processor* proc5 = new nx::Processor(5);
+   proc5->SetTriggerWindow(500, 1200);
+
+   nx::Processor* proc6 = new nx::Processor(6);
+   proc6->SetTriggerWindow(500, 1200);
+
+
    hadaq::TrbProcessor* trb3 = new hadaq::TrbProcessor(0);
 
    hadaq::TdcProcessor* tdc1 = new hadaq::TdcProcessor(trb3, 1);
@@ -23,5 +36,4 @@
 
    // method set window for all TDCs at the same time
    trb3->SetTriggerWindow(-450, -350);
-
 }

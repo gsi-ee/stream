@@ -193,16 +193,13 @@ namespace hadaq {
 
          unsigned Alignment() const { return 1 << ( GetDecoding() >> 16 & 0xff); }
 
-         /** swapsave access to any data stolen from hadtu.h */
+         /** swap-save access to any data stolen from hadtu.h */
          uint32_t Value(const uint32_t *member) const
          {
-            if (!IsSwapped()) return *member;
-            uint32_t tmp;
-            ((uint8_t *) &tmp)[0] = ((uint8_t *) member)[3];
-            ((uint8_t *) &tmp)[1] = ((uint8_t *) member)[2];
-            ((uint8_t *) &tmp)[2] = ((uint8_t *) member)[1];
-            ((uint8_t *) &tmp)[3] = ((uint8_t *) member)[0];
-            return tmp;
+            return IsSwapped() ? ((((uint8_t *) member)[0] << 24) |
+                                  (((uint8_t *) member)[1] << 16) |
+                                  (((uint8_t *) member)[2] << 8) |
+                                  (((uint8_t *) member)[3])) : *member;
          }
 
          uint32_t GetSize() const { return Value(&subEvtSize); }
@@ -222,7 +219,7 @@ namespace hadaq {
          /** swap-save access to any data. stolen from hadtu.h */
          uint32_t Data(unsigned idx) const
          {
-            const void* my= (char*) (this) + sizeof(RawSubevent);
+            const void* my = (char*) (this) + sizeof(RawSubevent);
 
             switch (Alignment()) {
                case 4:
@@ -237,7 +234,7 @@ namespace hadaq {
                }
             }
 
-            return ((uint8_t *) my)[idx];
+            return ((uint8_t*) my)[idx];
          }
    };
 

@@ -61,11 +61,14 @@ namespace hadaq {
          /** Returns hit channel ID */
          uint32_t getHitChannel() const { return (fData >> 22) & 0x7F; }
 
-         /** Returns hit coarse time counter */
+         /** Returns hit coarse time counter, 11 bit */
          uint32_t getHitTmCoarse() const { return fData & 0x7FF; }
 
-         /** Returns hit fine time counter */
+         /** Returns hit fine time counter, 10 bit */
          uint32_t getHitTmFine() const { return (fData >> 12) & 0x3FF; }
+
+         /** Returns time stamp, which is simple combination coarse and fine counter */
+         uint32_t getHitTmStamp() const { return (getHitTmCoarse() << 10) | getHitTmFine(); }
 
          /** Returns hit edge 1 - rising, 0 - falling */
          uint32_t getHitEdge() const {  return (fData >> 11) & 0x1; }
@@ -83,8 +86,6 @@ namespace hadaq {
 
          /** Return reserved bits of header message */
          uint32_t getHeaderRes() const { return (fData >> 16) & 0x1FFF; }
-
-
 
          void print()
          {

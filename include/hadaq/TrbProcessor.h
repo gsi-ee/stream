@@ -43,9 +43,12 @@ namespace hadaq {
 
          void AccountTriggerId(unsigned id);
 
-         /** Way to register sub-processor, like for TDC
-          * */
+         /** Way to register sub-processor, like for TDC */
          void AddSub(TdcProcessor* tdc, unsigned id);
+
+         /** This is maximum disorder time for TDC messages
+          * TODO: derive this value from sub-items */
+         virtual double MaximumDisorderTm() const { return 1000.; }
 
          void ProcessTDCV3(hadaq::RawSubevent* sub);
 
