@@ -102,7 +102,7 @@ Bool_t TFirstStepProcessor::BuildEvent(TGo4EventElement* outevnt)
          // analyze new sync markers
          if (AnalyzeSyncMarkers()) {
 
-            // printf("Collect new triggers\n");
+            printf("Collect new triggers\n");
 
             // get and redistribute new triggers
             CollectNewTriggers();

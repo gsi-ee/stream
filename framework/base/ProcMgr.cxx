@@ -295,7 +295,7 @@ bool base::ProcMgr::CollectNewTriggers()
 //      flush_time = 0.;
 
       if (flush_time != 0.) {
-//         printf("FLUSH: %12.9f\n", flush_time*1e-9);
+         printf("FLUSH: %12.9f\n", flush_time*1e-9);
          fTriggers.push_back(GlobalTriggerMarker(flush_time));
          fTriggers.back().isflush = true;
       }

@@ -83,7 +83,8 @@ namespace hadaq {
          /** Returns configured board id */
          unsigned GetBoardId() const { return fTdcId; }
 
-         /** Scan all messages, find reference signals */
+         /** Scan all messages, find reference signals
+          * if returned false, buffer has error and must be discarded */
          virtual bool FirstBufferScan(const base::Buffer& buf)
          {
             return DoBufferScan(buf, true);

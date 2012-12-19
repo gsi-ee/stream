@@ -151,3 +151,5 @@ Without filling current NX code works 2x times faster
    It indicates, than only raw data scan is performed - no any output data should
    be expected from such processor. Such mode required for TrbProcessor which works
    just like splitter.  
+3) If error found in the buffer (FirstBufferScan() returns false), 
+   buffer will be ignored in all consequent stages.    

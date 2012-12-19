@@ -44,6 +44,11 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 {
    // in the first scan we
 
+   if (buf.null()) {
+      if (first_scan) printf("Something wrong - empty buffer should not appear in the first scan/n");
+      return false;
+   }
+
    uint32_t syncid(0xffffffff);
    // copy first 4 bytes - it is syncid
    memcpy(&syncid, buf.ptr(), 4);
@@ -57,6 +62,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    TdcIterator iter((uint32_t*) buf.ptr(4), buf.datalen()/4 -1, false);
 
    unsigned help_index(0);
+
+   double localtm(0.), minimtm(-1.);
 
    while (iter.next()) {
 
@@ -92,24 +99,28 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                if (!iserr) hitcnt++;
             }
 
+            if (!iserr) {
+               localtm = iter.getMsgStampCoarse() * CoarseUnit() + SimpleFineCalibr(iter.msg().getHitTmFine());
+
+               if ((minimtm<1.) || (local_time_dist(minimtm, localtm) < 0.))
+                  minimtm = localtm;
+            }
+
+
             // remember position of channel 0 - it could be used for SYNC settings
             if ((chid==0) && iter.msg().isHitRisingEdge() && first_scan && (syncid != 0xffffffff) && !iserr) {
-
-               double synctm = iter.getMsgStampCoarse() * CoarseUnit() + SimpleFineCalibr(iter.msg().getHitTmFine());
 
                base::SyncMarker marker;
                marker.uniqueid = syncid;
                marker.localid = 0;
-               marker.local_stamp = synctm;
-               marker.localtm = synctm;
+               marker.local_stamp = localtm;
+               marker.localtm = localtm;
 
                AddSyncMarker(marker);
             }
 
             if (!first_scan && !iserr) {
-               double stamp = iter.getMsgStampCoarse() * CoarseUnit() + SimpleFineCalibr(iter.msg().getHitTmFine());
-
-               base::GlobalTime_t globaltm = LocalToGlobalTime(stamp, &help_index);
+               base::GlobalTime_t globaltm = LocalToGlobalTime(localtm, &help_index);
 
                // use first channel only for flushing
                unsigned trig_indx = TestHitTime(globaltm, (chid>0));
@@ -158,6 +169,12 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
    if (first_scan) {
 
+      if (!iserr && (minimtm>=0.))
+         buf().local_tm = minimtm;
+      else
+         iserr = true;
+
+
       FillH1(fMsgPerBrd, GetBoardId(), cnt);
 
       // fill number of "good" hits
@@ -166,6 +183,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       if (iserr)
          FillH1(fErrPerBrd, GetBoardId());
    }
+
+   return iserr;
 }
 
 void hadaq::TdcProcessor::AppendTrbSync(uint32_t syncid)

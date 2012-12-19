@@ -280,7 +280,10 @@ bool base::StreamProc::ScanNewBuffers()
 //   printf("Scan buffers last %u size %u\n", fQueueScanIndex, fQueue.size());
 
    while (fQueueScanIndex < fQueue.size()) {
-      FirstBufferScan(fQueue[fQueueScanIndex]);
+      base::Buffer& buf = fQueue[fQueueScanIndex];
+      // if first scan failed, release buffer
+      // TODO: probably, one could remove buffer immediately
+      if (!FirstBufferScan(buf)) buf.reset();
       fQueueScanIndex++;
    }
 
@@ -303,7 +306,11 @@ bool base::StreamProc::ScanNewBuffersTm()
       scan_limit = fSyncs[fSyncScanIndex].bufid;
 
    while (fQueueScanIndexTm < scan_limit) {
-      fQueue[fQueueScanIndexTm]().global_tm = LocalToGlobalTime(fQueue[fQueueScanIndexTm]().local_tm);
+      base::Buffer& buf = fQueue[fQueueScanIndexTm];
+
+      // when empty buffer, just ignore it - it will be skipped sometime
+      if (!buf.null())
+         buf().global_tm = LocalToGlobalTime(buf().local_tm);
       // printf("Set for buffer %u global tm %8.6f\n", fQueueScanIndexTm, fQueue[fQueueScanIndexTm]().globaltm);
       fQueueScanIndexTm++;
    }
@@ -501,7 +508,7 @@ bool base::StreamProc::CollectTriggers(GlobalTriggerMarksQueue& trigs)
       num_trig++;
       trigs.push_back(marker);
 
-//      printf("TRIGG: %12.9f\n", marker.globaltm*1e-9);
+      printf("TRIGG: %12.9f\n", marker.globaltm*1e-9);
    }
 
    if (num_trig == fLocalTrig.size())
@@ -651,7 +658,9 @@ bool base::StreamProc::ScanDataForNewTriggers()
    // time of last trigger is used to check which buffers can be scanned
    // time of last buffer is used to check which triggers we could check
 
-      // never do any seconds scan in such situation
+   printf("Proc:%p  Try scan data numtrig %u scan tm %u raw %u\n", this, fGlobalTrig.size(), fQueueScanIndexTm, IsRawScanOnly());
+
+   // never do any seconds scan in such situation
    if (IsRawScanOnly()) return true;
 
    // never scan last buffer
@@ -689,7 +698,10 @@ bool base::StreamProc::ScanDataForNewTriggers()
    while (upper_buf_limit < fQueueScanIndexTm - 1) {
       // only when next buffer start tm less than left boundary of last trigger,
       // one can include previous buffer into the scan
-      if (fQueue[upper_buf_limit+1].rec().global_tm > buffer_timeboundary) break;
+      base::Buffer& buf = fQueue[upper_buf_limit+1];
+
+      if (!buf.null())
+         if (buf.rec().global_tm > buffer_timeboundary) break;
 //      printf("Buffer %12.9f will be scanned, boundary %12.9f\n", fQueue[upper_buf_limit]().globaltm*1e-9, buffer_timeboundary*1e-9);
       upper_buf_limit++;
    }
@@ -716,12 +728,13 @@ bool base::StreamProc::ScanDataForNewTriggers()
    for (unsigned nbuf=0; nbuf<upper_buf_limit; nbuf++) {
 //      printf("Second scan of buffer %u  size %u\n", nbuf, fQueue.size());
 
-     if (nbuf>=fQueue.size()) {
-        printf("Something went wrong\n");
-        exit(11);
+      if (nbuf>=fQueue.size()) {
+         printf("Something went wrong\n");
+         exit(11);
       }
 
-      SecondBufferScan(fQueue[nbuf]);
+      if (!fQueue[nbuf].null())
+         SecondBufferScan(fQueue[nbuf]);
    }
 
    // at the end all these buffer can be skipped from the queue
