@@ -236,6 +236,15 @@ namespace hadaq {
 
             return ((uint8_t*) my)[idx];
          }
+
+         void CopyDataTo(void* buf, unsigned indx, unsigned datalen)
+         {
+            if (buf==0) return;
+            while (datalen-- > 0) {
+               *((uint32_t*) buf) = Data(indx++);
+               buf = ((uint32_t*) buf) + 1;
+            }
+         }
    };
 
 }

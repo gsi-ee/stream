@@ -44,6 +44,7 @@ base::StreamProc::StreamProc(const char* name, int indx) :
    fQueue(),
    fQueueScanIndex(0),
    fQueueScanIndexTm(0),
+   fRawScanOnly(false),
    fIsSynchronisationRequired(true),
    fSyncs(),
    fSyncScanIndex(0),
@@ -193,18 +194,16 @@ double base::StreamProc::GetC1Limit(C1handle c1, bool isleft)
    return mgr()->GetC1Limit(c1, isleft);
 }
 
-bool base::StreamProc::eraseSyncAt(unsigned indx)
-{
-   if (indx < fSyncs.size()) {
-      fSyncs.erase(fSyncs.begin() + indx);
-      if (fSyncScanIndex>indx) fSyncScanIndex--;
-      return true;
-   }
-   return false;
-}
-
 base::GlobalTime_t base::StreamProc::LocalToGlobalTime(base::GlobalTime_t localtm, unsigned* indx)
 {
+   // method uses helper index to locate faster interval where interpolation could be done
+   // value of index is following
+   //  0               - last value left to the first sync
+   //  [1..numSyncs()-1] - last value between indx-1 and indx syncs
+   //  numSyncs()      - last value right to the last sync
+
+   // TODO: one could probably use some other methods of time conversion
+
    if (!IsSynchronisationRequired()) return localtm;
 
    if (numSyncs() == 0) {
@@ -213,33 +212,25 @@ base::GlobalTime_t base::StreamProc::LocalToGlobalTime(base::GlobalTime_t localt
       return 0.;
    }
 
-   if ((numSyncs()>0) && (numSyncs() % 1000 == 0)) {
-      printf("Too much syncs %u - something wrong??\n", numSyncs());
-   }
-
    // use liner approximation only when more than one sync available
    if (numSyncs()>1) {
 
-      if ((indx!=0) &&  (*indx < numSyncs()-1) ) {
-         double dist1 = local_time_dist(getSync(*indx).localtm, localtm);
-         double dist2 = local_time_dist(localtm, getSync(*indx+1).localtm);
+      // we should try to use helper index only if it is inside existing sync range
+      bool try_indx = (indx!=0) && (*indx>0) && (*indx < (numSyncs() - 1));
 
-         if ((dist1>=0.) && (dist2>0)) {
-            //double k1 = dist2 / (dist1 + dist2);
-            double diff1 = dist1 / (dist1 + dist2) * (getSync(*indx+1).globaltm - getSync(*indx).globaltm);
-            //return getSync(*indx).globaltm*k1 + getSync(*indx+1).globaltm*k2;
+      for (unsigned cnt=0; cnt<numSyncs(); cnt++) {
+         unsigned n = 0;
 
-            if ((dist1>0) && ((diff1/dist1 < 0.9) || (diff1/dist1 > 1.1))) {
-               printf("Simothing wrong with time calc %8.6f %8.6f\n", dist1, diff1);
-               exit(1);
-            }
-
-            //return getSync(*indx).globaltm + dist1;
-            return getSync(*indx).globaltm + diff1;
+         if (cnt==0) {
+            // use first loop iteration to check if provided index
+            // suited for interpolation,
+            if (try_indx) n = *indx - 1; else continue;
+         } else {
+            n = cnt - 1;
+            // if reference index was provided, no need to check it again
+            if (try_indx && ((*indx - 1) == n)) continue;
          }
-      }
 
-      for (unsigned n=0; n<numSyncs()-1; n++) {
          double dist1 = local_time_dist(getSync(n).localtm, localtm);
          double dist2 = local_time_dist(localtm, getSync(n+1).localtm);
 
@@ -253,9 +244,10 @@ base::GlobalTime_t base::StreamProc::LocalToGlobalTime(base::GlobalTime_t localt
                exit(1);
             }
 
+            if (indx) *indx = n + 1;
+
             //return getSync(*indx).globaltm + dist1;
             return getSync(n).globaltm + diff1;
-
          }
       }
    }
@@ -266,9 +258,12 @@ base::GlobalTime_t base::StreamProc::LocalToGlobalTime(base::GlobalTime_t localt
    double dist1 = local_time_dist(getSync(0).localtm, localtm);
    double dist2 = local_time_dist(getSync(numSyncs()-1).localtm, localtm);
 
-   if (fabs(dist1) < fabs(dist2))
+   if (fabs(dist1) < fabs(dist2)) {
+      if (indx) *indx = 0;
       return getSync(0).globaltm + dist1;
+   }
 
+   if (indx) *indx = numSyncs();
    return getSync(numSyncs()-1).globaltm + dist2;
 }
 
@@ -289,27 +284,19 @@ bool base::StreamProc::ScanNewBuffers()
       fQueueScanIndex++;
    }
 
+   // for raw scanning any other steps are not interesting
+   if (IsRawScanOnly()) SkipAllData();
+
    return true;
 }
-
-void base::StreamProc::SkipAllData()
-{
-   fQueueScanIndexTm = fQueue.size();
-
-   SkipBuffers(fQueue.size());
-
-   fLocalTrig.clear();
-   fGlobalTrig.clear();
-
-   fSyncs.clear();
-   fSyncScanIndex = 0;
-}
-
 
 bool base::StreamProc::ScanNewBuffersTm()
 {
    // here we recalculate times for each buffer
    // this only can be done when appropriate syncs are produced
+
+   // for raw processor no any time is interesting
+   if (IsRawScanOnly()) return true;
 
    unsigned scan_limit = fQueue.size();
    if (fSyncScanIndex < fSyncs.size())
@@ -345,6 +332,9 @@ bool base::StreamProc::VerifyFlushTime(const base::GlobalTime_t& flush_time)
    // verify that proposed flush time can be processed already now
    // for that buffer time should be assigned
 
+   // when processor doing raw scan, one can ignore flushing as well
+   if (IsRawScanOnly()) return true;
+
    if ((flush_time==0.) || (fQueueScanIndexTm<2)) return false;
 
    for (unsigned n=0;n<fQueueScanIndexTm-1;n++)
@@ -361,6 +351,10 @@ void base::StreamProc::AddSyncMarker(base::SyncMarker& marker)
       exit(5);
    }
 
+   if ((numSyncs()>0) && (numSyncs() % 1000 == 0)) {
+      printf("Too much syncs %u - something wrong??\n", numSyncs());
+   }
+
    marker.globaltm = 0.;
    marker.bufid = fQueueScanIndex;
    fSyncs.push_back(marker);
@@ -368,7 +362,8 @@ void base::StreamProc::AddSyncMarker(base::SyncMarker& marker)
 
 bool base::StreamProc::AddTriggerMarker(LocalTriggerMarker& marker, double tm_range)
 {
-   // TODO: one could keep time of last produced trigger
+   // last local trigger is remembered to exclude trigger duplication or
+   // too close distances
 
    if (fLastLocalTriggerTm != 0.) {
 
@@ -380,7 +375,6 @@ bool base::StreamProc::AddTriggerMarker(LocalTriggerMarker& marker, double tm_ra
       if (dist <= tm_range) return false;
    }
 
-   marker.bufid = fQueueScanIndex;
    fLocalTrig.push_back(marker);
 
    // keep time of last trigger
@@ -388,6 +382,32 @@ bool base::StreamProc::AddTriggerMarker(LocalTriggerMarker& marker, double tm_ra
 
    return true;
 }
+
+bool base::StreamProc::eraseSyncAt(unsigned indx)
+{
+   if (indx < fSyncs.size()) {
+      fSyncs.erase(fSyncs.begin() + indx);
+      if (fSyncScanIndex>indx) fSyncScanIndex--;
+      return true;
+   }
+   return false;
+}
+
+bool base::StreamProc::eraseFirstSyncs(unsigned num_erase)
+{
+   if (fSyncScanIndex > num_erase)
+      fSyncScanIndex-=num_erase;
+   else
+      fSyncScanIndex = 0;
+
+   if (num_erase >= fSyncs.size()) {
+      fSyncs.clear();
+      return true;
+   }
+
+   fSyncs.erase(fSyncs.begin(), fSyncs.begin() + num_erase);
+}
+
 
 
 bool base::StreamProc::SkipBuffers(unsigned num_skip)
@@ -399,10 +419,9 @@ bool base::StreamProc::SkipBuffers(unsigned num_skip)
    fQueue.erase(fQueue.begin(), fQueue.begin() + num_skip);
 
    // erase all syncs with reference to first buffer
-   while ((fSyncs.size()>1) && (fSyncs[0].bufid<num_skip)) {
-      fSyncs.erase(fSyncs.begin());
-      if (fSyncScanIndex>0) fSyncScanIndex--;
-   }
+   unsigned erase_cnt(0);
+   while ((erase_cnt + 1 < fSyncs.size()) && (fSyncs[erase_cnt].bufid < num_skip)) erase_cnt++;
+   eraseFirstSyncs(erase_cnt);
 
    for (unsigned n=0;n<fSyncs.size();n++)
       if (fSyncs[n].bufid>num_skip)
@@ -412,12 +431,10 @@ bool base::StreamProc::SkipBuffers(unsigned num_skip)
 
 //   printf("Skip %u buffers numsync %u sync0id %u sync0tm %8.3f numbufs %u\n", num_skip, fSyncs.size(), fSyncs[0].uniqueid, fSyncs[0].globaltm*1e-9, fQueue.size());
 
-
-   while ((fLocalTrig.size()>0) && (fLocalTrig[0].bufid<num_skip))
-      fLocalTrig.erase(fLocalTrig.begin());
-
-   for (unsigned n=0;n<fLocalTrig.size();n++)
-      fLocalTrig[n].bufid-=num_skip;
+   // local triggers must be cleanup by other means,
+   // TODO: if it would not be possible, one could use front time of buffers to skip triggers
+   if (fLocalTrig.size()>1000)
+      printf("Too much %u local trigger remaining - why\n?", fLocalTrig.size());
 
    if (fQueueScanIndex>=num_skip) {
       fQueueScanIndex-=num_skip;
@@ -438,28 +455,53 @@ bool base::StreamProc::SkipBuffers(unsigned num_skip)
    return true;
 }
 
+void base::StreamProc::SkipAllData()
+{
+   fQueueScanIndexTm = fQueue.size();
+
+   SkipBuffers(fQueue.size());
+
+   fLocalTrig.clear();
+   fGlobalTrig.clear();
+
+   fSyncs.clear();
+   fSyncScanIndex = 0;
+}
+
+
+
 bool base::StreamProc::CollectTriggers(GlobalTriggerMarksQueue& trigs)
 {
    // TODO: one can make more sophisticated rules like time combination of several AUXs or even channles
    // TODO: another way - multiplicity histograms
 
-   unsigned num_trig(0);
+   unsigned num_trig(0), syncindx(0); // index used to help convert global to local time
 
-   for (unsigned n=0;n<fLocalTrig.size();n++) {
+//   printf("Collect new triggers numSync %u %u \n", numSyncs(), fLocalTrig.size());
 
-      // do not provide triggers, which cannot be correctly assigned in time
-      // TODO: it is simplified way, one could use time itself
-      if (fLocalTrig[n].bufid >= fQueueScanIndexTm) break;
-
-      num_trig++;
+   while (num_trig<fLocalTrig.size()) {
 
       GlobalTriggerMarker marker;
 
-      marker.globaltm = LocalToGlobalTime(fLocalTrig[n].localtm);
+      marker.globaltm = LocalToGlobalTime(fLocalTrig[num_trig].localtm, &syncindx);
+
+//      printf("Start scan trig local %u %u sync_indx %u %12.9f\n", num_trig, fLocalTrig.size(), syncindx, marker.globaltm*1e-9);
+
+      if (IsSynchronisationRequired()) {
+         // when synchronization used, one should verify where exact our local trigger is
+
+         // this is a case when marker right to the last sync
+         if (syncindx == numSyncs()) break;
+
+         if (syncindx == 0) {
+            printf("Strange - trigger time left to first sync - try to continue\n");
+         }
+      }
+
+      num_trig++;
+      trigs.push_back(marker);
 
 //      printf("TRIGG: %12.9f\n", marker.globaltm*1e-9);
-
-      trigs.push_back(marker);
    }
 
    if (num_trig == fLocalTrig.size())
@@ -474,6 +516,9 @@ bool base::StreamProc::DistributeTriggers(const base::GlobalTriggerMarksQueue& q
 {
    // here just duplicate of main trigger queue is created
    // TODO: make each trigger with unique id
+
+   // no need for trigger when doing only raw scan
+   if (IsRawScanOnly()) return true;
 
    while (fGlobalTrig.size() < queue.size()) {
       unsigned indx = fGlobalTrig.size();
@@ -494,6 +539,8 @@ bool base::StreamProc::DistributeTriggers(const base::GlobalTriggerMarksQueue& q
 
 bool base::StreamProc::AppendSubevent(base::Event* evt)
 {
+   if (IsRawScanOnly()) return true;
+
    if (fGlobalTrig.size()==0) {
       printf("global trigger queue empty !!!\n");
       exit(14);
@@ -550,7 +597,7 @@ unsigned base::StreamProc::TestHitTime(const base::GlobalTime_t& hittime, bool n
        // message can go inside only for normal trigger
        // but we need to check position relative to trigger to be able perform flushing
 
-       if (fGlobalTrig[indx].normal()){
+       if (fGlobalTrig[indx].normal()) {
           if (fabs(best_dist) > fabs(dist)) {
              best_dist = dist;
              best_trigertm = hittime - fGlobalTrig[indx].globaltm;
@@ -604,6 +651,8 @@ bool base::StreamProc::ScanDataForNewTriggers()
    // time of last trigger is used to check which buffers can be scanned
    // time of last buffer is used to check which triggers we could check
 
+      // never do any seconds scan in such situation
+   if (IsRawScanOnly()) return true;
 
    // never scan last buffer
    if (fQueueScanIndexTm < 2) return true;
@@ -659,24 +708,24 @@ bool base::StreamProc::ScanDataForNewTriggers()
       return true;
    }
 
-   // till now it is very generic code, probably we will move it to the generic part of the code
+   // till now it is very generic code how events limits and buffer limits are defined
+   // therefore it is moved here
 
-   // from here it is just scan of the NX buffers
-
-//   printf("Scan now %u buffers for [%u %u) triggers \n", upper_buf_limit, fGlobalTrigScanIndex, upper_trig_limit);
+   // now one should scan selected buffers second time for data selection
 
    for (unsigned nbuf=0; nbuf<upper_buf_limit; nbuf++) {
 //      printf("Second scan of buffer %u  size %u\n", nbuf, fQueue.size());
 
-      if (nbuf>=fQueue.size()) {
-         printf("Something went wrong\n");
-         exit(11);
+     if (nbuf>=fQueue.size()) {
+        printf("Something went wrong\n");
+        exit(11);
       }
 
       SecondBufferScan(fQueue[nbuf]);
    }
 
-//   printf("Before skip %u buffers queue size %u\n", upper_buf_limit, fQueue.size());
+   // at the end all these buffer can be skipped from the queue
+   // at the same time all sync will be skipped as well
 
    SkipBuffers(upper_buf_limit);
 

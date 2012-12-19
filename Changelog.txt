@@ -138,6 +138,16 @@ Without filling current NX code works 2x times faster
    structures 
    
 18.12.2012
-1) Introduce TdcMessage and TdcIterator classes. They are basic classes
+1) Introduce TdcMessage and TdcIterator classes. These are basic classes
    for navigation via FPGA-TDC raw data.      
    
+19.12.2012
+1) First try of synchronization with processor/subprocessor approach. 
+   Problem here that SYNC number registered by TRB3 itself, 
+   while SYNC time is recorded by every TDC individually. 
+   In such case TrbProcessor just split raw data between TdcProcessor's.
+   If found, SYNC messages placed in begin of raw data.
+2) RawScan mode introduced in StreamProc class. 
+   It indicates, than only raw data scan is performed - no any output data should
+   be expected from such processor. Such mode required for TrbProcessor which works
+   just like splitter.  

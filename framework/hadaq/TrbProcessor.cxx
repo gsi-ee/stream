@@ -1,5 +1,7 @@
 #include "hadaq/TrbProcessor.h"
 
+#include <string.h>
+
 #include "base/defines.h"
 #include "base/ProcMgr.h"
 
@@ -21,6 +23,13 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid) :
    fLastTriggerId = 0;
    fLostTriggerCnt = 0;
    fTakenTriggerCnt = 0;
+
+
+   // this is raw-scan processor, therefore no synchronization is required for it
+   SetSynchronisationRequired(false);
+
+   // only raw scan, data can be immediately removed
+   SetRawScanOnly(true);
 }
 
 hadaq::TrbProcessor::~TrbProcessor()
@@ -86,7 +95,6 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
 
    hadaq::TrbIterator iter(buf().buf, buf().datalen);
 
-
    hadaq::RawEvent* ev = 0;
 
    while ((ev = iter.nextEvent()) != 0) {
@@ -106,8 +114,7 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
          // use only 16-bit in trigger number while CTS make a lot of errors in higher 8 bits
          AccountTriggerId((sub->GetTrigNr() >> 8) & 0xffff);
 
-         ProcessTDCV3(sub);
-
+         ScanTDCV3(sub);
       }
 
 //      printf("Finish event processing\n");
@@ -117,7 +124,7 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
    return true;
 }
 
-void hadaq::TrbProcessor::ProcessTDCV3(hadaq::RawSubevent* sub)
+void hadaq::TrbProcessor::ScanTDCV3(hadaq::RawSubevent* sub)
 {
    // this is first scan of subevent from TRB3 data
    // our task is statistic over all messages we will found
@@ -125,7 +132,7 @@ void hadaq::TrbProcessor::ProcessTDCV3(hadaq::RawSubevent* sub)
 
 
    for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
-      iter->second->BeforeFirstScan();
+      iter->second->SetNewDataFlag(false);
 
    unsigned ix = 0;           // cursor
 
@@ -133,6 +140,8 @@ void hadaq::TrbProcessor::ProcessTDCV3(hadaq::RawSubevent* sub)
 
    unsigned syncNumber(0);
    bool findSync(false);
+
+//   printf("Scan TRB3 raw data\n");
 
    while (ix < trbSubEvSize) {
       //! Extract data portion from the whole packet (in a loop)
@@ -158,9 +167,21 @@ void hadaq::TrbProcessor::ProcessTDCV3(hadaq::RawSubevent* sub)
 
          TdcProcessor* subproc = fMap[tdcid];
 
-         if (subproc)
-            subproc->FirstSubScan(sub, ix, datalen);
-         else
+         if (subproc) {
+
+            base::Buffer buf;
+            buf.makenew((datalen+1)*4);
+
+            memset(buf.ptr(), 0xff, 4); // fill dummy sync id in the begin
+            sub->CopyDataTo(buf.ptr(4), ix, datalen);
+
+            buf().kind = 0;
+            buf().boardid = tdcid;
+            buf().format = 0;
+
+            subproc->AddNextBuffer(buf);
+            subproc->SetNewDataFlag(true);
+         } else
             printf("Did not find processor for TDC %u - skip data %u\n", tdcid, datalen);
 
          ix+=datalen;
@@ -245,28 +266,13 @@ void hadaq::TrbProcessor::ProcessTDCV3(hadaq::RawSubevent* sub)
 //      ix+=datalen;
    }
 
-   if (findSync)
+   if (findSync) {
+
+      // printf("Append new SYNC %x\n", syncNumber);
+
       for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++) {
-
-         // for each TDC own SYNC marker will be created to
-         // synchronize local time with external markers
-         double localtm = iter->second->AddSyncIfFound(syncNumber);
-
-         // use time of first TDC in list for synchronization
-         // it is required to find regions where event selection should be done
-         if ((iter == fMap.begin()) && (localtm!=0)) {
-            base::SyncMarker marker;
-            marker.uniqueid = syncNumber;
-            marker.localid = 0;
-            marker.local_stamp = localtm;
-            marker.localtm = localtm;
-            AddSyncMarker(marker);
-         }
+         if (iter->second->IsNewDataFlag())
+            iter->second->AppendTrbSync(syncNumber);
       }
-}
-
-
-bool hadaq::TrbProcessor::SecondBufferScan(const base::Buffer& buf)
-{
-   return true;
+   }
 }

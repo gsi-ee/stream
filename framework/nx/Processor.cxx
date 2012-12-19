@@ -434,6 +434,8 @@ bool nx::Processor::FirstBufferScan(const base::Buffer& buf)
 
             FillH1(fAUXt[auxid], msgtm);
 
+//            printf("Find AUX%u\n", auxid);
+
             if (fTriggerSignal == auxid) {
 
                base::LocalTriggerMarker marker;
@@ -535,14 +537,14 @@ bool nx::Processor::SecondBufferScan(const base::Buffer& buf)
 
             base::GlobalTime_t globaltm = LocalToGlobalTime(stamp, &help_index);
 
-            unsigned indx = TestHitTime(globaltm, isnxmsg);
+            unsigned trig_indx = TestHitTime(globaltm, isnxmsg);
 
-            if (indx < fGlobalTrig.size()) {
-               nx::SubEvent* ev = (nx::SubEvent*) fGlobalTrig[indx].subev;
+            if (trig_indx < fGlobalTrig.size()) {
+               nx::SubEvent* ev = (nx::SubEvent*) fGlobalTrig[trig_indx].subev;
 
                if (ev==0) {
                   ev = new nx::SubEvent;
-                  fGlobalTrig[indx].subev = ev;
+                  fGlobalTrig[trig_indx].subev = ev;
 //                     printf("Create new event %u\n", cnt);
                }
 

@@ -6,6 +6,7 @@
 #include "hadaq/defines.h"
 
 #include "hadaq/TdcMessage.h"
+#include "hadaq/TdcIterator.h"
 
 namespace hadaq {
 
@@ -15,6 +16,8 @@ namespace hadaq {
     * It only can be used together with TrbProcessor  */
 
    class TdcProcessor : public base::StreamProc {
+
+      friend class TrbProcessor;
 
       protected:
 
@@ -33,7 +36,7 @@ namespace hadaq {
          base::H1handle fCoarse[NumTdcChannels]; //!
          base::H1handle fFine[NumTdcChannels];   //!
 
-         double fCh0Time;           //! value, which is found after first scan
+         bool   fNewDataFlag;         //! flag used by TRB processor to indicate if new data was added
 
          /** Returns true when processor used to select trigger signal
           * TDC not yet able to perform trigger selection */
@@ -52,6 +55,17 @@ namespace hadaq {
             return (CoarseUnit() * (fine - fFineMinValue)) / (fFineMaxValue - fFineMinValue);
          }
 
+         void SetNewDataFlag(bool on) { fNewDataFlag = on; }
+         bool IsNewDataFlag() const { return fNewDataFlag; }
+
+         /** Method will be called by TRB processor if SYNC message was found
+          * One should change 4 first bytes in the last buffer in the queue */
+         void AppendTrbSync(uint32_t syncid);
+
+         /** Scan all messages, find reference signals */
+         bool DoBufferScan(const base::Buffer& buf, bool isfirst);
+
+
       public:
 
          TdcProcessor(TrbProcessor* trb, unsigned tdcid);
@@ -69,15 +83,17 @@ namespace hadaq {
          /** Returns configured board id */
          unsigned GetBoardId() const { return fTdcId; }
 
-         void BeforeFirstScan() { fCh0Time = 0.; }
+         /** Scan all messages, find reference signals */
+         virtual bool FirstBufferScan(const base::Buffer& buf)
+         {
+            return DoBufferScan(buf, true);
+         }
 
-         /** Method to scan data, which are related to that TDC */
-         void FirstSubScan(hadaq::RawSubevent* sub, unsigned indx, unsigned datalen);
-
-         /** Method will be called by TRB processor if SYNC message was found */
-         double AddSyncIfFound(unsigned syncid);
-
-
+         /** Scan buffer for selecting them inside trigger */
+         virtual bool SecondBufferScan(const base::Buffer& buf)
+         {
+            return DoBufferScan(buf, false);
+         }
 
    };
 }

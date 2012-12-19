@@ -12,6 +12,24 @@ void base::Buffer::reset()
    }
 }
 
+void base::Buffer::makenew(unsigned datalen)
+{
+   reset();
+
+   if (datalen==0) return;
+
+   fRec = (RawDataRec*) malloc(sizeof(RawDataRec) + datalen);
+
+   fRec->reset();
+
+   fRec->refcnt = 1;
+
+   fRec->buf = (char*) fRec + sizeof(RawDataRec);
+
+   fRec->datalen = datalen;
+}
+
+
 void base::Buffer::makecopyof(void* buf, unsigned datalen)
 {
    reset();

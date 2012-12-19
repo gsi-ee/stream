@@ -35,7 +35,6 @@
    proc4->SetTriggerSignal(1); // use AUX1 as trigger signal
    proc4->SetTriggerWindow(100, 600);
    proc4->SetSyncSource(sync_src);
-
    //proc4->SetPrint(10000);
 
 

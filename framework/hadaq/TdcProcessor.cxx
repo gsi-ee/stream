@@ -1,11 +1,12 @@
 #include "hadaq/TdcProcessor.h"
 
+#include <stdlib.h>
+#include <string.h>
+
 #include "base/defines.h"
 #include "base/ProcMgr.h"
 
 #include "hadaq/TrbProcessor.h"
-
-#include "hadaq/TdcIterator.h"
 
 unsigned hadaq::TdcProcessor::fMaxBrdId = 8;
 
@@ -28,22 +29,34 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid) :
    fAllCoarse = MakeH1("CoarseTm", "coarse counter value", 2048, 0, 2048, "coarse");
 
    if (trb) trb->AddSub(this, tdcid);
+
+   fNewDataFlag = false;
 }
 
 hadaq::TdcProcessor::~TdcProcessor()
 {
 }
 
-void hadaq::TdcProcessor::FirstSubScan(hadaq::RawSubevent* sub, unsigned indx, unsigned datalen)
-{
-   hadaq:TdcIterator iter;
-   iter.assign(sub, indx, datalen);
 
-   // printf("========= Data for TDC %u ====== \n", GetBoardId());
+
+
+bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
+{
+   // in the first scan we
+
+   uint32_t syncid(0xffffffff);
+   // copy first 4 bytes - it is syncid
+   memcpy(&syncid, buf.ptr(), 4);
+
+   // printf("TDC board %u SYNC %x\n", GetBoardId(), (unsigned) syncid);
 
    unsigned cnt(0), hitcnt(0);
 
    bool iserr = false;
+
+   TdcIterator iter((uint32_t*) buf.ptr(4), buf.datalen()/4 -1, false);
+
+   unsigned help_index(0);
 
    while (iter.next()) {
 
@@ -53,7 +66,8 @@ void hadaq::TdcProcessor::FirstSubScan(hadaq::RawSubevent* sub, unsigned indx, u
 
       cnt++;
 
-      FillH1(fMsgsKind, iter.msg().getKind() >> 29);
+      if (first_scan)
+         FillH1(fMsgsKind, iter.msg().getKind() >> 29);
 
       if (iter.msg().isHitMsg()) {
 
@@ -69,7 +83,7 @@ void hadaq::TdcProcessor::FirstSubScan(hadaq::RawSubevent* sub, unsigned indx, u
          } else {
 
             // fill histograms only for normal channels
-            if (chid>0) {
+            if (first_scan && (chid>0)) {
                FillH1(fChannels, chid);
 
                FillH1(fAllFine, iter.msg().getHitTmFine());
@@ -79,8 +93,42 @@ void hadaq::TdcProcessor::FirstSubScan(hadaq::RawSubevent* sub, unsigned indx, u
             }
 
             // remember position of channel 0 - it could be used for SYNC settings
-            if ((chid==0) && iter.msg().isHitRisingEdge())
-               fCh0Time = iter.getMsgStampCoarse() * CoarseUnit() + SimpleFineCalibr(iter.msg().getHitTmFine());
+            if ((chid==0) && iter.msg().isHitRisingEdge() && first_scan && (syncid != 0xffffffff) && !iserr) {
+
+               double synctm = iter.getMsgStampCoarse() * CoarseUnit() + SimpleFineCalibr(iter.msg().getHitTmFine());
+
+               base::SyncMarker marker;
+               marker.uniqueid = syncid;
+               marker.localid = 0;
+               marker.local_stamp = synctm;
+               marker.localtm = synctm;
+
+               AddSyncMarker(marker);
+            }
+
+            if (!first_scan && !iserr) {
+               double stamp = iter.getMsgStampCoarse() * CoarseUnit() + SimpleFineCalibr(iter.msg().getHitTmFine());
+
+               base::GlobalTime_t globaltm = LocalToGlobalTime(stamp, &help_index);
+
+               // use first channel only for flushing
+               unsigned trig_indx = TestHitTime(globaltm, (chid>0));
+
+/*               if (trig_indx < fGlobalTrig.size()) {
+                  hadaq::TdcSubEvent* ev = (hadaq::TdcSubEvent*) fGlobalTrig[trig_indx].subev;
+
+                  if (ev==0) {
+                     ev = new nx::SubEvent;
+                     fGlobalTrig[trig_indx].subev = ev;
+                  }
+
+                  ev->fExtMessages.push_back(hadaq::TdcMessageExt(iter.msg(), globaltm));
+               }
+*/
+
+
+            }
+
          }
 
          iter.clearCurEpoch();
@@ -93,7 +141,7 @@ void hadaq::TdcProcessor::FirstSubScan(hadaq::RawSubevent* sub, unsigned indx, u
            break;
         case tdckind_Header: {
            unsigned errbits = iter.msg().getHeaderErr();
-           if (errbits)
+           if (errbits && first_scan)
               printf("!!! found error bits: 0x%x at tdc 0x%x\n", errbits, GetBoardId());
 
            break;
@@ -108,26 +156,24 @@ void hadaq::TdcProcessor::FirstSubScan(hadaq::RawSubevent* sub, unsigned indx, u
       }
    }
 
-   FillH1(fMsgPerBrd, GetBoardId(), cnt);
+   if (first_scan) {
 
-   // fill number of "good" hits
-   FillH1(fHitsPerBrd, GetBoardId(), hitcnt);
+      FillH1(fMsgPerBrd, GetBoardId(), cnt);
 
-   if (iserr)
-      FillH1(fErrPerBrd, GetBoardId());
+      // fill number of "good" hits
+      FillH1(fHitsPerBrd, GetBoardId(), hitcnt);
+
+      if (iserr)
+         FillH1(fErrPerBrd, GetBoardId());
+   }
 }
 
-double hadaq::TdcProcessor::AddSyncIfFound(unsigned syncid)
+void hadaq::TdcProcessor::AppendTrbSync(uint32_t syncid)
 {
-   if (fCh0Time==0.) return 0.;
+   if (fQueue.size() == 0) {
+      printf("something went wrong!!!\n");
+      exit(765);
+   }
 
-   base::SyncMarker marker;
-   marker.uniqueid = syncid;
-   marker.localid = 0;
-   marker.local_stamp = fCh0Time;
-   marker.localtm = fCh0Time;
-
-   AddSyncMarker(marker);
-   return fCh0Time;
-
+   memcpy(fQueue.back().ptr(), &syncid, 4);
 }

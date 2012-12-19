@@ -1,5 +1,5 @@
 void first() {
-   base::ProcMgr::instance()->SetRawAnalysis(true);
+   base::ProcMgr::instance()->SetRawAnalysis(false);
 
    nx::Processor::SetDisorderTm(5000);
    nx::Processor::SetLastEpochCorr(true);

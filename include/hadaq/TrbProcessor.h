@@ -50,7 +50,8 @@ namespace hadaq {
           * TODO: derive this value from sub-items */
          virtual double MaximumDisorderTm() const { return 1000.; }
 
-         void ProcessTDCV3(hadaq::RawSubevent* sub);
+         /** Scan FPGA-TDC data, distribute over sub-processors */
+         void ScanTDCV3(hadaq::RawSubevent* sub);
 
       public:
 
@@ -65,9 +66,6 @@ namespace hadaq {
 
          /** Scan all messages, find reference signals */
          virtual bool FirstBufferScan(const base::Buffer& buf);
-
-         /** Scan buffer for selecting them inside trigger */
-         virtual bool SecondBufferScan(const base::Buffer& buf);
 
    };
 }

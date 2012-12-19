@@ -60,6 +60,14 @@ namespace base {
 
          RawDataRec& rec() const { return *fRec; }
 
+         unsigned datalen() const { return fRec ? fRec->datalen : 0; }
+
+         void* ptr(unsigned shift = 0) const { return fRec ? (shift <= fRec->datalen ? (char*)fRec->buf + shift : 0) : 0; }
+
+         /** Method produces empty buffer with
+          * specified amount of memory */
+         void makenew(unsigned datalen);
+
          /** Method produces buffer instance with deep copy of provided raw data
           * Means extra memory will be allocated and content of source data will be copied*/
          void makecopyof(void* buf, unsigned datalen);
@@ -68,6 +76,7 @@ namespace base {
           * Means buffer will only contain pointer of source data
           * Source data should exists until single instance of buffer is existing */
          void makereferenceof(void* buf, unsigned datalen);
+
 
    };
 

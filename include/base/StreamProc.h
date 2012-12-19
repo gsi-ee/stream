@@ -38,9 +38,8 @@ namespace base {
    struct LocalTriggerMarker {
       GlobalTime_t  localtm;     //!< local time in ns,
       unsigned      localid;     //!< arbitrary id, like aux number or sync number
-      unsigned      bufid;       //!< use it for keep reference from which buffer it is
 
-      LocalTriggerMarker() : localtm(0.), localid(0), bufid(0) {}
+      LocalTriggerMarker() : localtm(0.), localid(0)  {}
    };
 
 
@@ -95,6 +94,8 @@ namespace base {
          unsigned     fQueueScanIndex;            //!< index of next buffer which should be scanned
          unsigned     fQueueScanIndexTm;          //!< index of buffer to scan and set correct times of the buffer head
 
+         bool         fRawScanOnly;               //!< indicates if only raw scan will be done, processor will not be used for any data selection
+
          bool            fIsSynchronisationRequired; //!< true if sync is required
          SyncMarksQueue  fSyncs;                  //!< list of sync markers
          unsigned        fSyncScanIndex;          //!< sync scan index, use to adjust syncs over many processors
@@ -137,6 +138,17 @@ namespace base {
          int TestC1(C1handle c1, double value, double* dist = 0);
          double GetC1Limit(C1handle c1, bool isleft = true);
 
+
+         /** Method set raw-scan only mode for processor
+          * Processor will not be used for any data selection */
+         void SetRawScanOnly(bool on = true) { fRawScanOnly = on; }
+
+         /** Method indicate if any kind of time-synchronization technique
+          * should be applied for the processor.
+          * If true, sync messages must be produced by processor and will be used.
+          * If false, local time stamps could be immediately used (with any necessary conversion) */
+         void SetSynchronisationRequired(bool on = true) { fIsSynchronisationRequired = on; }
+
          void AddSyncMarker(SyncMarker& marker);
 
          /** Add new local trigger.
@@ -165,9 +177,17 @@ namespace base {
          /** Method decides to which trigger window belong hit */
          unsigned TestHitTime(const base::GlobalTime_t& hittime, bool normal_hit);
 
+         /** method should return multiplicity value of specified trigger */
          virtual unsigned GetTriggerMultipl(unsigned indx) { return 0; }
 
+         /** Method called to sort data in subevent */
          virtual void SortDataInSubEvent(base::SubEvent*) {}
+
+         /** Removes sync at specified position */
+         bool eraseSyncAt(unsigned indx);
+
+         /** Remove specified number of syncs */
+         bool eraseFirstSyncs(unsigned sync_num);
 
       public:
 
@@ -190,6 +210,8 @@ namespace base {
          virtual void SetTriggerWindow(double left, double right)
          { ChangeC1(triggerWindow, left, right); }
 
+
+         bool IsRawScanOnly() const { return fRawScanOnly; }
 
          /** Method indicate if any kind of time-synchronization technique
           * should be applied for the processor.
@@ -216,8 +238,6 @@ namespace base {
          unsigned numSyncs() const { return fSyncs.size(); }
          SyncMarker& getSync(unsigned n) { return fSyncs[n]; }
          SyncMarker& lastSync() { return fSyncs[fSyncs.size()-1]; }
-         /** Removes sync at specified position */
-         bool eraseSyncAt(unsigned indx);
 
          /** Method to deliver detected triggers from processor to central manager */
          virtual bool CollectTriggers(GlobalTriggerMarksQueue& queue);
@@ -225,15 +245,15 @@ namespace base {
          /** This is method to get back identified triggers from central manager */
          virtual bool DistributeTriggers(const GlobalTriggerMarksQueue& queue);
 
-         /** Here each processor should scan data again for new triggers */
-         bool ScanDataForNewTriggers();
+         /** Here each processor should scan data again for new triggers
+          * Method made virtual while some subprocessors will do it in connection with others */
+         virtual bool ScanDataForNewTriggers();
 
          /** Returns number of already build events */
          unsigned NumReadySubevents() const { return fGlobalTrigScanIndex; }
 
          /** Append data for first trigger to the main event */
          virtual bool AppendSubevent(base::Event* evt);
-
 
 
          /** Central method to scan new data in the queue

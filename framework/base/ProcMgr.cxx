@@ -247,14 +247,13 @@ skip_sync_scanning:
    // we require at least two valid syncs on each stream
    for (unsigned n=0;n<fProc.size();n++) {
 
-      // every processor need at least two valid syncs for time calibrations
-      // TODO: later one can ignore optional streams here
+      // one can simply ignore optional streams here
 
+      // every processor need at least two valid syncs for time calibrations
       if (fProc[n]->IsSynchronisationRequired() &&
-          (fProc[n]->fSyncScanIndex < 2)) return false;
+           (fProc[n]->fSyncScanIndex < 2)) return false;
 
       // let also assign global times for the buffers here
-
       fProc[n]->ScanNewBuffersTm();
    }
 
@@ -338,6 +337,7 @@ bool base::ProcMgr::ProduceNextEvent(base::Event* &evt)
    unsigned numready = fTriggers.size();
 
    for (unsigned n=0;n<fProc.size();n++) {
+      if (fProc[n]->IsRawScanOnly()) continue;
       unsigned local = fProc[n]->NumReadySubevents();
       if (local<numready) numready = local;
    }
