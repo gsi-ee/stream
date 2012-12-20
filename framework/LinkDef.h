@@ -28,6 +28,7 @@
 #pragma link C++ class nx::Iterator+;
 #pragma link C++ class nx::Processor+;
 #pragma link C++ class nx::SubEvent+;
+#pragma link C++ class base::MessageExt<nx::Message>+;
 #pragma link C++ class nx::MessageExt+;
 #pragma link C++ class std::vector<nx::MessageExt>+;
 

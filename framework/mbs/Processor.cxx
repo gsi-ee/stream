@@ -1,5 +1,7 @@
 #include "mbs/Processor.h"
 
+#include <stdio.h>
+
 #include "base/defines.h"
 #include "base/ProcMgr.h"
 
@@ -26,8 +28,14 @@ mbs::Processor::Processor() :
 
 mbs::Processor::~Processor()
 {
-
 }
+
+unsigned calc_local_tm(unsigned syncid) 
+{
+   // return (syncid - (2466426 - 100)) % 128;
+   return syncid;
+}
+   
 
 bool mbs::Processor::FirstBufferScan(const base::Buffer& buf)
 {
@@ -46,28 +54,31 @@ bool mbs::Processor::FirstBufferScan(const base::Buffer& buf)
 
       // rest is not interesting
 
-      printf("MBS SYNC %u mod %u  time %u.%u\n", sync_num, sync_num % 4096, mbssec, mbsmsec);
-
       double mbs_time = mbssec + mbsmsec*0.001;
 
+      unsigned localtm = calc_local_tm(sync_num);
+
+      printf("MBS SYNC %u mod %u  time %u.%u\n", sync_num, localtm, mbssec, mbsmsec);
+
+      
       base::SyncMarker marker;
       marker.uniqueid = sync_num;
       marker.localid = 0;
-      marker.local_stamp = sync_num; // use SYNC number itself
-      marker.localtm = sync_num;
+      marker.local_stamp = localtm; // use SYNC number itself
+      marker.localtm = localtm;
 
       AddSyncMarker(marker);
 
       fLastSync1 = sync_num;
 
-      buf().local_tm = fLastSync1; // use SYNC number as local time
+      buf().local_tm = localtm; // use SYNC number as local time
    }
 
    if (buf().kind == base::proc_CERN_Oct12) {
       // here not interested at all about content
       // just assign time stamp
 
-      buf().local_tm = fLastSync1;
+      buf().local_tm = calc_local_tm(fLastSync1);
    }
 
 
@@ -84,8 +95,10 @@ bool mbs::Processor::SecondBufferScan(const base::Buffer& buf)
       // here we just need to decide which events has to have MBS part
 
       unsigned help_index(0);
+      
+      double localtm = calc_local_tm(fLastSync2);
 
-      base::GlobalTime_t globaltm = LocalToGlobalTime(fLastSync2, &help_index);
+      base::GlobalTime_t globaltm = LocalToGlobalTime(localtm, &help_index);
 
       unsigned indx = TestHitTime(globaltm, true);
 
