@@ -25,7 +25,8 @@ namespace mbs {
          virtual double MaximumDisorderTm() const { return 1000.; }
 
 
-
+         base::LocalStampConverter fConv1;
+         base::LocalStampConverter fConv2;
 
       public:
 

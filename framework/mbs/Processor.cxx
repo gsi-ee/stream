@@ -24,16 +24,20 @@ mbs::Processor::Processor() :
 
    // only raw scan, data can be immediately removed
    // SetRawScanOnly(true);
+
+   fConv1.SetTimeSystem(7, 1.);
+   fConv2.SetTimeSystem(7, 1.);
+
 }
 
 mbs::Processor::~Processor()
 {
 }
 
-unsigned calc_local_tm(unsigned syncid) 
+unsigned produce_fake_stamp(unsigned syncid)
 {
-   // return (syncid - (2466426 - 100)) % 128;
-   return syncid;
+    return (syncid - (2466426 - 100)) % 128;
+   //return syncid;
 }
    
 
@@ -54,12 +58,14 @@ bool mbs::Processor::FirstBufferScan(const base::Buffer& buf)
 
       // rest is not interesting
 
-      double mbs_time = mbssec + mbsmsec*0.001;
+      // double mbs_time = mbssec + mbsmsec*0.001;
 
-      unsigned localtm = calc_local_tm(sync_num);
+      unsigned stamp = produce_fake_stamp(sync_num);
+      fConv1.MoveRef(stamp);
 
-      printf("MBS SYNC %u mod %u  time %u.%u\n", sync_num, localtm, mbssec, mbsmsec);
+      double localtm = fConv1.ToSeconds(stamp);
 
+      printf("MBS SYNC %u stamp %u tm %12.1f  \n", sync_num, stamp, localtm);
       
       base::SyncMarker marker;
       marker.uniqueid = sync_num;
@@ -78,7 +84,9 @@ bool mbs::Processor::FirstBufferScan(const base::Buffer& buf)
       // here not interested at all about content
       // just assign time stamp
 
-      buf().local_tm = calc_local_tm(fLastSync1);
+      unsigned stamp = produce_fake_stamp(fLastSync1);
+
+      buf().local_tm = fConv1.ToSeconds(stamp);
    }
 
 
@@ -89,6 +97,9 @@ bool mbs::Processor::SecondBufferScan(const base::Buffer& buf)
 {
    if (buf().kind == base::proc_Triglog) {
       fLastSync2 = buf.getuint32(0);
+      unsigned stamp = produce_fake_stamp(fLastSync2);
+      fConv2.MoveRef(stamp);
+
    }
 
    if (buf().kind == base::proc_CERN_Oct12) {
@@ -96,7 +107,9 @@ bool mbs::Processor::SecondBufferScan(const base::Buffer& buf)
 
       unsigned help_index(0);
       
-      double localtm = calc_local_tm(fLastSync2);
+      unsigned stamp = produce_fake_stamp(fLastSync2);
+
+      double localtm = fConv2.ToSeconds(stamp);
 
       base::GlobalTime_t globaltm = LocalToGlobalTime(localtm, &help_index);
 
