@@ -29,8 +29,8 @@
 #pragma link C++ class nx::Iterator+;
 #pragma link C++ class nx::Processor+;
 #pragma link C++ class nx::SubEvent+;
-#pragma link C++ class nx::MessageExtended+;
-#pragma link C++ class std::vector<nx::MessageExtended>+;
+#pragma link C++ class nx::MessageExt+;
+#pragma link C++ class std::vector<nx::MessageExt>+;
 
 // GET4 processing
 #pragma link C++ namespace get4;
@@ -38,8 +38,8 @@
 #pragma link C++ class get4::Iterator+;
 #pragma link C++ class get4::Processor+;
 #pragma link C++ class get4::SubEvent+;
-#pragma link C++ class get4::MessageExtended+;
-#pragma link C++ class std::vector<get4::MessageExtended>+;
+#pragma link C++ class get4::MessageExt+;
+#pragma link C++ class std::vector<get4::MessageExt>+;
 
 // HADAQ processing
 #pragma link C++ namespace hadaq;
@@ -47,6 +47,7 @@
 #pragma link C++ class hadaq::TrbIterator+;
 #pragma link C++ class hadaq::TdcMessage+;
 #pragma link C++ class hadaq::TdcMessageExt+;
+#pragma link C++ class std::vector<hadaq::TdcMessageExt>+;
 #pragma link C++ class hadaq::TdcSubEvent+;
 #pragma link C++ class hadaq::TdcIterator+;
 #pragma link C++ class hadaq::TdcProcessor+;

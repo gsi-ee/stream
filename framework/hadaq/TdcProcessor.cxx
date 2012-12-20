@@ -121,23 +121,12 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                base::GlobalTime_t globaltm = LocalToGlobalTime(localtm, &help_index);
 
                // use first channel only for flushing
-               unsigned trig_indx = TestHitTime(globaltm, true, false);
+               unsigned indx = TestHitTime(globaltm, true, false);
 
 //               printf("Test hit time %12.9f trigger %u\n", globaltm*1e-9, trig_indx);
 
-               if (trig_indx < fGlobalTrig.size()) {
-
-                  hadaq::TdcSubEvent* ev = (hadaq::TdcSubEvent*) fGlobalTrig[trig_indx].subev;
-
-                  if (ev==0) {
-                     ev = new hadaq::TdcSubEvent;
-                     fGlobalTrig[trig_indx].subev = ev;
-                  }
-
-                  ev->fExtMessages.push_back(hadaq::TdcMessageExt(iter.msg(), globaltm));
-
-               }
-
+               if (indx < fGlobalTrig.size())
+                  AddMessage(indx, (hadaq::TdcSubEvent*) fGlobalTrig[indx].subev, hadaq::TdcMessageExt(iter.msg(), globaltm));
             }
 
          }

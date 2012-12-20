@@ -7,8 +7,6 @@
 
 namespace nx {
 
-   class SubEvent;
-
    struct NxRec {
       bool used;
 

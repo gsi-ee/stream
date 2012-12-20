@@ -530,19 +530,11 @@ bool nx::Processor::SecondBufferScan(const base::Buffer& buf)
 
             base::GlobalTime_t globaltm = LocalToGlobalTime(stamp, &help_index);
 
-            unsigned trig_indx = TestHitTime(globaltm, isnxmsg);
+            unsigned indx = TestHitTime(globaltm, isnxmsg);
 
-            if (trig_indx < fGlobalTrig.size()) {
-               nx::SubEvent* ev = (nx::SubEvent*) fGlobalTrig[trig_indx].subev;
+            if (indx < fGlobalTrig.size())
+               AddMessage(indx, (nx::SubEvent*) fGlobalTrig[indx].subev, nx::MessageExt(msg, globaltm));
 
-               if (ev==0) {
-                  ev = new nx::SubEvent;
-                  fGlobalTrig[trig_indx].subev = ev;
-//                     printf("Create new event %u\n", cnt);
-               }
-
-               ev->fExtMessages.push_back(nx::MessageExtended(msg, globaltm));
-            }
             break;
          }
 

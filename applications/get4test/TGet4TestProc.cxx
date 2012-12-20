@@ -68,12 +68,12 @@ void TGet4TestProc::Process(TStreamEvent* ev)
 
     if (sub0!=0) {
        // TGo4Log::Info("Find GET4 data for ROC0 size %u  trigger: %10.9f", sub0->fExtMessages.size(), ev->GetTriggerTime()*1e-9);
-       fMultipl->Fill(sub0->fExtMessages.size());
+       fMultipl->Fill(sub0->Size());
 
        TGet4TestMap::iterator iter;
 
-       for (unsigned cnt=0;cnt<sub0->fExtMessages.size();cnt++) {
-          const get4::Message& msg = sub0->fExtMessages[cnt].msg();
+       for (unsigned cnt=0;cnt<sub0->Size();cnt++) {
+          const get4::Message& msg = sub0->msg(cnt).msg();
 
           unsigned indx = code(0, msg.getGet4Number(), msg.getGet4ChNum());
 

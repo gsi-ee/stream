@@ -44,7 +44,7 @@ namespace base {
          {
             for (EventsMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
                if (iter->second)
-                  iter->second->Reset();
+                  iter->second->Clear();
 
             fTriggerTm = 0;
          }

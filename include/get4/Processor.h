@@ -7,8 +7,6 @@
 
 namespace get4 {
 
-   class SubEvent;
-
    enum { NumChannels = 4 };
 
    struct Get4Rec {

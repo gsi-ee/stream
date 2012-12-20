@@ -164,4 +164,9 @@ Without filling current NX code works 2x times faster
    informational value.
 4) Event data for FPGA TDC 
 5) Define base::SubEvent::Sort() method for time sorting, implement in all subclasses    
-     
+6) Declare template classes - base::MessageExt and base::SubEventExt.
+   Many common and special virtual methods defined - like message access or Sort() or Clear().   
+   Event and message structures for NX, GET4 and TDC now based on such template classes
+7) Introduce templated method base::StreamProc::AddMessage, which uses 
+   event/message class as parameter to add hit to specific subevent
+   

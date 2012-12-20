@@ -50,18 +50,17 @@ namespace base {
 
       SubEvent*     subev;        //!< structure with data, selected for the trigger, ownership
       bool          isflush;      //!< indicate that trigger is just for flushing, no real data is important
-      unsigned      multipl;      //!< value account multiplicity of the trigger
 
       GlobalTriggerMarker(GlobalTime_t tm = 0.) :
-         globaltm(tm), lefttm(0.), righttm(0.), subev(0), isflush(false), multipl(0) {}
+         globaltm(tm), lefttm(0.), righttm(0.), subev(0), isflush(false) {}
 
       GlobalTriggerMarker(const GlobalTriggerMarker& src) :
-         globaltm(src.globaltm), lefttm(src.lefttm), righttm(src.righttm), subev(src.subev), isflush(src.isflush), multipl(src.multipl) {}
+         globaltm(src.globaltm), lefttm(src.lefttm), righttm(src.righttm), subev(src.subev), isflush(src.isflush) {}
 
       ~GlobalTriggerMarker() { /** should we here destroy subevent??? */ }
 
       bool null() const { return globaltm<=0.; }
-      void reset() { globaltm = 0.; isflush = false; multipl = 0; }
+      void reset() { globaltm = 0.; isflush = false; }
 
       /** return true when interval defines normal event */
       bool normal() const { return !isflush; }
@@ -184,6 +183,16 @@ namespace base {
           *  normal_hit - indicates that time is belong to data, which than can be assigned to output
           *  can_close_event - when true, hit time can be used to decide that event is ready */
          unsigned TestHitTime(const base::GlobalTime_t& hittime, bool normal_hit, bool can_close_event = true);
+
+         template<class EventClass, class MessageClass>
+         void AddMessage(unsigned indx, EventClass* ev, const MessageClass& msg)
+         {
+            if (ev==0) {
+               ev = new EventClass;
+               fGlobalTrig[indx].subev = ev;
+            }
+            ev->AddMsg(msg);
+         }
 
          /** Removes sync at specified position */
          bool eraseSyncAt(unsigned indx);

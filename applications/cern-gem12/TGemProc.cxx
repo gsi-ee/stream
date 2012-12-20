@@ -55,9 +55,9 @@ void TGemProc::Process(TStreamEvent* evnt)
          continue;
       }
 
-      for (unsigned cnt=0; cnt < sub->fExtMessages.size(); cnt++) {
+      for (unsigned cnt=0; cnt < sub->Size(); cnt++) {
 
-         const nx::MessageExtended& extmsg = sub->fExtMessages[cnt];
+         const nx::MessageExt& extmsg = sub->msg(cnt);
          const nx::Message& msg = extmsg.msg();
 
          if (!msg.isHitMsg()) continue;  // only interested in HIT messages

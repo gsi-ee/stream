@@ -568,7 +568,7 @@ bool base::StreamProc::AppendSubevent(base::Event* evt)
    }
 
    if (fGlobalTrig[0].normal())
-      FillH1(fMultipl, fGlobalTrig[0].multipl);
+      FillH1(fMultipl, fGlobalTrig[0].subev ? fGlobalTrig[0].subev->Multiplicity() : 0);
 
    if (fGlobalTrig[0].subev!=0) {
       if (evt!=0) {
@@ -654,17 +654,11 @@ unsigned base::StreamProc::TestHitTime(const base::GlobalTime_t& hittime, bool n
        }
     }
 
-   if (normal_hit) {
+   // account hit time in histogram
+   if (normal_hit && (best_indx<fGlobalTrig.size()))
+      FillH1(fTriggerTm, best_trigertm);
 
-      // account hit time in histogram
-      if (best_indx<fGlobalTrig.size())
-         FillH1(fTriggerTm, best_trigertm);
-
-      if (res_indx<fGlobalTrig.size())
-         fGlobalTrig[res_indx].multipl++;
-
-      //printf("Test message %12.9f again trigger %12.9f test = %d dist = %9.0f\n", globaltm*1e-9, fGlobalTrig[indx].globaltm*1e-9, test, dist);
-   }
+   //printf("Test message %12.9f again trigger %12.9f test = %d dist = %9.0f\n", globaltm*1e-9, fGlobalTrig[indx].globaltm*1e-9, test, dist);
 
    return normal_hit ? res_indx : fGlobalTrig.size();
 }

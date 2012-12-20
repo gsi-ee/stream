@@ -3,6 +3,9 @@
 
 #include <stdint.h>
 
+#include <algorithm>
+#include <vector>
+
 
 namespace base {
 
@@ -37,14 +40,99 @@ namespace base {
 
          virtual ~SubEvent() {}
 
-         virtual void Reset() {}
+         virtual void Clear() {}
 
          virtual void Sort() {}
+
+         /** Method returns event multiplicity - that ever it means */
+         virtual unsigned Multiplicity() const { return 0; }
+
+   };
+
+
+   template<class MsgClass>
+   class MessageExt {
+      protected:
+         /* original roc message*/
+         MsgClass fMessage;
+
+         /* full time stamp without correction*/
+         double fGlobalTime;
+
+      public:
+
+         MessageExt() :
+            fMessage(),
+            fGlobalTime(0.)
+         {
+         }
+
+         MessageExt(const MsgClass& msg, double globaltm) :
+            fMessage(msg),
+            fGlobalTime(globaltm)
+         {
+         }
+
+         MessageExt(const MessageExt& src) :
+            fMessage(src.fMessage),
+            fGlobalTime(src.fGlobalTime)
+         {
+         }
+
+         MessageExt& operator=(const MessageExt& src)
+         {
+            fMessage = src.fMessage;
+            fGlobalTime = src.fGlobalTime;
+            return *this;
+         }
+
+         ~MessageExt() {}
+
+         /* this is used for timesorting the messages in the filled vectors */
+         bool operator<(const MessageExt &rhs) const
+            { return (fGlobalTime < rhs.fGlobalTime); }
+
+         const MsgClass& msg() const { return fMessage; }
+
+         double GetGlobalTime() const { return fGlobalTime; }
+   };
+
+
+   template<class MsgClass>
+   class SubEventEx : public base::SubEvent {
+      protected:
+         std::vector<MsgClass> fExtMessages;   //!< vector of extended messages
+
+      public:
+
+         SubEventEx() : base::SubEvent(), fExtMessages()  {}
+
+         ~SubEventEx() {}
+
+         /** Add new message to sub-event */
+         void AddMsg(const MsgClass& msg) { fExtMessages.push_back(msg); }
+
+         /** Returns number of messages */
+         unsigned Size() const { return fExtMessages.size(); }
+
+         /** Returns message with specified index */
+         MsgClass& msg(unsigned indx) { return fExtMessages[indx]; }
+
+         /** Returns subevent multiplicity  */
+         virtual unsigned Multiplicity() const { return Size(); }
+
+         /** Clear subevent - remove all messages */
+         virtual void Clear() { fExtMessages.clear(); }
+
+         /** Do time sorting of messages */
+         virtual void Sort()
+         {
+            std::sort(fExtMessages.begin(), fExtMessages.end());
+         }
 
    };
 
 }
-
 
 
 #endif
