@@ -17,8 +17,7 @@ unsigned hadaq::TdcProcessor::fFineMaxValue = 480;
 
 
 hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid) :
-   base::StreamProc("TDC", tdcid),
-   fTdcId(tdcid)
+   base::StreamProc("TDC", tdcid)
 {
    fMsgPerBrd = mgr()->MakeH1("MsgPerTDC", "Number of messages per TDC", fMaxBrdId, 0, fMaxBrdId, "tdc");
    fErrPerBrd = mgr()->MakeH1("ErrPerTDC", "Number of errors per TDC", fMaxBrdId, 0, fMaxBrdId, "tdc");

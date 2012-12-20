@@ -87,6 +87,8 @@ namespace base {
 
          std::string fName;                       //! processor name, used for event naming
 
+         unsigned   fBoardId;                     //! identifier, used mostly for debugging
+
          ProcMgr*   fMgr;                         //!
 
          BuffersQueue fQueue;                     //!
@@ -122,7 +124,9 @@ namespace base {
          base::C1handle fTriggerWindow;   //!<  window used for data selection
 
          /** Make constructor protected - no way to create base class instance */
-         StreamProc(const char* name = "", int indx = -1);
+         StreamProc(const char* name = "", unsigned brdid = 0xffffffff);
+
+         void SetBoardId(unsigned id) { fBoardId = id; }
 
          /** Set subprefix for histograms and conditions */
          void SetSubPrefix(const char* subname = "", int indx = -1, const char* subname2 = "", int indx2 = -1);
@@ -208,6 +212,8 @@ namespace base {
          ProcMgr* mgr() const { return fMgr; }
 
          const std::string GetProcName() const { return fName; }
+
+         unsigned GetBoardId() const { return fBoardId; }
 
          /** Enable/disable time sorting of data in output event */
          void SetTimeSorting(bool on) { fTimeSorting = on; }

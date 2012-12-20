@@ -15,8 +15,6 @@ namespace base {
    class SysCoreProc : public base::StreamProc {
 
       protected:
-         unsigned  fBrdId;         //! board id, which will be used for the filling
-
          unsigned  fSyncSource;    // 0,1: SYNC0,1 used for synchronization,  >=2: local time used for time stamp
          unsigned  fTriggerSignal; // 0 .. 3 is AUXs, 10-11 is SYNCs
 
@@ -46,9 +44,6 @@ namespace base {
 
          SysCoreProc(const char* name, unsigned brdid);
          virtual ~SysCoreProc();
-
-         /** Returns configured board id */
-         unsigned GetBoardId() const { return fBrdId; }
 
          /** Set signal id, used for time synchronization
           *  One could use SYNC0 (id=0) or SYNC1 (id=1) for synchronization with other components

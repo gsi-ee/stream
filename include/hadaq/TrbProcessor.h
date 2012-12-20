@@ -25,8 +25,6 @@ namespace hadaq {
 
       protected:
 
-         unsigned fBrdId;         //! board id, which  will be used for the filling
-
          SubProcMap fMap;
 
          unsigned fLastTriggerId;    //! last seen trigger id
@@ -53,9 +51,6 @@ namespace hadaq {
 
          TrbProcessor(unsigned brdid);
          virtual ~TrbProcessor();
-
-         /** Returns configured board id */
-         unsigned GetBoardId() const { return fBrdId; }
 
          /** Set trigger window not only for itself, bit for all subprocessors */
          virtual void SetTriggerWindow(double left, double right);

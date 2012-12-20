@@ -5,19 +5,11 @@
 
 #include "nx/Message.h"
 
-#include <vector>
-#include <algorithm>
-
 namespace nx {
 
-
-   /*
-    * Extended message container. Keeps original ROC message, but adds full timestamp and
-    * optionally corrected adc valules.
-    * Note that extended messages inside the vector will be sorted after full timestamp
-    * by the TRocProc::FinalizeEvent
-    *
-    */
+   /**  Extended message container.
+    * Keeps original ROC message, but adds full timestamp and
+    * optionally corrected adc valules. */
 
    class MessageExt : public base::MessageExt<nx::Message> {
       protected:

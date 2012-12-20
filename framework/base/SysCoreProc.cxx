@@ -8,8 +8,7 @@
 unsigned base::SysCoreProc::fMaxBrdId = 16;
 
 base::SysCoreProc::SysCoreProc(const char* name, unsigned brdid) :
-   base::StreamProc(name, (int) brdid),
-   fBrdId(brdid),
+   base::StreamProc(name, brdid),
    fSyncSource(0),
    fTriggerSignal(0xff),
    fNumPrintMessages(0),

@@ -19,12 +19,14 @@ NEWLIB = $(STREAMSYS)/lib/libStream.so
 NEWLIB_HEADERS = $(wildcard $(STREAMSYS)/include/base/*.h) \
                  $(wildcard $(STREAMSYS)/include/nx/*.h) \
                  $(wildcard $(STREAMSYS)/include/get4/*.h) \
-                 $(wildcard $(STREAMSYS)/include/hadaq/*.h)
-                  
+                 $(wildcard $(STREAMSYS)/include/hadaq/*.h) \
+                 $(wildcard $(STREAMSYS)/include/mbs/*.h) 
+                                   
 NEWLIB_SRCS =    $(wildcard base/*.cxx) \
                  $(wildcard nx/*.cxx) \
                  $(wildcard get4/*.cxx) \
-                 $(wildcard hadaq/*.cxx)
+                 $(wildcard hadaq/*.cxx) \
+                 $(wildcard mbs/*.cxx)
                  
 NEWLIB_OBJS = $(patsubst %.cxx, %.o, $(NEWLIB_SRCS))
 NEWLIB_DEPS = $(patsubst %.cxx, %.d, $(NEWLIB_SRCS))

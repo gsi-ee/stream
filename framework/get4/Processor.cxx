@@ -71,7 +71,7 @@ get4::Processor::Processor(unsigned rocid, unsigned get4mask) :
    // require at least 100 ns interval between two trigger candidates
    SetTriggerMargin(100);
 
-   fRefId = 99; // impossible combination
+   fRefChannelId = 99; // impossible combination
 
    printf("Create GET4 processor for board %u\n", GetBoardId());
 
@@ -85,7 +85,7 @@ get4::Processor::~Processor()
 void get4::Processor::setRefChannel(unsigned ref_get4, unsigned ref_ch, unsigned ref_edge)
 {
    // keep all ids in one word
-   fRefId = ref_get4 * 100 + ref_ch*10 + ref_edge;
+   fRefChannelId = ref_get4 * 100 + ref_ch*10 + ref_edge;
 }
 
 
@@ -186,7 +186,7 @@ bool get4::Processor::FirstBufferScan(const base::Buffer& buf)
             // fill rising and falling edges together
             FillH1(GET4[get4].fChannels, ch + edge*0.5);
 
-            if (fRefId == get4 * 100 + ch*10 + edge) {
+            if (fRefChannelId == get4 * 100 + ch*10 + edge) {
                base::LocalTriggerMarker marker;
                marker.localid = (get4+1) * 100 + ch*10 + edge;
                marker.localtm = fIter.getMsgFullTimeD();

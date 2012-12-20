@@ -10,7 +10,6 @@
 
 hadaq::TrbProcessor::TrbProcessor(unsigned brdid) :
    base::StreamProc("TRB", brdid),
-   fBrdId(brdid),
    fMap()
 {
    mgr()->RegisterProc(this, base::proc_TRBEvent, brdid);

@@ -9,7 +9,7 @@ namespace base {
     * It allows to keep many references on same raw data and automatically release it  */
 
    struct RawDataRec {
-      int      refcnt;   // number of references
+      int           refcnt;   // number of references
 
       unsigned      kind;       // like ROC event, SPADIC or MBS or ..
       unsigned      boardid;    // board id
@@ -63,6 +63,9 @@ namespace base {
          unsigned datalen() const { return fRec ? fRec->datalen : 0; }
 
          void* ptr(unsigned shift = 0) const { return fRec ? (shift <= fRec->datalen ? (char*)fRec->buf + shift : 0) : 0; }
+
+         uint32_t getuint32(unsigned indx) const { return ((uint32_t*) ptr())[indx]; }
+
 
          /** Method produces empty buffer with
           * specified amount of memory */

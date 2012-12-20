@@ -34,7 +34,7 @@ namespace get4 {
 
          std::vector<get4::Get4Rec> GET4;      //! usage masks for nxyters
 
-         unsigned fRefId;
+         unsigned fRefChannelId;              //! set channel ID, which used as trigger
 
          bool get4_in_use(unsigned id) { return id < GET4.size() ? GET4[id].used : false; }
 

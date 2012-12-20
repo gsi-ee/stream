@@ -79,7 +79,7 @@ Bool_t TFirstStepProcessor::BuildEvent(TGo4EventElement* outevnt)
          buf().boardid = psubevt->GetSubcrate();
          buf().format = psubevt->GetControl();
 
-         //      TGo4Log::Info("  find subevent kind %2u brd %2u fmt %u len %d", buf().kind, buf().boardid, buf().format, buf().datalen);
+//         TGo4Log::Info("  find subevent kind %2u brd %2u fmt %u len %d", buf().kind, buf().boardid, buf().format, buf().datalen);
 
          ProvideRawData(buf);
       }

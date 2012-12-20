@@ -36,4 +36,9 @@ void first() {
 
    // method set window for all TDCs at the same time
    trb3->SetTriggerWindow(-400, -300);
+
+
+   // MBS processor - for a moment it is specific for CERN beamtime
+   mbs::Processor* mbs1 = new mbs::Processor();
+   mbs1->SetTriggerWindow(-1000, 1000);
 }

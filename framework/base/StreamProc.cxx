@@ -38,8 +38,9 @@ int base::GlobalTriggerMarker::TestHitTime(const GlobalTime_t& hittime, double* 
 
 // ====================================================================
 
-base::StreamProc::StreamProc(const char* name, int indx) :
+base::StreamProc::StreamProc(const char* name, unsigned brdid) :
    fName(name),
+   fBoardId(0),
    fMgr(0),
    fQueue(),
    fQueueScanIndex(0),
@@ -58,10 +59,11 @@ base::StreamProc::StreamProc(const char* name, int indx) :
    fSubPrefixD(),
    fSubPrefixN()
 {
-   if (indx>=0) {
+   if (brdid < 0xffffffff) {
       char sbuf[100];
-      snprintf(sbuf, sizeof(sbuf),"%d",indx);
+      snprintf(sbuf, sizeof(sbuf), "%u", brdid);
       fName.append(sbuf);
+      fBoardId = brdid;
    }
 
    fPrefix = fName;

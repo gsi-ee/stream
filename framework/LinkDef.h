@@ -22,7 +22,6 @@
 #pragma link C++ typedef base::H2handle;
 #pragma link C++ typedef base::C1handle;
 
-
 // here is classes for nXYTER processing
 #pragma link C++ namespace nx;
 #pragma link C++ class nx::Message+;
@@ -52,5 +51,9 @@
 #pragma link C++ class hadaq::TdcIterator+;
 #pragma link C++ class hadaq::TdcProcessor+;
 
+// MBS data processing
+#pragma link C++ namespace mbs;
+#pragma link C++ class mbs::SubEvent+;
+#pragma link C++ class mbs::Processor+;
 
 #endif

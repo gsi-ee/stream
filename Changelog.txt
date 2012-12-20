@@ -169,4 +169,7 @@ Without filling current NX code works 2x times faster
    Event and message structures for NX, GET4 and TDC now based on such template classes
 7) Introduce templated method base::StreamProc::AddMessage, which uses 
    event/message class as parameter to add hit to specific subevent
-   
+8) Simple mbs::Processor and empty mbs::SubEvent classes. 
+   For the moment specialized for cern-oct12 beamtime, later one could
+   think about more generic way to integrate MBS data in such framework
+

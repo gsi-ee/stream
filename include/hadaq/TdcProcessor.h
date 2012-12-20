@@ -22,8 +22,6 @@ namespace hadaq {
 
       protected:
 
-         unsigned  fTdcId;          //! board id, which will be used for the filling
-
          base::H1handle fMsgPerBrd;  //! messages per board
          base::H1handle fErrPerBrd;  //! errors per board
          base::H1handle fHitsPerBrd; //! data hits per board
@@ -83,9 +81,6 @@ namespace hadaq {
             fFineMinValue = min;
             fFineMaxValue = max;
          }
-
-         /** Returns configured board id */
-         unsigned GetBoardId() const { return fTdcId; }
 
          /** Scan all messages, find reference signals
           * if returned false, buffer has error and must be discarded */
