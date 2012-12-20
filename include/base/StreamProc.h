@@ -185,9 +185,6 @@ namespace base {
           *  can_close_event - when true, hit time can be used to decide that event is ready */
          unsigned TestHitTime(const base::GlobalTime_t& hittime, bool normal_hit, bool can_close_event = true);
 
-         /** Method called to sort data in subevent */
-         virtual void SortDataInSubEvent(base::SubEvent*) {}
-
          /** Removes sync at specified position */
          bool eraseSyncAt(unsigned indx);
 

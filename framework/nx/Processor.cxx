@@ -572,11 +572,3 @@ bool nx::Processor::SecondBufferScan(const base::Buffer& buf)
 
    return true;
 }
-
-void nx::Processor::SortDataInSubEvent(base::SubEvent* subev)
-{
-   nx::SubEvent* nxsub = (nx::SubEvent*) subev;
-
-   std::sort(nxsub->fExtMessages.begin(), nxsub->fExtMessages.end());
-}
-

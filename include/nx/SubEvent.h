@@ -6,6 +6,7 @@
 #include "nx/Message.h"
 
 #include <vector>
+#include <algorithm>
 
 namespace nx {
 
@@ -86,6 +87,12 @@ namespace nx {
          {
             fExtMessages.clear();
          }
+
+         virtual void Sort()
+         {
+            std::sort(fExtMessages.begin(), fExtMessages.end());
+         }
+
    };
 
 }

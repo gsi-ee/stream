@@ -63,8 +63,6 @@ namespace nx {
          // this constant identify to which extend NX time can be disordered
          virtual double MaximumDisorderTm() const { return fNXDisorderTm; }
 
-         virtual void SortDataInSubEvent(base::SubEvent*);
-
          static double fNXDisorderTm;
          static bool fLastEpochCorr;
 

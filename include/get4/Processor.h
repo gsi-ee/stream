@@ -50,8 +50,6 @@ namespace get4 {
          /** Returns true when processor used to select trigger signal */
          virtual bool doTriggerSelection() const { return (fTriggerSignal < 4) || (fTriggerSignal==10) || (fTriggerSignal==11); }
 
-         virtual void SortDataInSubEvent(base::SubEvent*);
-
          int Get4TimeDiff(uint64_t t1, uint64_t t2) { return t1<=t2 ? t2-t1 : -1*((int) (t1-t2)); }
 
       public:

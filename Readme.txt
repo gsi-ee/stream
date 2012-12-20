@@ -46,21 +46,33 @@ Some implementation details and ideas:
 
 
 Current state:
-1) Preliminary working for ROC/nXYTER and ROC/GET4 combination
-2) First try for nXYTER problem correction
-2) Capable to correctly resolve multiple AUX problem!
-3) Runs with lmd files from beamtimes. 
-   See first.C macros in applications directory
+1) First working implementation for: 
+   ROC/nXYTER, ROC/GET4, TRB3/FPGA-TDC
+2) Working correction for nXYTER last-epoch problem
+3) Capable to correctly work with AUX-based trigger
+4) Failure detection in TRB3 readout
+5) Correct synchronization of streams with different number
+   or with missing SYNC messages
+6) Also no-SYNC mode works - in optic case sync messages can be 
+   skipped completely from analysis     
+7) Preliminary code for GET4 testing is implemented.
+   It allows to recognize different problems from measured pulser data  
+8) Files from cern-oct12 (CERN/PS) and cern-gem12 (CERB/SPS) 
+   beamtimes can be processed (at least primary data selection).
+   For GEM detector-mapping (second step) is implemented.
+   can be processed. See applications folder for examples  
 
 
 To be done in near future:
-1) Precise time calibration, was missing in onlinemonitor
-   For a moment linear interpolation between two syncs are used
-2) Region-of-interests
+1) Precise time calibration, was missing completely in onlinemonitor.
+   For a moment simple linear interpolation between two syncs are used
+2) More complex rules for Region-of-Interests (RoI) definitions.
+   One could use correlation between several channels for that.
 3) No-trigger mode, when synchronized data delivered to next step
-4) GET4, TRB3, Spadic, MBS support
+4) Spadic, MBS, EPICS support - 
 5) I/O for event data
-
+6) ROOT-only and ROOT-free running engines
+ 
 
 How to use package
 
@@ -72,17 +84,20 @@ How to use package
    Typically one should call go4login initialization script
    
    [shell] . go4login 
+   
+   Project can be compiled without ROOT and Go4, but till now
+   there is no examples of such usage
     
 3) Compile project:
 
-   [shell] cd stream;
+   [shell] cd stream
    [shell] make all
    
 4) Use generated streamlogin script to set variables:
 
    [shell] . streamlogin
 
-5) Run any example from applications subdirectory with go4
+5) Run any example from applications subdirectory with go4.
    If necessary, compile additional code there:
 
    [shell] cd applications/get4test
@@ -92,3 +107,9 @@ How to use package
 6) Results histogram can be seen from autosave file
 
    [shell] go4 Go4AnalysisASF.root    
+   
+
+For any questions or suggestions contact:
+S.Linev@gsi.de
+
+   

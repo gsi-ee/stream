@@ -6,6 +6,7 @@
 #include "get4/Message.h"
 
 #include <vector>
+#include <algorithm>
 
 namespace get4 {
 
@@ -75,6 +76,11 @@ namespace get4 {
          virtual void Reset()
          {
             fExtMessages.clear();
+         }
+
+         virtual void Sort()
+         {
+            std::sort(fExtMessages.begin(), fExtMessages.end());
          }
    };
 

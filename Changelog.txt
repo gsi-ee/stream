@@ -161,5 +161,7 @@ Without filling current NX code works 2x times faster
    therefore event closing should be done by mean of channel 0 time - channel 0 is 
    always with bigger time stamp.
 3) Account event multiplicity direct in TestHitTime() method - anyway it is just 
-   informational value.   
+   informational value.
+4) Event data for FPGA TDC 
+5) Define base::SubEvent::Sort() method for time sorting, implement in all subclasses    
      

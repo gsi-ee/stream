@@ -39,6 +39,8 @@ namespace base {
 
          virtual void Reset() {}
 
+         virtual void Sort() {}
+
    };
 
 }

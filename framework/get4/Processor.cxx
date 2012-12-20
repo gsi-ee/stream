@@ -4,8 +4,6 @@
 #include <stdio.h>
 #include <math.h>
 
-#include <algorithm>
-
 #include "base/ProcMgr.h"
 
 #include "get4/SubEvent.h"
@@ -355,11 +353,3 @@ bool get4::Processor::SecondBufferScan(const base::Buffer& buf)
 
    return true;
 }
-
-void get4::Processor::SortDataInSubEvent(base::SubEvent* subev)
-{
-   get4::SubEvent* nxsub = (get4::SubEvent*) subev;
-
-   std::sort(nxsub->fExtMessages.begin(), nxsub->fExtMessages.end());
-}
-

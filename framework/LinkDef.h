@@ -46,6 +46,8 @@
 #pragma link C++ class hadaq::TrbProcessor+;
 #pragma link C++ class hadaq::TrbIterator+;
 #pragma link C++ class hadaq::TdcMessage+;
+#pragma link C++ class hadaq::TdcMessageExt+;
+#pragma link C++ class hadaq::TdcSubEvent+;
 #pragma link C++ class hadaq::TdcIterator+;
 #pragma link C++ class hadaq::TdcProcessor+;
 

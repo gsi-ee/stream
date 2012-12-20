@@ -572,7 +572,7 @@ bool base::StreamProc::AppendSubevent(base::Event* evt)
 
    if (fGlobalTrig[0].subev!=0) {
       if (evt!=0) {
-         if (IsTimeSorting()) SortDataInSubEvent(fGlobalTrig[0].subev);
+         if (IsTimeSorting()) fGlobalTrig[0].subev->Sort();
          evt->AddSubEvent(GetProcName(), fGlobalTrig[0].subev);
       } else {
          printf("Something wrong - subevent could not be assigned normal %d!!!!\n", fGlobalTrig[0].normal());
