@@ -153,3 +153,13 @@ Without filling current NX code works 2x times faster
    just like splitter.  
 3) If error found in the buffer (FirstBufferScan() returns false), 
    buffer will be ignored in all consequent stages.    
+
+20.12.2012
+1) Use only valid syncs for synchronization - in case of TRB some SYNCs are dropped
+   while one could not extract time stamp for them.
+2) Take into account that hits from TDC channels are not sorted and 
+   therefore event closing should be done by mean of channel 0 time - channel 0 is 
+   always with bigger time stamp.
+3) Account event multiplicity direct in TestHitTime() method - anyway it is just 
+   informational value.   
+     

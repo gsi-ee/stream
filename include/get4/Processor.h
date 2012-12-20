@@ -47,9 +47,6 @@ namespace get4 {
          // this constant identify to which extend NX time can be disordered
          virtual double MaximumDisorderTm() const { return 1000.; }
 
-         /** Method should return measure for subevent multiplicity */
-         virtual unsigned GetTriggerMultipl(unsigned indx);
-
          /** Returns true when processor used to select trigger signal */
          virtual bool doTriggerSelection() const { return (fTriggerSignal < 4) || (fTriggerSignal==10) || (fTriggerSignal==11); }
 

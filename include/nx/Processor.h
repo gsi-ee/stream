@@ -63,9 +63,6 @@ namespace nx {
          // this constant identify to which extend NX time can be disordered
          virtual double MaximumDisorderTm() const { return fNXDisorderTm; }
 
-         /** Method should return measure for subevent multiplicity */
-         virtual unsigned GetTriggerMultipl(unsigned indx);
-
          virtual void SortDataInSubEvent(base::SubEvent*);
 
          static double fNXDisorderTm;

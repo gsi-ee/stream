@@ -281,14 +281,6 @@ bool get4::Processor::FirstBufferScan(const base::Buffer& buf)
    return true;
 }
 
-unsigned get4::Processor::GetTriggerMultipl(unsigned indx)
-{
-   get4::SubEvent* ev = (get4::SubEvent*) fGlobalTrig[indx].subev;
-
-   return ev ? ev->fExtMessages.size() : 0;
-}
-
-
 bool get4::Processor::SecondBufferScan(const base::Buffer& buf)
 {
    if (buf.null()) return false;

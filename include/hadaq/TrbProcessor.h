@@ -46,10 +46,6 @@ namespace hadaq {
          /** Way to register sub-processor, like for TDC */
          void AddSub(TdcProcessor* tdc, unsigned id);
 
-         /** This is maximum disorder time for TDC messages
-          * TODO: derive this value from sub-items */
-         virtual double MaximumDisorderTm() const { return 1000.; }
-
          /** Scan FPGA-TDC data, distribute over sub-processors */
          void ScanTDCV3(hadaq::RawSubevent* sub);
 

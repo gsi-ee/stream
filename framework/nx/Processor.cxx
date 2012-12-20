@@ -481,13 +481,6 @@ bool nx::Processor::FirstBufferScan(const base::Buffer& buf)
    return true;
 }
 
-unsigned nx::Processor::GetTriggerMultipl(unsigned indx)
-{
-   nx::SubEvent* ev = (nx::SubEvent*) fGlobalTrig[indx].subev;
-
-   return ev ? ev->fExtMessages.size() : 0;
-}
-
 
 bool nx::Processor::SecondBufferScan(const base::Buffer& buf)
 {

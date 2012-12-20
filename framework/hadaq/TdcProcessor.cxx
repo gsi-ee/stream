@@ -63,7 +63,9 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
    unsigned help_index(0);
 
-   double localtm(0.), minimtm(-1.);
+   double localtm(0.), minimtm(-1.), ch0time(-1);
+
+//   if (!first_scan) printf("TDC%u Second scan\n", GetBoardId());
 
    while (iter.next()) {
 
@@ -108,25 +110,24 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
 
             // remember position of channel 0 - it could be used for SYNC settings
-            if ((chid==0) && iter.msg().isHitRisingEdge() && first_scan && (syncid != 0xffffffff) && !iserr) {
-
-               base::SyncMarker marker;
-               marker.uniqueid = syncid;
-               marker.localid = 0;
-               marker.local_stamp = localtm;
-               marker.localtm = localtm;
-
-               AddSyncMarker(marker);
+            if ((chid==0) && iter.msg().isHitRisingEdge() && !iserr) {
+               ch0time = localtm;
             }
 
-            if (!first_scan && !iserr) {
+            // here we check if hit can be assigned to the events
+            if (!first_scan && !iserr && (chid>0)) {
                base::GlobalTime_t globaltm = LocalToGlobalTime(localtm, &help_index);
 
                // use first channel only for flushing
-               unsigned trig_indx = TestHitTime(globaltm, (chid>0));
+               unsigned trig_indx = TestHitTime(globaltm, true, false);
 
-/*               if (trig_indx < fGlobalTrig.size()) {
-                  hadaq::TdcSubEvent* ev = (hadaq::TdcSubEvent*) fGlobalTrig[trig_indx].subev;
+//               printf("Test hit time %12.9f trigger %u\n", globaltm*1e-9, trig_indx);
+
+
+               if (trig_indx < fGlobalTrig.size()) {
+
+
+/*                  hadaq::TdcSubEvent* ev = (hadaq::TdcSubEvent*) fGlobalTrig[trig_indx].subev;
 
                   if (ev==0) {
                      ev = new nx::SubEvent;
@@ -134,9 +135,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                   }
 
                   ev->fExtMessages.push_back(hadaq::TdcMessageExt(iter.msg(), globaltm));
-               }
 */
-
+               }
 
             }
 
@@ -169,11 +169,21 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
    if (first_scan) {
 
+      if ((syncid != 0xffffffff) && (ch0time>=0)) {
+         base::SyncMarker marker;
+         marker.uniqueid = syncid;
+         marker.localid = 0;
+         marker.local_stamp = ch0time;
+         marker.localtm = ch0time;
+         AddSyncMarker(marker);
+      }
+
       if (!iserr && (minimtm>=0.))
          buf().local_tm = minimtm;
       else
          iserr = true;
 
+//      printf("Proc:%p first scan iserr:%d  minm: %12.9f\n", this, iserr, minimtm*1e-9);
 
       FillH1(fMsgPerBrd, GetBoardId(), cnt);
 
@@ -182,9 +192,14 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
       if (iserr)
          FillH1(fErrPerBrd, GetBoardId());
+   } else {
+
+      // use first channel only for flushing
+      if (ch0time>=0)
+         TestHitTime(LocalToGlobalTime(ch0time, &help_index), false, true);
    }
 
-   return iserr;
+   return !iserr;
 }
 
 void hadaq::TdcProcessor::AppendTrbSync(uint32_t syncid)

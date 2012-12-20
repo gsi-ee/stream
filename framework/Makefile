@@ -4,8 +4,11 @@ ifneq ($(shell root-config --version 2>/dev/null),)
 IS_ROOT=true
 endif
 
+ifdef debug
+CXXOPT      += -g
+endif
 
-CXXOPT        = -O2 -fPIC $(INCLUDES:%=-I%)
+CXXOPT       += -O2 -fPIC $(INCLUDES:%=-I%) 
 LD            = g++
 CXX           = g++
 

@@ -50,17 +50,18 @@ namespace base {
 
       SubEvent*     subev;        //!< structure with data, selected for the trigger, ownership
       bool          isflush;      //!< indicate that trigger is just for flushing, no real data is important
+      unsigned      multipl;      //!< value account multiplicity of the trigger
 
       GlobalTriggerMarker(GlobalTime_t tm = 0.) :
-         globaltm(tm), lefttm(0.), righttm(0.), subev(0), isflush(false) {}
+         globaltm(tm), lefttm(0.), righttm(0.), subev(0), isflush(false), multipl(0) {}
 
       GlobalTriggerMarker(const GlobalTriggerMarker& src) :
-         globaltm(src.globaltm), lefttm(src.lefttm), righttm(src.righttm), subev(src.subev), isflush(src.isflush) {}
+         globaltm(src.globaltm), lefttm(src.lefttm), righttm(src.righttm), subev(src.subev), isflush(src.isflush), multipl(src.multipl) {}
 
       ~GlobalTriggerMarker() { /** should we here destroy subevent??? */ }
 
       bool null() const { return globaltm<=0.; }
-      void reset() { globaltm = 0.; isflush = false; }
+      void reset() { globaltm = 0.; isflush = false; multipl = 0; }
 
       /** return true when interval defines normal event */
       bool normal() const { return !isflush; }
@@ -98,7 +99,7 @@ namespace base {
 
          bool            fIsSynchronisationRequired; //!< true if sync is required
          SyncMarksQueue  fSyncs;                  //!< list of sync markers
-         unsigned        fSyncScanIndex;          //!< sync scan index, use to adjust syncs over many processors
+         unsigned        fSyncScanIndex;          //!< sync scan index, indicate number of syncs which can really be used for synchronization
          bool            fSyncFlag;               //!< boolean, used in sync adjustment procedure
 
          LocalTriggerMarksQueue fLocalTrig;       //!< list of local triggers
@@ -119,7 +120,7 @@ namespace base {
          base::H1handle fTriggerTm;  //! histogram with time relative to the trigger
          base::H1handle fMultipl;    //! histogram of event multiplicity
 
-         base::C1handle triggerWindow;   //!<  window used for data selection
+         base::C1handle fTriggerWindow;   //!<  window used for data selection
 
          /** Make constructor protected - no way to create base class instance */
          StreamProc(const char* name = "", int indx = -1);
@@ -161,7 +162,11 @@ namespace base {
 
          /** Method converts local time (in ns representation) to global time
           * TODO: One could introduce more precise method, which works with stamps*/
-         GlobalTime_t LocalToGlobalTime(GlobalTime_t localtm, unsigned* lastindx = 0);
+         GlobalTime_t LocalToGlobalTime(GlobalTime_t localtm, unsigned* sync_index = 0);
+
+         /** Method return true when sync_index is means interpolation of time */
+         bool IsSyncIndexWithInterpolation(unsigned indx) const
+         { return (indx>0) && (indx<numReadySyncs()); }
 
          /** Returns true when processor used to select trigger signal */
          virtual bool doTriggerSelection() const { return false; }
@@ -175,11 +180,10 @@ namespace base {
          /** Time constant, defines how far disorder of messages can go */
          virtual double MaximumDisorderTm() const { return 0.; }
 
-         /** Method decides to which trigger window belong hit */
-         unsigned TestHitTime(const base::GlobalTime_t& hittime, bool normal_hit);
-
-         /** method should return multiplicity value of specified trigger */
-         virtual unsigned GetTriggerMultipl(unsigned indx) { return 0; }
+         /** Method decides to which trigger window belong hit
+          *  normal_hit - indicates that time is belong to data, which than can be assigned to output
+          *  can_close_event - when true, hit time can be used to decide that event is ready */
+         unsigned TestHitTime(const base::GlobalTime_t& hittime, bool normal_hit, bool can_close_event = true);
 
          /** Method called to sort data in subevent */
          virtual void SortDataInSubEvent(base::SubEvent*) {}
@@ -209,7 +213,7 @@ namespace base {
          /** Set window relative to some reference signal, which will be used as
           * region-of-interest interval to select messages from the stream */
          virtual void SetTriggerWindow(double left, double right)
-         { ChangeC1(triggerWindow, left, right); }
+         { ChangeC1(fTriggerWindow, left, right); }
 
 
          bool IsRawScanOnly() const { return fRawScanOnly; }
@@ -237,8 +241,8 @@ namespace base {
 
          /** Returns total number of sync markers */
          unsigned numSyncs() const { return fSyncs.size(); }
+         unsigned numReadySyncs() const { return fSyncScanIndex; }
          SyncMarker& getSync(unsigned n) { return fSyncs[n]; }
-         SyncMarker& lastSync() { return fSyncs[fSyncs.size()-1]; }
 
          /** Method to deliver detected triggers from processor to central manager */
          virtual bool CollectTriggers(GlobalTriggerMarksQueue& queue);

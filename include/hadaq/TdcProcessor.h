@@ -13,7 +13,8 @@ namespace hadaq {
    class TrbProcessor;
 
    /** This is specialized sub-processor for FPGA-TDC.
-    * It only can be used together with TrbProcessor  */
+    * Normally it should be used together with TrbProcessor,
+    * which the only can provide data  */
 
    class TdcProcessor : public base::StreamProc {
 
@@ -31,7 +32,6 @@ namespace hadaq {
          base::H1handle fMsgsKind;  //! messages kinds
          base::H1handle fAllFine;   //! histogram of all fine counters
          base::H1handle fAllCoarse; //! histogram of all coarse counters
-
 
          base::H1handle fCoarse[NumTdcChannels]; //!
          base::H1handle fFine[NumTdcChannels];   //!
@@ -61,6 +61,10 @@ namespace hadaq {
          /** Method will be called by TRB processor if SYNC message was found
           * One should change 4 first bytes in the last buffer in the queue */
          void AppendTrbSync(uint32_t syncid);
+
+         /** This is maximum disorder time for TDC messages
+          * TODO: derive this value from sub-items */
+         virtual double MaximumDisorderTm() const { return 2000.; }
 
          /** Scan all messages, find reference signals */
          bool DoBufferScan(const base::Buffer& buf, bool isfirst);

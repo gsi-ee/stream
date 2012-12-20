@@ -35,5 +35,5 @@ void first() {
    hadaq::TdcProcessor* tdc7 = new hadaq::TdcProcessor(trb3, 7);
 
    // method set window for all TDCs at the same time
-   trb3->SetTriggerWindow(-450, -350);
+   trb3->SetTriggerWindow(-400, -300);
 }

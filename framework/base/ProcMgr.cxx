@@ -219,7 +219,7 @@ bool base::ProcMgr::AnalyzeSyncMarkers()
 
             // slave sync id is bigger, stop analyzing, but could do calibration
             if (diff>0) {
-               printf("Find hole in SYNC sequences in processor %u\n", n);
+               // printf("Find hole in SYNC sequences in processor %u\n", n);
                is_slave_ok = true;
                break;
             }
@@ -295,7 +295,7 @@ bool base::ProcMgr::CollectNewTriggers()
 //      flush_time = 0.;
 
       if (flush_time != 0.) {
-         printf("FLUSH: %12.9f\n", flush_time*1e-9);
+         // printf("FLUSH: %12.9f\n", flush_time*1e-9);
          fTriggers.push_back(GlobalTriggerMarker(flush_time));
          fTriggers.back().isflush = true;
       }
