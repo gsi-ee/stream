@@ -180,3 +180,11 @@ Without filling current NX code works 2x times faster
 
 21.12.2012
 1) Shift all time stamp classes into base/TimeStamp.h file
+2) Change NX and GET4 timing concept in messages/iterators/processors
+   Now everywhere LocalStampConverter is used to convert timestamps 
+   to local time in seconds. Change to seconds have consequence in
+   most places - time conditions, safety margins and some other constants
+   have been changed.
+3) Really separate functionality of nx::Message/Iterator and 
+   get4::Message/Iterator classes.  
+   

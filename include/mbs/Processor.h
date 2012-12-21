@@ -22,7 +22,7 @@ namespace mbs {
 
          /** This is maximum disorder time for MBS
           * TODO: derive this value from sub-items */
-         virtual double MaximumDisorderTm() const { return 1000.; }
+         virtual double MaximumDisorderTm() const { return 1e-6; }
 
 
          base::LocalStampConverter fConv1;

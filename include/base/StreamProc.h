@@ -160,9 +160,6 @@ namespace base {
            *  and have minimal distance to previous trigger */
          bool AddTriggerMarker(LocalTriggerMarker& marker, double tm_range = 0.);
 
-         /** TODO: one should account time wrap for local stamps */
-         double local_time_dist(GlobalTime_t tm1, GlobalTime_t tm2) { return tm2-tm1; }
-
          /** Method converts local time (in ns representation) to global time
           * TODO: One could introduce more precise method, which works with stamps*/
          GlobalTime_t LocalToGlobalTime(GlobalTime_t localtm, unsigned* sync_index = 0);
@@ -211,7 +208,7 @@ namespace base {
          //  void AssignMgr(ProcMgr* m) { fMgr = m; }
          ProcMgr* mgr() const { return fMgr; }
 
-         const std::string GetProcName() const { return fName; }
+         const char* GetName() const { return fName.c_str(); }
 
          unsigned GetBoardId() const { return fBoardId; }
 

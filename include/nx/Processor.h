@@ -14,27 +14,7 @@ namespace nx {
       base::H2handle fADCs;      //! ADC distribution
       base::H1handle fHITt;      //! hit time
 
-
-      // these variables for wrong last-epoch bit detection
-      // idea is simple - every readout costs 32 ns
-      // if last epoch is appears, one need to have long readout history
-
-/*      unsigned lasthittm;
-      unsigned reversecnt;
-      unsigned lasthit[128];
-      unsigned lastch;
-      unsigned lastepoch;
-*/
-      uint64_t lastfulltm1;
-      uint64_t lastfulltm2;
-
-      NxRec() : used(false), fChannels(0), fADCs(0), fHITt(0), lastfulltm1(0), lastfulltm2(0) {}
-
-//      void corr_reset();
-//      void corr_nextepoch(unsigned epoch);
-//      int corr_nexthit_old(nx::Message& msg, bool docorr = false);
-//      int corr_nexthit_next(nx::Message& msg, bool docorr = false);
-      int corr_nexthit(nx::Message& msg, uint64_t fulltm, bool docorr = false, bool firstscan = true);
+      NxRec() : used(false), fChannels(0), fADCs(0), fHITt(0) {}
    };
 
    class Processor : public base::SysCoreProc {

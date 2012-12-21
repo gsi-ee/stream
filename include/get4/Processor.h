@@ -43,7 +43,7 @@ namespace get4 {
          void AssignBufferTo(get4::Iterator& iter, const base::Buffer& buf);
 
          // this constant identify to which extend NX time can be disordered
-         virtual double MaximumDisorderTm() const { return 1000.; }
+         virtual double MaximumDisorderTm() const { return 1e-6; }
 
          /** Returns true when processor used to select trigger signal */
          virtual bool doTriggerSelection() const { return (fTriggerSignal < 4) || (fTriggerSignal==10) || (fTriggerSignal==11); }

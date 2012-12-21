@@ -12,7 +12,6 @@ namespace base {
          uint32_t      fBufferLen;    // length of assigned buffer
          uint32_t      fBufferPos;    // current position
          uint32_t      fMsgSize;      // size of single message
-         uint32_t      fEpoch;        // current epoch
 
       public:
          Iterator(int fmt = formatNormal);
@@ -26,14 +25,12 @@ namespace base {
 
          bool assign(void* buf, uint32_t len);
 
-         /** Return epoch value for current message */
-         inline uint32_t getMsgEpoch() const { return fEpoch; }
-
          // returns true is last message was extracted from the buffer
          inline bool islast() const { return  fBufferPos >= fBufferLen; }
 
-         /** Return last epoch value */
-         uint32_t getLastEpoch() const { return fEpoch; }
+         //! Expanded timestamp for 250 MHz * 14 bit epochs
+         inline static uint64_t FullTimeStamp(uint32_t epoch, uint16_t stamp)
+            { return ((uint64_t) epoch << 14) | (stamp & 0x3fff); }
    };
 }
 

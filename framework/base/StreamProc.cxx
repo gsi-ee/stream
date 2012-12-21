@@ -70,9 +70,9 @@ base::StreamProc::StreamProc(const char* name, unsigned brdid) :
 
    fMgr = base::ProcMgr::AddProc(this);
 
-   fTriggerTm = MakeH1("TriggerTm", "Time relative to trigger", 2500, -1000., 4000., "ns");
+   fTriggerTm = MakeH1("TriggerTm", "Time relative to trigger", 2500, -1e-6, 4e-6, "s");
    fMultipl = MakeH1("Multipl", "Subevent multiplicity", 40, 0., 40., "hits");
-   fTriggerWindow = MakeC1("TrWindow", 500, 1000, fTriggerTm);
+   fTriggerWindow = MakeC1("TrWindow", 5e-7, 10e-7, fTriggerTm);
 }
 
 
@@ -233,8 +233,8 @@ base::GlobalTime_t base::StreamProc::LocalToGlobalTime(base::GlobalTime_t localt
             if (try_indx && ((*indx - 1) == n)) continue;
          }
 
-         double dist1 = local_time_dist(getSync(n).localtm, localtm);
-         double dist2 = local_time_dist(localtm, getSync(n+1).localtm);
+         double dist1 = localtm - getSync(n).localtm;
+         double dist2 = getSync(n+1).localtm - localtm;
 
          if ((dist1>=0.) && (dist2>0)) {
             //double k1 = dist2 / (dist1 + dist2);
@@ -257,8 +257,8 @@ base::GlobalTime_t base::StreamProc::LocalToGlobalTime(base::GlobalTime_t localt
    // this is just shift relative to boundary SYNC markers
    // only possible when distance in nanoseconds
 
-   double dist1 = local_time_dist(getSync(0).localtm, localtm);
-   double dist2 = local_time_dist(getSync(numReadySyncs()-1).localtm, localtm);
+   double dist1 = localtm - getSync(0).localtm;
+   double dist2 = localtm - getSync(numReadySyncs()-1).localtm;
 
    if (fabs(dist1) < fabs(dist2)) {
       if (indx) *indx = 0;
@@ -383,13 +383,18 @@ bool base::StreamProc::AddTriggerMarker(LocalTriggerMarker& marker, double tm_ra
 
       if (tm_range==0.) tm_range = fTriggerAcceptMaring;
 
-      double dist = local_time_dist(fLastLocalTriggerTm, marker.localtm);
+      double dist = marker.localtm - fLastLocalTriggerTm;
 
       // make very simple rule - distance should be bigger than specified range
-      if (dist <= tm_range) return false;
+      if (dist <= tm_range) {
+         // printf("Reject trigger %12.9f\n", marker.localtm);
+         return false;
+      }
    }
 
    fLocalTrig.push_back(marker);
+
+//   printf("Add trigger %12.9f\n", marker.localtm);
 
    // keep time of last trigger
    fLastLocalTriggerTm = marker.localtm;
@@ -520,7 +525,7 @@ bool base::StreamProc::CollectTriggers(GlobalTriggerMarksQueue& trigs)
       }
 
 //      printf("Proc:%s TRIGG: %12.9f localtm:%12.9f syncindx %u  numsyncs %u\n",
-//            GetProcName().c_str(), marker.globaltm*1e-9, fLocalTrig[num_trig].localtm*1e-9,
+//            GetName(), marker.globaltm*1e-9, fLocalTrig[num_trig].localtm*1e-9,
 //            syncindx, numReadySyncs());
 
       num_trig++;
@@ -549,9 +554,12 @@ bool base::StreamProc::DistributeTriggers(const base::GlobalTriggerMarksQueue& q
       fGlobalTrig.push_back(base::GlobalTriggerMarker(queue[indx]));
 
       fGlobalTrig.back().SetInterval(GetC1Limit(fTriggerWindow, true), GetC1Limit(fTriggerWindow, false));
+
+//      if (fGlobalTrig.back().normal())
+//         printf("%s trigger %12.9f %12.9f\n", GetName(), fGlobalTrig.back().lefttm, fGlobalTrig.back().righttm);
    }
 
-//   printf("%s triggers after append new items\n", GetProcName().c_str());
+//   printf("%s triggers after append new items\n", GetName());
 //   for (unsigned n=0;n<fGlobalTrig.size();n++)
 //      printf("TRIG %u %12.9f\n", n, fGlobalTrig[n].globaltm*1e-9);
 
@@ -575,7 +583,7 @@ bool base::StreamProc::AppendSubevent(base::Event* evt)
    if (fGlobalTrig[0].subev!=0) {
       if (evt!=0) {
          if (IsTimeSorting()) fGlobalTrig[0].subev->Sort();
-         evt->AddSubEvent(GetProcName(), fGlobalTrig[0].subev);
+         evt->AddSubEvent(GetName(), fGlobalTrig[0].subev);
       } else {
          printf("Something wrong - subevent could not be assigned normal %d!!!!\n", fGlobalTrig[0].normal());
          delete fGlobalTrig[0].subev;
@@ -591,7 +599,7 @@ bool base::StreamProc::AppendSubevent(base::Event* evt)
       fGlobalTrigScanIndex--;
    }
 
-//   printf("%s triggers after remove first item\n", GetProcName().c_str());
+//   printf("%s triggers after remove first item\n", GetName());
 //   for (unsigned n=0;n<fGlobalTrig.size();n++)
 //      printf("TRIG %u %12.9f\n", n, fGlobalTrig[n].globaltm*1e-9);
 
@@ -640,7 +648,8 @@ unsigned base::StreamProc::TestHitTime(const base::GlobalTime_t& hittime, bool n
 
           if (can_close_event && (dist>MaximumDisorderTm())) {
              if (indx==fGlobalTrigScanIndex) {
-                // printf("Declare event %u ready\n", lefttrig);
+//                if (fGlobalTrig[indx].normal())
+//                   printf("Declare trigger %12.9f ready\n", fGlobalTrig[indx].globaltm);
                 fGlobalTrigScanIndex++;
 
              } else {
@@ -674,7 +683,7 @@ bool base::StreamProc::ScanDataForNewTriggers()
    // time of last trigger is used to check which buffers can be scanned
    // time of last buffer is used to check which triggers we could check
 
-//   printf("Proc:%p  Try scan data numtrig %u scan tm %u raw %u\n", this, fGlobalTrig.size(), fQueueScanIndexTm, IsRawScanOnly());
+//   printf("Proc:%p  Try scan data numtrig %u scan tm %u raw %u\n", GetName(), fGlobalTrig.size(), fQueueScanIndexTm, IsRawScanOnly());
 
    // never do any seconds scan in such situation
    if (IsRawScanOnly()) return true;

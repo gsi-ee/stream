@@ -5,8 +5,7 @@ base::Iterator::Iterator(int fmt) :
    fBuffer(0),
    fBufferLen(0),
    fBufferPos(0),
-   fMsgSize(0),
-   fEpoch(0)
+   fMsgSize(0)
 {
    fMsgSize = base::Message::RawSize(fFormat);
 }

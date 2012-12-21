@@ -153,6 +153,8 @@ bool base::ProcMgr::AnalyzeSyncMarkers()
       }
 
       if (fTimeMasterIndex == DummyIndex) fTimeMasterIndex = first;
+
+//      printf("************ SELECT MASTER INDEX %u ******* \n", fTimeMasterIndex);
    }
 
 
@@ -273,6 +275,8 @@ bool base::ProcMgr::CollectNewTriggers()
    for (unsigned n=0;n<fProc.size();n++)
       fProc[n]->CollectTriggers(fTriggers);
 
+//   printf("CollectNewTriggers\n");
+
    // create flush event when master has already two buffers and
    // time is reached by all sub-systems
    if (fProc.size() > 0) {
@@ -282,6 +286,8 @@ bool base::ProcMgr::CollectNewTriggers()
       // if we request flush time, it should be bigger than last trigger marker
       GlobalTime_t flush_time =
             fProc[use_indx]->ProvidePotentialFlushTime(fTriggers.size() > 0 ? fTriggers.back().globaltm : 0.);
+
+//      printf("Try flush time %12.9f\n", flush_time);
 
       // now verify that each processor is accept such flushtime
       // important that every component obtained and analyzed this region,
@@ -295,7 +301,7 @@ bool base::ProcMgr::CollectNewTriggers()
 //      flush_time = 0.;
 
       if (flush_time != 0.) {
-         // printf("FLUSH: %12.9f\n", flush_time*1e-9);
+//         printf("FLUSH: %12.9f\n", flush_time);
          fTriggers.push_back(GlobalTriggerMarker(flush_time));
          fTriggers.back().isflush = true;
       }

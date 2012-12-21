@@ -34,7 +34,7 @@ namespace base {
 
    class LocalStampConverter {
       protected:
-         uint64_t fT0;          //! time stamp, used as t0 for time production
+         int64_t  fT0;          //! time stamp, used as t0 for time production
          uint64_t fWrapSize;    //! value of time stamp which wraps - MUST be power of 2
          uint64_t fHalfWrapSize; //! fWrapSize/2 - used very often in calculations
          uint64_t fValueMask;   //! mask to extract bits related to stamp
@@ -61,7 +61,7 @@ namespace base {
 
          ~LocalStampConverter() {}
 
-         void SetT0(uint64_t t0) { fT0 = t0; }
+         void SetT0(int64_t t0) { fT0 = t0; }
 
          /** Set major timing parameters - wrap value and coefficient */
          void SetTimeSystem(unsigned wrapbits, double coef)
@@ -77,7 +77,7 @@ namespace base {
 
          /** Method calculates distance between two stamps
           * In simplest case just should return t2-t1 */
-         int64_t distance(LocalStamp_t t1, LocalStamp_t t2)
+         int64_t distance(LocalStamp_t t1, LocalStamp_t t2) const
          {
             uint64_t diff = (t2 - t1) & fValueMask;
             return diff < fWrapSize/2 ? (int64_t) diff : (int64_t)diff - fWrapSize;
@@ -92,7 +92,7 @@ namespace base {
 
          /** Method convert time stamp to seconds,
           * taking into account probable wrap relative to fRef value */
-         double ToSeconds(LocalStamp_t stamp)
+         double ToSeconds(LocalStamp_t stamp) const
          {
             // simplest way just return stamp*fCoef,
             // but one should account all possible wraps

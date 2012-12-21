@@ -69,7 +69,7 @@ get4::Processor::Processor(unsigned rocid, unsigned get4mask) :
    SetNoTriggerSignal();
 
    // require at least 100 ns interval between two trigger candidates
-   SetTriggerMargin(100);
+   SetTriggerMargin(1e-7);
 
    fRefChannelId = 99; // impossible combination
 
@@ -140,17 +140,21 @@ bool get4::Processor::FirstBufferScan(const base::Buffer& buf)
 
       FillH1(fMsgsKind, msg.getMessageType());
 
+      // this time used for histograming and print selection
+
+      double localtm = fIter.getMsgTime();
+
+//      printf("kind: %u  localtm = %12.9f\n", msg.getMessageType(), localtm);
+
+      double msgtm = localtm - floor(localtm/1000.)*1000.;
 
 //      fIter.printMessage(roc::msg_print_Human);
 
       // keep time of first non-epoch message as start point of the buffer
       if (first && !msg.isEpochMsg()) {
          first = false;
-         buf().local_tm = fIter.getMsgFullTimeD();
+         buf().local_tm = localtm;
       }
-
-      // this time used for histograming and print selection
-      double msgtm = (fIter.getMsgFullTime() % 1000000000000LLU)*1e-9;
 
       FillH1(fALLt, msgtm);
 
@@ -181,7 +185,6 @@ bool get4::Processor::FirstBufferScan(const base::Buffer& buf)
             unsigned ch = msg.getGet4ChNum();
             unsigned edge = msg.getGet4Edge();
             unsigned ts = msg.getGet4Ts();
-            uint64_t fulltm = fIter.getMsgFullTime();
 
             // fill rising and falling edges together
             FillH1(GET4[get4].fChannels, ch + edge*0.5);
@@ -189,7 +192,7 @@ bool get4::Processor::FirstBufferScan(const base::Buffer& buf)
             if (fRefChannelId == get4 * 100 + ch*10 + edge) {
                base::LocalTriggerMarker marker;
                marker.localid = (get4+1) * 100 + ch*10 + edge;
-               marker.localtm = fIter.getMsgFullTimeD();
+               marker.localtm = localtm;
 
                // printf("Select TRIGGER: %10.9f\n", marker.localtm*1e-9);
 
@@ -225,8 +228,8 @@ bool get4::Processor::FirstBufferScan(const base::Buffer& buf)
                base::SyncMarker marker;
                marker.uniqueid = msg.getSyncData();
                marker.localid = msg.getSyncChNum();
-               marker.local_stamp = fIter.getMsgFullTime();
-               marker.localtm = fIter.getMsgFullTimeD(); // nx gave us time in ns
+               marker.local_stamp = fIter.getMsgStamp();
+               marker.localtm = localtm; // nx gave us time in ns
 
                // printf("ROC%u Find sync %u tm %6.3f\n", rocid, marker.uniqueid, marker.localtm*1e-9);
                // if (marker.uniqueid > 11798000) exit(11);
@@ -241,7 +244,7 @@ bool get4::Processor::FirstBufferScan(const base::Buffer& buf)
 
                base::LocalTriggerMarker marker;
                marker.localid = 10 + sync_ch;
-               marker.localtm = fIter.getMsgFullTimeD();
+               marker.localtm = localtm;
 
                AddTriggerMarker(marker);
             }
@@ -258,7 +261,7 @@ bool get4::Processor::FirstBufferScan(const base::Buffer& buf)
 
                base::LocalTriggerMarker marker;
                marker.localid = auxid;
-               marker.localtm = fIter.getMsgFullTimeD();
+               marker.localtm = localtm;
 
                AddTriggerMarker(marker);
             }
@@ -320,7 +323,7 @@ bool get4::Processor::SecondBufferScan(const base::Buffer& buf)
 
 
          case base::MSG_GET4: {
-            base::GlobalTime_t localtm = fIter2.getMsgFullTimeD();
+            base::GlobalTime_t localtm = fIter2.getMsgTime();
 
             base::GlobalTime_t globaltm = LocalToGlobalTime(localtm, &help_index);
 

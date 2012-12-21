@@ -62,7 +62,7 @@ namespace hadaq {
 
          /** This is maximum disorder time for TDC messages
           * TODO: derive this value from sub-items */
-         virtual double MaximumDisorderTm() const { return 2000.; }
+         virtual double MaximumDisorderTm() const { return 2e-6; }
 
          /** Scan all messages, find reference signals */
          bool DoBufferScan(const base::Buffer& buf, bool isfirst);

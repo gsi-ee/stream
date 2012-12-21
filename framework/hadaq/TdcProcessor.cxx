@@ -105,7 +105,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             if (!iserr) {
                localtm = iter.getMsgStampCoarse() * CoarseUnit() + SimpleFineCalibr(iter.msg().getHitTmFine());
 
-               if ((minimtm<1.) || (local_time_dist(minimtm, localtm) < 0.))
+               if ((minimtm<1.) || (localtm < minimtm))
                   minimtm = localtm;
             }
 

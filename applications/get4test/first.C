@@ -10,14 +10,14 @@
    proc->setRefChannel(0, 0);
 
    // use this window to extract signals around reference
-   proc->SetTriggerWindow(-1000., 1000.);
+   proc->SetTriggerWindow(-1e-6, 1e-6);
 
 //   double msgtm = 3.607101958; // 18 hits
 //   double msgtm = 3.611034118; // 22 hits
    double msgtm = 11.744051718; // 17 hits
 //   double msgtm = 70.065848839; // SYNC in between of GET4 messages
 
-   proc->SetPrint(100000, msgtm - 1e-5, msgtm + 1e-5);
+   proc->SetPrint(1000, msgtm - 1e-5, msgtm + 1e-5);
 }
 
 
