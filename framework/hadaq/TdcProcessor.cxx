@@ -17,7 +17,9 @@ unsigned hadaq::TdcProcessor::fFineMaxValue = 480;
 
 
 hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid) :
-   base::StreamProc("TDC", tdcid)
+   base::StreamProc("TDC", tdcid),
+   fIter1(),
+   fIter2()
 {
    fMsgPerBrd = mgr()->MakeH1("MsgPerTDC", "Number of messages per TDC", fMaxBrdId, 0, fMaxBrdId, "tdc");
    fErrPerBrd = mgr()->MakeH1("ErrPerTDC", "Number of errors per TDC", fMaxBrdId, 0, fMaxBrdId, "tdc");
@@ -58,19 +60,23 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
    unsigned cnt(0), hitcnt(0);
 
-   bool iserr = false;
+   bool iserr(false), isfirstepoch(false);
 
-   TdcIterator iter((uint32_t*) buf.ptr(4), buf.datalen()/4 -1, false);
+   uint32_t first_epoch(0);
+
+   TdcIterator& iter = first_scan ? fIter1 : fIter2;
+
+   iter.assign((uint32_t*) buf.ptr(4), buf.datalen()/4 -1, false);
 
    unsigned help_index(0);
 
    double localtm(0.), minimtm(-1.), ch0time(-1);
 
-//   if (!first_scan) printf("TDC%u Second scan\n", GetBoardId());
+//   printf("TDC%u scan\n", GetBoardId());
 
    while (iter.next()) {
 
-      // iter.msg().print();
+  //    iter.msg().print();
 
       if ((cnt==0) && !iter.msg().isHeaderMsg()) iserr = true;
 
@@ -78,6 +84,11 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
       if (first_scan)
          FillH1(fMsgsKind, iter.msg().getKind() >> 29);
+
+      if ((cnt==2) && iter.msg().isEpochMsg()) {
+         isfirstepoch = true;
+         first_epoch = iter.msg().getEpochValue();
+      }
 
       if (iter.msg().isHitMsg()) {
 
@@ -103,17 +114,19 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             }
 
             if (!iserr) {
-               localtm = iter.getMsgStampCoarse() * CoarseUnit() + SimpleFineCalibr(iter.msg().getHitTmFine());
+               localtm = iter.getMsgTime() + SimpleFineCalibr(iter.msg().getHitTmFine());
+
+               //printf("   msg time %12.9f   stamp %12.9f\n", localtm, iter.getMsgStamp()*5e-9);
 
                if ((minimtm<1.) || (localtm < minimtm))
                   minimtm = localtm;
+
+               // remember position of channel 0 - it could be used for SYNC settings
+               if ((chid==0) && iter.msg().isHitRisingEdge()) {
+                  ch0time = localtm;
+               }
             }
 
-
-            // remember position of channel 0 - it could be used for SYNC settings
-            if ((chid==0) && iter.msg().isHitRisingEdge() && !iserr) {
-               ch0time = localtm;
-            }
 
             // here we check if hit can be assigned to the events
             if (!first_scan && !iserr && (chid>0)) {
@@ -154,6 +167,9 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
            break;
       }
    }
+
+   if (isfirstepoch && !iserr)
+      iter.setRefEpoch(first_epoch);
 
    if (first_scan) {
 

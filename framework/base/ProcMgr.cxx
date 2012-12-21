@@ -170,7 +170,7 @@ bool base::ProcMgr::AnalyzeSyncMarkers()
    // TODO: later one can ignore optional streams here
    for (unsigned n=0;n<fProc.size();n++) {
       if (fProc[n]->IsSynchronisationRequired() && (fProc[n]->numSyncs() < 2)) {
-          printf("No enough syncs on processor %u!!!\n", n);
+          printf("No enough syncs on processor %s!!!\n", fProc[n]->GetName());
           // exit(5);
           return false;
       }

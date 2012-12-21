@@ -425,6 +425,8 @@ bool base::StreamProc::eraseFirstSyncs(unsigned num_erase)
    }
 
    fSyncs.erase(fSyncs.begin(), fSyncs.begin() + num_erase);
+
+   return true;
 }
 
 

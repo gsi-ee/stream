@@ -111,9 +111,11 @@ namespace base {
          {
             // when new reference smaller than previous
             // one should check if distance small that we could believe it is normal
-            if (newref < fRef)
-               if (abs_distance(fRef, newref) < fWrapSize/2)
+            if (newref < fRef) {
+               int64_t shift = distance(fRef, newref);
+               if ((shift>0) && (shift < (int64_t) fWrapSize/2))
                   fCurrentWrap+=fWrapSize;
+            }
 
             fRef = newref;
 

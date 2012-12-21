@@ -78,8 +78,6 @@ void get4::Message::printData(std::ostream& os, unsigned kind, uint32_t epoch, d
    }
 
    if (kind & base::msg_print_Human) {
-      int fifoFill = 0;
-
       switch (getMessageType()) {
          case base::MSG_EPOCH:
             snprintf(buf, sizeof(buf),
@@ -206,7 +204,7 @@ void get4::Message::printData(std::ostream& os, unsigned kind, uint32_t epoch, d
                  snprintf(sysbuf, sizeof(sysbuf), "Packet lost");
                  break;
               case base::SYSMSG_GET4_EVENT: {
-                 uint32_t data           = getSysMesData();
+                 // uint32_t data           = getSysMesData();
                  uint32_t get4_pattern   = getField(16, 6); //(data>>16) & 0x3f;
                  uint32_t get4_eventType = getBit(22);      //(data>>7)  & 0xfff;
                  uint32_t get4_TS        = getField(23,12); //(data>>6)  & 0x1;

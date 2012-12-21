@@ -5,6 +5,8 @@
 
 #include "hadaq/TdcMessage.h"
 
+#include "base/TimeStamp.h"
+
 namespace hadaq {
 
    class TdcIterator {
@@ -19,6 +21,8 @@ namespace hadaq {
          hadaq::TdcMessage fMsg; //! current message
          uint32_t  fCurEpoch;    //! current epoch
 
+         base::LocalStampConverter  fConv;   //! use to covert time stamps in seconds
+
       public:
 
          TdcIterator() :
@@ -26,19 +30,12 @@ namespace hadaq {
             fBuflen(0),
             fSwapped(false),
             fMsg(),
-            fCurEpoch(DummyEpoch)
+            fCurEpoch(DummyEpoch),
+            fConv()
          {
-         }
-
-
-         TdcIterator(uint32_t* buf, unsigned len, bool swapped = true) :
-            fBuf(buf),
-            fBuflen(len),
-            fSwapped(swapped),
-            fMsg(),
-            fCurEpoch(DummyEpoch)
-         {
-            if (fBuflen == 0) fBuf = 0;
+            // we have 11 bits for coarse stamp and 32 bits for epoch
+            // each bin is 5 ns
+            fConv.SetTimeSystem(11+32, 5e-9);
          }
 
          void assign(uint32_t* buf, unsigned len, bool swapped = true)
@@ -56,6 +53,12 @@ namespace hadaq {
          {
             if (subev!=0)
                assign(subev->GetDataPtr(indx), datalen, subev->IsSwapped());
+         }
+
+         /** One should call method to set current reference epoch */
+         void setRefEpoch(uint32_t epoch)
+         {
+            fConv.MoveRef(((uint64_t) epoch) << 11);
          }
 
          bool next()
@@ -77,9 +80,14 @@ namespace hadaq {
 
          /** Returns 39-bit value, which combines epoch and coarse counter.
           * Time bin is 5 ns  */
-         uint64_t getMsgStampCoarse() const
+         uint64_t getMsgStamp() const
          {
             return (isCurEpoch() ? ((uint64_t) fCurEpoch) << 11 : 0) | (fMsg.isHitMsg() ? fMsg.getHitTmCoarse() : 0);
+         }
+
+         double getMsgTime() const
+         {
+            return fConv.ToSeconds(getMsgStamp());
          }
 
          hadaq::TdcMessage& msg() { return fMsg; }

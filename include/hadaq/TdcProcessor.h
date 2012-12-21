@@ -22,6 +22,9 @@ namespace hadaq {
 
       protected:
 
+         TdcIterator fIter1;         //! iterator for the first scan
+         TdcIterator fIter2;         //! iterator for the second scan
+
          base::H1handle fMsgPerBrd;  //! messages per board
          base::H1handle fErrPerBrd;  //! errors per board
          base::H1handle fHitsPerBrd; //! data hits per board
@@ -44,7 +47,7 @@ namespace hadaq {
          static unsigned fFineMinValue; //! minimum value for fine counter, used for simple linear approximation
          static unsigned fFineMaxValue; //! maximum value for fine counter, used for simple linear approximation
 
-         double CoarseUnit() const { return 5.; }
+         double CoarseUnit() const { return 5e-9; }
 
          double SimpleFineCalibr(unsigned fine)
          {

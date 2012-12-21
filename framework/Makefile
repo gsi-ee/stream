@@ -8,7 +8,7 @@ ifdef debug
 CXXOPT      += -g
 endif
 
-CXXOPT       += -O2 -fPIC $(INCLUDES:%=-I%) 
+CXXOPT       += -O2 -fPIC -Wall $(INCLUDES:%=-I%) 
 LD            = g++
 CXX           = g++
 
