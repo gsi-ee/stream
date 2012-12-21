@@ -1,8 +1,5 @@
 #include "base/Message.h"
 
-#include <stdio.h>
-#include <string.h>
-
 uint32_t base::Message::RawSize(int fmt)
 {
    switch (fmt) {

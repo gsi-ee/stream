@@ -1,5 +1,7 @@
 #include "nx/Message.h"
 
+#include <stdio.h>
+
 //----------------------------------------------------------------------------
 //! Print message in human readable format to \a cout.
 /*!

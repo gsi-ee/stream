@@ -18,8 +18,9 @@ namespace get4 {
                   memcpy(&data, src, 6);
                   return true;
                case base::formatOptic2:
-                  memcpy(&data, (uint8_t*) src + 2, 6);
-                  setRocNumber(*((uint16_t*) src));
+                  data = (*((uint64_t*) src) >> 16) | (*((uint64_t*) src) << 48);
+                  // memcpy(&data, (uint8_t*) src + 2, 6);
+                  // setRocNumber(*((uint16_t*) src));
                   return true;
                case base::formatNormal:
                   memcpy(&data, src, 8);
