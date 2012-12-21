@@ -15,9 +15,7 @@ namespace nx {
       public:
          Iterator(int fmt = base::formatNormal);
 
-         Iterator(const Iterator& src);
-
-         virtual ~Iterator();
+         ~Iterator();
 
          void setRocNumber(uint16_t rocnum = 0);
 

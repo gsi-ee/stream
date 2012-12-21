@@ -7,13 +7,6 @@ get4::Iterator::Iterator(int fmt) :
    for (unsigned n=0;n<MaxGet4;n++) fEpoch2[n] = 0;
 }
 
-get4::Iterator::Iterator(const Iterator& src) :
-   base::Iterator(src),
-   fMsg(src.fMsg)
-{
-   for (unsigned n=0;n<MaxGet4;n++) fEpoch2[n] = src.fEpoch2[n];
-}
-
 get4::Iterator::~Iterator()
 {
 }
@@ -22,12 +15,6 @@ void get4::Iterator::setRocNumber(uint16_t rocnum)
 {
    if (fFormat == base::formatEth2)
       fMsg.setRocNumber(rocnum);
-}
-
-void get4::Iterator::resetEpochs()
-{
-   base::Iterator::resetEpochs();
-   for (unsigned n=0;n<MaxGet4;n++) fEpoch2[n] = 0;
 }
 
 void get4::Iterator::printMessage(unsigned kind)

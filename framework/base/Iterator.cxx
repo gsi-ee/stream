@@ -11,31 +11,14 @@ base::Iterator::Iterator(int fmt) :
    fMsgSize = base::Message::RawSize(fFormat);
 }
 
-base::Iterator::Iterator(const Iterator& src) :
-   fFormat(src.fFormat),
-   fBuffer(src.fBuffer),
-   fBufferLen(src.fBufferLen),
-   fBufferPos(src.fBufferPos),
-   fMsgSize(src.fMsgSize),
-   fEpoch(src.fEpoch)
-{
-}
-
 base::Iterator::~Iterator()
 {
 }
-
 
 void base::Iterator::setFormat(int fmt)
 {
    fFormat = fmt;
    fMsgSize = base::Message::RawSize(fFormat);
-}
-
-
-void base::Iterator::resetEpochs()
-{
-   fEpoch = 0;
 }
 
 

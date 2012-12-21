@@ -12,14 +12,12 @@ namespace base {
          uint32_t      fBufferLen;    // length of assigned buffer
          uint32_t      fBufferPos;    // current position
          uint32_t      fMsgSize;      // size of single message
-         uint32_t      fEpoch;            // current epoch
+         uint32_t      fEpoch;        // current epoch
 
       public:
          Iterator(int fmt = formatNormal);
 
-         Iterator(const Iterator& src);
-
-         virtual ~Iterator();
+         ~Iterator();
 
          void setFormat(int fmt);
          int getFormat() const { return fFormat; }
@@ -28,13 +26,13 @@ namespace base {
 
          bool assign(void* buf, uint32_t len);
 
-         void resetEpochs();
-
+         /** Return epoch value for current message */
          inline uint32_t getMsgEpoch() const { return fEpoch; }
 
          // returns true is last message was extracted from the buffer
          inline bool islast() const { return  fBufferPos >= fBufferLen; }
 
+         /** Return last epoch value */
          uint32_t getLastEpoch() const { return fEpoch; }
    };
 }

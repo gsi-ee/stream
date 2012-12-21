@@ -177,3 +177,6 @@ Without filling current NX code works 2x times faster
    used in all places where so-called local time is produced. Such local time
    will not wrap any longer and more smart calibration could be used for the 
    local/global time calculations. 
+
+21.12.2012
+1) Shift all time stamp classes into base/TimeStamp.h file

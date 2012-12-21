@@ -9,7 +9,7 @@
 // here is base classes
 #pragma link C++ class base::Buffer+;
 #pragma link C++ class base::SubEvent+;
-#pragma link C++ class LocalStampConverter+;
+#pragma link C++ class base::LocalStampConverter+;
 #pragma link C++ class base::Event+;
 #pragma link C++ class base::Message+;
 #pragma link C++ class base::Iterator+;

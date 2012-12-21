@@ -6,12 +6,6 @@ nx::Iterator::Iterator(int fmt) :
 {
 }
 
-nx::Iterator::Iterator(const Iterator& src) :
-   base::Iterator(src),
-   fMsg(src.fMsg)
-{
-}
-
 nx::Iterator::~Iterator()
 {
 }
