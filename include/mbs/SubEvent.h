@@ -18,7 +18,7 @@ namespace mbs {
          virtual void Sort() {}
 
          /** Method returns event multiplicity - that ever it means */
-         virtual unsigned Multiplicity() const { return 0; }
+         virtual unsigned Multiplicity() const { return 1; }
    };
 }
 

@@ -13,6 +13,8 @@ namespace mbs {
 
       protected:
 
+         base::LocalStampConverter  fConv1; //! use converter to emulate local time scale
+
          unsigned fLastSync1; //! last sync id in first scan
          unsigned fLastSync2; //! last sync id in second scan
 
@@ -23,10 +25,6 @@ namespace mbs {
          /** This is maximum disorder time for MBS
           * TODO: derive this value from sub-items */
          virtual double MaximumDisorderTm() const { return 1e-6; }
-
-
-         base::LocalStampConverter fConv1;
-         base::LocalStampConverter fConv2;
 
       public:
 

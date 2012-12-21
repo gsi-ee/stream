@@ -39,6 +39,6 @@ void first() {
 
 
    // MBS processor - for a moment it is specific for CERN beamtime
-//   mbs::Processor* mbs1 = new mbs::Processor();
-//   mbs1->SetTriggerWindow(-1e-6, 1e-6);
+   mbs::Processor* mbs1 = new mbs::Processor();
+   mbs1->SetTriggerWindow(-1e-6, 1e-6);
 }

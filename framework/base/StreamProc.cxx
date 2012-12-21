@@ -402,6 +402,15 @@ bool base::StreamProc::AddTriggerMarker(LocalTriggerMarker& marker, double tm_ra
    return true;
 }
 
+unsigned base::StreamProc::findSyncWithId(unsigned syncid) const
+{
+   for (unsigned n=0; n<fSyncs.size(); n++)
+      if (fSyncs[n].uniqueid == syncid) return n;
+
+   return fSyncs.size();
+}
+
+
 bool base::StreamProc::eraseSyncAt(unsigned indx)
 {
    if (indx < fSyncs.size()) {
@@ -441,7 +450,7 @@ bool base::StreamProc::SkipBuffers(unsigned num_skip)
 
    // erase all syncs with reference to first buffer
    unsigned erase_cnt(0);
-   while ((erase_cnt + 1 < fSyncs.size()) && (fSyncs[erase_cnt].bufid < num_skip)) erase_cnt++;
+   while ((erase_cnt + 1 < fSyncs.size()) && (fSyncs[erase_cnt].bufid + 1  < num_skip)) erase_cnt++;
    eraseFirstSyncs(erase_cnt);
 
    for (unsigned n=0;n<fSyncs.size();n++)

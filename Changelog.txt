@@ -189,4 +189,7 @@ Without filling current NX code works 2x times faster
    get4::Message/Iterator classes.  
 4) Change hadaq::TdcIterator and hadaq::TdcProcessor to use 
    LocalStampConverter class and seconds as time units.
-       
+5) In mbs::Processor use LocalStampConverter just to emulate time scale.
+   Every sync is just new second and LocalStampConverter prevents wrap 
+   of such artificial time scale
+            

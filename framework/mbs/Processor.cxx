@@ -25,21 +25,17 @@ mbs::Processor::Processor() :
    // only raw scan, data can be immediately removed
    // SetRawScanOnly(true);
 
-   fConv1.SetTimeSystem(7, 1.);
-   fConv2.SetTimeSystem(7, 1.);
+   // LocalStampConverter used just to emulate time scale.
+   //  Every sync is just new second and LocalStampConverter prevents wrap
+   //   of such artificial time scale
+   // Some time scale is required to let framework decide which buffer can be processed
 
+   fConv1.SetTimeSystem(24, 1.);
 }
 
 mbs::Processor::~Processor()
 {
 }
-
-unsigned produce_fake_stamp(unsigned syncid)
-{
-    return (syncid - (2466426 - 100)) % 128;
-   //return syncid;
-}
-   
 
 bool mbs::Processor::FirstBufferScan(const base::Buffer& buf)
 {
@@ -51,21 +47,18 @@ bool mbs::Processor::FirstBufferScan(const base::Buffer& buf)
 
       uint32_t sync_num = buf.getuint32(indx++);
 
-      uint32_t pattern = buf.getuint32(indx++);
-
-      uint32_t mbssec = buf.getuint32(indx++);
-      uint32_t mbsmsec = buf.getuint32(indx++);
+//      uint32_t pattern = buf.getuint32(indx++);
+//      uint32_t mbssec = buf.getuint32(indx++);
+//      uint32_t mbsmsec = buf.getuint32(indx++);
 
       // rest is not interesting
 
       // double mbs_time = mbssec + mbsmsec*0.001;
 
-      unsigned stamp = produce_fake_stamp(sync_num);
-      fConv1.MoveRef(stamp);
+      fConv1.MoveRef(sync_num);
+      double localtm = fConv1.ToSeconds(sync_num);
 
-      double localtm = fConv1.ToSeconds(stamp);
-
-      printf("MBS SYNC %u stamp %u tm %12.1f  \n", sync_num, stamp, localtm);
+//      printf("MBS SYNC %u tm %12.1f  \n", sync_num, localtm);
       
       base::SyncMarker marker;
       marker.uniqueid = sync_num;
@@ -84,9 +77,7 @@ bool mbs::Processor::FirstBufferScan(const base::Buffer& buf)
       // here not interested at all about content
       // just assign time stamp
 
-      unsigned stamp = produce_fake_stamp(fLastSync1);
-
-      buf().local_tm = fConv1.ToSeconds(stamp);
+      buf().local_tm = fConv1.ToSeconds(fLastSync1);
    }
 
 
@@ -97,21 +88,29 @@ bool mbs::Processor::SecondBufferScan(const base::Buffer& buf)
 {
    if (buf().kind == base::proc_Triglog) {
       fLastSync2 = buf.getuint32(0);
-      unsigned stamp = produce_fake_stamp(fLastSync2);
-      fConv2.MoveRef(stamp);
-
+      // fConv2.MoveRef(fLastSync2);
    }
 
    if (buf().kind == base::proc_CERN_Oct12) {
       // here we just need to decide which events has to have MBS part
 
-      unsigned help_index(0);
-      
-      unsigned stamp = produce_fake_stamp(fLastSync2);
+//      unsigned help_index(0);
 
-      double localtm = fConv2.ToSeconds(stamp);
+//      double localtm = fConv2.ToSeconds(fLastSync2);
 
-      base::GlobalTime_t globaltm = LocalToGlobalTime(localtm, &help_index);
+      unsigned myid = findSyncWithId(fLastSync2);
+      if (myid==numSyncs()) {
+         printf("Something happened - we could not locate SYNC message %u for MBS\n", fLastSync2);
+         return false;
+      }
+
+      base::GlobalTime_t globaltm = getSync(myid).globaltm;
+
+//      base::GlobalTime_t globaltm = LocalToGlobalTime(localtm, &help_index);
+
+//      printf("CHECK sync %u  tm1 %12.9f tm2 %12.9f  numsyncs %u\n", fLastSync2, synctm, globaltm, numSyncs());
+//      for (unsigned cnt=0;cnt<numSyncs();cnt++)
+//         printf("    SYNC%03u  id:%u  tm:%12.9f\n", cnt, getSync(cnt).uniqueid, getSync(cnt).globaltm);
 
       unsigned indx = TestHitTime(globaltm, true);
 
@@ -124,11 +123,10 @@ bool mbs::Processor::SecondBufferScan(const base::Buffer& buf)
          }
 
          // fill raw data here
-         printf("Fill MBS data for trigger %u\n", indx);
+//         printf("Fill MBS data for trigger %u  sync %u global %12.9f \n", indx, fLastSync2, globaltm);
       }
 
    }
-
 
    return true;
 }

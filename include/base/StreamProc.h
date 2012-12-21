@@ -252,6 +252,7 @@ namespace base {
          unsigned numSyncs() const { return fSyncs.size(); }
          unsigned numReadySyncs() const { return fSyncScanIndex; }
          SyncMarker& getSync(unsigned n) { return fSyncs[n]; }
+         unsigned findSyncWithId(unsigned syncid) const;
 
          /** Method to deliver detected triggers from processor to central manager */
          virtual bool CollectTriggers(GlobalTriggerMarksQueue& queue);

@@ -47,7 +47,7 @@ Some implementation details and ideas:
 
 Current state:
 1) First working implementation for: 
-   ROC/nXYTER, ROC/GET4, TRB3/FPGA-TDC
+   ROC/nXYTER, ROC/GET4, TRB3/FPGA-TDC, MBS
 2) Working correction for nXYTER last-epoch problem
 3) Capable to correctly work with AUX-based trigger
 4) Failure detection in TRB3 readout
@@ -60,17 +60,22 @@ Current state:
 8) Files from cern-oct12 (CERN/PS) and cern-gem12 (CERB/SPS) 
    beamtimes can be processed (at least primary data selection).
    For GEM detector-mapping (second step) is implemented.
-   can be processed. See applications folder for examples  
-
+   can be processed. See applications folder for examples
+9) Solid time model. Universal time unit is seconds.
+   Each subsystem able to provide continuous time scale without
+   any overflows, which are typical problem of simple binary counters.
 
 To be done in near future:
 1) Precise time calibration, was missing completely in onlinemonitor.
-   For a moment simple linear interpolation between two syncs are used
+   For a moment simple linear interpolation between two syncs are used.
+   Now, when all local times are continuous, it is possible to implement
+   calibration coefficients with smoothing instead of simple interpolations.  
 2) More complex rules for Region-of-Interests (RoI) definitions.
    One could use correlation between several channels for that.
-3) No-trigger mode, when synchronized data delivered to next step
-4) Spadic, MBS, EPICS support - 
-5) I/O for event data
+3) Regular time intervals - model of time slices. In such case
+   all data (with some duplication) should be delivered to next step
+4) Spadic, EPICS support - just to enable beamtime analysis 
+5) I/O for event data - raw and ROOT format
 6) ROOT-only and ROOT-free running engines
  
 
