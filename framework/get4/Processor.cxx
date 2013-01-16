@@ -194,7 +194,7 @@ bool get4::Processor::FirstBufferScan(const base::Buffer& buf)
                marker.localid = (get4+1) * 100 + ch*10 + edge;
                marker.localtm = localtm;
 
-               // printf("Select TRIGGER: %10.9f\n", marker.localtm*1e-9);
+               // printf("GET4 TRIGGER: %10.9f\n", marker.localtm);
 
                AddTriggerMarker(marker);
 

@@ -665,8 +665,8 @@ unsigned base::StreamProc::TestHitTime(const base::GlobalTime_t& hittime, bool n
 
              } else {
                 printf("Check hit time error trig_indx:%u trig_tm:%12.9f left_indx:%u left_tm:%12.9f dist:%12.9f- check \n",
-                      indx, fGlobalTrig[indx].globaltm*1e-9,
-                      fGlobalTrigScanIndex, fGlobalTrig[fGlobalTrigScanIndex].globaltm*1e-9, dist*1e-9);
+                      indx, fGlobalTrig[indx].globaltm,
+                      fGlobalTrigScanIndex, fGlobalTrig[fGlobalTrigScanIndex].globaltm, dist);
                 exit(17);
              }
           }
