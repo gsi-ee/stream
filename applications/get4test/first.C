@@ -6,6 +6,9 @@
    // ignore all SYNC messages, do not use them for time synchronization
    proc->SetNoSyncSource();
 
+   // ignore all 250 MHz messages for timing, useful when clocks are not synchronized
+   proc->SetIgnore250Mhz();
+
    // use channel 0 on Get4 as reference
    proc->setRefChannel(4, 0);
 

@@ -12,16 +12,49 @@ struct TGet4TestRec {
 
    TH1* fWidth;
 
+   TH1* fDiffRising;
+
    unsigned lastrising;
    unsigned lastfalling;
    unsigned hitcnt;
 
-   TGet4TestRec() : rocid(0), get4id(0), chid(0), fWidth(0) {}
+   bool isrising;
+   bool isfalling;
 
-   void reset() {
-      lastrising = 0;
-      lastfalling = 0;
+
+   TGet4TestRec() : rocid(0), get4id(0), chid(0), fWidth(0), fDiffRising(0) {}
+
+   void reset()
+   {
       hitcnt = 0;
+      resetedges();
+   }
+
+   void resetedges()
+   {
+      lastrising = 0; isrising = false;
+      lastfalling = 0; isfalling = false;
+   }
+
+   void set_edge(unsigned edge, unsigned ts)
+   {
+
+      if (isrising && isfalling) resetedges();
+
+      if (edge == 1) {
+         lastrising = ts;
+         isrising = true;
+      } else {
+         lastfalling = ts;
+         isfalling = true;
+      }
+   }
+
+   double calc_width()
+   {
+      if (!isrising || !isfalling) return 0.;
+
+      return (lastrising < lastfalling) ? (lastfalling - lastrising)*50. : (lastrising - lastfalling)*-50.;
    }
 
 };

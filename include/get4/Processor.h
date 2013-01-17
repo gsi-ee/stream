@@ -36,6 +36,8 @@ namespace get4 {
 
          unsigned fRefChannelId;              //! set channel ID, which used as trigger
 
+         bool   fIgnore250Mhz;                //! if set, times of 250 Mhz messages not used for any analysis
+
          bool get4_in_use(unsigned id) { return id < GET4.size() ? GET4[id].used : false; }
 
          bool IsValidBufIndex(unsigned indx) const { return indx<fQueue.size(); }
@@ -56,6 +58,8 @@ namespace get4 {
          virtual ~Processor();
 
          void setRefChannel(unsigned ref_get4, unsigned ref_ch, unsigned ref_edge = 0);
+
+         void SetIgnore250Mhz(bool on = true) { fIgnore250Mhz = on; }
 
          /** Scan all messages, find reference signals */
          virtual bool FirstBufferScan(const base::Buffer& buf);

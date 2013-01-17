@@ -104,7 +104,7 @@ namespace get4 {
          //! For Get4 data: Returns Get4 time stamp, 50 ps binning (19 bit field)
          inline uint32_t getGet4Ts() const { return getField(14, 19); }
 
-         //! For Get4 data: Returns Get4 rising or falling edge (1 bit field)
+         //! For Get4 data: Returns Get4 rising (=1) or falling (=0) edge (1 bit field)
          inline uint32_t getGet4Edge() const { return getBit(33); }
 
          //! For Get4 data: Returns the CRC-8 of the rest of the message.

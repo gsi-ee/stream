@@ -193,3 +193,9 @@ Without filling current NX code works 2x times faster
    Every sync is just new second and LocalStampConverter prevents wrap 
    of such artificial time scale
             
+17.01.2013
+1) In GET4 analysis treat correctly rising and falling edges.
+2) Make correct calculations of signal width in get4test
+3) Add leading edge difference to next channel in get4test
+4) Add possibility to ignore 250MHz times in get4 processor
+   to avoid problems with unsynchronized clocks 

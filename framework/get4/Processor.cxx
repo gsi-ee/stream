@@ -73,6 +73,8 @@ get4::Processor::Processor(unsigned rocid, unsigned get4mask) :
 
    fRefChannelId = 99; // impossible combination
 
+   fIgnore250Mhz = false;
+
    printf("Create GET4 processor for board %u\n", GetBoardId());
 
 }
@@ -150,16 +152,12 @@ bool get4::Processor::FirstBufferScan(const base::Buffer& buf)
 
 //      fIter.printMessage(roc::msg_print_Human);
 
-      // keep time of first non-epoch message as start point of the buffer
-      if (first && !msg.isEpochMsg()) {
-         first = false;
-         buf().local_tm = localtm;
-      }
-
       FillH1(fALLt, msgtm);
 
       if (CheckPrint(msgtm, 1e-6))
          fIter.printMessage(base::msg_print_Human);
+
+      bool ignoremsg = false;
 
       switch (msg.getMessageType()) {
 
@@ -173,6 +171,7 @@ bool get4::Processor::FirstBufferScan(const base::Buffer& buf)
          }
 
          case base::MSG_EPOCH: {
+            ignoremsg = fIgnore250Mhz;
             break;
          }
 
@@ -197,10 +196,9 @@ bool get4::Processor::FirstBufferScan(const base::Buffer& buf)
                // printf("GET4 TRIGGER: %10.9f\n", marker.localtm);
 
                AddTriggerMarker(marker);
-
             }
 
-            if (edge==0) {
+            if (edge==1) {
                FillH1(GET4[get4].fRisCoarseTm[ch], ts / 128);
                FillH1(GET4[get4].fRisFineTm[ch], ts % 128);
             } else {
@@ -221,6 +219,11 @@ bool get4::Processor::FirstBufferScan(const base::Buffer& buf)
             // unsigned sync_id = msg.getSyncData();
 
             FillH1(fSYNCt[sync_ch], msgtm);
+
+            ignoremsg = fIgnore250Mhz;
+
+            // completely ignore messages
+            if (fIgnore250Mhz) break;
 
             // for the moment use DABC format where SYNC is always second message
             if (sync_ch == fSyncSource) {
@@ -257,6 +260,9 @@ bool get4::Processor::FirstBufferScan(const base::Buffer& buf)
 
             FillH1(fAUXt[auxid], msgtm);
 
+            ignoremsg = fIgnore250Mhz;
+            if (fIgnore250Mhz) break;
+
             if (fTriggerSignal == auxid) {
 
                base::LocalTriggerMarker marker;
@@ -274,6 +280,12 @@ bool get4::Processor::FirstBufferScan(const base::Buffer& buf)
             break;
          }
       } // switch
+
+      // keep time of first non-epoch message as start point of the buffer
+      if (first && !ignoremsg && !msg.isEpochMsg()) {
+         first = false;
+         buf().local_tm = localtm;
+      }
 
    }
 

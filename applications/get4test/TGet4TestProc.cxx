@@ -35,7 +35,8 @@ void TGet4TestProc::Add(unsigned rocid, unsigned get4id, unsigned chid)
    TString prefix = Form("GET4TEST/ROC%u_GET%u_CH%u/HROC%u_GET%u_CH%u_", rocid, get4id, chid, rocid, get4id, chid);
    TString info = Form("ROC%u GET4 %u Channel %u", rocid, get4id, chid);
 
-   rec.fWidth = MakeTH1('I', (prefix+"Width").Data(), (TString("Signal width on ") + info).Data(), 4096, 0., 4096.);
+   rec.fWidth = MakeTH1('I', (prefix+"Width").Data(), (TString("Signal width on ") + info).Data(), 4000, -2000*50., 2000*50., "ps");
+   rec.fDiffRising = MakeTH1('I', (prefix+"DiffRising").Data(), (TString("Rising difference on ") + info).Data(), 4000, -2000*50., 2000*50., "ps");
 }
 
 void TGet4TestProc::MakeHistos()
@@ -59,6 +60,8 @@ void TGet4TestProc::MakeHistos()
 
 void TGet4TestProc::Process(TStreamEvent* ev)
 {
+
+//   printf("new event\n");
 
    for (TGet4TestMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++) {
       iter->second.reset();
@@ -84,17 +87,31 @@ void TGet4TestProc::Process(TStreamEvent* ev)
           TGet4TestRec& rec = iter->second;
           rec.hitcnt++;
 
-          if (msg.getGet4Edge() == 0) {
-             rec.lastrising = msg.getGet4Ts();
-          } else {
-             rec.lastfalling = msg.getGet4Ts();
+          rec.set_edge(msg.getGet4Edge(), msg.getGet4Ts());
 
-             rec.fWidth->Fill(rec.lastfalling - rec.lastrising);
-          }
+          double width = rec.calc_width();
+          if (width!=0.) rec.fWidth->Fill(width);
        }
 
     } else {
        TGo4Log::Error("Not found GET4 data for ROC0 in event %10.9f", ev->GetTriggerTime()*1e-9);
+    }
+
+    for (TGet4TestMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++) {
+
+       TGet4TestMap::iterator next = iter;
+       next++;
+       if (next == fMap.end()) next = fMap.begin();
+
+       TGet4TestRec& rec1 = iter->second;
+       TGet4TestRec& rec2 = next->second;
+
+       if (rec1.isrising && rec2.isrising) {
+
+          double diff = rec2.lastrising*50. - rec1.lastrising*50.;
+
+          rec1.fDiffRising->Fill(diff);
+       }
     }
 
     unsigned indx=0;

@@ -464,7 +464,7 @@ bool base::StreamProc::SkipBuffers(unsigned num_skip)
    // local triggers must be cleanup by other means,
    // TODO: if it would not be possible, one could use front time of buffers to skip triggers
    if (fLocalTrig.size()>1000)
-      printf("Too much %u local trigger remaining - why\n?", fLocalTrig.size());
+      printf("Too much %u local trigger remaining - why\n?", (unsigned) fLocalTrig.size());
 
    if (fQueueScanIndex>=num_skip) {
       fQueueScanIndex-=num_skip;
