@@ -29,6 +29,9 @@ get4::Processor::Processor(unsigned rocid, unsigned get4mask) :
 {
    mgr()->RegisterProc(this, base::proc_RocEvent, rocid);
 
+   mgr()->RegisterProc(this, base::proc_RawData, rocid);
+
+
 //   printf("Start histo creation\n");
 
    fMsgsKind = MakeH1("MsgKind", "kind of messages", 8, 0, 8, "xbin:NOP,-,EPOCH,SYNC,AUX,EPOCH2,GET4,SYS;kind");
