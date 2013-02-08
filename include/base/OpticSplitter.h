@@ -16,11 +16,12 @@ namespace base {
     * Current ABB firmware mix data from all ROCs together, therefore
     * OpticSplitter required to resort raw data per buffer.  */
 
-   typedef std::map<unsigned,base::SysCoreProc*> SysCoreMap;
-
    class OpticSplitter : public base::StreamProc {
 
       friend class SysCoreProc;
+
+      typedef std::map<unsigned,base::SysCoreProc*> SysCoreMap;
+
 
       protected:
 

@@ -13,14 +13,18 @@
 double nx::Processor::fNXDisorderTm = 17e-6;
 bool nx::Processor::fLastEpochCorr = false;
 
-nx::Processor::Processor(unsigned rocid, unsigned nxmask) :
+nx::Processor::Processor(unsigned rocid, unsigned nxmask, base::OpticSplitter* spl) :
    base::SysCoreProc("ROC", rocid),
    fIter(),
    fIter2()
 {
-   mgr()->RegisterProc(this, base::proc_RocEvent, rocid);
+   // only if configured without splitter,
+   // processor should subscribe for data
 
-   mgr()->RegisterProc(this, base::proc_RawData, rocid);
+   if (spl==0) {
+      mgr()->RegisterProc(this, base::proc_RocEvent, rocid);
+      mgr()->RegisterProc(this, base::proc_RawData, rocid);
+   }
 
 //   printf("Start histo creation\n");
 
@@ -85,10 +89,12 @@ void nx::Processor::AssignBufferTo(nx::Iterator& iter, const base::Buffer& buf)
    iter.setFormat(buf().format);
    iter.setRocNumber(buf().boardid);
 
-   unsigned msglen = nx::Message::RawSize(buf().format);
-
-   // we exclude last message which is duplication of SYNC
-   iter.assign(buf().buf, buf().datalen - msglen);
+   if (buf().kind == base::proc_RocEvent) {
+      unsigned msglen = nx::Message::RawSize(buf().format);
+      // we exclude last message which is duplication of SYNC
+      iter.assign(buf().buf, buf().datalen - msglen);
+   } else
+      iter.assign(buf().buf, buf().datalen);
 }
 
 

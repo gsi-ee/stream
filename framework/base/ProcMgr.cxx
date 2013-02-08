@@ -66,13 +66,12 @@ bool base::ProcMgr::RegisterProc(StreamProc* proc, unsigned kind, unsigned brdid
    return true;
 }
 
+
 void base::ProcMgr::SetTimeSorting(bool on)
 {
    for (unsigned n=0;n<fProc.size();n++)
       fProc[n]->SetTimeSorting(on);
-
 }
-
 
 
 void base::ProcMgr::ProvideRawData(const Buffer& buf)

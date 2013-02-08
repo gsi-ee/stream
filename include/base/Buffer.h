@@ -60,7 +60,11 @@ namespace base {
 
          RawDataRec& rec() const { return *fRec; }
 
+         /** Returns length of memory buffer */
          unsigned datalen() const { return fRec ? fRec->datalen : 0; }
+
+         /** Change length of memory buffer - only can be reduced */
+         bool setdatalen(unsigned newlen);
 
          void* ptr(unsigned shift = 0) const { return fRec ? (shift <= fRec->datalen ? (char*)fRec->buf + shift : 0) : 0; }
 

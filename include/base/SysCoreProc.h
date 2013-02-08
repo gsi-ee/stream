@@ -5,6 +5,8 @@
 
 namespace base {
 
+   class OpticSplitter;
+
    /** SysCoreProc is base class for many processors of data,
     *  provided by SysCore2/3 boards.
     *  Main idea is to collect common settings/methods for SysCore variants like:
@@ -13,6 +15,8 @@ namespace base {
     *  for time synchronization. */
 
    class SysCoreProc : public base::StreamProc {
+
+      friend class OpticSplitter;
 
       protected:
          unsigned  fSyncSource;    // 0,1: SYNC0,1 used for synchronization,  >=2: local time used for time stamp
@@ -30,6 +34,11 @@ namespace base {
 
          static unsigned fMaxBrdId;  //! maximum allowed board id, used for histogramming
 
+         // this part is dedicated for OpticSplitter and should not be touched
+         Buffer    fSplitBuf;         //! temporary buffer for splitting
+         uint64_t* fSplitPtr;         //! current position for split data
+
+
          /** Returns true when processor used to select trigger signal
           * In subclass one could have alternative ways of trigger or ROI selections */
          virtual bool doTriggerSelection() const { return (fTriggerSignal < 4) || (fTriggerSignal==10) || (fTriggerSignal==11); }
@@ -42,7 +51,7 @@ namespace base {
 
       public:
 
-         SysCoreProc(const char* name, unsigned brdid);
+         SysCoreProc(const char* name, unsigned brdid, OpticSplitter* spl = 0);
          virtual ~SysCoreProc();
 
          /** Set signal id, used for time synchronization

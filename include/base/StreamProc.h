@@ -79,6 +79,8 @@ namespace base {
 
       protected:
 
+         enum { DummyBrdId = 0xffffffff };
+
          typedef std::vector<base::Buffer> BuffersQueue;
 
          typedef std::vector<base::SyncMarker> SyncMarksQueue;
@@ -124,7 +126,7 @@ namespace base {
          base::C1handle fTriggerWindow;   //!<  window used for data selection
 
          /** Make constructor protected - no way to create base class instance */
-         StreamProc(const char* name = "", unsigned brdid = 0xffffffff);
+         StreamProc(const char* name = "", unsigned brdid = DummyBrdId, bool basehist = true);
 
          void SetBoardId(unsigned id) { fBoardId = id; }
 

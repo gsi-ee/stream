@@ -38,7 +38,7 @@ int base::GlobalTriggerMarker::TestHitTime(const GlobalTime_t& hittime, double* 
 
 // ====================================================================
 
-base::StreamProc::StreamProc(const char* name, unsigned brdid) :
+base::StreamProc::StreamProc(const char* name, unsigned brdid, bool basehist) :
    fName(name),
    fBoardId(0),
    fMgr(0),
@@ -59,7 +59,7 @@ base::StreamProc::StreamProc(const char* name, unsigned brdid) :
    fSubPrefixD(),
    fSubPrefixN()
 {
-   if (brdid < 0xffffffff) {
+   if (brdid < DummyBrdId) {
       char sbuf[100];
       snprintf(sbuf, sizeof(sbuf), "%u", brdid);
       fName.append(sbuf);
@@ -70,9 +70,11 @@ base::StreamProc::StreamProc(const char* name, unsigned brdid) :
 
    fMgr = base::ProcMgr::AddProc(this);
 
-   fTriggerTm = MakeH1("TriggerTm", "Time relative to trigger", 2500, -1e-6, 4e-6, "s");
-   fMultipl = MakeH1("Multipl", "Subevent multiplicity", 40, 0., 40., "hits");
-   fTriggerWindow = MakeC1("TrWindow", 5e-7, 10e-7, fTriggerTm);
+   if (basehist) {
+      fTriggerTm = MakeH1("TriggerTm", "Time relative to trigger", 2500, -1e-6, 4e-6, "s");
+      fMultipl = MakeH1("Multipl", "Subevent multiplicity", 40, 0., 40., "hits");
+      fTriggerWindow = MakeC1("TrWindow", 5e-7, 10e-7, fTriggerTm);
+   }
 }
 
 

@@ -12,6 +12,19 @@ void base::Buffer::reset()
    }
 }
 
+bool base::Buffer::setdatalen(unsigned newlen)
+{
+   if (newlen>datalen()) return false;
+
+   if (newlen==0)
+      reset();
+   else
+      fRec->datalen = newlen;
+
+   return true;
+}
+
+
 void base::Buffer::makenew(unsigned datalen)
 {
    reset();

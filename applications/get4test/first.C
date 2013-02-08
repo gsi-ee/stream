@@ -1,7 +1,10 @@
-{
+void first() {
    // base::ProcMgr::instance()->SetRawAnalysis(false);
 
-   get4::Processor* proc = new get4::Processor(0, 0x30);
+   // this is just for testing, we redirect data from splitter to processor
+   base::OpticSplitter* split = new base::OpticSplitter(0x0);
+
+   get4::Processor* proc = new get4::Processor(0, 0x30, split);
 
    // ignore all SYNC messages, do not use them for time synchronization
    proc->SetNoSyncSource();

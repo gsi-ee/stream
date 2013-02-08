@@ -2,20 +2,26 @@
 
 #include <stdio.h>
 
+#include "base/OpticSplitter.h"
+
 #include "base/ProcMgr.h"
 
 
 unsigned base::SysCoreProc::fMaxBrdId = 16;
 
-base::SysCoreProc::SysCoreProc(const char* name, unsigned brdid) :
+base::SysCoreProc::SysCoreProc(const char* name, unsigned brdid, OpticSplitter* spl) :
    base::StreamProc(name, brdid),
    fSyncSource(0),
    fTriggerSignal(0xff),
    fNumPrintMessages(0),
    fPrintLeft(-1.),
    fPrintRight(-1.),
-   fAnyPrinted(false)
+   fAnyPrinted(false),
+   fSplitBuf(),
+   fSplitPtr(0)
 {
+   if (spl!=0) spl->AddSub(this, brdid);
+
    char sbuf1[100], sbuf2[100];
    sprintf(sbuf1, "MsgPer%s", name);
    sprintf(sbuf2, "Number of messages per %s", name);

@@ -46,7 +46,7 @@ namespace nx {
 
       public:
 
-         Processor(unsigned rocid, unsigned nxmask = 0x5);
+         Processor(unsigned rocid, unsigned nxmask = 0x5, base::OpticSplitter* spl = 0);
          virtual ~Processor();
 
          /** Scan NX messages for SYNC, AUX and all other kind of messages */

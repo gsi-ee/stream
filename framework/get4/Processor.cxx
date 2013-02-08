@@ -22,15 +22,18 @@ get4::Get4Rec::Get4Rec() :
 
 
 
-get4::Processor::Processor(unsigned rocid, unsigned get4mask) :
-   base::SysCoreProc("ROC", rocid),
+get4::Processor::Processor(unsigned rocid, unsigned get4mask, base::OpticSplitter* spl) :
+   base::SysCoreProc("ROC", rocid, spl),
    fIter(),
    fIter2()
 {
-   mgr()->RegisterProc(this, base::proc_RocEvent, rocid);
+   // only if configured without splitter,
+   // processor should subscribe for data
 
-   mgr()->RegisterProc(this, base::proc_RawData, rocid);
-
+   if (spl==0) {
+      mgr()->RegisterProc(this, base::proc_RocEvent, rocid);
+      mgr()->RegisterProc(this, base::proc_RawData, rocid);
+   }
 
 //   printf("Start histo creation\n");
 
@@ -101,10 +104,12 @@ void get4::Processor::AssignBufferTo(get4::Iterator& iter, const base::Buffer& b
    iter.setFormat(buf().format);
    iter.setRocNumber(buf().boardid);
 
-   unsigned msglen = get4::Message::RawSize(buf().format);
-
-   // we exclude last message which is duplication of SYNC
-   iter.assign(buf().buf, buf().datalen - msglen);
+   if (buf().kind == base::proc_RocEvent) {
+      // we exclude last message which is duplication of SYNC
+      unsigned msglen = get4::Message::RawSize(buf().format);
+      iter.assign(buf().buf, buf().datalen - msglen);
+   } else
+      iter.assign(buf().buf, buf().datalen);
 }
 
 

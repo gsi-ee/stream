@@ -199,3 +199,10 @@ Without filling current NX code works 2x times faster
 3) Add leading edge difference to next channel in get4test
 4) Add possibility to ignore 250MHz times in get4 processor
    to avoid problems with unsynchronized clocks 
+   
+8.02.2013
+1) Support of raw data format for Get4 and nXYTER. Simple modification, while
+   complete analysis does not depends on position of SYNC messages in the buffers
+2) Introducing OpticSplitter, which is required to split data after raw
+   optic readout. In this case ABB put messages from all ROCs in one data stream.
+    
