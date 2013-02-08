@@ -12,7 +12,7 @@ namespace get4 {
    struct Get4Rec {
       bool used;
 
-      base::H1handle fChannels;  //! histogram with system types
+      base::H1handle fChannels;  //! histogram with channels
 
       base::H1handle fRisCoarseTm[NumChannels]; //! histograms of rising stamp for each channel
       base::H1handle fFalCoarseTm[NumChannels]; //! histograms of falling stamp for each channel
@@ -31,6 +31,7 @@ namespace get4 {
 
          base::H1handle fMsgsKind;   //! histogram with messages kinds
          base::H1handle fSysTypes;   //! histogram with system types
+         base::H1handle fMsgPerGet4;   //! histogram with system types
 
          std::vector<get4::Get4Rec> GET4;      //! usage masks for nxyters
 

@@ -2,9 +2,9 @@ void first() {
    // base::ProcMgr::instance()->SetRawAnalysis(false);
 
    // this is just for testing, we redirect data from splitter to processor
-   base::OpticSplitter* split = new base::OpticSplitter(0x0);
+   // base::OpticSplitter* split = new base::OpticSplitter(0x0);
 
-   get4::Processor* proc = new get4::Processor(0, 0x30, split);
+   get4::Processor* proc = new get4::Processor(0, 0x3);
 
    // ignore all SYNC messages, do not use them for time synchronization
    proc->SetNoSyncSource();
@@ -13,7 +13,7 @@ void first() {
    proc->SetIgnore250Mhz();
 
    // use channel 0 on Get4 as reference
-   proc->setRefChannel(4, 0);
+   proc->setRefChannel(0, 0);
 
    // use this window to extract signals around reference
    proc->SetTriggerWindow(-1e-6, 1e-6);

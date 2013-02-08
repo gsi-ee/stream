@@ -39,6 +39,7 @@ get4::Processor::Processor(unsigned rocid, unsigned get4mask, base::OpticSplitte
 
    fMsgsKind = MakeH1("MsgKind", "kind of messages", 8, 0, 8, "xbin:NOP,-,EPOCH,SYNC,AUX,EPOCH2,GET4,SYS;kind");
    fSysTypes = MakeH1("SysTypes", "Distribution of system messages", 16, 0, 16, "systype");
+   fMsgPerGet4 = MakeH1("PerGet4", "Distribution of hits between Get4", 16, 0, 16, "get4");
 
    CreateBasicHistograms();
 
@@ -187,6 +188,8 @@ bool get4::Processor::FirstBufferScan(const base::Buffer& buf)
             // must be ignored
 
             unsigned get4 = msg.getGet4Number();
+
+            FillH1(fMsgPerGet4, get4);
             if (!get4_in_use(get4)) break;
 
             unsigned ch = msg.getGet4ChNum();
@@ -219,6 +222,9 @@ bool get4::Processor::FirstBufferScan(const base::Buffer& buf)
          }
 
          case base::MSG_EPOCH2: {
+
+            // should we fill here histogram? we will not see normal hits
+            // FillH1(fMsgPerGet4, msg.getEpoch2ChipNumber());
             break;
          }
 
