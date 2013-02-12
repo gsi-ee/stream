@@ -1,12 +1,13 @@
 #ifndef BASE_STREAMPROC_H
 #define BASE_STREAMPROC_H
 
-#include <vector>
-
 #include <string>
 
 #include "base/Buffer.h"
-#include "base/SubEvent.h"
+
+#include "base/Markers.h"
+
+#include "base/ProcMgr.h"
 
 namespace base {
 
@@ -15,64 +16,7 @@ namespace base {
     * Main motivation for the class is unify way how data-streams can be processed
     * and how all kind of time calculations could be done.  */
 
-   class ProcMgr;
    class Event;
-
-   typedef void* H1handle;
-   typedef void* H2handle;
-   typedef void* C1handle;
-
-
-   struct SyncMarker {
-      unsigned      uniqueid;    //!< unique identifier for marker like 24-bit number of SYNC message
-      unsigned      localid;     //!< some local id, custom number for each subsystem
-      LocalStamp_t  local_stamp; //!< 64-bit integer for local stamp representation
-      GlobalTime_t  localtm;     //!< local time (ns),
-      GlobalTime_t  globaltm;    //!< global time (ns), used for all selections
-      unsigned      bufid;       //!< use it for keep reference from which buffer it is
-
-      SyncMarker() : uniqueid(0), localid(0), local_stamp(0), localtm(0.), globaltm(0.), bufid(0) {}
-   };
-
-
-   struct LocalTriggerMarker {
-      GlobalTime_t  localtm;     //!< local time in ns,
-      unsigned      localid;     //!< arbitrary id, like aux number or sync number
-
-      LocalTriggerMarker() : localtm(0.), localid(0)  {}
-   };
-
-
-   struct GlobalTriggerMarker {
-      GlobalTime_t globaltm;     //!< global time - reference time of marker
-      GlobalTime_t lefttm;       //!< left range for hit selection
-      GlobalTime_t righttm;      //!< right range for hit selection
-
-      SubEvent*     subev;        //!< structure with data, selected for the trigger, ownership
-      bool          isflush;      //!< indicate that trigger is just for flushing, no real data is important
-
-      GlobalTriggerMarker(GlobalTime_t tm = 0.) :
-         globaltm(tm), lefttm(0.), righttm(0.), subev(0), isflush(false) {}
-
-      GlobalTriggerMarker(const GlobalTriggerMarker& src) :
-         globaltm(src.globaltm), lefttm(src.lefttm), righttm(src.righttm), subev(src.subev), isflush(src.isflush) {}
-
-      ~GlobalTriggerMarker() { /** should we here destroy subevent??? */ }
-
-      bool null() const { return globaltm<=0.; }
-      void reset() { globaltm = 0.; isflush = false; }
-
-      /** return true when interval defines normal event */
-      bool normal() const { return !isflush; }
-
-      void SetInterval(double left, double right);
-
-      int TestHitTime(const GlobalTime_t& hittime, double* dist = 0);
-   };
-
-
-   typedef std::vector<base::GlobalTriggerMarker> GlobalTriggerMarksQueue;
-
 
    class StreamProc {
       friend class ProcMgr;
@@ -135,10 +79,16 @@ namespace base {
          void SetSubPrefix(const char* subname = "", int indx = -1, const char* subname2 = "", int indx2 = -1);
 
          H1handle MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle = 0);
-         void FillH1(H1handle h1, double x, double weight = 1.);
+         inline void FillH1(H1handle h1, double x, double weight = 1.)
+         {
+            if (IsHistFilling()) mgr()->FillH1(h1, x, weight);
+         }
 
          H2handle MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options = 0);
-         void FillH2(H1handle h2, double x, double y, double weight = 1.);
+         inline void FillH2(H1handle h2, double x, double y, double weight = 1.)
+         {
+            if (IsHistFilling()) mgr()->FillH2(h2, x, y, weight);
+         }
 
          C1handle MakeC1(const char* name, double left, double right, H1handle h1 = 0);
          void ChangeC1(C1handle c1, double left, double right);

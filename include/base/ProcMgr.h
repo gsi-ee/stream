@@ -4,8 +4,9 @@
 #include <vector>
 #include <map>
 
+#include "base/defines.h"
 #include "base/Buffer.h"
-#include "base/StreamProc.h"
+#include "base/Markers.h"
 #include "base/Event.h"
 
 namespace base {
@@ -13,6 +14,8 @@ namespace base {
    /** Class base::ProcMgr is central manager of processors and interface
     * to any external frameworks like ROOT or Go4 or ...
     * It is singleton - the only instance for whole system  */
+
+   class StreamProc;
 
    class ProcMgr {
 

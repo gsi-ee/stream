@@ -7,37 +7,6 @@
 #include "base/ProcMgr.h"
 #include "base/Event.h"
 
-void base::GlobalTriggerMarker::SetInterval(double left, double right)
-{
-   if (left>right) {
-      printf("left > right in time interval - failure\n");
-      exit(7);
-   }
-
-   lefttm = globaltm + left;
-   righttm = globaltm + right;
-}
-
-int base::GlobalTriggerMarker::TestHitTime(const GlobalTime_t& hittime, double* dist)
-{
-   // be aware that condition like [left, right) is tested
-   // therefore if left==right, hit will never be assigned to such condition
-
-   if (dist) *dist = 0.;
-   if (hittime < lefttm) {
-      if (dist) *dist = hittime - lefttm;
-      return -1;
-   } else
-   if (hittime >= righttm) {
-      if (dist) *dist = hittime - righttm;
-      return 1;
-   }
-   return 0;
-}
-
-
-// ====================================================================
-
 base::StreamProc::StreamProc(const char* name, unsigned brdid, bool basehist) :
    fName(name),
    fBoardId(0),
@@ -143,11 +112,6 @@ base::H1handle base::StreamProc::MakeH1(const char* name, const char* title, int
 }
 
 
-void base::StreamProc::FillH1(H1handle h1, double x, double weight)
-{
-   if (IsHistFilling()) mgr()->FillH1(h1, x, weight);
-}
-
 base::H2handle base::StreamProc::MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options)
 {
    std::string hname = fPrefix + "/";
@@ -162,11 +126,6 @@ base::H2handle base::StreamProc::MakeH2(const char* name, const char* title, int
    htitle.append(title);
 
    return mgr()->MakeH2(hname.c_str(), htitle.c_str(), nbins1, left1, right1, nbins2, left2, right2, options);
-}
-
-void base::StreamProc::FillH2(H1handle h2, double x, double y, double weight)
-{
-   if (IsHistFilling()) mgr()->FillH2(h2, x, y, weight);
 }
 
 

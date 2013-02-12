@@ -25,6 +25,12 @@ namespace base {
       proc_TRBEvent     = 31    //!< container for TRB frontend data
    };
 
+
+   typedef void* H1handle;
+   typedef void* H2handle;
+   typedef void* C1handle;
+
+
 }
 
 
