@@ -1,5 +1,5 @@
 void first() {
-   // base::ProcMgr::instance()->SetRawAnalysis(false);
+   // base::ProcMgr::instance()->SetRawAnalysis(true);
 
    // this is just for testing, we redirect data from splitter to processor
    // base::OpticSplitter* split = new base::OpticSplitter(0x0);
@@ -11,6 +11,10 @@ void first() {
 
    // ignore all 250 MHz messages for timing, useful when clocks are not synchronized
    proc->SetIgnore250Mhz();
+
+   // proc->SetRawScanOnly(true);
+
+   proc->SetHistFilling(false);
 
    // use channel 0 on Get4 as reference
    proc->setRefChannel(0, 0);

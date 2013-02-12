@@ -24,7 +24,7 @@ get4::Get4Rec::Get4Rec() :
 
 get4::Processor::Processor(unsigned rocid, unsigned get4mask, base::OpticSplitter* spl) :
    base::SysCoreProc("ROC", rocid, spl),
-   fIter(),
+   fIter1(),
    fIter2()
 {
    // only if configured without splitter,
@@ -119,9 +119,9 @@ bool get4::Processor::FirstBufferScan(const base::Buffer& buf)
 {
    if (buf.null()) return false;
 
-   AssignBufferTo(fIter, buf);
+   AssignBufferTo(fIter1, buf);
 
-   get4::Message& msg = fIter.msg();
+   get4::Message& msg = fIter1.msg();
 
    unsigned cnt(0), msgcnt(0);
 
@@ -133,12 +133,12 @@ bool get4::Processor::FirstBufferScan(const base::Buffer& buf)
 //   static int doprint = 1;
 //   static double mymarker = 4311410447414.;
 
-   while (fIter.next()) {
+   while (fIter1.next()) {
 
       cnt++;
 
       // ignore epoch message at the end of the buffer
-      if (fIter.islast() && msg.isEpochMsg()) continue;
+      if (fIter1.islast() && msg.isEpochMsg()) continue;
 
       unsigned rocid = msg.getRocNumber();
 
@@ -153,18 +153,18 @@ bool get4::Processor::FirstBufferScan(const base::Buffer& buf)
 
       // this time used for histograming and print selection
 
-      double localtm = fIter.getMsgTime();
+      double localtm = fIter1.getMsgTime();
 
 //      printf("kind: %u  localtm = %12.9f\n", msg.getMessageType(), localtm);
 
       double msgtm = localtm - floor(localtm/1000.)*1000.;
 
-//      fIter.printMessage(roc::msg_print_Human);
+//      fIter1.printMessage(roc::msg_print_Human);
 
       FillH1(fALLt, msgtm);
 
       if (CheckPrint(msgtm, 1e-6))
-         fIter.printMessage(base::msg_print_Human);
+         fIter1.printMessage(base::msg_print_Human);
 
       bool ignoremsg = false;
 
@@ -245,7 +245,7 @@ bool get4::Processor::FirstBufferScan(const base::Buffer& buf)
                base::SyncMarker marker;
                marker.uniqueid = msg.getSyncData();
                marker.localid = msg.getSyncChNum();
-               marker.local_stamp = fIter.getMsgStamp();
+               marker.local_stamp = fIter1.getMsgStamp();
                marker.localtm = localtm; // nx gave us time in ns
 
                // printf("ROC%u Find sync %u tm %6.3f\n", rocid, marker.uniqueid, marker.localtm*1e-9);
@@ -312,6 +312,9 @@ bool get4::Processor::SecondBufferScan(const base::Buffer& buf)
 {
    if (buf.null()) return false;
 
+//   printf("get4::Processor::SecondBufferScan  left %u  right %u totalsize %u  max disorder %f\n",
+//           fGlobalTrigScanIndex, fGlobalTrigRightIndex, (unsigned) fGlobalTrig.size(), MaximumDisorderTm());
+
 //   printf("Start second buffer scan left %u  right %u  size %u\n", lefttrig, righttrig, fGlobalTrig.size());
 //   for (unsigned n=0;n<fGlobalTrig.size();n++)
 //      printf("TRIG %u %12.9f flush:%u\n", n, fGlobalTrig[n].globaltm*1e-9, fGlobalTrig[n].isflush);
@@ -372,6 +375,9 @@ bool get4::Processor::SecondBufferScan(const base::Buffer& buf)
       } // switch
 
    }
+
+//   printf("get4::Processor::SecondBufferScan  left %u  right %u totalsize %u  done\n",
+//           fGlobalTrigScanIndex, fGlobalTrigRightIndex, (unsigned) fGlobalTrig.size());
 
    return true;
 }

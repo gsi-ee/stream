@@ -99,6 +99,7 @@ namespace base {
          unsigned     fQueueScanIndexTm;          //!< index of buffer to scan and set correct times of the buffer head
 
          bool         fRawScanOnly;               //!< indicates if only raw scan will be done, processor will not be used for any data selection
+         bool         fHistFilling;               //!< indicates if histograms should be fillled
 
          bool            fIsSynchronisationRequired; //!< true if sync is required
          SyncMarksQueue  fSyncs;                  //!< list of sync markers
@@ -143,11 +144,6 @@ namespace base {
          void ChangeC1(C1handle c1, double left, double right);
          int TestC1(C1handle c1, double value, double* dist = 0);
          double GetC1Limit(C1handle c1, bool isleft = true);
-
-
-         /** Method set raw-scan only mode for processor
-          * Processor will not be used for any data selection */
-         void SetRawScanOnly(bool on = true) { fRawScanOnly = on; }
 
          /** Method indicate if any kind of time-synchronization technique
           * should be applied for the processor.
@@ -226,8 +222,13 @@ namespace base {
          virtual void SetTriggerWindow(double left, double right)
          { ChangeC1(fTriggerWindow, left, right); }
 
-
+         /** Method set raw-scan only mode for processor
+          * Processor will not be used for any data selection */
+         void SetRawScanOnly(bool on = true) { fRawScanOnly = on; }
          bool IsRawScanOnly() const { return fRawScanOnly; }
+
+         void SetHistFilling(bool on = true) { fHistFilling = on; }
+         bool IsHistFilling() const { return fHistFilling; }
 
          /** Method indicate if any kind of time-synchronization technique
           * should be applied for the processor.

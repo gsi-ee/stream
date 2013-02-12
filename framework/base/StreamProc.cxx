@@ -46,6 +46,7 @@ base::StreamProc::StreamProc(const char* name, unsigned brdid, bool basehist) :
    fQueueScanIndex(0),
    fQueueScanIndexTm(0),
    fRawScanOnly(false),
+   fHistFilling(true),
    fIsSynchronisationRequired(true),
    fSyncs(),
    fSyncScanIndex(0),
@@ -144,7 +145,7 @@ base::H1handle base::StreamProc::MakeH1(const char* name, const char* title, int
 
 void base::StreamProc::FillH1(H1handle h1, double x, double weight)
 {
-   mgr()->FillH1(h1, x, weight);
+   if (IsHistFilling()) mgr()->FillH1(h1, x, weight);
 }
 
 base::H2handle base::StreamProc::MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options)
@@ -165,7 +166,7 @@ base::H2handle base::StreamProc::MakeH2(const char* name, const char* title, int
 
 void base::StreamProc::FillH2(H1handle h2, double x, double y, double weight)
 {
-   mgr()->FillH2(h2, x, y, weight);
+   if (IsHistFilling()) mgr()->FillH2(h2, x, y, weight);
 }
 
 
@@ -616,7 +617,6 @@ bool base::StreamProc::AppendSubevent(base::Event* evt)
 //   for (unsigned n=0;n<fGlobalTrig.size();n++)
 //      printf("TRIG %u %12.9f\n", n, fGlobalTrig[n].globaltm*1e-9);
 
-
    return true;
 }
 
@@ -648,6 +648,8 @@ unsigned base::StreamProc::TestHitTime(const base::GlobalTime_t& hittime, bool n
           }
 
           if (test==0) {
+//             printf("Assign hit to evnt %3u  left %3u\n", indx, fGlobalTrigScanIndex);
+
              res_indx = indx;
              break;
           }
@@ -677,6 +679,10 @@ unsigned base::StreamProc::TestHitTime(const base::GlobalTime_t& hittime, bool n
           // distance will be negative
        }
     }
+
+//   if (res_indx == fGlobalTrig.size()) {
+//      printf("non-assigned hit\n");
+//   }
 
    // account hit time in histogram
    if (normal_hit && (best_indx<fGlobalTrig.size()))

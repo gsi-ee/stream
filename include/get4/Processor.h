@@ -26,7 +26,7 @@ namespace get4 {
 
       protected:
 
-         get4::Iterator fIter;  //! first iterator over all messages
+         get4::Iterator fIter1;  //! first iterator over all messages
          get4::Iterator fIter2;  //! second iterator over all messages
 
          base::H1handle fMsgsKind;   //! histogram with messages kinds

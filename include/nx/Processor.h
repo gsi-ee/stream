@@ -20,7 +20,7 @@ namespace nx {
    class Processor : public base::SysCoreProc {
 
       protected:
-         nx::Iterator fIter;  //! first iterator over all messages
+         nx::Iterator fIter1;  //! first iterator over all messages
          nx::Iterator fIter2;  //! second iterator over all messages
 
          base::H1handle fMsgsKind;   //! histogram with messages kinds

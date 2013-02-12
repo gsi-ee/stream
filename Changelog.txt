@@ -206,3 +206,6 @@ Without filling current NX code works 2x times faster
 2) Introducing OpticSplitter, which is required to split data after raw
    optic readout. In this case ABB put messages from all ROCs in one data stream.
     
+    
+12.02.2013
+1) Add possibility to switch on/off histogram filling

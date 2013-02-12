@@ -15,7 +15,7 @@ bool nx::Processor::fLastEpochCorr = false;
 
 nx::Processor::Processor(unsigned rocid, unsigned nxmask, base::OpticSplitter* spl) :
    base::SysCoreProc("ROC", rocid),
-   fIter(),
+   fIter1(),
    fIter2()
 {
    // only if configured without splitter,
@@ -67,7 +67,7 @@ nx::Processor::Processor(unsigned rocid, unsigned nxmask, base::OpticSplitter* s
    fNumCorrHits = 0;
 
    if (IsLastEpochCorr()) {
-      fIter.SetCorrection(true, nxmask);
+      fIter1.SetCorrection(true, nxmask);
       fIter2.SetCorrection(true, nxmask);
    }
 }
@@ -103,9 +103,9 @@ bool nx::Processor::FirstBufferScan(const base::Buffer& buf)
 {
    if (buf.null()) return false;
 
-   AssignBufferTo(fIter, buf);
+   AssignBufferTo(fIter1, buf);
 
-   nx::Message& msg = fIter.msg();
+   nx::Message& msg = fIter1.msg();
 
    unsigned cnt(0), msgcnt(0);
 
@@ -117,12 +117,12 @@ bool nx::Processor::FirstBufferScan(const base::Buffer& buf)
 //   static int doprint = 0;
 //   static double mymarker = 4311410447414.;
 
-   while (fIter.next()) {
+   while (fIter1.next()) {
 
       cnt++;
 
       // ignore epoch message at the end of the buffer
-      if (fIter.islast() && msg.isEpochMsg()) continue;
+      if (fIter1.islast() && msg.isEpochMsg()) continue;
 
       unsigned rocid = msg.getRocNumber();
 
@@ -135,7 +135,7 @@ bool nx::Processor::FirstBufferScan(const base::Buffer& buf)
 
       FillH1(fMsgsKind, msg.getMessageType());
 
-      double localtm = fIter.getMsgTime();
+      double localtm = fIter1.getMsgTime();
       // this time used for histograming and print selection
       double msgtm = localtm - floor(localtm/1000.)*1000.;
 
@@ -157,8 +157,8 @@ bool nx::Processor::FirstBufferScan(const base::Buffer& buf)
 
             fNumHits++;
 
-            if (fIter.IsCorrection()) {
-               isok = fIter.LastCorrectionRes();
+            if (fIter1.IsCorrection()) {
+               isok = fIter1.LastCorrectionRes();
                if ((isok==-1) || (isok==-5)) fNumCorrHits++; else
                if (isok<0) fNumBadHits++;
             }
@@ -193,7 +193,7 @@ bool nx::Processor::FirstBufferScan(const base::Buffer& buf)
                base::SyncMarker marker;
                marker.uniqueid = msg.getSyncData();
                marker.localid = msg.getSyncChNum();
-               marker.local_stamp = fIter.getMsgStamp();
+               marker.local_stamp = fIter1.getMsgStamp();
                marker.localtm = localtm; // nx gave us time in ns
 
                // printf("ROC%u Find sync %u tm %12.9f\n", rocid, marker.uniqueid, marker.localtm);
@@ -248,7 +248,7 @@ bool nx::Processor::FirstBufferScan(const base::Buffer& buf)
       // keep time of first non-epoch message as start point of the buffer
       if (first && !msg.isEpochMsg()) {
          first = false;
-         buf().local_tm = fIter.getMsgTime(); // nx-based is always in ns
+         buf().local_tm = fIter1.getMsgTime(); // nx-based is always in ns
 
          // printf("Assign buf time %12.9f\n", buf().local_tm);
       }
@@ -263,7 +263,7 @@ bool nx::Processor::FirstBufferScan(const base::Buffer& buf)
             case -5: printf("msb "); break;
             default: printf("    "); break;
          }
-         fIter.printMessage(base::msg_print_Human);
+         fIter1.printMessage(base::msg_print_Human);
       }
    }
 

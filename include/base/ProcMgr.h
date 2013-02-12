@@ -15,6 +15,7 @@ namespace base {
     * It is singleton - the only instance for whole system  */
 
    class ProcMgr {
+
       protected:
 
          enum { MaxBrdId = 256 };
