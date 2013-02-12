@@ -25,9 +25,9 @@ namespace base {
 
          enum { DummyBrdId = 0xffffffff };
 
-         typedef std::vector<base::Buffer> BuffersQueue;
+         typedef RecordsQueue<base::Buffer, false> BuffersQueue;
 
-         typedef std::vector<base::SyncMarker> SyncMarksQueue;
+         typedef RecordsQueue<base::SyncMarker, false> SyncMarksQueue;
 
          std::string fName;                       //! processor name, used for event naming
 
@@ -68,7 +68,8 @@ namespace base {
 
          base::C1handle fTriggerWindow;   //!<  window used for data selection
 
-         static unsigned fQueueCapacity;   //!< maximum number of items in the queue
+         static unsigned fMarksQueueCapacity;   //!< maximum number of items in the marksers queue
+         static unsigned fBufsQueueCapacity;   //!< maximum number of items in the queue
 
          /** Make constructor protected - no way to create base class instance */
          StreamProc(const char* name = "", unsigned brdid = DummyBrdId, bool basehist = true);
@@ -204,7 +205,7 @@ namespace base {
          /** Returns total number of sync markers */
          unsigned numSyncs() const { return fSyncs.size(); }
          unsigned numReadySyncs() const { return fSyncScanIndex; }
-         SyncMarker& getSync(unsigned n) { return fSyncs[n]; }
+         SyncMarker& getSync(unsigned n) { return fSyncs.item(n); }
          unsigned findSyncWithId(unsigned syncid) const;
 
          /** Method to deliver detected triggers from processor to central manager */
@@ -237,7 +238,9 @@ namespace base {
          virtual bool SecondBufferScan(const base::Buffer& buf) { return false; }
 
 
-         static void SetQueueCapacity(unsigned sz) { fQueueCapacity = sz; }
+         static void SetMarksQueueCapacity(unsigned sz) { fMarksQueueCapacity = sz; }
+         static void SetBufsQueueCapacity(unsigned sz) { fBufsQueueCapacity = sz; }
+
    };
 
 }

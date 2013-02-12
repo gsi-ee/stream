@@ -172,7 +172,7 @@ namespace base {
             return i_tgt != i_src;
          }
 
-         bool RemoveItem(unsigned indx)
+         bool erase_item(unsigned indx)
          {
             if (indx>=fSize) return false;
 
@@ -204,7 +204,7 @@ namespace base {
                if (fHead==fBorder) fHead = fQueue;
                fSize++;
             } else {
-               throw std::runtime_error("No more space in fixed queue size");
+               throw std::runtime_error("No more space in fixed-size queue");
             }
          }
 
@@ -261,7 +261,7 @@ namespace base {
             return *item;
          }
 
-         T* ItemPtr(unsigned indx) const
+         T* item_ptr(unsigned indx) const
          {
             #ifdef DABC_EXTRA_CHECKS
             if (indx>=fSize) {
@@ -342,7 +342,7 @@ namespace base {
 
          T& item(unsigned indx) const { return Parent::item(indx); }
 
-         T* ItemPtr(unsigned indx) const { return Parent::ItemPtr(indx); }
+         T* item_ptr(unsigned indx) const { return Parent::item_ptr(indx); }
 
          void pop() { front().reset(); Parent::pop(); }
 
@@ -354,6 +354,15 @@ namespace base {
          }
 
 
+         void pop_items(unsigned cnt)
+         {
+            if (cnt>=size()) {
+               clear();
+            } else {
+               while (cnt-->0) pop();
+            }
+         }
+
          void clear()
          {
             if (Parent::fCapacity != Parent::fInitSize) {
@@ -363,6 +372,17 @@ namespace base {
                   item(n).reset();
                Parent::clear();
             }
+         }
+
+         bool erase_item(unsigned indx)
+         {
+            bool res = Parent::erase_item(indx);
+
+            // after item was removed from inside queue,
+            // head element now pointer on item which was not cleared
+            if (res) Parent::fHead->reset();
+
+            return res;
          }
 
 

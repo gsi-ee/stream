@@ -18,6 +18,10 @@ namespace base {
       unsigned      bufid;       //!< use it for keep reference from which buffer it is
 
       SyncMarker() : uniqueid(0), localid(0), local_stamp(0), localtm(0.), globaltm(0.), bufid(0) {}
+
+      SyncMarker(const SyncMarker& src) : uniqueid(src.uniqueid), localid(src.localid), local_stamp(src.local_stamp), localtm(src.localtm), globaltm(src.globaltm), bufid(src.bufid) {}
+
+      void reset() { uniqueid=0; localid=0; local_stamp=0; localtm=0; globaltm=0; bufid=0; }
    };
 
 

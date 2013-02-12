@@ -209,3 +209,12 @@ Without filling current NX code works 2x times faster
     
 12.02.2013
 1) Add possibility to switch on/off histogram filling
+2) Copy and modify Queue and RecordsQueue classes from DABC.
+   They allow to allocate and use fixed-space queue for complex
+   data types.
+3) Replacement of std::vectors by Queue class gave significant 
+   improvement in get4test, where long markers queue (~2000 items) are used.
+   Each vector::erase() operation is too expensive, where Queue::pop() 
+   does mostly nothing.
+4) As last change, RecordsQueue used for buffers queue. 
+   Probably not important for performance, but unified all queues.  
