@@ -207,7 +207,7 @@ bool nx::Processor::FirstBufferScan(const base::Buffer& buf)
 
             if (fTriggerSignal == (10 + sync_ch)) {
 
-               base::LocalTriggerMarker marker;
+               base::LocalTimeMarker marker;
                marker.localid = 10 + sync_ch;
                marker.localtm = localtm;
 
@@ -226,7 +226,7 @@ bool nx::Processor::FirstBufferScan(const base::Buffer& buf)
 
             if (fTriggerSignal == auxid) {
 
-               base::LocalTriggerMarker marker;
+               base::LocalTimeMarker marker;
                marker.localid = auxid;
                marker.localtm = localtm;
 

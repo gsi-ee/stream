@@ -200,7 +200,7 @@ bool get4::Processor::FirstBufferScan(const base::Buffer& buf)
             FillH1(GET4[get4].fChannels, ch + edge*0.5);
 
             if (fRefChannelId == get4 * 100 + ch*10 + edge) {
-               base::LocalTriggerMarker marker;
+               base::LocalTimeMarker marker;
                marker.localid = (get4+1) * 100 + ch*10 + edge;
                marker.localtm = localtm;
 
@@ -259,7 +259,7 @@ bool get4::Processor::FirstBufferScan(const base::Buffer& buf)
 
             if (fTriggerSignal == (10 + sync_ch)) {
 
-               base::LocalTriggerMarker marker;
+               base::LocalTimeMarker marker;
                marker.localid = 10 + sync_ch;
                marker.localtm = localtm;
 
@@ -279,7 +279,7 @@ bool get4::Processor::FirstBufferScan(const base::Buffer& buf)
 
             if (fTriggerSignal == auxid) {
 
-               base::LocalTriggerMarker marker;
+               base::LocalTimeMarker marker;
                marker.localid = auxid;
                marker.localtm = localtm;
 

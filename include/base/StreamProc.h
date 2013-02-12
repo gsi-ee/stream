@@ -29,8 +29,6 @@ namespace base {
 
          typedef std::vector<base::SyncMarker> SyncMarksQueue;
 
-         typedef std::vector<base::LocalTriggerMarker> LocalTriggerMarksQueue;
-
          std::string fName;                       //! processor name, used for event naming
 
          unsigned   fBoardId;                     //! identifier, used mostly for debugging
@@ -50,7 +48,7 @@ namespace base {
          unsigned        fSyncScanIndex;          //!< sync scan index, indicate number of syncs which can really be used for synchronization
          bool            fSyncFlag;               //!< boolean, used in sync adjustment procedure
 
-         LocalTriggerMarksQueue fLocalTrig;       //!< list of local triggers
+         LocalMarkersQueue  fLocalMarks;          //!< queue with local markers
          double          fTriggerAcceptMaring;    //!< time margin (in local time) to accept new trigger
          GlobalTime_t    fLastLocalTriggerTm;     //!< time of last local trigger
 
@@ -69,6 +67,8 @@ namespace base {
          base::H1handle fMultipl;    //! histogram of event multiplicity
 
          base::C1handle fTriggerWindow;   //!<  window used for data selection
+
+         static unsigned fQueueCapacity;   //!< maximum number of items in the queue
 
          /** Make constructor protected - no way to create base class instance */
          StreamProc(const char* name = "", unsigned brdid = DummyBrdId, bool basehist = true);
@@ -106,7 +106,7 @@ namespace base {
          /** Add new local trigger.
            * Method first proves that new trigger marker stays in time order
            *  and have minimal distance to previous trigger */
-         bool AddTriggerMarker(LocalTriggerMarker& marker, double tm_range = 0.);
+         bool AddTriggerMarker(LocalTimeMarker& marker, double tm_range = 0.);
 
          /** Method converts local time (in ns representation) to global time
           * TODO: One could introduce more precise method, which works with stamps*/
@@ -235,6 +235,9 @@ namespace base {
          /** Second generic scan of buffer
           * Here selection of data for region-of-interest should be performed */
          virtual bool SecondBufferScan(const base::Buffer& buf) { return false; }
+
+
+         static void SetQueueCapacity(unsigned sz) { fQueueCapacity = sz; }
    };
 
 }

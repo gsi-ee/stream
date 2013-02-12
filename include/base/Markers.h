@@ -5,6 +5,8 @@
 
 #include "base/TimeStamp.h"
 
+#include "base/Queue.h"
+
 namespace base {
 
    class SubEvent;
@@ -21,13 +23,20 @@ namespace base {
    };
 
 
-   struct LocalTriggerMarker {
+   struct LocalTimeMarker {
       GlobalTime_t  localtm;     //!< local time in ns,
       unsigned      localid;     //!< arbitrary id, like aux number or sync number
 
-      LocalTriggerMarker() : localtm(0.), localid(0)  {}
+      LocalTimeMarker() : localtm(0.), localid(0)  {}
+
+      // ~LocalTimeMarker() {}
+
+      void reset() {} // we need function, but it is not really used while no memory allocation
    };
 
+   typedef RecordsQueue<LocalTimeMarker, false> LocalMarkersQueue;
+
+   // =========================================================================
 
    struct GlobalTriggerMarker {
       GlobalTime_t globaltm;     //!< global time - reference time of marker

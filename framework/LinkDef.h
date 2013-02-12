@@ -18,7 +18,7 @@
 #pragma link C++ class base::OpticSplitter+;
 #pragma link C++ class base::ProcMgr+;
 #pragma link C++ class base::SyncMarker+;
-#pragma link C++ class base::LocalTriggerMarker+;
+#pragma link C++ class base::LocalTimeMarker+;
 #pragma link C++ class base::GlobalTriggerMarker+;
 #pragma link C++ typedef base::H1handle;
 #pragma link C++ typedef base::H2handle;

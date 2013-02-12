@@ -7,6 +7,8 @@
 #include "base/ProcMgr.h"
 #include "base/Event.h"
 
+unsigned base::StreamProc::fQueueCapacity = 10000;
+
 base::StreamProc::StreamProc(const char* name, unsigned brdid, bool basehist) :
    fName(name),
    fBoardId(0),
@@ -19,7 +21,7 @@ base::StreamProc::StreamProc(const char* name, unsigned brdid, bool basehist) :
    fIsSynchronisationRequired(true),
    fSyncs(),
    fSyncScanIndex(0),
-   fLocalTrig(),
+   fLocalMarks(fQueueCapacity),
    fTriggerAcceptMaring(0.),
    fLastLocalTriggerTm(0.),
    fGlobalTrig(),
@@ -53,7 +55,7 @@ base::StreamProc::~StreamProc()
 //   printf("Start bufs clear\n");
    fSyncs.clear();
    fQueue.clear();
-   fLocalTrig.clear();
+   fLocalMarks.clear();
    // TODO: cleanup of event data
    fGlobalTrig.clear();
 //   printf("Done bufs clear\n");
@@ -336,7 +338,7 @@ void base::StreamProc::AddSyncMarker(base::SyncMarker& marker)
    fSyncs.push_back(marker);
 }
 
-bool base::StreamProc::AddTriggerMarker(LocalTriggerMarker& marker, double tm_range)
+bool base::StreamProc::AddTriggerMarker(LocalTimeMarker& marker, double tm_range)
 {
    // last local trigger is remembered to exclude trigger duplication or
    // too close distances
@@ -354,7 +356,12 @@ bool base::StreamProc::AddTriggerMarker(LocalTriggerMarker& marker, double tm_ra
       }
    }
 
-   fLocalTrig.push_back(marker);
+   if (fLocalMarks.full()) {
+      printf("Local markers queue is full in processor %s\n", GetName());
+      exit(7);
+   }
+
+   fLocalMarks.push(marker);
 
 //   printf("Add trigger %12.9f\n", marker.localtm);
 
@@ -425,8 +432,8 @@ bool base::StreamProc::SkipBuffers(unsigned num_skip)
 
    // local triggers must be cleanup by other means,
    // TODO: if it would not be possible, one could use front time of buffers to skip triggers
-   if (fLocalTrig.size()>1000)
-      printf("Too much %u local trigger remaining - why\n?", (unsigned) fLocalTrig.size());
+   if (fLocalMarks.size()>1000)
+      printf("Too much %u local trigger remaining - why\n?", (unsigned) fLocalMarks.size());
 
    if (fQueueScanIndex>=num_skip) {
       fQueueScanIndex-=num_skip;
@@ -453,7 +460,7 @@ void base::StreamProc::SkipAllData()
 
    SkipBuffers(fQueue.size());
 
-   fLocalTrig.clear();
+   fLocalMarks.clear();
    fGlobalTrig.clear();
 
    fSyncs.clear();
@@ -467,24 +474,17 @@ bool base::StreamProc::CollectTriggers(GlobalTriggerMarksQueue& trigs)
    // TODO: one can make more sophisticated rules like time combination of several AUXs or even channles
    // TODO: another way - multiplicity histograms
 
-   unsigned num_trig(0), syncindx(0); // index used to help convert global to local time
+   unsigned syncindx(0); // index used to help convert global to local time
 
-//   printf("Collect new triggers numSync %u %u \n", numSyncs(), fLocalTrig.size());
+//   printf("Collect new triggers numSync %u %u \n", numSyncs(), fLocalMarks.size());
 
-   while (num_trig<fLocalTrig.size()) {
+   while (fLocalMarks.size() > 0) {
 
       GlobalTriggerMarker marker;
 
-      marker.globaltm = LocalToGlobalTime(fLocalTrig[num_trig].localtm, &syncindx);
+      marker.globaltm = LocalToGlobalTime(fLocalMarks.front().localtm, &syncindx);
 
-/*      if (fabs(3026028138200. - fLocalTrig[num_trig].localtm) < 10.) {
-         printf("Converting localtm: %12.9f res: %12.9f \n", fLocalTrig[num_trig].localtm*1e-9, marker.globaltm*1e-9);
-         for (unsigned n=0; n<numReadySyncs();n++)
-            printf("SYNC%u  localtm:%12.9f global:%12.9f\n", n, getSync(n).localtm*1e-9, getSync(n).globaltm*1e-9);
-      }
-*/
-
-//      printf("Start scan trig local %u %u sync_indx %u %12.9f\n", num_trig, fLocalTrig.size(), syncindx, marker.globaltm*1e-9);
+//      printf("Start scan trig local %u %u sync_indx %u %12.9f\n", num_trig, fLocalMarks.size(), syncindx, marker.globaltm*1e-9);
 
       if (IsSynchronisationRequired()) {
          // when synchronization used, one should verify where exact our local trigger is
@@ -497,18 +497,9 @@ bool base::StreamProc::CollectTriggers(GlobalTriggerMarksQueue& trigs)
          }
       }
 
-//      printf("Proc:%s TRIGG: %12.9f localtm:%12.9f syncindx %u  numsyncs %u\n",
-//            GetName(), marker.globaltm*1e-9, fLocalTrig[num_trig].localtm*1e-9,
-//            syncindx, numReadySyncs());
-
-      num_trig++;
+      fLocalMarks.pop();
       trigs.push_back(marker);
    }
-
-   if (num_trig == fLocalTrig.size())
-      fLocalTrig.clear();
-   else
-      fLocalTrig.erase(fLocalTrig.begin(), fLocalTrig.begin()+num_trig);
 
    return true;
 }
