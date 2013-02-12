@@ -34,7 +34,7 @@ namespace base {
          ProcessorsVect fProc;                      //!
          ProcessorsMap  fMap;                       //!
 
-         GlobalTriggerMarksQueue  fTriggers;        //!< list of current triggers
+         GlobalMarksQueue  fTriggers;               //!< list of current triggers
 
          unsigned  fTimeMasterIndex;                //!< processor index, which time is used for all other subsystems
 

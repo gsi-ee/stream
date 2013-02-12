@@ -114,12 +114,12 @@ bool mbs::Processor::SecondBufferScan(const base::Buffer& buf)
 
       unsigned indx = TestHitTime(globaltm, true);
 
-      if (indx < fGlobalTrig.size()) {
-         mbs::SubEvent* ev = (mbs::SubEvent*) fGlobalTrig[indx].subev;
+      if (indx < fGlobalMarks.size()) {
+         mbs::SubEvent* ev = (mbs::SubEvent*) fGlobalMarks.item(indx).subev;
 
          if (ev==0) {
             ev = new mbs::SubEvent;
-            fGlobalTrig[indx].subev = ev;
+            fGlobalMarks.item(indx).subev = ev;
          }
 
          // fill raw data here

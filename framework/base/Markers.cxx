@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void base::GlobalTriggerMarker::SetInterval(double left, double right)
+void base::GlobalMarker::SetInterval(double left, double right)
 {
    if (left>right) {
       printf("left > right in time interval - failure\n");
@@ -14,7 +14,7 @@ void base::GlobalTriggerMarker::SetInterval(double left, double right)
    righttm = globaltm + right;
 }
 
-int base::GlobalTriggerMarker::TestHitTime(const GlobalTime_t& hittime, double* dist)
+int base::GlobalMarker::TestHitTime(const GlobalTime_t& hittime, double* dist)
 {
    // be aware that condition like [left, right) is tested
    // therefore if left==right, hit will never be assigned to such condition

@@ -137,8 +137,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
 //               printf("Test hit time %12.9f trigger %u\n", globaltm*1e-9, trig_indx);
 
-               if (indx < fGlobalTrig.size())
-                  AddMessage(indx, (hadaq::TdcSubEvent*) fGlobalTrig[indx].subev, hadaq::TdcMessageExt(iter.msg(), globaltm));
+               if (indx < fGlobalMarks.size())
+                  AddMessage(indx, (hadaq::TdcSubEvent*) fGlobalMarks.item(indx).subev, hadaq::TdcMessageExt(iter.msg(), globaltm));
             }
 
          }

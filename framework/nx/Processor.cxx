@@ -277,9 +277,9 @@ bool nx::Processor::SecondBufferScan(const base::Buffer& buf)
 {
    if (buf.null()) return false;
 
-//   printf("Start second buffer scan left %u  right %u  size %u\n", lefttrig, righttrig, fGlobalTrig.size());
-//   for (unsigned n=0;n<fGlobalTrig.size();n++)
-//      printf("TRIG %u %12.9f flush:%u\n", n, fGlobalTrig[n].globaltm*1e-9, fGlobalTrig[n].isflush);
+//   printf("Start second buffer scan left %u  right %u  size %u\n", lefttrig, righttrig, fGlobalMarks.size());
+//   for (unsigned n=0;n<fGlobalMarks.size();n++)
+//      printf("TRIG %u %12.9f flush:%u\n", n, fGlobalMarks.item(n).globaltm*1e-9, fGlobalMarks.item(n).isflush);
 
 //   printf("Start second buffer scan\n");
 
@@ -324,8 +324,8 @@ bool nx::Processor::SecondBufferScan(const base::Buffer& buf)
 
             unsigned indx = TestHitTime(globaltm, isnxmsg);
 
-            if (indx < fGlobalTrig.size())
-               AddMessage(indx, (nx::SubEvent*) fGlobalTrig[indx].subev, nx::MessageExt(msg, globaltm));
+            if (indx < fGlobalMarks.size())
+               AddMessage(indx, (nx::SubEvent*) fGlobalMarks.item(indx).subev, nx::MessageExt(msg, globaltm));
 
             break;
          }

@@ -19,7 +19,7 @@
 #pragma link C++ class base::ProcMgr+;
 #pragma link C++ class base::SyncMarker+;
 #pragma link C++ class base::LocalTimeMarker+;
-#pragma link C++ class base::GlobalTriggerMarker+;
+#pragma link C++ class base::GlobalMarker+;
 #pragma link C++ typedef base::H1handle;
 #pragma link C++ typedef base::H2handle;
 #pragma link C++ typedef base::C1handle;

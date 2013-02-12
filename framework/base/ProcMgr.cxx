@@ -9,7 +9,7 @@ base::ProcMgr* base::ProcMgr::fInstance = 0;
 base::ProcMgr::ProcMgr() :
    fProc(),
    fMap(),
-   fTriggers(),
+   fTriggers(10000),    // FIXME: size should be configurable
    fTimeMasterIndex(DummyIndex),
    fRawAnalysisOnly(false)
 {
@@ -301,7 +301,7 @@ bool base::ProcMgr::CollectNewTriggers()
 
       if (flush_time != 0.) {
 //         printf("FLUSH: %12.9f\n", flush_time);
-         fTriggers.push_back(GlobalTriggerMarker(flush_time));
+         fTriggers.push(GlobalMarker(flush_time));
          fTriggers.back().isflush = true;
       }
    }
@@ -350,13 +350,13 @@ bool base::ProcMgr::ProduceNextEvent(base::Event* &evt)
    while (numready > 0) {
 
       //   printf("Total event %u ready %u  next trigger %6.3f\n", fTriggers.size(), numready,
-      //         fTriggers.size() > 0 ? fTriggers[0].globaltm*1e-9 : 0.);
+      //         fTriggers.size() > 0 ? fTriggers.front().globaltm*1e-9 : 0.);
 
-      if (fTriggers[0].isflush) {
-         // printf("Remove flush event %12.9f\n", fTriggers[0].globaltm*1e-9);
+      if (fTriggers.front().isflush) {
+         // printf("Remove flush event %12.9f\n", fTriggers.front().globaltm*1e-9);
          for (unsigned n=0;n<fProc.size();n++)
             fProc[n]->AppendSubevent(0);
-         fTriggers.erase(fTriggers.begin());
+         fTriggers.pop();
          numready--;
          continue;
       }
@@ -366,13 +366,13 @@ bool base::ProcMgr::ProduceNextEvent(base::Event* &evt)
       else
          evt->DestroyEvents();
 
-      evt->SetTriggerTime(fTriggers[0].globaltm);
+      evt->SetTriggerTime(fTriggers.front().globaltm);
 
       // here all subevents from first event are collected
       // at the same time event should be removed from all local/global lists
       for (unsigned n=0;n<fProc.size();n++)
          fProc[n]->AppendSubevent(evt);
-      fTriggers.erase(fTriggers.begin());
+      fTriggers.pop();
 
       //   printf("PRODUCE EVENT\n");
       return true;

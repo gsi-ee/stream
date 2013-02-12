@@ -47,8 +47,6 @@ namespace base {
             }
          };
 
-
-
       protected:
 
          friend class Queue<T,canexpand>::Iterator;
@@ -60,8 +58,6 @@ namespace base {
          T*         fHead;
          T*         fTail;
          unsigned   fInitSize; //!< original size of the queue, restored then clear() method is called
-
-         T*         QueueItem(unsigned n) { return fQueue + n; }
 
       public:
          Queue() :
@@ -225,18 +221,6 @@ namespace base {
             return 0;
          }
 
-
-         void PushRef(const T& val)
-         {
-            if ((fSize<fCapacity) || Expand()) {
-               *fHead++ = val;
-               if (fHead==fBorder) fHead = fQueue;
-               fSize++;
-            } else {
-               throw std::runtime_error("No more space in fixed queue size");
-            }
-         }
-
          void pop()
          {
             if (fSize>0) {
@@ -266,7 +250,7 @@ namespace base {
 
          // TODO: implement iterator to access all items in the queue
 
-         T& Item(unsigned indx) const
+         T& item(unsigned indx) const
          {
             #ifdef DABC_EXTRA_CHECKS
             if (indx>=fSize)
@@ -285,17 +269,17 @@ namespace base {
                return 0;
             }
             #endif
-            T* item = fTail + indx;
-            if (item>=fBorder) item -= fCapacity;
-            return item;
+            T* _item = fTail + indx;
+            if (_item>=fBorder) _item -= fCapacity;
+            return _item;
          }
 
-         T& Back() const
+         T& back() const
          {
             #ifdef DABC_EXTRA_CHECKS
                if (fSize==0) EOUT(("Queue is empty"));
             #endif
-            return Item(fSize-1);
+            return item(fSize-1);
          }
 
          void clear()
@@ -346,6 +330,8 @@ namespace base {
 
          T& front() const { return Parent::front(); }
 
+         T& back() const { return Parent::back(); }
+
          unsigned capacity() const { return Parent::capacity(); }
 
          unsigned size() const { return Parent::size(); }
@@ -354,7 +340,7 @@ namespace base {
 
          bool empty() const { return Parent::empty(); }
 
-         T& Item(unsigned indx) const { return Parent::Item(indx); }
+         T& item(unsigned indx) const { return Parent::item(indx); }
 
          T* ItemPtr(unsigned indx) const { return Parent::ItemPtr(indx); }
 
@@ -374,7 +360,7 @@ namespace base {
                Parent::Allocate(Parent::fInitSize);
             } else {
                for (unsigned n=0;n<size();n++)
-                  Item(n).reset();
+                  item(n).reset();
                Parent::clear();
             }
          }

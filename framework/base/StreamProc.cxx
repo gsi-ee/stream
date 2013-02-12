@@ -24,8 +24,9 @@ base::StreamProc::StreamProc(const char* name, unsigned brdid, bool basehist) :
    fLocalMarks(fQueueCapacity),
    fTriggerAcceptMaring(0.),
    fLastLocalTriggerTm(0.),
-   fGlobalTrig(),
+   fGlobalMarks(fQueueCapacity),
    fGlobalTrigScanIndex(0),
+   fGlobalTrigRightIndex(0),
    fTimeSorting(false),
    fPrefix(),
    fSubPrefixD(),
@@ -57,7 +58,7 @@ base::StreamProc::~StreamProc()
    fQueue.clear();
    fLocalMarks.clear();
    // TODO: cleanup of event data
-   fGlobalTrig.clear();
+   fGlobalMarks.clear();
 //   printf("Done bufs clear\n");
 }
 
@@ -461,7 +462,7 @@ void base::StreamProc::SkipAllData()
    SkipBuffers(fQueue.size());
 
    fLocalMarks.clear();
-   fGlobalTrig.clear();
+   fGlobalMarks.clear();
 
    fSyncs.clear();
    fSyncScanIndex = 0;
@@ -469,7 +470,7 @@ void base::StreamProc::SkipAllData()
 
 
 
-bool base::StreamProc::CollectTriggers(GlobalTriggerMarksQueue& trigs)
+bool base::StreamProc::CollectTriggers(GlobalMarksQueue& trigs)
 {
    // TODO: one can make more sophisticated rules like time combination of several AUXs or even channles
    // TODO: another way - multiplicity histograms
@@ -480,7 +481,7 @@ bool base::StreamProc::CollectTriggers(GlobalTriggerMarksQueue& trigs)
 
    while (fLocalMarks.size() > 0) {
 
-      GlobalTriggerMarker marker;
+      GlobalMarker marker;
 
       marker.globaltm = LocalToGlobalTime(fLocalMarks.front().localtm, &syncindx);
 
@@ -498,13 +499,13 @@ bool base::StreamProc::CollectTriggers(GlobalTriggerMarksQueue& trigs)
       }
 
       fLocalMarks.pop();
-      trigs.push_back(marker);
+      trigs.push(marker);
    }
 
    return true;
 }
 
-bool base::StreamProc::DistributeTriggers(const base::GlobalTriggerMarksQueue& queue)
+bool base::StreamProc::DistributeTriggers(const base::GlobalMarksQueue& queue)
 {
    // here just duplicate of main trigger queue is created
    // TODO: make each trigger with unique id
@@ -512,20 +513,20 @@ bool base::StreamProc::DistributeTriggers(const base::GlobalTriggerMarksQueue& q
    // no need for trigger when doing only raw scan
    if (IsRawScanOnly()) return true;
 
-   while (fGlobalTrig.size() < queue.size()) {
-      unsigned indx = fGlobalTrig.size();
+   while (fGlobalMarks.size() < queue.size()) {
+      unsigned indx = fGlobalMarks.size();
 
-      fGlobalTrig.push_back(base::GlobalTriggerMarker(queue[indx]));
+      fGlobalMarks.push(queue.item(indx));
 
-      fGlobalTrig.back().SetInterval(GetC1Limit(fTriggerWindow, true), GetC1Limit(fTriggerWindow, false));
+      fGlobalMarks.back().SetInterval(GetC1Limit(fTriggerWindow, true), GetC1Limit(fTriggerWindow, false));
 
-//      if (fGlobalTrig.back().normal())
-//         printf("%s trigger %12.9f %12.9f\n", GetName(), fGlobalTrig.back().lefttm, fGlobalTrig.back().righttm);
+//      if (fGlobalMarks.back().normal())
+//         printf("%s trigger %12.9f %12.9f\n", GetName(), fGlobalMarks.back().lefttm, fGlobalTrig.back().righttm);
    }
 
 //   printf("%s triggers after append new items\n", GetName());
-//   for (unsigned n=0;n<fGlobalTrig.size();n++)
-//      printf("TRIG %u %12.9f\n", n, fGlobalTrig[n].globaltm*1e-9);
+//   for (unsigned n=0;n<fGlobalMarks.size();n++)
+//      printf("TRIG %u %12.9f\n", n, fGlobalMarks.item(n).globaltm*1e-9);
 
    return true;
 }
@@ -535,27 +536,28 @@ bool base::StreamProc::AppendSubevent(base::Event* evt)
 {
    if (IsRawScanOnly()) return true;
 
-   if (fGlobalTrig.size()==0) {
+   if (fGlobalMarks.size()==0) {
       printf("global trigger queue empty !!!\n");
       exit(14);
       return false;
    }
 
-   if (fGlobalTrig[0].normal())
-      FillH1(fMultipl, fGlobalTrig[0].subev ? fGlobalTrig[0].subev->Multiplicity() : 0);
+   if (fGlobalMarks.front().normal())
+      FillH1(fMultipl, fGlobalMarks.front().subev ? fGlobalMarks.front().subev->Multiplicity() : 0);
 
-   if (fGlobalTrig[0].subev!=0) {
+   if (fGlobalMarks.front().subev!=0) {
       if (evt!=0) {
-         if (IsTimeSorting()) fGlobalTrig[0].subev->Sort();
-         evt->AddSubEvent(GetName(), fGlobalTrig[0].subev);
+         if (IsTimeSorting()) fGlobalMarks.front().subev->Sort();
+         evt->AddSubEvent(GetName(), fGlobalMarks.front().subev);
       } else {
-         printf("Something wrong - subevent could not be assigned normal %d!!!!\n", fGlobalTrig[0].normal());
-         delete fGlobalTrig[0].subev;
+         printf("Something wrong - subevent could not be assigned normal %d!!!!\n", fGlobalMarks.front().normal());
+         delete fGlobalMarks.front().subev;
       }
-      fGlobalTrig[0].subev = 0;
+      fGlobalMarks.front().subev = 0;
    }
 
-   fGlobalTrig.erase(fGlobalTrig.begin());
+   fGlobalMarks.pop();
+
    if (fGlobalTrigScanIndex==0) {
       printf("Index of ready event is 0 - how to understand???\n");
       exit(12);
@@ -564,8 +566,8 @@ bool base::StreamProc::AppendSubevent(base::Event* evt)
    }
 
 //   printf("%s triggers after remove first item\n", GetName());
-//   for (unsigned n=0;n<fGlobalTrig.size();n++)
-//      printf("TRIG %u %12.9f\n", n, fGlobalTrig[n].globaltm*1e-9);
+//   for (unsigned n=0;n<fGlobalMarks.size();n++)
+//      printf("TRIG %u %12.9f\n", n, fGlobalMarks.item(n).globaltm*1e-9);
 
    return true;
 }
@@ -575,25 +577,27 @@ unsigned base::StreamProc::TestHitTime(const base::GlobalTime_t& hittime, bool n
 {
    double dist(0.), best_dist(-1e15), best_trigertm(-1e15);
 
-   unsigned res_indx(fGlobalTrig.size()), best_indx(fGlobalTrig.size());
+   unsigned res_indx(fGlobalMarks.size()), best_indx(fGlobalMarks.size());
 
    for (unsigned indx=fGlobalTrigScanIndex; indx<fGlobalTrigRightIndex; indx++) {
 
-       if (indx>=fGlobalTrig.size()) {
+       if (indx>=fGlobalMarks.size()) {
           printf("ALARM!!!!\n");
           exit(10);
        }
 
-       int test = fGlobalTrig[indx].TestHitTime(hittime, &dist);
+       GlobalMarker& marker = fGlobalMarks.item(indx);
+
+       int test = marker.TestHitTime(hittime, &dist);
 
        // remember best distance for normal trigger,
        // message can go inside only for normal trigger
        // but we need to check position relative to trigger to be able perform flushing
 
-       if (fGlobalTrig[indx].normal()) {
+       if (marker.normal()) {
           if (fabs(best_dist) > fabs(dist)) {
              best_dist = dist;
-             best_trigertm = hittime - fGlobalTrig[indx].globaltm;
+             best_trigertm = hittime - marker.globaltm;
              best_indx = indx;
           }
 
@@ -614,13 +618,13 @@ unsigned base::StreamProc::TestHitTime(const base::GlobalTime_t& hittime, bool n
           if (can_close_event && (dist>MaximumDisorderTm())) {
              if (indx==fGlobalTrigScanIndex) {
 //                if (fGlobalTrig[indx].normal())
-//                   printf("Declare trigger %12.9f ready\n", fGlobalTrig[indx].globaltm);
+//                   printf("Declare trigger %12.9f ready\n", marker.globaltm);
                 fGlobalTrigScanIndex++;
 
              } else {
                 printf("Check hit time error trig_indx:%u trig_tm:%12.9f left_indx:%u left_tm:%12.9f dist:%12.9f- check \n",
-                      indx, fGlobalTrig[indx].globaltm,
-                      fGlobalTrigScanIndex, fGlobalTrig[fGlobalTrigScanIndex].globaltm, dist);
+                      indx, marker.globaltm,
+                      fGlobalTrigScanIndex, fGlobalMarks.item(fGlobalTrigScanIndex).globaltm, dist);
                 exit(17);
              }
           }
@@ -635,12 +639,12 @@ unsigned base::StreamProc::TestHitTime(const base::GlobalTime_t& hittime, bool n
 //   }
 
    // account hit time in histogram
-   if (normal_hit && (best_indx<fGlobalTrig.size()))
+   if (normal_hit && (best_indx<fGlobalMarks.size()))
       FillH1(fTriggerTm, best_trigertm);
 
    //printf("Test message %12.9f again trigger %12.9f test = %d dist = %9.0f\n", globaltm*1e-9, fGlobalTrig[indx].globaltm*1e-9, test, dist);
 
-   return normal_hit ? res_indx : fGlobalTrig.size();
+   return normal_hit ? res_indx : fGlobalMarks.size();
 }
 
 bool base::StreamProc::ScanDataForNewTriggers()
@@ -652,7 +656,7 @@ bool base::StreamProc::ScanDataForNewTriggers()
    // time of last trigger is used to check which buffers can be scanned
    // time of last buffer is used to check which triggers we could check
 
-//   printf("Proc:%p  Try scan data numtrig %u scan tm %u raw %u\n", GetName(), fGlobalTrig.size(), fQueueScanIndexTm, IsRawScanOnly());
+//   printf("Proc:%p  Try scan data numtrig %u scan tm %u raw %u\n", GetName(), fGlobalMarks.size(), fQueueScanIndexTm, IsRawScanOnly());
 
    // never do any seconds scan in such situation
    if (IsRawScanOnly()) return true;
@@ -661,12 +665,12 @@ bool base::StreamProc::ScanDataForNewTriggers()
    if (fQueueScanIndexTm < 2) return true;
 
    // never scan when no triggers are exists
-   if (fGlobalTrig.size() == 0) return true;
+   if (fGlobalMarks.size() == 0) return true;
 
    // define triggers which we could scan
    fGlobalTrigRightIndex = fGlobalTrigScanIndex;
 
-   if (fGlobalTrig.size() > 1) {
+   if (fGlobalMarks.size() > 1) {
 
       if (fQueueScanIndexTm > fQueue.size()) {
          printf("Something wrong with index fQueueScanIndexTm %u\n", fQueueScanIndexTm);
@@ -689,8 +693,8 @@ bool base::StreamProc::ScanDataForNewTriggers()
 
 //      printf("Trigger time limit is %12.9f\n", trigger_time_limit*1e-9);
 
-      while (fGlobalTrigRightIndex < fGlobalTrig.size()-1) {
-         if (fGlobalTrig[fGlobalTrigRightIndex].globaltm > trigger_time_limit) break;
+      while (fGlobalTrigRightIndex < fGlobalMarks.size()-1) {
+         if (fGlobalMarks.item(fGlobalTrigRightIndex).globaltm > trigger_time_limit) break;
          fGlobalTrigRightIndex++;
       }
    }
@@ -705,7 +709,7 @@ bool base::StreamProc::ScanDataForNewTriggers()
 
    unsigned upper_buf_limit = 0;
 
-   double buffer_timeboundary = fGlobalTrig[fGlobalTrigRightIndex-1].globaltm + GetC1Limit(fTriggerWindow, true) - MaximumDisorderTm();
+   double buffer_timeboundary = fGlobalMarks.item(fGlobalTrigRightIndex-1).globaltm + GetC1Limit(fTriggerWindow, true) - MaximumDisorderTm();
 
    while (upper_buf_limit < fQueueScanIndexTm - 1) {
       // only when next buffer start tm less than left boundary of last trigger,

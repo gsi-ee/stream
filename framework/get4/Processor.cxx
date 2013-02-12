@@ -313,11 +313,11 @@ bool get4::Processor::SecondBufferScan(const base::Buffer& buf)
    if (buf.null()) return false;
 
 //   printf("get4::Processor::SecondBufferScan  left %u  right %u totalsize %u  max disorder %f\n",
-//           fGlobalTrigScanIndex, fGlobalTrigRightIndex, (unsigned) fGlobalTrig.size(), MaximumDisorderTm());
+//           fGlobalTrigScanIndex, fGlobalTrigRightIndex, (unsigned) fGlobalMarks.size(), MaximumDisorderTm());
 
 //   printf("Start second buffer scan left %u  right %u  size %u\n", lefttrig, righttrig, fGlobalTrig.size());
-//   for (unsigned n=0;n<fGlobalTrig.size();n++)
-//      printf("TRIG %u %12.9f flush:%u\n", n, fGlobalTrig[n].globaltm*1e-9, fGlobalTrig[n].isflush);
+//   for (unsigned n=0;n<fGlobalMarks.size();n++)
+//      printf("TRIG %u %12.9f flush:%u\n", n, fGlobalMarks.item(n).globaltm*1e-9, fGlobalMarks.item(n).isflush);
 
    AssignBufferTo(fIter2, buf);
 
@@ -358,8 +358,8 @@ bool get4::Processor::SecondBufferScan(const base::Buffer& buf)
 
             unsigned indx = TestHitTime(globaltm, get4_in_use(msg.getGet4Number()));
 
-            if (indx < fGlobalTrig.size())
-               AddMessage(indx, (get4::SubEvent*) fGlobalTrig[indx].subev, get4::MessageExt(msg, globaltm));
+            if (indx < fGlobalMarks.size())
+               AddMessage(indx, (get4::SubEvent*) fGlobalMarks.item(indx).subev, get4::MessageExt(msg, globaltm));
 
             break;
          }

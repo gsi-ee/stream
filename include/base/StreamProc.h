@@ -52,7 +52,7 @@ namespace base {
          double          fTriggerAcceptMaring;    //!< time margin (in local time) to accept new trigger
          GlobalTime_t    fLastLocalTriggerTm;     //!< time of last local trigger
 
-         GlobalTriggerMarksQueue fGlobalTrig;     //!< list of global triggers in work
+         GlobalMarksQueue fGlobalMarks;           //!< list of global triggers in work
 
          unsigned fGlobalTrigScanIndex;           //!< index with first trigger which is not yet ready
          unsigned fGlobalTrigRightIndex;          //!< temporary value, used during second buffers scan
@@ -138,7 +138,7 @@ namespace base {
          {
             if (ev==0) {
                ev = new EventClass;
-               fGlobalTrig[indx].subev = ev;
+               fGlobalMarks.item(indx).subev = ev;
             }
             ev->AddMsg(msg);
          }
@@ -208,10 +208,10 @@ namespace base {
          unsigned findSyncWithId(unsigned syncid) const;
 
          /** Method to deliver detected triggers from processor to central manager */
-         virtual bool CollectTriggers(GlobalTriggerMarksQueue& queue);
+         virtual bool CollectTriggers(GlobalMarksQueue& queue);
 
          /** This is method to get back identified triggers from central manager */
-         virtual bool DistributeTriggers(const GlobalTriggerMarksQueue& queue);
+         virtual bool DistributeTriggers(const GlobalMarksQueue& queue);
 
          /** Here each processor should scan data again for new triggers
           * Method made virtual while some subprocessors will do it in connection with others */
