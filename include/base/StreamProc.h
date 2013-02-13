@@ -134,6 +134,10 @@ namespace base {
           *  can_close_event - when true, hit time can be used to decide that event is ready */
          unsigned TestHitTime(const base::GlobalTime_t& hittime, bool normal_hit, bool can_close_event = true);
 
+         // TODO: this is another place for future improvement
+         // one can preallocate number of subevents with place ready for some messages
+         // than one can use these events instead of creating them on the fly
+
          template<class EventClass, class MessageClass>
          void AddMessage(unsigned indx, EventClass* ev, const MessageClass& msg)
          {
