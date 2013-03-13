@@ -85,6 +85,16 @@ namespace base {
             if (IsHistFilling()) mgr()->FillH1(h1, x, weight);
          }
 
+         inline double GetH1Content(H1handle h1, int nbin)
+         {
+            return mgr()->GetH1Content(h1, nbin);
+         }
+
+         inline void ClearH1(base::H1handle h1)
+         {
+            if (IsHistFilling()) mgr()->ClearH1(h1);
+         }
+
          H2handle MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options = 0);
          inline void FillH2(H1handle h2, double x, double y, double weight = 1.)
          {
@@ -228,6 +238,10 @@ namespace base {
          /** Append data for first trigger to the main event */
          virtual bool AppendSubevent(base::Event* evt);
 
+
+         virtual void UserPreLoop() {}
+
+         virtual void UserPostLoop() {}
 
          /** Central method to scan new data in the queue
           * This should include:

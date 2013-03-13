@@ -18,15 +18,9 @@ base::ProcMgr::ProcMgr() :
 
 base::ProcMgr::~ProcMgr()
 {
-   for (unsigned n=0;n<fProc.size();n++) {
-      // printf("Delete processor %u %p\n", n, fProc[n]);
-      delete fProc[n];
-      fProc[n] = 0;
-   }
 
+   DeleteAllProcessors();
    // printf("Delete processors done\n");
-
-   fProc.clear();
 
    if (fInstance == this) fInstance = 0;
 }
@@ -34,6 +28,30 @@ base::ProcMgr::~ProcMgr()
 base::ProcMgr* base::ProcMgr::instance()
 {
    return fInstance;
+}
+
+
+void base::ProcMgr::DeleteAllProcessors()
+{
+   for (unsigned n=0;n<fProc.size();n++) {
+      // printf("Delete processor %u %p\n", n, fProc[n]);
+      delete fProc[n];
+      fProc[n] = 0;
+   }
+
+   fProc.clear();
+}
+
+void base::ProcMgr::UserPreLoop()
+{
+   for (unsigned n=0;n<fProc.size();n++)
+      if (fProc[n]) fProc[n]->UserPreLoop();
+}
+
+void base::ProcMgr::UserPostLoop()
+{
+   for (unsigned n=0;n<fProc.size();n++)
+      if (fProc[n]) fProc[n]->UserPostLoop();
 }
 
 

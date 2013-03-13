@@ -28,6 +28,8 @@ class TFirstStepProcessor : public TGo4EventProcessor,
 
       virtual base::H1handle MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle = 0);
       virtual void FillH1(base::H1handle h1, double x, double weight = 1.);
+      virtual double GetH1Content(base::H1handle h1, int nbin);
+      virtual void ClearH1(base::H1handle h1);
 
       virtual base::H2handle MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options = 0);
       virtual void FillH2(base::H1handle h2, double x, double y, double weight = 1.);

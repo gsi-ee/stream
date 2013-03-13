@@ -9,7 +9,10 @@ class TStreamAnalysis : public TGo4Analysis {
       TStreamAnalysis(int argc, char** argv);
       virtual ~TStreamAnalysis() ;
 
-   private:
+      virtual Int_t UserPreLoop();
+
+      virtual Int_t UserPostLoop();
+
 
    ClassDef(TStreamAnalysis,1)
 };

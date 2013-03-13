@@ -83,8 +83,11 @@ namespace hadaq {
          uint64_t getMsgStamp() const
          { return (isCurEpoch() ? ((uint64_t) fCurEpoch) << 11 : 0) | (fMsg.isHitMsg() ? fMsg.getHitTmCoarse() : 0); }
 
-         double getMsgTime() const
-         { return fConv.ToSeconds(getMsgStamp()) + (fMsg.isHitMsg() ? hadaq::TdcMessage::SimpleFineCalibr(fMsg.getHitTmFine()) : 0. ); }
+         inline double getMsgTimeCoarse() const
+         { return fConv.ToSeconds(getMsgStamp()); }
+
+         inline double getMsgTimeFine() const
+         { return fMsg.isHitMsg() ? hadaq::TdcMessage::SimpleFineCalibr(fMsg.getHitTmFine()) : 0.; }
 
          hadaq::TdcMessage& msg() { return fMsg; }
 
@@ -100,7 +103,8 @@ namespace hadaq {
          void printmsg()
          {
             double tm = -1.;
-            if (msg().isHitMsg() || msg().isEpochMsg()) tm = getMsgTime();
+            if (msg().isHitMsg() || msg().isEpochMsg())
+               tm = getMsgTimeCoarse() + getMsgTimeFine();
             msg().print(tm);
          }
    };

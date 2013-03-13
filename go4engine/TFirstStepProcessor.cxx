@@ -215,6 +215,24 @@ void TFirstStepProcessor::FillH1(base::H1handle h1, double x, double weight)
       histo1->Fill(x);
 }
 
+double TFirstStepProcessor::GetH1Content(base::H1handle h1, int nbin)
+{
+   if (h1==0) return 0.;
+
+   TH1* histo1 = (TH1*) h1;
+
+   return histo1->GetBinContent(nbin+1);
+}
+
+void TFirstStepProcessor::ClearH1(base::H1handle h1)
+{
+   if (h1==0) return;
+
+   TH1* histo1 = (TH1*) h1;
+   histo1->Reset();
+}
+
+
 void TFirstStepProcessor::FillH2(base::H1handle h2, double x, double y, double weight)
 {
    if (h2==0) return;

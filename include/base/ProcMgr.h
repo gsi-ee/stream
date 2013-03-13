@@ -49,6 +49,8 @@ namespace base {
            * Sync ID overflow is taken into account */
          int SyncIdDiff(unsigned id1, unsigned id2) const;
 
+         void DeleteAllProcessors();
+
       public:
          ProcMgr();
          virtual ~ProcMgr();
@@ -65,6 +67,8 @@ namespace base {
 
          virtual H1handle MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle = 0) { return 0; }
          virtual void FillH1(H1handle h1, double x, double weight = 1.) {}
+         virtual double GetH1Content(H1handle h1, int nbin) { return 0; }
+         virtual void ClearH1(base::H1handle h1) {}
 
          virtual H2handle MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options = 0) { return 0; }
          virtual void FillH2(H1handle h2, double x, double y, double weight = 1.) {}
@@ -111,6 +115,10 @@ namespace base {
           * Only can be done that each processor is agree to deliver data within
           * trigger interval. It may not be a case when messages from future buffers may be required */
          bool ProduceNextEvent(base::Event* &evt);
+
+         void UserPreLoop();
+
+         void UserPostLoop();
    };
 }
 

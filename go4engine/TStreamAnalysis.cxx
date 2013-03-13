@@ -88,6 +88,28 @@ TStreamAnalysis::TStreamAnalysis(int argc, char** argv) :
    // DefineServerPasswords("CernOct11admin", "CernOct11ctrl", "CernOct11view");
 }
 
+
+Int_t TStreamAnalysis::UserPreLoop()
+{
+   TGo4AnalysisStep* step1 = GetAnalysisStep("First");
+   TFirstStepProcessor* proc1 = dynamic_cast<TFirstStepProcessor*> (step1->GetEventProcessor());
+
+   if (proc1) proc1->UserPreLoop();
+
+   return TGo4Analysis::UserPreLoop();
+}
+
+Int_t TStreamAnalysis::UserPostLoop()
+{
+   TGo4AnalysisStep* step1 = GetAnalysisStep("First");
+   TFirstStepProcessor* proc1 = dynamic_cast<TFirstStepProcessor*> (step1->GetEventProcessor());
+
+   if (proc1) proc1->UserPostLoop();
+
+   return TGo4Analysis::UserPostLoop();
+}
+
+
 //***********************************************************
 TStreamAnalysis::~TStreamAnalysis()
 {
