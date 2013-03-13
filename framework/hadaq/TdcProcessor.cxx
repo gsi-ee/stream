@@ -13,10 +13,11 @@
 unsigned hadaq::TdcProcessor::fMaxBrdId = 8;
 
 
-hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid) :
+hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, bool all_histos) :
    base::StreamProc("TDC", tdcid),
    fIter1(),
-   fIter2()
+   fIter2(),
+   fAllHistos(all_histos)
 {
    fMsgPerBrd = mgr()->MakeH1("MsgPerTDC", "Number of messages per TDC", fMaxBrdId, 0, fMaxBrdId, "tdc");
    fErrPerBrd = mgr()->MakeH1("ErrPerTDC", "Number of errors per TDC", fMaxBrdId, 0, fMaxBrdId, "tdc");
@@ -28,6 +29,19 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid) :
    fAllFine = MakeH1("FineTm", "fine counter value", 1024, 0, 1024, "fine");
    fAllCoarse = MakeH1("CoarseTm", "coarse counter value", 2048, 0, 2048, "coarse");
 
+   if (all_histos)
+      for (int ch=0;ch<NumTdcChannels;ch++) {
+         SetSubPrefix("Ch", ch);
+         fCh[ch].fRisingFine = MakeH1("RisingFine", "Rising fine counter", 1024, 0, 1024, "fine");
+         fCh[ch].fRisingCoarse = MakeH1("RisingCoarse", "Rising coarse counter", 2048, 0, 2048, "coarse");
+         fCh[ch].fRisingRef = MakeH1("RisingRef", "Difference to reference channel", 4000, -1000., +1000., "ns");
+         fCh[ch].fFallingFine = MakeH1("FallingFine", "Falling fine counter", 1024, 0, 1024, "fine");
+         fCh[ch].fFallingCoarse = MakeH1("FallingCoarse", "Falling coarse counter", 2048, 0, 2048, "coarse");
+         fCh[ch].fFallingRef = MakeH1("FallingRef", "Difference to reference channel", 4000, -1000., +1000., "ns");
+      }
+
+
+
    if (trb) trb->AddSub(this, tdcid);
 
    fNewDataFlag = false;
@@ -35,6 +49,56 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid) :
 
 hadaq::TdcProcessor::~TdcProcessor()
 {
+}
+
+void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch)
+{
+   if ((ch<NumTdcChannels) && (refch<NumTdcChannels))
+      fCh[ch].refch = refch;
+}
+
+
+void hadaq::TdcProcessor::BeforeFill()
+{
+   for (unsigned ch=0;ch<NumTdcChannels;ch++) {
+      fCh[ch].last_rising_tm = 0;
+      fCh[ch].last_falling_tm = 0;
+   }
+}
+
+void hadaq::TdcProcessor::FillHistograms()
+{
+   hadaq::TdcMessage& msg = fIter1.msg();
+
+   unsigned chid = msg.getHitChannel();
+   ChannelRec& rec = fCh[chid];
+
+   double tm = fIter1.getMsgTime();
+
+   if (msg.isHitRisingEdge()) {
+      FillH1(rec.fRisingFine, msg.getHitTmFine());
+      FillH1(rec.fRisingCoarse, msg.getHitTmCoarse());
+      if (rec.last_rising_tm == 0.) rec.last_rising_tm = tm;
+   } else {
+      FillH1(rec.fFallingFine, msg.getHitTmFine());
+      FillH1(rec.fFallingCoarse, msg.getHitTmCoarse());
+      if (rec.last_falling_tm == 0.) rec.last_falling_tm = tm;
+   }
+
+}
+
+void hadaq::TdcProcessor::AfterFill()
+{
+   for (unsigned ch=0;ch<NumTdcChannels;ch++) {
+      unsigned ref = fCh[ch].refch;
+      if ((ref>=NumTdcChannels) || (ref==ch)) continue;
+
+      if ((fCh[ch].last_rising_tm !=0 ) && (fCh[ref].last_rising_tm !=0))
+         FillH1(fCh[ch].fRisingRef, (fCh[ch].last_rising_tm - fCh[ref].last_rising_tm)*1e9);
+
+      if ((fCh[ch].last_falling_tm !=0 ) && (fCh[ref].last_falling_tm !=0))
+         FillH1(fCh[ch].fFallingRef, (fCh[ch].last_falling_tm - fCh[ref].last_falling_tm)*1e9);
+   }
 }
 
 
@@ -71,6 +135,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
 //   printf("TDC%u scan\n", GetBoardId());
 
+   if (fAllHistos && first_scan) BeforeFill();
+
    while (iter.next()) {
 
 //      iter.msg().print();
@@ -101,11 +167,15 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          } else {
 
             // fill histograms only for normal channels
-            if (first_scan && (chid>0)) {
-               FillH1(fChannels, chid);
+            if (first_scan) {
 
-               FillH1(fAllFine, iter.msg().getHitTmFine());
-               FillH1(fAllCoarse, iter.msg().getHitTmCoarse());
+               if (chid>0) {
+                  FillH1(fChannels, chid);
+                  FillH1(fAllFine, iter.msg().getHitTmFine());
+                  FillH1(fAllCoarse, iter.msg().getHitTmCoarse());
+               }
+
+               if (fAllHistos) FillHistograms();
 
                if (!iserr) hitcnt++;
             }
@@ -199,6 +269,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       if (ch0time>=0)
          TestHitTime(LocalToGlobalTime(ch0time, &help_index), false, true);
    }
+
+   if (fAllHistos && first_scan) AfterFill();
 
    return !iserr;
 }

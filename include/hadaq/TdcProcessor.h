@@ -21,6 +21,28 @@ namespace hadaq {
       friend class TrbProcessor;
 
       protected:
+         struct ChannelRec {
+            unsigned refch;                    //! reference channel for specified
+            base::H1handle fRisingFine;    //! histogram of all fine counters
+            base::H1handle fRisingCoarse;  //! histogram of all coarse counters
+            base::H1handle fRisingRef;     //! histogram of all coarse counters
+            base::H1handle fFallingFine;   //! histogram of all fine counters
+            base::H1handle fFallingCoarse; //! histogram of all coarse counters
+            base::H1handle fFallingRef; //! histogram of all coarse counters
+            double last_rising_tm;
+            double last_falling_tm;
+
+
+            ChannelRec() :
+               refch(0),
+               fRisingFine(0),
+               fRisingCoarse(0),
+               fFallingFine(0),
+               fFallingCoarse(0),
+               last_rising_tm(0.),
+               last_falling_tm(0.) {}
+         };
+
 
          TdcIterator fIter1;         //! iterator for the first scan
          TdcIterator fIter2;         //! iterator for the second scan
@@ -34,10 +56,10 @@ namespace hadaq {
          base::H1handle fAllFine;   //! histogram of all fine counters
          base::H1handle fAllCoarse; //! histogram of all coarse counters
 
-         base::H1handle fCoarse[NumTdcChannels]; //!
-         base::H1handle fFine[NumTdcChannels];   //!
+         ChannelRec fCh[NumTdcChannels]; //! histogram for individual channles
 
          bool   fNewDataFlag;         //! flag used by TRB processor to indicate if new data was added
+         bool   fAllHistos;           //! fill all possible histograms
 
          /** Returns true when processor used to select trigger signal
           * TDC not yet able to perform trigger selection */
@@ -61,13 +83,19 @@ namespace hadaq {
          /** Scan all messages, find reference signals */
          bool DoBufferScan(const base::Buffer& buf, bool isfirst);
 
+         /** These methods used to fill different raw histograms during first scan */
+         void BeforeFill();
+         void FillHistograms();
+         void AfterFill();
 
       public:
 
-         TdcProcessor(TrbProcessor* trb, unsigned tdcid);
+         TdcProcessor(TrbProcessor* trb, unsigned tdcid, bool all_histos = false);
          virtual ~TdcProcessor();
 
          static void SetMaxBoardId(unsigned max) { fMaxBrdId = max; }
+
+         void SetRefChannel(unsigned ch, unsigned refch);
 
          /** Scan all messages, find reference signals
           * if returned false, buffer has error and must be discarded */
