@@ -206,7 +206,6 @@ Without filling current NX code works 2x times faster
 2) Introducing OpticSplitter, which is required to split data after raw
    optic readout. In this case ABB put messages from all ROCs in one data stream.
     
-    
 12.02.2013
 1) Add possibility to switch on/off histogram filling
 2) Copy and modify Queue and RecordsQueue classes from DABC.
@@ -218,3 +217,8 @@ Without filling current NX code works 2x times faster
    does mostly nothing.
 4) As last change, RecordsQueue used for buffers queue. 
    Probably not important for performance, but unified all queues.  
+
+13.03.2013
+1. Add new application for FPGA TDC testing on TRB3. First provide possibility
+   for raw printout of the data.
+    

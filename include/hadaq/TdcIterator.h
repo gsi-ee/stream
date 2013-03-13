@@ -35,7 +35,7 @@ namespace hadaq {
          {
             // we have 11 bits for coarse stamp and 32 bits for epoch
             // each bin is 5 ns
-            fConv.SetTimeSystem(11+32, 5e-9);
+            fConv.SetTimeSystem(11+32, hadaq::TdcMessage::CoarseUnit());
          }
 
          void assign(uint32_t* buf, unsigned len, bool swapped = true)
@@ -81,14 +81,10 @@ namespace hadaq {
          /** Returns 39-bit value, which combines epoch and coarse counter.
           * Time bin is 5 ns  */
          uint64_t getMsgStamp() const
-         {
-            return (isCurEpoch() ? ((uint64_t) fCurEpoch) << 11 : 0) | (fMsg.isHitMsg() ? fMsg.getHitTmCoarse() : 0);
-         }
+         { return (isCurEpoch() ? ((uint64_t) fCurEpoch) << 11 : 0) | (fMsg.isHitMsg() ? fMsg.getHitTmCoarse() : 0); }
 
          double getMsgTime() const
-         {
-            return fConv.ToSeconds(getMsgStamp());
-         }
+         { return fConv.ToSeconds(getMsgStamp()) + (fMsg.isHitMsg() ? hadaq::TdcMessage::SimpleFineCalibr(fMsg.getHitTmFine()) : 0. ); }
 
          hadaq::TdcMessage& msg() { return fMsg; }
 
@@ -100,6 +96,13 @@ namespace hadaq {
 
          /** Return value of current epoch */
          uint32_t getCurEpoch() const { return fCurEpoch; }
+
+         void printmsg()
+         {
+            double tm = -1.;
+            if (msg().isHitMsg() || msg().isEpochMsg()) tm = getMsgTime();
+            msg().print(tm);
+         }
    };
 }
 

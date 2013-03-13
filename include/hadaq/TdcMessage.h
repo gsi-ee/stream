@@ -30,6 +30,9 @@ namespace hadaq {
       protected:
          uint32_t   fData;
 
+         static unsigned gFineMinValue;
+         static unsigned gFineMaxValue;
+
       public:
 
          TdcMessage() : fData(0) {}
@@ -87,28 +90,23 @@ namespace hadaq {
          /** Return reserved bits of header message */
          uint32_t getHeaderRes() const { return (fData >> 16) & 0x1FFF; }
 
-         void print()
+         void print(double tm = -1.);
+
+         static double CoarseUnit() { return 5e-9; }
+
+         static double SimpleFineCalibr(unsigned fine)
          {
-            printf("   0x%08x ", (unsigned) fData);
-
-            switch (getKind()) {
-               case tdckind_Reserved: printf ("reserved\n"); break;
-
-               case tdckind_Header:   printf ("header\n"); break;
-               case tdckind_Debug:    printf ("debug\n"); break;
-               case tdckind_Epoch:    printf ("epoch %u\n", (unsigned) getEpochValue()); break;
-               case tdckind_Hit:
-               case tdckind_Hit1:
-               case tdckind_Hit2:
-               case tdckind_Hit3:     printf("hit ch:%4u edge:%u coarse:%4u fine:%4u\n",
-                                            (unsigned) getHitChannel(), (unsigned)getHitEdge(), (unsigned)getHitTmCoarse(), (unsigned)getHitTmFine());
-                                      break;
-               default:
-                  printf("unknown kind %u\n", (unsigned) getKind());
-                  break;
-            }
+            if (fine<=gFineMinValue) return 0.;
+            if (fine>=gFineMaxValue) return CoarseUnit();
+            return (CoarseUnit() * (fine - gFineMinValue)) / (gFineMaxValue - gFineMinValue);
          }
 
+         /** Method set static limits, which are used for simple interpolation of time for fine counter */
+         static void SetFineLimits(unsigned min, unsigned max)
+         {
+            gFineMinValue = min;
+            gFineMaxValue = max;
+         }
    };
 
 }

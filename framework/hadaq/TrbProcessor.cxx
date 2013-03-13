@@ -8,6 +8,9 @@
 #include "hadaq/TrbIterator.h"
 #include "hadaq/TdcProcessor.h"
 
+#define RAWPRINT( args ...) if(IsPrintRawData()) printf( args )
+
+
 hadaq::TrbProcessor::TrbProcessor(unsigned brdid) :
    base::StreamProc("TRB", brdid),
    fMap()
@@ -23,6 +26,7 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid) :
    fLostTriggerCnt = 0;
    fTakenTriggerCnt = 0;
 
+   fPrintRawData = false;
 
    // this is raw-scan processor, therefore no synchronization is required for it
    SetSynchronisationRequired(false);
@@ -98,15 +102,16 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
 
    while ((ev = iter.nextEvent()) != 0) {
 
-//      printf("************ Find event len %u *********** \n", ev->GetSize());
+      if (IsPrintRawData()) ev->Dump();
 
       FillH1(fEvSize, ev->GetSize());
 
       hadaq::RawSubevent* sub = 0;
+      unsigned subcnt(0);
 
       while ((sub = iter.nextSubevent()) != 0) {
 
-//         printf("************ Find subevent len %u ********** \n", sub->GetSize());
+         if (IsPrintRawData()) sub->Dump(true);
 
          FillH1(fSubevSize, sub->GetSize());
 
@@ -114,6 +119,8 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
          AccountTriggerId((sub->GetTrigNr() >> 8) & 0xffff);
 
          ScanTDCV3(sub);
+
+         subcnt++;
       }
 
 //      printf("Finish event processing\n");
@@ -151,9 +158,9 @@ void hadaq::TrbProcessor::ScanTDCV3(hadaq::RawSubevent* sub)
       // ===========  this is header for TDC, build inside the TRB3 =================
       if ((data & 0xFF00) == 0xB000) {
          // do that ever you want
-         // unsigned brdid = data & 0xFF;
+         unsigned brdid = data & 0xFF;
 
-         // EPRINT ("***  --- tdc header: 0x%08x, TRB3-buildin TDC-FPGA brd=%d, size=%d  IGNORED\n", data, curBrd, tdcLen);
+         RAWPRINT("    TRB3-TDC header: 0x%08x, TRB3-buildin TDC-FPGA brd=%u, size=%u  IGNORED\n", (unsigned) data, brdid, datalen);
 
          ix+=datalen;
          continue;
@@ -161,8 +168,15 @@ void hadaq::TrbProcessor::ScanTDCV3(hadaq::RawSubevent* sub)
 
       //! ================= RICH-FEE TDC header ========================
       if ((data & 0xFF00) == 0xC000) {
-
          unsigned tdcid = data & 0xFF;
+
+         RAWPRINT ("   RICH-TDC header: 0x%08x, brd=%u, size=%u\n", (unsigned) data, tdcid, datalen);
+
+         if (IsPrintRawData()) {
+            TdcIterator iter;
+            iter.assign(sub, ix, datalen);
+            while (iter.next()) iter.printmsg();
+         }
 
          TdcProcessor* subproc = fMap[tdcid];
 
@@ -191,7 +205,7 @@ void hadaq::TrbProcessor::ScanTDCV3(hadaq::RawSubevent* sub)
 
       //! ==================== CTS header and inside ================
       if ((data & 0xFFFF) == 0x8000) {
-         //EPRINT ("***  --- CTS header: 0x%x, size=%d\n", data, centHubLen);
+         RAWPRINT("   CTS header: 0x%x, size=%d\n", (unsigned) data, datalen);
          //hTrbTriggerCount->Fill(5);          //! TRB - CTS
          //hTrbTriggerCount->Fill(0);          //! TRB TOTAL
 
@@ -199,49 +213,37 @@ void hadaq::TrbProcessor::ScanTDCV3(hadaq::RawSubevent* sub)
          data = sub->Data(ix++); datalen--;
          unsigned trigtype = (data & 0xFFFF);
          unsigned trignum = (data >> 16) & 0xF;
-         // printf("***  --- CTS trigtype: 0x%x %x, trignum=0x%x\n", trigtype, trigtype & 0x3, trignum);
-         //fCurrentTriggerType = trigtype;
-
-         // printf("trigtype = %x trignum\n", trigtype & 0x3);
+         RAWPRINT("     CTS trigtype: 0x%x, trignum=0x%x\n", trigtype, trignum);
 
          while (datalen-- > 0) {
             //! Look only for the CTS data
             data = sub->Data(ix++);
-            // printf("***  --- CTS word: 0x%x, skipping\n", data);
-            //hTrbTriggerCount->Fill(5);       //! TRB - CTS
-            //hTrbTriggerCount->Fill(0);       //! TRB TOTAL
+            RAWPRINT("     CTS word: 0x%08x\n", (unsigned) data);
          }
+
+         data = sub->Data(ix++);
 
          //! Last CTS word - SYNC number
          syncNumber = (data & 0xFFFFFF);
-
          if ((trigtype & 0x3) == 1) {
             findSync = true;
-
-            // printf("Find SYNC %u\n", syncNum);
          }
 
-         // printf("***  --- CTS word - SYNC number: 0x%x, num=%d\n", data, syncNum);
-         //hTrbTriggerCount->Fill(5);       //! TRB - CTS
-         //hTrbTriggerCount->Fill(0);       //! TRB TOTAL
+         RAWPRINT("     CTS word: 0x%08x - SYNC number: num=%d\n", (unsigned) data, syncNumber);
          continue;
       }
 
       //! ==================  Dummy header and inside ==========================
       if ((data & 0xFFFF) == 0x5555) {
-         //EPRINT ("***  --- dummy header: 0x%x, size=%d\n", data, centHubLen);
+         RAWPRINT("   Dummy header: 0x%x, size=%d\n", (unsigned) data, datalen);
          //hTrbTriggerCount->Fill(4);          //! TRB - DUMMY
          //hTrbTriggerCount->Fill(0);          //! TRB TOTAL
          while (datalen-- > 0) {
             //! In theory here must be only one word - termination package with the status
             data = sub->Data(ix++);
-            //EPRINT ("***  --- status word: 0x%x\n", data);
-            //hTrbTriggerCount->Fill(4);       //! TRB - DUMMY
-            //hTrbTriggerCount->Fill(0);       //! TRB TOTAL
-            uint32_t fSubeventStatus = data;
-            if (fSubeventStatus != 0x00000001) {
-               // hTrbTriggerCount->Fill(1);    //! TRB - INVALID
-            }
+            RAWPRINT("      word: 0x%08x\n", (unsigned) data);
+            //uint32_t fSubeventStatus = data;
+            //if (fSubeventStatus != 0x00000001) { bad events}
          }
 
          continue;

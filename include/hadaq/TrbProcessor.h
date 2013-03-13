@@ -35,6 +35,8 @@ namespace hadaq {
          base::H1handle fSubevSize;  //! HADAQ subevent size
          base::H1handle fLostRate;   //! lost rate
 
+         bool fPrintRawData;
+
          /** Returns true when processor used to select trigger signal
           * TRB3 not yet able to perform trigger selection */
          virtual bool doTriggerSelection() const { return false; }
@@ -57,6 +59,9 @@ namespace hadaq {
 
          /** Scan all messages, find reference signals */
          virtual bool FirstBufferScan(const base::Buffer& buf);
+
+         void SetPrintRawData(bool on = true) { fPrintRawData = on; }
+         bool IsPrintRawData() const { return fPrintRawData; }
 
    };
 }

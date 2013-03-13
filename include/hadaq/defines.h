@@ -133,6 +133,8 @@ namespace hadaq {
          uint32_t GetId() const { return Value(&evtId); }
 
          uint32_t GetSeqNr() const { return Value(&evtSeqNr); }
+
+         void Dump();
    };
 
 /*
@@ -245,6 +247,8 @@ namespace hadaq {
                buf = ((uint32_t*) buf) + 1;
             }
          }
+
+         void Dump(bool print_raw_data = false);
    };
 
 }

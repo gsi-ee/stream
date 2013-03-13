@@ -12,9 +12,6 @@
 
 unsigned hadaq::TdcProcessor::fMaxBrdId = 8;
 
-unsigned hadaq::TdcProcessor::fFineMinValue = 31;
-unsigned hadaq::TdcProcessor::fFineMaxValue = 480;
-
 
 hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid) :
    base::StreamProc("TDC", tdcid),
@@ -76,7 +73,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
    while (iter.next()) {
 
-  //    iter.msg().print();
+//      iter.msg().print();
 
       if ((cnt==0) && !iter.msg().isHeaderMsg()) iserr = true;
 
@@ -114,7 +111,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             }
 
             if (!iserr) {
-               localtm = iter.getMsgTime() + SimpleFineCalibr(iter.msg().getHitTmFine());
+               localtm = iter.getMsgTime() + hadaq::TdcMessage::SimpleFineCalibr(iter.msg().getHitTmFine());
 
                //printf("   msg time %12.9f   stamp %12.9f\n", localtm, iter.getMsgStamp()*5e-9);
 

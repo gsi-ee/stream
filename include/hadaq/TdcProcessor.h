@@ -47,15 +47,6 @@ namespace hadaq {
          static unsigned fFineMinValue; //! minimum value for fine counter, used for simple linear approximation
          static unsigned fFineMaxValue; //! maximum value for fine counter, used for simple linear approximation
 
-         double CoarseUnit() const { return 5e-9; }
-
-         double SimpleFineCalibr(unsigned fine)
-         {
-            if (fine<=fFineMinValue) return 0.;
-            if (fine>=fFineMaxValue) return CoarseUnit();
-            return (CoarseUnit() * (fine - fFineMinValue)) / (fFineMaxValue - fFineMinValue);
-         }
-
          void SetNewDataFlag(bool on) { fNewDataFlag = on; }
          bool IsNewDataFlag() const { return fNewDataFlag; }
 
@@ -77,13 +68,6 @@ namespace hadaq {
          virtual ~TdcProcessor();
 
          static void SetMaxBoardId(unsigned max) { fMaxBrdId = max; }
-
-         /** Method set static limits, which are used for simple interpolation of time for fine counter */
-         static void SetFineLimits(unsigned min, unsigned max)
-         {
-            fFineMinValue = min;
-            fFineMaxValue = max;
-         }
 
          /** Scan all messages, find reference signals
           * if returned false, buffer has error and must be discarded */
