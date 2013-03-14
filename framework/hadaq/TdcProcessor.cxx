@@ -13,13 +13,15 @@
 
 unsigned hadaq::TdcProcessor::fMaxBrdId = 8;
 
+#define RAWPRINT( args ...) if(IsPrintRawData()) printf( args )
 
 hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels, unsigned edge_mask) :
    base::StreamProc("TDC", tdcid),
    fIter1(),
    fIter2(),
    fEdgeMask(edge_mask),
-   fAutoCalibration(0)
+   fAutoCalibration(0),
+   fPrintRawData(false)
 {
    fMsgPerBrd = mgr()->MakeH1("MsgPerTDC", "Number of messages per TDC", fMaxBrdId, 0, fMaxBrdId, "tdc");
    fErrPerBrd = mgr()->MakeH1("ErrPerTDC", "Number of errors per TDC", fMaxBrdId, 0, fMaxBrdId, "tdc");
@@ -52,7 +54,10 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
       }
    }
 
-   if (trb) trb->AddSub(this, tdcid);
+   if (trb) {
+      trb->AddSub(this, tdcid);
+      fPrintRawData = trb->IsPrintRawData();
+   }
 
    fNewDataFlag = false;
 
@@ -118,11 +123,17 @@ void hadaq::TdcProcessor::AfterFill()
       unsigned ref = fCh[ch].refch;
 
       if ((ref<NumChannels()) && (ref!=ch)) {
-         if (DoRisingEdge() && (fCh[ch].first_rising_tm !=0 ) && (fCh[ref].first_rising_tm !=0))
+         if (DoRisingEdge() && (fCh[ch].first_rising_tm !=0 ) && (fCh[ref].first_rising_tm !=0)) {
             FillH1(fCh[ch].fRisingRef, (fCh[ch].first_rising_tm - fCh[ref].first_rising_tm)*1e9);
+            RAWPRINT("Difference rising %u %u  %12.3f  %12.3f  %5.3f\n", ch, ref,
+                  fCh[ch].first_rising_tm*1e9,  fCh[ref].first_rising_tm*1e9, (fCh[ch].first_rising_tm - fCh[ref].first_rising_tm)*1e9);
+         }
 
-         if (DoFallingEdge() && (fCh[ch].first_falling_tm !=0 ) && (fCh[ref].first_falling_tm !=0))
+         if (DoFallingEdge() && (fCh[ch].first_falling_tm !=0 ) && (fCh[ref].first_falling_tm !=0)) {
             FillH1(fCh[ch].fFallingRef, (fCh[ch].first_falling_tm - fCh[ref].first_falling_tm)*1e9);
+            RAWPRINT("Difference falling %u %u  %12.3f  %12.3f  %5.3f\n", ch, ref,
+                     fCh[ch].first_falling_tm*1e9,  fCh[ref].first_falling_tm*1e9, (fCh[ch].first_rising_tm - fCh[ref].first_falling_tm)*1e9);
+         }
       }
 
       if ((fAutoCalibration>0) && fCh[ch].docalibr) {

@@ -91,8 +91,9 @@ namespace hadaq {
          unsigned  fEdgeMask;         //! fill histograms 1 - rising, 2 - falling, 3 - both
          long      fAutoCalibration;  //! indicates minimal number of counts in each channel required to produce calibration
 
-
          std::string fWriteCalibr;    //! file which should be written at the end of data processing
+
+         bool      fPrintRawData;    //! if true, raw data will be printed
 
          /** Returns true when processor used to select trigger signal
           * TDC not yet able to perform trigger selection */
@@ -147,6 +148,8 @@ namespace hadaq {
 
          void SetWriteCalibration(const std::string& fname) { fWriteCalibr = fname; }
 
+         void SetPrintRawData(bool on = true) { fPrintRawData = on; }
+         bool IsPrintRawData() const { return fPrintRawData; }
 
          virtual void UserPreLoop();
 
