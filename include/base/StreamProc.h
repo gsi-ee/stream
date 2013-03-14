@@ -82,7 +82,7 @@ namespace base {
          H1handle MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle = 0);
          inline void FillH1(H1handle h1, double x, double weight = 1.)
          {
-            if (IsHistFilling()) mgr()->FillH1(h1, x, weight);
+            if (IsHistFilling() && (h1!=0)) mgr()->FillH1(h1, x, weight);
          }
 
          inline double GetH1Content(H1handle h1, int nbin)
@@ -98,7 +98,7 @@ namespace base {
          H2handle MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options = 0);
          inline void FillH2(H1handle h2, double x, double y, double weight = 1.)
          {
-            if (IsHistFilling()) mgr()->FillH2(h2, x, y, weight);
+            if (IsHistFilling() && (h2!=0)) mgr()->FillH2(h2, x, y, weight);
          }
 
          C1handle MakeC1(const char* name, double left, double right, H1handle h1 = 0);

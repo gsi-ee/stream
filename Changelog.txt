@@ -226,4 +226,6 @@ Without filling current NX code works 2x times faster
    once (in form of binary file) and than reuse it for analysis of other data
 4. Allow to disable some TDC channels, also allow to disable calibration of some channels
  
-    
+14.03.2013
+1. Provide automatic calibration mode for FPGA TDC, allow to process only rising or only
+   falling edges. Optimize internal data structures and performance.    

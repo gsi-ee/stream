@@ -14,41 +14,43 @@
 unsigned hadaq::TdcProcessor::fMaxBrdId = 8;
 
 
-hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels, bool all_histos) :
+hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels, unsigned edge_mask) :
    base::StreamProc("TDC", tdcid),
    fIter1(),
    fIter2(),
-   fAllHistos(all_histos)
+   fEdgeMask(edge_mask),
+   fAutoCalibration(0)
 {
    fMsgPerBrd = mgr()->MakeH1("MsgPerTDC", "Number of messages per TDC", fMaxBrdId, 0, fMaxBrdId, "tdc");
    fErrPerBrd = mgr()->MakeH1("ErrPerTDC", "Number of errors per TDC", fMaxBrdId, 0, fMaxBrdId, "tdc");
    fHitsPerBrd = mgr()->MakeH1("HitsPerTDC", "Number of data hits per TDC", fMaxBrdId, 0, fMaxBrdId, "tdc");
 
-   fChannels = MakeH1("Channels", "TDC channels", NumTdcChannels, 0, NumTdcChannels, "ch");
+   fChannels = MakeH1("Channels", "TDC channels", numchannels, 0, numchannels, "ch");
    fMsgsKind = MakeH1("MsgKind", "kind of messages", 8, 0, 8, "xbin:Reserved,Header,Debug,Epoch,Hit,-,-,-;kind");
 
    fAllFine = MakeH1("FineTm", "fine counter value", 1024, 0, 1024, "fine");
    fAllCoarse = MakeH1("CoarseTm", "coarse counter value", 2048, 0, 2048, "coarse");
 
-   if (all_histos)
-      for (unsigned ch=0;ch<NumTdcChannels;ch++) {
-         fCh[ch].disabled = (ch>=numchannels);
-         if (fCh[ch].disabled) continue;
 
-         SetSubPrefix("Ch", ch);
+   for (unsigned ch=0;ch<numchannels;ch++) {
+      fCh.push_back(ChannelRec());
 
+      SetSubPrefix("Ch", ch);
+
+      if (DoRisingEdge()) {
          fCh[ch].fRisingFine = MakeH1("RisingFine", "Rising fine counter", FineCounterBins, 0, FineCounterBins, "fine");
          fCh[ch].fRisingCoarse = MakeH1("RisingCoarse", "Rising coarse counter", 2048, 0, 2048, "coarse");
-         fCh[ch].fRisingRef = MakeH1("RisingRef", "Difference to reference channel", 4000, -1000., +1000., "ns");
+         fCh[ch].fRisingRef = MakeH1("RisingRef", "Difference to reference channel", 20000, -100., +100., "ns");
          fCh[ch].fRisingCalibr = MakeH1("RisingCalibr", "Rising calibration function", FineCounterBins, 0, FineCounterBins, "fine");
-
-         fCh[ch].fFallingFine = MakeH1("FallingFine", "Falling fine counter", FineCounterBins, 0, FineCounterBins, "fine");
-         fCh[ch].fFallingCoarse = MakeH1("FallingCoarse", "Falling coarse counter", 2048, 0, 2048, "coarse");
-         fCh[ch].fFallingRef = MakeH1("FallingRef", "Difference to reference channel", 4000, -1000., +1000., "ns");
-         fCh[ch].fFallingCalibr = MakeH1("FallingCalibr", "Falling calibration function", FineCounterBins, 0, FineCounterBins, "fine");
       }
 
-
+      if (DoFallingEdge()) {
+         fCh[ch].fFallingFine = MakeH1("FallingFine", "Falling fine counter", FineCounterBins, 0, FineCounterBins, "fine");
+         fCh[ch].fFallingCoarse = MakeH1("FallingCoarse", "Falling coarse counter", 2048, 0, 2048, "coarse");
+         fCh[ch].fFallingRef = MakeH1("FallingRef", "Difference to reference channel", 20000, -100., +100., "ns");
+         fCh[ch].fFallingCalibr = MakeH1("FallingCalibr", "Falling calibration function", FineCounterBins, 0, FineCounterBins, "fine");
+      }
+   }
 
    if (trb) trb->AddSub(this, tdcid);
 
@@ -61,30 +63,19 @@ hadaq::TdcProcessor::~TdcProcessor()
 {
 }
 
-void hadaq::TdcProcessor::DisableCalibrationFor(int firstch, int lastch)
+void hadaq::TdcProcessor::DisableCalibrationFor(unsigned firstch, unsigned lastch)
 {
-   if (lastch<0) lastch = firstch;
-   if (lastch>=NumTdcChannels-1) lastch = NumTdcChannels-1;
-   for (int n=firstch;n<=lastch;n++)
+   if (lastch<=firstch) lastch = firstch+1;
+   if (lastch>=NumChannels()) lastch = NumChannels();
+   for (unsigned n=firstch;n<lastch;n++)
       fCh[n].docalibr = false;
 }
-
-void hadaq::TdcProcessor::DisableChannels(int firstch, int lastch)
-{
-   if (lastch<0) lastch = firstch;
-   if (lastch>=NumTdcChannels-1) lastch = NumTdcChannels-1;
-   for (int n=firstch;n<=lastch;n++)
-      fCh[n].disabled = true;
-
-}
-
 
 
 void hadaq::TdcProcessor::UserPreLoop()
 {
 //   printf("************************* hadaq::TdcProcessor preloop *******************\n");
-   for (int ch=0;ch<NumTdcChannels;ch++) {
-      if (fCh[ch].disabled) continue;
+   for (unsigned ch=0;ch<NumChannels();ch++) {
 
       CopyCalibration(fCh[ch].rising_calibr, fCh[ch].fRisingCalibr);
 
@@ -97,7 +88,7 @@ void hadaq::TdcProcessor::UserPostLoop()
 //   printf("************************* hadaq::TdcProcessor postloop *******************\n");
 
    if (!fWriteCalibr.empty()) {
-      ProduceCalibration();
+      if (fAutoCalibration == 0) ProduceCalibration(true);
       StoreCalibration(fWriteCalibr);
    }
 }
@@ -105,56 +96,44 @@ void hadaq::TdcProcessor::UserPostLoop()
 
 void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch)
 {
-   if ((ch<NumTdcChannels) && (refch<NumTdcChannels))
+   if ((ch<NumChannels()) && (refch<NumChannels()))
       fCh[ch].refch = refch;
 }
 
 
 void hadaq::TdcProcessor::BeforeFill()
 {
-   for (unsigned ch=0;ch<NumTdcChannels;ch++) {
-      fCh[ch].last_rising_tm = 0;
-      fCh[ch].last_falling_tm = 0;
+   for (unsigned ch=0;ch<NumChannels();ch++) {
+      fCh[ch].first_rising_tm = 0;
+      fCh[ch].first_falling_tm = 0;
    }
-}
-
-void hadaq::TdcProcessor::FillHistograms()
-{
-   hadaq::TdcMessage& msg = fIter1.msg();
-
-   unsigned chid = msg.getHitChannel();
-   ChannelRec& rec = fCh[chid];
-
-   double tm = fIter1.getMsgTimeCoarse();
-
-   if (msg.isHitRisingEdge()) {
-      tm += rec.rising_calibr[msg.getHitTmFine()];
-
-      FillH1(rec.fRisingFine, msg.getHitTmFine());
-      FillH1(rec.fRisingCoarse, msg.getHitTmCoarse());
-      if (rec.last_rising_tm == 0.) rec.last_rising_tm = tm;
-   } else {
-      tm += rec.falling_calibr[msg.getHitTmFine()];
-
-      FillH1(rec.fFallingFine, msg.getHitTmFine());
-      FillH1(rec.fFallingCoarse, msg.getHitTmCoarse());
-      if (rec.last_falling_tm == 0.) rec.last_falling_tm = tm;
-   }
-
 }
 
 void hadaq::TdcProcessor::AfterFill()
 {
-   for (unsigned ch=0;ch<NumTdcChannels;ch++) {
+   bool docalibration(true), isany(false);
+
+   for (unsigned ch=0;ch<NumChannels();ch++) {
+
       unsigned ref = fCh[ch].refch;
-      if ((ref>=NumTdcChannels) || (ref==ch)) continue;
 
-      if ((fCh[ch].last_rising_tm !=0 ) && (fCh[ref].last_rising_tm !=0))
-         FillH1(fCh[ch].fRisingRef, (fCh[ch].last_rising_tm - fCh[ref].last_rising_tm)*1e9);
+      if ((ref<NumChannels()) && (ref!=ch)) {
+         if (DoRisingEdge() && (fCh[ch].first_rising_tm !=0 ) && (fCh[ref].first_rising_tm !=0))
+            FillH1(fCh[ch].fRisingRef, (fCh[ch].first_rising_tm - fCh[ref].first_rising_tm)*1e9);
 
-      if ((fCh[ch].last_falling_tm !=0 ) && (fCh[ref].last_falling_tm !=0))
-         FillH1(fCh[ch].fFallingRef, (fCh[ch].last_falling_tm - fCh[ref].last_falling_tm)*1e9);
+         if (DoFallingEdge() && (fCh[ch].first_falling_tm !=0 ) && (fCh[ref].first_falling_tm !=0))
+            FillH1(fCh[ch].fFallingRef, (fCh[ch].first_falling_tm - fCh[ref].first_falling_tm)*1e9);
+      }
+
+      if ((fAutoCalibration>0) && fCh[ch].docalibr) {
+         isany = true;
+         if (DoRisingEdge() && (fCh[ch].all_rising_stat<fAutoCalibration)) docalibration = false;
+         if (DoFallingEdge() && (fCh[ch].all_falling_stat<fAutoCalibration)) docalibration = false;
+      }
    }
+
+   if (docalibration && isany)
+      ProduceCalibration(true);
 }
 
 
@@ -189,7 +168,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
 //   printf("TDC%u scan\n", GetBoardId());
 
-   if (fAllHistos && first_scan) BeforeFill();
+   if (first_scan) BeforeFill();
 
    hadaq::TdcMessage& msg = iter.msg();
 
@@ -210,76 +189,92 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       }
 
       if (msg.isHitMsg()) {
-
          unsigned chid = msg.getHitChannel();
+         unsigned fine = msg.getHitTmFine();
+         unsigned coarse = msg.getHitTmCoarse();
+         bool isrising = msg.isHitRisingEdge();
 
          if (!iter.isCurEpoch()) {
-            // printf("*** LOST EPOCH - ignore hit data ***\n");
+            // one expects epoch before each hit message, if not data are corrupted and we can ingore it
             iserr = true;
-         } else
-         if (chid >= NumTdcChannels) {
-            printf("TDC Channel number problem %u\n", chid);
-            iserr = true;
-         } else {
-
-            // fill histograms only for normal channels
-            if (first_scan) {
-
-               FillH1(fChannels, chid);
-
-               if (chid>0) {
-                  FillH1(fAllFine, msg.getHitTmFine());
-                  FillH1(fAllCoarse, msg.getHitTmCoarse());
-               }
-
-               if (msg.isHitRisingEdge()) {
-                  fCh[chid].rising_stat[msg.getHitTmFine()]++;
-               } else {
-                  fCh[chid].falling_stat[msg.getHitTmFine()]++;
-               }
-
-               if (fAllHistos) FillHistograms();
-
-               if (!iserr) hitcnt++;
-            }
-
-            if (!iserr) {
-               localtm = iter.getMsgTimeCoarse();
-
-               if (msg.isHitRisingEdge())
-                  localtm += fCh[chid].rising_calibr[msg.getHitTmFine()];
-               else
-                  localtm += fCh[chid].falling_calibr[msg.getHitTmFine()];
-
-               if ((minimtm<1.) || (localtm < minimtm))
-                  minimtm = localtm;
-
-               // remember position of channel 0 - it could be used for SYNC settings
-               if ((chid==0) && msg.isHitRisingEdge()) {
-                  ch0time = localtm;
-               }
-            }
-
-
-            // here we check if hit can be assigned to the events
-            if (!first_scan && !iserr && (chid>0)) {
-               base::GlobalTime_t globaltm = LocalToGlobalTime(localtm, &help_index);
-
-               // use first channel only for flushing
-               unsigned indx = TestHitTime(globaltm, true, false);
-
-//               printf("Test hit time %12.9f trigger %u\n", globaltm*1e-9, trig_indx);
-
-               if (indx < fGlobalMarks.size())
-                  AddMessage(indx, (hadaq::TdcSubEvent*) fGlobalMarks.item(indx).subev, hadaq::TdcMessageExt(msg, globaltm));
-            }
-
+            continue;
          }
 
          iter.clearCurEpoch();
 
+         if (chid >= NumChannels()) {
+            printf("TDC Channel number problem %u\n", chid);
+            iserr = true;
+            continue;
+         }
+
+         if (fine >= FineCounterBins) {
+            printf("Fine counter %u out of allowed range 0..%u\n", fine, FineCounterBins);
+            iserr = true;
+            continue;
+         }
+
+         ChannelRec& rec = fCh[chid];
+
+         localtm = iter.getMsgTimeCoarse();
+
+         if (isrising)
+            localtm += rec.rising_calibr[fine];
+         else
+            localtm += rec.falling_calibr[fine];
+
+         // fill histograms only for normal channels
+         if (first_scan) {
+
+            FillH1(fChannels, chid);
+            FillH1(fAllFine, fine);
+            FillH1(fAllCoarse, coarse);
+
+            if (isrising) {
+               rec.rising_stat[fine]++;
+               rec.all_rising_stat++;
+
+               FillH1(rec.fRisingFine, fine);
+               FillH1(rec.fRisingCoarse, coarse);
+               if (rec.first_rising_tm == 0.) rec.first_rising_tm = localtm;
+
+            } else {
+               rec.falling_stat[fine]++;
+               rec.all_falling_stat++;
+
+               FillH1(rec.fFallingFine, fine);
+               FillH1(rec.fFallingCoarse, coarse);
+               if (rec.first_falling_tm == 0.) rec.first_falling_tm = localtm;
+            }
+
+            if (!iserr) hitcnt++;
+         }
+
+         if (!iserr) {
+            if ((minimtm<1.) || (localtm < minimtm))
+               minimtm = localtm;
+
+            // remember position of channel 0 - it could be used for SYNC settings
+            if ((chid==0) && isrising) {
+               ch0time = localtm;
+            }
+         }
+
+         // here we check if hit can be assigned to the events
+         if (!first_scan && !iserr && (chid>0)) {
+            base::GlobalTime_t globaltm = LocalToGlobalTime(localtm, &help_index);
+
+            // use first channel only for flushing
+            unsigned indx = TestHitTime(globaltm, true, false);
+
+            if (indx < fGlobalMarks.size())
+               AddMessage(indx, (hadaq::TdcSubEvent*) fGlobalMarks.item(indx).subev, hadaq::TdcMessageExt(msg, globaltm));
+         }
+
          continue;
       }
+
+      // process other messages kinds
 
       switch (msg.getKind()) {
         case tdckind_Reserved:
@@ -336,7 +331,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          TestHitTime(LocalToGlobalTime(ch0time, &help_index), false, true);
    }
 
-   if (fAllHistos && first_scan) AfterFill();
+   if (first_scan) AfterFill();
 
    return !iserr;
 }
@@ -385,16 +380,32 @@ void hadaq::TdcProcessor::CopyCalibration(float* calibr, base::H1handle hcalibr)
 
 }
 
-void hadaq::TdcProcessor::ProduceCalibration()
+void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat)
 {
-   for (int ch=0;ch<NumTdcChannels;ch++) {
-      if (fCh[ch].disabled) continue;
+   printf("Produce channels calibrations\n");
+
+   for (unsigned ch=0;ch<NumChannels();ch++) {
       if (fCh[ch].docalibr) {
-         CalibrateChannel(fCh[ch].rising_stat, fCh[ch].rising_calibr);
-         CalibrateChannel(fCh[ch].falling_stat, fCh[ch].falling_calibr);
+         if (DoRisingEdge()) {
+            CalibrateChannel(fCh[ch].rising_stat, fCh[ch].rising_calibr);
+            if (clear_stat) {
+               for (unsigned n=0;n<FineCounterBins;n++) fCh[ch].rising_stat[n] = 0;
+               fCh[ch].all_rising_stat = 0;
+            }
+         }
+         if (DoFallingEdge()) {
+            CalibrateChannel(fCh[ch].falling_stat, fCh[ch].falling_calibr);
+            if (clear_stat) {
+               for (unsigned n=0;n<FineCounterBins;n++) fCh[ch].falling_stat[n] = 0;
+               fCh[ch].all_falling_stat = 0;
+            }
+
+         }
       }
-      CopyCalibration(fCh[ch].rising_calibr, fCh[ch].fRisingCalibr);
-      CopyCalibration(fCh[ch].falling_calibr, fCh[ch].fFallingCalibr);
+      if (DoRisingEdge())
+         CopyCalibration(fCh[ch].rising_calibr, fCh[ch].fRisingCalibr);
+      if (DoFallingEdge())
+         CopyCalibration(fCh[ch].falling_calibr, fCh[ch].fFallingCalibr);
    }
 }
 
@@ -408,7 +419,11 @@ void hadaq::TdcProcessor::StoreCalibration(const std::string& fname)
       return;
    }
 
-   for (int ch=0;ch<NumTdcChannels;ch++) {
+   uint64_t num = NumChannels();
+
+   fwrite(&num, sizeof(num), 1, f);
+
+   for (unsigned ch=0;ch<NumChannels();ch++) {
       fwrite(fCh[ch].rising_calibr, sizeof(fCh[ch].rising_calibr), 1, f);
       fwrite(fCh[ch].falling_calibr, sizeof(fCh[ch].falling_calibr), 1, f);
    }
@@ -428,9 +443,17 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fname)
       return false;
    }
 
-   for (int ch=0;ch<NumTdcChannels;ch++) {
-      fread(fCh[ch].rising_calibr, sizeof(fCh[ch].rising_calibr), 1, f);
-      fread(fCh[ch].falling_calibr, sizeof(fCh[ch].falling_calibr), 1, f);
+   uint64_t num(0);
+
+   fread(&num, sizeof(num), 1, f);
+
+   if (num!=NumChannels()) {
+      printf("Mismatch of channels number in calibration file %u and in processor %u\n", (unsigned) num, NumChannels());
+   } else {
+      for (unsigned ch=0;ch<NumChannels();ch++) {
+         fread(fCh[ch].rising_calibr, sizeof(fCh[ch].rising_calibr), 1, f);
+         fread(fCh[ch].falling_calibr, sizeof(fCh[ch].falling_calibr), 1, f);
+      }
    }
 
    fclose(f);

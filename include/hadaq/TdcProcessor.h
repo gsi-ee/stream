@@ -12,7 +12,7 @@ namespace hadaq {
 
    class TrbProcessor;
 
-   enum { FineCounterBins = 1024 };
+   enum { FineCounterBins = 600 };
 
    /** This is specialized sub-processor for FPGA-TDC.
     * Normally it should be used together with TrbProcessor,
@@ -23,10 +23,12 @@ namespace hadaq {
       friend class TrbProcessor;
 
       protected:
+
+         enum { rising_edge = 1, falling_edge = 2 };
+
          struct ChannelRec {
-            bool disabled;                 //! if disabled, channel will be ignored
             unsigned refch;                //! reference channel for specified
-            bool docalibr;                 //! if flase, simple calibration will be used
+            bool docalibr;                 //! if false, simple calibration will be used
             base::H1handle fRisingFine;    //! histogram of all fine counters
             base::H1handle fRisingCoarse;  //! histogram of all coarse counters
             base::H1handle fRisingRef;     //! histogram of all coarse counters
@@ -35,8 +37,10 @@ namespace hadaq {
             base::H1handle fFallingCoarse; //! histogram of all coarse counters
             base::H1handle fFallingRef;    //! histogram of all coarse counters
             base::H1handle fFallingCalibr; //! histogram of channel calibration function
-            double last_rising_tm;
-            double last_falling_tm;
+            double first_rising_tm;
+            double first_falling_tm;
+            long all_rising_stat;
+            long all_falling_stat;
             long rising_stat[FineCounterBins];
             float rising_calibr[FineCounterBins];
             long falling_stat[FineCounterBins];
@@ -44,7 +48,6 @@ namespace hadaq {
 
 
             ChannelRec() :
-               disabled(false),
                refch(0),
                docalibr(true),
                fRisingFine(0),
@@ -55,8 +58,10 @@ namespace hadaq {
                fFallingCoarse(0),
                fFallingRef(0),
                fFallingCalibr(0),
-               last_rising_tm(0.),
-               last_falling_tm(0.)
+               first_rising_tm(0.),
+               first_falling_tm(0.),
+               all_rising_stat(0),
+               all_falling_stat(0)
             {
                for (unsigned n=0;n<FineCounterBins;n++) {
                   rising_stat[n] = 0;
@@ -80,10 +85,12 @@ namespace hadaq {
          base::H1handle fAllFine;   //! histogram of all fine counters
          base::H1handle fAllCoarse; //! histogram of all coarse counters
 
-         ChannelRec fCh[NumTdcChannels]; //! histogram for individual channles
+         std::vector<ChannelRec>  fCh; //! histogram for individual channels
 
          bool   fNewDataFlag;         //! flag used by TRB processor to indicate if new data was added
-         bool   fAllHistos;           //! fill all possible histograms
+         unsigned  fEdgeMask;         //! fill histograms 1 - rising, 2 - falling, 3 - both
+         long      fAutoCalibration;  //! indicates minimal number of counts in each channel required to produce calibration
+
 
          std::string fWriteCalibr;    //! file which should be written at the end of data processing
 
@@ -111,31 +118,35 @@ namespace hadaq {
 
          /** These methods used to fill different raw histograms during first scan */
          void BeforeFill();
-         void FillHistograms();
          void AfterFill();
 
          void CalibrateChannel(long* statistic, float* calibr);
          void CopyCalibration(float* calibr, base::H1handle hcalibr);
-         void ProduceCalibration();
+         void ProduceCalibration(bool clear_stat);
          void StoreCalibration(const std::string& fname);
 
 
       public:
 
-         TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels = NumTdcChannels, bool all_histos = false);
+         TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels = MaxNumTdcChannels, unsigned edge_mask = 1);
          virtual ~TdcProcessor();
 
          static void SetMaxBoardId(unsigned max) { fMaxBrdId = max; }
 
+         inline unsigned NumChannels() const { return fCh.size(); }
+         inline bool DoRisingEdge() const { return fEdgeMask & rising_edge; }
+         inline bool DoFallingEdge() const { return fEdgeMask & falling_edge; }
+
+         void DisableCalibrationFor(unsigned firstch, unsigned lastch = 0);
+
          void SetRefChannel(unsigned ch, unsigned refch);
 
-         void SetWriteCalibr(const std::string& fname) { fWriteCalibr = fname; }
+         void SetAutoCalibration(long cnt = 100000) { fAutoCalibration = cnt; }
 
          bool LoadCalibration(const std::string& fname);
 
-         void DisableChannels(int firstch, int lastch = -1);
+         void SetWriteCalibration(const std::string& fname) { fWriteCalibr = fname; }
 
-         void DisableCalibrationFor(int firstch, int lastch = -1);
 
          virtual void UserPreLoop();
 

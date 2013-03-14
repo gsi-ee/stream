@@ -20,7 +20,7 @@ namespace hadaq {
    };
 
    enum TdcConstants {
-      NumTdcChannels = 65
+      MaxNumTdcChannels = 65
    };
 
    /** TdcMessage is wrapper for data, produced by FPGA-TDC
