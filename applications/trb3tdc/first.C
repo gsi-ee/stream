@@ -12,7 +12,7 @@ void first()
    // create processor for hits from TDC3, only 5 channels are enabled, edges_mask
    hadaq::TdcProcessor* tdc3 = new hadaq::TdcProcessor(trb3, 3, 5, 0x1);
 
-   for (int n=1;n<5;n++)
+   for (int n=1;n<4;n++)
       tdc3->SetRefChannel(n, n+1);
    tdc3->DisableCalibrationFor(0);
 
