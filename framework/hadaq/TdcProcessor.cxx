@@ -44,6 +44,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
          fCh[ch].fRisingCoarse = MakeH1("RisingCoarse", "Rising coarse counter", 2048, 0, 2048, "coarse");
          fCh[ch].fRisingRef = MakeH1("RisingRef", "Difference to reference channel", 20000, -100., +100., "ns");
          fCh[ch].fRisingCoarseRef = MakeH1("RisingCoarseRef", "Difference to rising coarse counter in ref channel", 4096, -2048, 2048, "coarse");
+         fCh[ch].fRisingRef2D = MakeH2("RisingRef2D", "Difference to reference channel", 400, -1., +1., 100, 0, 500, "ns");
          fCh[ch].fRisingCalibr = MakeH1("RisingCalibr", "Rising calibration function", FineCounterBins, 0, FineCounterBins, "fine");
       }
 
@@ -126,9 +127,13 @@ void hadaq::TdcProcessor::AfterFill()
 
       if ((ref<NumChannels()) && (ref!=ch)) {
          if (DoRisingEdge() && (fCh[ch].first_rising_tm !=0 ) && (fCh[ref].first_rising_tm !=0)) {
-            FillH1(fCh[ch].fRisingRef, (fCh[ch].first_rising_tm - fCh[ref].first_rising_tm)*1e9);
-            FillH1(fCh[ch].fRisingCoarseRef, 0. + fCh[ch].first_rising_coarse - fCh[ref].first_rising_coarse);
+            double diff = (fCh[ch].first_rising_tm - fCh[ref].first_rising_tm)*1e9;
 
+            FillH1(fCh[ch].fRisingRef, diff);
+            FillH1(fCh[ch].fRisingCoarseRef, 0. + fCh[ch].first_rising_coarse - fCh[ref].first_rising_coarse);
+            FillH2(fCh[ch].fRisingRef2D, diff, fCh[ch].first_rising_fine);
+            FillH2(fCh[ch].fRisingRef2D, diff-0.5, fCh[ref].first_rising_fine);
+            FillH2(fCh[ch].fRisingRef2D, diff-1.0, fCh[ch].first_rising_coarse/4);
             RAWPRINT("Difference rising %u %u  %12.3f  %12.3f  %7.3f  coarse %03x - %03x = %4d  fine %03x %03x \n", ch, ref,
                   fCh[ch].first_rising_tm*1e9,  fCh[ref].first_rising_tm*1e9, (fCh[ch].first_rising_tm - fCh[ref].first_rising_tm)*1e9,
                   fCh[ch].first_rising_coarse, fCh[ref].first_rising_coarse, (int) fCh[ch].first_rising_coarse - fCh[ref].first_rising_coarse,

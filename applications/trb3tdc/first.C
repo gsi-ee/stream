@@ -16,9 +16,9 @@ void first()
       tdc3->SetRefChannel(n, n+1);
    tdc3->DisableCalibrationFor(0);
 
-//   tdc3->LoadCalibration("test.cal");
+   tdc3->LoadCalibration("test3.cal");
 //   tdc3->SetAutoCalibration(100000);
-//   tdc3->SetWriteCalibration("test.cal");
+//   tdc3->SetWriteCalibration("test3.cal");
 
    // method set window for all TDCs at the same time
    //trb3->SetTriggerWindow(-4e-7, -3e-7);

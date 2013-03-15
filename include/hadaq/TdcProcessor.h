@@ -33,6 +33,7 @@ namespace hadaq {
             base::H1handle fRisingCoarse;  //! histogram of all coarse counters
             base::H1handle fRisingRef;     //! histogram of all coarse counters
             base::H1handle fRisingCoarseRef; //! histogram
+            base::H2handle fRisingRef2D; //! histogram
             base::H1handle fRisingCalibr;  //! histogram of channel calibration function
             base::H1handle fFallingFine;   //! histogram of all fine counters
             base::H1handle fFallingCoarse; //! histogram of all coarse counters
@@ -60,6 +61,7 @@ namespace hadaq {
                fRisingCoarse(0),
                fRisingRef(0),
                fRisingCoarseRef(0),
+               fRisingRef2D(0),
                fRisingCalibr(0),
                fFallingFine(0),
                fFallingCoarse(0),
