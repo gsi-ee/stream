@@ -239,9 +239,9 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          localtm = iter.getMsgTimeCoarse();
 
          if (isrising)
-            localtm += rec.rising_calibr[fine];
+            localtm -= rec.rising_calibr[fine];
          else
-            localtm += rec.falling_calibr[fine];
+            localtm -= rec.falling_calibr[fine];
 
          // fill histograms only for normal channels
          if (first_scan) {

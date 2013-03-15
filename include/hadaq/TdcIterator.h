@@ -104,7 +104,7 @@ namespace hadaq {
          {
             double tm = -1.;
             if (msg().isHitMsg() || msg().isEpochMsg())
-               tm = getMsgTimeCoarse() + getMsgTimeFine();
+               tm = getMsgTimeCoarse() - getMsgTimeFine();
             msg().print(tm);
          }
    };
