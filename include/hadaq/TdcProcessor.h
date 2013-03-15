@@ -32,10 +32,12 @@ namespace hadaq {
             base::H1handle fRisingFine;    //! histogram of all fine counters
             base::H1handle fRisingCoarse;  //! histogram of all coarse counters
             base::H1handle fRisingRef;     //! histogram of all coarse counters
+            base::H1handle fRisingCoarseRef; //! histogram
             base::H1handle fRisingCalibr;  //! histogram of channel calibration function
             base::H1handle fFallingFine;   //! histogram of all fine counters
             base::H1handle fFallingCoarse; //! histogram of all coarse counters
             base::H1handle fFallingRef;    //! histogram of all coarse counters
+            base::H1handle fFallingCoarseRef; //! histogram
             base::H1handle fFallingCalibr; //! histogram of channel calibration function
             double first_rising_tm;
             double first_falling_tm;
@@ -57,10 +59,12 @@ namespace hadaq {
                fRisingFine(0),
                fRisingCoarse(0),
                fRisingRef(0),
+               fRisingCoarseRef(0),
                fRisingCalibr(0),
                fFallingFine(0),
                fFallingCoarse(0),
                fFallingRef(0),
+               fFallingCoarseRef(0),
                fFallingCalibr(0),
                first_rising_tm(0.),
                first_falling_tm(0.),

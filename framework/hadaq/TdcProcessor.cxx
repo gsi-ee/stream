@@ -43,6 +43,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
          fCh[ch].fRisingFine = MakeH1("RisingFine", "Rising fine counter", FineCounterBins, 0, FineCounterBins, "fine");
          fCh[ch].fRisingCoarse = MakeH1("RisingCoarse", "Rising coarse counter", 2048, 0, 2048, "coarse");
          fCh[ch].fRisingRef = MakeH1("RisingRef", "Difference to reference channel", 20000, -100., +100., "ns");
+         fCh[ch].fRisingCoarseRef = MakeH1("RisingCoarseRef", "Difference to rising coarse counter in ref channel", 4096, -2048, 2048, "coarse");
          fCh[ch].fRisingCalibr = MakeH1("RisingCalibr", "Rising calibration function", FineCounterBins, 0, FineCounterBins, "fine");
       }
 
@@ -50,6 +51,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
          fCh[ch].fFallingFine = MakeH1("FallingFine", "Falling fine counter", FineCounterBins, 0, FineCounterBins, "fine");
          fCh[ch].fFallingCoarse = MakeH1("FallingCoarse", "Falling coarse counter", 2048, 0, 2048, "coarse");
          fCh[ch].fFallingRef = MakeH1("FallingRef", "Difference to reference channel", 20000, -100., +100., "ns");
+         fCh[ch].fFallingCoarseRef = MakeH1("FallingCoarseRef", "Difference to falling coarse counter in ref channel", 4096, -2048, 2048, "coarse");
          fCh[ch].fFallingCalibr = MakeH1("FallingCalibr", "Falling calibration function", FineCounterBins, 0, FineCounterBins, "fine");
       }
    }
@@ -125,17 +127,20 @@ void hadaq::TdcProcessor::AfterFill()
       if ((ref<NumChannels()) && (ref!=ch)) {
          if (DoRisingEdge() && (fCh[ch].first_rising_tm !=0 ) && (fCh[ref].first_rising_tm !=0)) {
             FillH1(fCh[ch].fRisingRef, (fCh[ch].first_rising_tm - fCh[ref].first_rising_tm)*1e9);
-            RAWPRINT("Difference rising %u %u  %12.3f  %12.3f  %7.3f  coarse %03x - %03x = %08x  fine %03x %03x \n", ch, ref,
+            FillH1(fCh[ch].fRisingCoarseRef, 0. + fCh[ch].first_rising_coarse - fCh[ref].first_rising_coarse);
+
+            RAWPRINT("Difference rising %u %u  %12.3f  %12.3f  %7.3f  coarse %03x - %03x = %4d  fine %03x %03x \n", ch, ref,
                   fCh[ch].first_rising_tm*1e9,  fCh[ref].first_rising_tm*1e9, (fCh[ch].first_rising_tm - fCh[ref].first_rising_tm)*1e9,
-                  fCh[ch].first_rising_coarse, fCh[ref].first_rising_coarse, fCh[ch].first_rising_coarse - fCh[ref].first_rising_coarse,
+                  fCh[ch].first_rising_coarse, fCh[ref].first_rising_coarse, (int) fCh[ch].first_rising_coarse - fCh[ref].first_rising_coarse,
                   fCh[ch].first_rising_fine, fCh[ref].first_rising_fine);
          }
 
          if (DoFallingEdge() && (fCh[ch].first_falling_tm !=0 ) && (fCh[ref].first_falling_tm !=0)) {
             FillH1(fCh[ch].fFallingRef, (fCh[ch].first_falling_tm - fCh[ref].first_falling_tm)*1e9);
-            RAWPRINT("Difference falling %u %u  %12.3f  %12.3f  %7.3f  coarse %03x - %03x = %08x fine %03x %03x \n", ch, ref,
+            FillH1(fCh[ch].fFallingCoarseRef, 0. + fCh[ch].first_falling_coarse - fCh[ref].first_falling_coarse);
+            RAWPRINT("Difference falling %u %u  %12.3f  %12.3f  %7.3f  coarse %03x - %03x = %4d  fine %03x %03x \n", ch, ref,
                      fCh[ch].first_falling_tm*1e9,  fCh[ref].first_falling_tm*1e9, (fCh[ch].first_falling_tm - fCh[ref].first_falling_tm)*1e9,
-                     fCh[ch].first_falling_coarse, fCh[ref].first_falling_coarse, fCh[ch].first_falling_coarse - fCh[ref].first_falling_coarse,
+                     fCh[ch].first_falling_coarse, fCh[ref].first_falling_coarse, (int) fCh[ch].first_falling_coarse - fCh[ref].first_falling_coarse,
                      fCh[ch].first_falling_fine, fCh[ref].first_falling_fine);
          }
       }
