@@ -39,6 +39,10 @@ namespace hadaq {
             base::H1handle fFallingCalibr; //! histogram of channel calibration function
             double first_rising_tm;
             double first_falling_tm;
+            unsigned first_rising_coarse;
+            unsigned first_falling_coarse;
+            unsigned first_rising_fine;
+            unsigned first_falling_fine;
             long all_rising_stat;
             long all_falling_stat;
             long rising_stat[FineCounterBins];
@@ -60,6 +64,10 @@ namespace hadaq {
                fFallingCalibr(0),
                first_rising_tm(0.),
                first_falling_tm(0.),
+               first_rising_coarse(0),
+               first_falling_coarse(0),
+               first_rising_fine(0),
+               first_falling_fine(0),
                all_rising_stat(0),
                all_falling_stat(0)
             {

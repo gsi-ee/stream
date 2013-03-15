@@ -125,14 +125,18 @@ void hadaq::TdcProcessor::AfterFill()
       if ((ref<NumChannels()) && (ref!=ch)) {
          if (DoRisingEdge() && (fCh[ch].first_rising_tm !=0 ) && (fCh[ref].first_rising_tm !=0)) {
             FillH1(fCh[ch].fRisingRef, (fCh[ch].first_rising_tm - fCh[ref].first_rising_tm)*1e9);
-            RAWPRINT("Difference rising %u %u  %12.3f  %12.3f  %5.3f\n", ch, ref,
-                  fCh[ch].first_rising_tm*1e9,  fCh[ref].first_rising_tm*1e9, (fCh[ch].first_rising_tm - fCh[ref].first_rising_tm)*1e9);
+            RAWPRINT("Difference rising %u %u  %12.3f  %12.3f  %7.3f  coarse %03x - %03x = %08x  fine %03x %03x \n", ch, ref,
+                  fCh[ch].first_rising_tm*1e9,  fCh[ref].first_rising_tm*1e9, (fCh[ch].first_rising_tm - fCh[ref].first_rising_tm)*1e9,
+                  fCh[ch].first_rising_coarse, fCh[ref].first_rising_coarse, fCh[ch].first_rising_coarse - fCh[ref].first_rising_coarse,
+                  fCh[ch].first_rising_fine, fCh[ref].first_rising_fine);
          }
 
          if (DoFallingEdge() && (fCh[ch].first_falling_tm !=0 ) && (fCh[ref].first_falling_tm !=0)) {
             FillH1(fCh[ch].fFallingRef, (fCh[ch].first_falling_tm - fCh[ref].first_falling_tm)*1e9);
-            RAWPRINT("Difference falling %u %u  %12.3f  %12.3f  %5.3f\n", ch, ref,
-                     fCh[ch].first_falling_tm*1e9,  fCh[ref].first_falling_tm*1e9, (fCh[ch].first_rising_tm - fCh[ref].first_falling_tm)*1e9);
+            RAWPRINT("Difference falling %u %u  %12.3f  %12.3f  %7.3f  coarse %03x - %03x = %08x fine %03x %03x \n", ch, ref,
+                     fCh[ch].first_falling_tm*1e9,  fCh[ref].first_falling_tm*1e9, (fCh[ch].first_falling_tm - fCh[ref].first_falling_tm)*1e9,
+                     fCh[ch].first_falling_coarse, fCh[ref].first_falling_coarse, fCh[ch].first_falling_coarse - fCh[ref].first_falling_coarse,
+                     fCh[ch].first_falling_fine, fCh[ref].first_falling_fine);
          }
       }
 
@@ -247,7 +251,11 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
                FillH1(rec.fRisingFine, fine);
                FillH1(rec.fRisingCoarse, coarse);
-               if (rec.first_rising_tm == 0.) rec.first_rising_tm = localtm;
+               if (rec.first_rising_tm == 0.) {
+                  rec.first_rising_tm = localtm;
+                  rec.first_rising_coarse = coarse;
+                  rec.first_rising_fine = fine;
+               }
 
             } else {
                rec.falling_stat[fine]++;
@@ -255,7 +263,11 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
                FillH1(rec.fFallingFine, fine);
                FillH1(rec.fFallingCoarse, coarse);
-               if (rec.first_falling_tm == 0.) rec.first_falling_tm = localtm;
+               if (rec.first_falling_tm == 0.) {
+                  rec.first_falling_tm = localtm;
+                  rec.first_falling_coarse = coarse;
+                  rec.first_falling_fine = fine;
+               }
             }
 
             if (!iserr) hitcnt++;
