@@ -152,6 +152,8 @@ bool base::ProcMgr::AnalyzeSyncMarkers()
    // TODO: work with unsynchronized SYNC messages - not always the same id in the front
    // TODO: process not only last sync message
 
+   bool isenough = true;
+
    if (fProc.size()==0) return false;
 
    // in the beginning decide who is time master
@@ -186,12 +188,20 @@ bool base::ProcMgr::AnalyzeSyncMarkers()
    // we require at least 2 syncs on each stream
    // TODO: later one can ignore optional streams here
    for (unsigned n=0;n<fProc.size();n++) {
+
+
+      //printf("Proc %s sync required %s\n",fProc[n]->GetName(), fProc[n]->IsSynchronisationRequired() ? "true" : "false");
+
       if (fProc[n]->IsSynchronisationRequired() && (fProc[n]->numSyncs() < 2)) {
-          printf("No enough syncs on processor %s!!!\n", fProc[n]->GetName());
+          printf("No enough %u syncs on processor %s!!!\n", fProc[n]->numSyncs(), fProc[n]->GetName());
           // exit(5);
-          return false;
+          isenough = false;
       }
+
    }
+
+   if (!isenough) return false;
+
 
    master = fProc[fTimeMasterIndex];
 
@@ -231,7 +241,7 @@ bool base::ProcMgr::AnalyzeSyncMarkers()
             // master sync is bigger, slave sync must be ignored
             if (diff<0) {
                // we even remove it while no any reasonable stamp can be assigned to it
-               printf("Erase SYNC %u in processor %u\n", slave_marker.uniqueid, n);
+               printf("Erase SYNC %u in processor %s\n", slave_marker.uniqueid, slave->GetName());
                slave->eraseSyncAt(slave->fSyncScanIndex);
                continue;
             }
@@ -339,6 +349,8 @@ bool base::ProcMgr::ScanDataForNewTriggers()
    // here we want that each processor scan its data again for new triggers
    // which we already distribute to each processor. In fact, this could run in
    // individual thread of each processor
+
+//   printf("--------------- ScanDataForNewTriggers -------------- \n");
 
    for (unsigned n=0;n<fProc.size();n++)
       fProc[n]->ScanDataForNewTriggers();

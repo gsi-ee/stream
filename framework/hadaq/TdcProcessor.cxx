@@ -225,15 +225,15 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             continue;
          }
 
-         iter.clearCurEpoch();
-
          if (chid >= NumChannels()) {
+            iter.clearCurEpoch();
             printf("TDC Channel number problem %u\n", chid);
             iserr = true;
             continue;
          }
 
          if (fine >= FineCounterBins) {
+            iter.clearCurEpoch();
             printf("Fine counter %u out of allowed range 0..%u\n", fine, FineCounterBins);
             iserr = true;
             continue;
@@ -242,6 +242,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          ChannelRec& rec = fCh[chid];
 
          localtm = iter.getMsgTimeCoarse();
+
+         iter.clearCurEpoch();
 
          if (isrising)
             localtm -= rec.rising_calibr[fine];
@@ -315,7 +317,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
         case tdckind_Header: {
            unsigned errbits = msg.getHeaderErr();
            if (errbits && first_scan)
-              printf("!!! found error bits: 0x%x at tdc 0x%x\n", errbits, GetBoardId());
+              printf("%4s found error bits: 0x%x\n", GetName(), errbits);
 
            break;
         }
@@ -335,6 +337,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    if (first_scan) {
 
       if ((syncid != 0xffffffff) && (ch0time>=0)) {
+
+//         printf("SYNC %u localtm %12.9f\n", syncid, ch0time);
          base::SyncMarker marker;
          marker.uniqueid = syncid;
          marker.localid = 0;

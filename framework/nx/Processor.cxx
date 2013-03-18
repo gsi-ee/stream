@@ -43,9 +43,9 @@ nx::Processor::Processor(unsigned rocid, unsigned nxmask, base::OpticSplitter* s
 
       SetSubPrefix("NX", nx);
 
-      NX[nx].fChannels = MakeH1("Channels", "NX channels", 128, 0, 128, "ch");
+      NX[nx].fChannels = MakeH1("Channels", "NX channels", NumChannels, 0, NumChannels, "ch");
 
-      NX[nx].fADCs = MakeH2("ADC", "ADC distribution", 128, 0., 128., 1024, 0., 4096., "ch;adc");
+      NX[nx].fADCs = MakeH2("ADC", "ADC distribution", NumChannels, 0., NumChannels, 1024, 0., 4096., "ch;adc");
       NX[nx].fHITt = MakeH1("HITt", "Hit time distribution", 10000, 0., 1000., "s");
 
       // NX[nx].corr_reset();
@@ -81,6 +81,39 @@ nx::Processor::~Processor()
 
    //   printf("nx::Processor::~Processor\n");
 }
+
+
+bool nx::Processor::LoadTextBaseline(const std::string& fname)
+{
+   if (fname.empty()) return false;
+
+   FILE * pedFile = fopen( fname.c_str(), "r" );
+   if( ! pedFile ) {
+      printf("Pedestal file %s not found\n", fname.c_str());
+      return false;
+   }
+
+   unsigned roc, nx, ch;
+   float ped, width;
+
+   std::vector<unsigned> cnt(NX.size(), 0);
+
+   while(fscanf( pedFile, "%u%u%u%f%f", &roc, &nx, &ch, &ped, &width ) == 5) {
+      if (roc!= GetBoardId()) continue;
+      if ((nx>=NX.size()) || !NX[nx].used || ch>=NumChannels) continue;
+      NX[nx].base_line[ch] = ped;
+      cnt[nx]++;
+      if (cnt[nx] == NumChannels) {
+         printf("Fill base line for NX %u from ROC%u\n", nx, GetBoardId());
+         NX[nx].isbaseline = true;
+      }
+   }
+   fclose(pedFile);
+
+   return true;
+}
+
+
 
 void nx::Processor::AssignBufferTo(nx::Iterator& iter, const base::Buffer& buf)
 {
@@ -196,7 +229,7 @@ bool nx::Processor::FirstBufferScan(const base::Buffer& buf)
                marker.local_stamp = fIter1.getMsgStamp();
                marker.localtm = localtm; // nx gave us time in ns
 
-               // printf("ROC%u Find sync %u tm %12.9f\n", rocid, marker.uniqueid, marker.localtm);
+               // printf("%s Find sync %u tm %12.9f\n", GetName(), marker.uniqueid, marker.localtm);
                // if (marker.uniqueid > 11798000) exit(11);
 
                // marker.globaltm = 0.; // will be filled by the StreamProc
@@ -316,7 +349,14 @@ bool nx::Processor::SecondBufferScan(const base::Buffer& buf)
             // here is time in ns
             double localtm = fIter2.getMsgTime();
 
-            bool isnxmsg = msg.isHitMsg() && nx_in_use(msg.getNxNumber());
+            float adc = 0.;
+
+            unsigned nx = msg.getNxNumber();
+
+            bool isnxmsg = msg.isHitMsg() && nx_in_use(nx);
+
+            if (isnxmsg && NX[nx].isbaseline)
+               adc = NX[nx].base_line[msg.getNxChNum()] - msg.getNxAdcValue();
 
             base::GlobalTime_t globaltm = LocalToGlobalTime(localtm, &help_index);
 
@@ -325,7 +365,7 @@ bool nx::Processor::SecondBufferScan(const base::Buffer& buf)
             unsigned indx = TestHitTime(globaltm, isnxmsg);
 
             if (indx < fGlobalMarks.size())
-               AddMessage(indx, (nx::SubEvent*) fGlobalMarks.item(indx).subev, nx::MessageExt(msg, globaltm));
+               AddMessage(indx, (nx::SubEvent*) fGlobalMarks.item(indx).subev, nx::MessageExt(msg, globaltm, adc));
 
             break;
          }

@@ -20,9 +20,9 @@ namespace nx {
 
          MessageExt() : base::MessageExt<nx::Message>(), fCorrectedADC(0) {}
 
-         MessageExt(const nx::Message& msg, double globaltm) :
+         MessageExt(const nx::Message& msg, double globaltm, float adc = 0.) :
             base::MessageExt<nx::Message>(msg, globaltm),
-            fCorrectedADC(0)
+            fCorrectedADC(adc)
          {
          }
 
@@ -36,6 +36,7 @@ namespace nx {
 
          void SetCorrectedADC(float val) { fCorrectedADC = val; }
          float GetCorrectedNxADC() const { return fCorrectedADC; }
+         bool isCorrectedADC() const { return fCorrectedADC!=0.; }
    };
 
 

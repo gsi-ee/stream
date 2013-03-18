@@ -94,7 +94,7 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
 //   buf().datalen
 
 
-//   printf("*********** Start TRB processing len %u ************ \n", buf().datalen);
+   RAWPRINT("TRB3 - first scan of buffer %u\n", buf().datalen);
 
    hadaq::TrbIterator iter(buf().buf, buf().datalen);
 
@@ -147,6 +147,7 @@ void hadaq::TrbProcessor::ScanTDCV3(hadaq::RawSubevent* sub)
    unsigned syncNumber(0);
    bool findSync(false);
 
+   RAWPRINT("Scan TRB3 raw event 4-bytes size %u\n", trbSubEvSize);
 //   printf("Scan TRB3 raw data\n");
 
    while (ix < trbSubEvSize) {
@@ -215,7 +216,7 @@ void hadaq::TrbProcessor::ScanTDCV3(hadaq::RawSubevent* sub)
          unsigned trignum = (data >> 16) & 0xF;
          RAWPRINT("     CTS trigtype: 0x%x, trignum=0x%x\n", trigtype, trignum);
 
-         while (datalen-- > 0) {
+         while (datalen-- > 1) {
             //! Look only for the CTS data
             data = sub->Data(ix++);
             RAWPRINT("     CTS word: 0x%08x\n", (unsigned) data);
@@ -229,7 +230,7 @@ void hadaq::TrbProcessor::ScanTDCV3(hadaq::RawSubevent* sub)
             findSync = true;
          }
 
-         RAWPRINT("     CTS word: 0x%08x - SYNC number: num=%d\n", (unsigned) data, syncNumber);
+         RAWPRINT("     CTS word: 0x%08x - SYNC number %u real:%s \n", (unsigned) data, syncNumber, (findSync ? "true" : "false"));
          continue;
       }
 
@@ -269,7 +270,7 @@ void hadaq::TrbProcessor::ScanTDCV3(hadaq::RawSubevent* sub)
 
    if (findSync) {
 
-      // printf("Append new SYNC %x\n", syncNumber);
+//      printf("Append new SYNC %u\n", syncNumber);
 
       for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++) {
          if (iter->second->IsNewDataFlag())

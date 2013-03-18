@@ -209,6 +209,12 @@ base::GlobalTime_t base::StreamProc::LocalToGlobalTime(base::GlobalTime_t localt
 
             if ((dist1>0) && ((diff1/dist1 < 0.9) || (diff1/dist1 > 1.1))) {
                printf("Something wrong with time calc %8.6f %8.6f\n", dist1, diff1);
+
+               printf("%s converting localtm %12.9f dist1 %12.9f dist2 %12.9f\n", GetName(), localtm, dist1, dist2);
+
+               printf("sync1_local  %14.9f  sync2_local  %14.9f  diff %12.9f\n", getSync(n).localtm, getSync(n+1).localtm, getSync(n+1).localtm - getSync(n).localtm);
+               printf("sync1_global %14.9f  sync2_global %14.9f  diff %12.9f\n", getSync(n).globaltm, getSync(n+1).globaltm, getSync(n+1).globaltm - getSync(n).globaltm);
+
                exit(1);
             }
 
@@ -238,6 +244,10 @@ base::GlobalTime_t base::StreamProc::LocalToGlobalTime(base::GlobalTime_t localt
 
 bool base::StreamProc::AddNextBuffer(const Buffer& buf)
 {
+   // printf("%4s Add buffer queue size %u\n", GetName(), fQueue.size());
+
+   if (fQueue.full()) printf("%s queue if full size %u\n", GetName(), fQueue.size());
+
    fQueue.push(buf);
 
    return true;
@@ -332,7 +342,7 @@ void base::StreamProc::AddSyncMarker(base::SyncMarker& marker)
    }
 
    if ((numSyncs()>0) && (numSyncs() % 1000 == 0)) {
-      printf("Too much syncs %u - something wrong??\n", numSyncs());
+      printf("%s too much syncs %u - something wrong??\n", GetName(), numSyncs());
    }
 
    marker.globaltm = 0.;
@@ -414,16 +424,21 @@ bool base::StreamProc::SkipBuffers(unsigned num_skip)
 
    fQueue.pop_items(num_skip);
 
-   // erase all syncs with reference to first buffer
+   // erase all syncs wich are reference to skipped buffers except one
+   // always keep at least two syncs
    unsigned erase_cnt(0);
-   while ((erase_cnt + 1 < fSyncs.size()) && (fSyncs.item(erase_cnt).bufid + 1  < num_skip)) erase_cnt++;
+   while (((erase_cnt + 1) < fSyncs.size()) && (fSyncs.item(erase_cnt+1).bufid < num_skip)) erase_cnt++;
    eraseFirstSyncs(erase_cnt);
 
-   for (unsigned n=0;n<fSyncs.size();n++)
+//   printf("%4s skips %2u buffers and %2u syncs, remained %3u buffers and %3u syncs\n", GetName(), num_skip, erase_cnt, fQueue.size(), fSyncs.size());
+
+   for (unsigned n=0;n<fSyncs.size();n++) {
+//      printf("   sync %u  was from buffer %u\n", n, fSyncs.item(n).bufid);
       if (fSyncs.item(n).bufid>num_skip)
          fSyncs.item(n).bufid-=num_skip;
       else
          fSyncs.item(n).bufid = 0;
+   }
 
 //   printf("Skip %u buffers numsync %u sync0id %u sync0tm %8.3f numbufs %u\n", num_skip, fSyncs.size(), fSyncs[0].uniqueid, fSyncs[0].globaltm*1e-9, fQueue.size());
 
