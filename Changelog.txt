@@ -235,3 +235,7 @@ Without filling current NX code works 2x times faster
    analysis. Implementing of baseline measurement should be done.
 2. Fix several problems in cern-oct12 analysis, where NXYTER and FPGA TDC should be
    correctly synchronized.    
+   
+19.03.2013
+1. Analyze fine counter of TDC hit message if it was missed hit or counter out of allowed 
+   range. Let configure subevents ID for CTS and TDC.

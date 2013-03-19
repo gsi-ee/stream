@@ -22,6 +22,9 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid) :
 
    fLostRate = MakeH1("LostRate", "Relative number of lost packets", 1000, 0, 1., "data lost");
 
+   fHadaqCTSId = 0x8000;
+   fHadaqTDCId = 0xC000;
+
    fLastTriggerId = 0;
    fLostTriggerCnt = 0;
    fTakenTriggerCnt = 0;
@@ -167,8 +170,10 @@ void hadaq::TrbProcessor::ScanTDCV3(hadaq::RawSubevent* sub)
          continue;
       }
 
+
+
       //! ================= RICH-FEE TDC header ========================
-      if ((data & 0xFF00) == 0xC000) {
+      if ((data & 0xFF00) == fHadaqTDCId) {
          unsigned tdcid = data & 0xFF;
 
          RAWPRINT ("   RICH-TDC header: 0x%08x, brd=%u, size=%u\n", (unsigned) data, tdcid, datalen);
@@ -203,9 +208,8 @@ void hadaq::TrbProcessor::ScanTDCV3(hadaq::RawSubevent* sub)
          continue; // go to next block
       }  // end of if TDC header
 
-
       //! ==================== CTS header and inside ================
-      if ((data & 0xFFFF) == 0x8000) {
+      if ((data & 0xFFFF) == fHadaqCTSId) {
          RAWPRINT("   CTS header: 0x%x, size=%d\n", (unsigned) data, datalen);
          //hTrbTriggerCount->Fill(5);          //! TRB - CTS
          //hTrbTriggerCount->Fill(0);          //! TRB TOTAL

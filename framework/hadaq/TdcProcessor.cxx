@@ -28,6 +28,9 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fHitsPerBrd = mgr()->MakeH1("HitsPerTDC", "Number of data hits per TDC", fMaxBrdId, 0, fMaxBrdId, "tdc");
 
    fChannels = MakeH1("Channels", "TDC channels", numchannels, 0, numchannels, "ch");
+   fErrors = MakeH1("Errors", "Errors in TDC channels", numchannels, 0, numchannels, "ch");
+   fUndHits = MakeH1("UndetectedHits", "Undetected hits in TDC channels", numchannels, 0, numchannels, "ch");
+
    fMsgsKind = MakeH1("MsgKind", "kind of messages", 8, 0, 8, "xbin:Reserved,Header,Debug,Epoch,Hit,-,-,-;kind");
 
    fAllFine = MakeH1("FineTm", "fine counter value", 1024, 0, 1024, "fine");
@@ -218,32 +221,38 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          unsigned fine = msg.getHitTmFine();
          unsigned coarse = msg.getHitTmCoarse();
          bool isrising = msg.isHitRisingEdge();
+         localtm = iter.getMsgTimeCoarse();
 
          if (!iter.isCurEpoch()) {
-            // one expects epoch before each hit message, if not data are corrupted and we can ingore it
+            // one expects epoch before each hit message, if not data are corrupted and we can ignore it
+            printf("Missing epoch for hit from channel %u\n", chid);
             iserr = true;
             continue;
          }
 
+         iter.clearCurEpoch();
+
          if (chid >= NumChannels()) {
-            iter.clearCurEpoch();
             printf("TDC Channel number problem %u\n", chid);
             iserr = true;
             continue;
          }
 
+         if (fine == 0x3FF) {
+            // special case - missing hit, just ignore such value
+            printf("Missing hit in channel %u fine counter is %x\n", chid, fine);
+            FillH1(fUndHits, chid);
+            continue;
+         }
+
          if (fine >= FineCounterBins) {
-            iter.clearCurEpoch();
-            printf("Fine counter %u out of allowed range 0..%u\n", fine, FineCounterBins);
+            FillH1(fErrors, chid);
+            printf("Fine counter %u out of allowed range 0..%u in channel %u\n", fine, FineCounterBins, chid);
             iserr = true;
             continue;
          }
 
          ChannelRec& rec = fCh[chid];
-
-         localtm = iter.getMsgTimeCoarse();
-
-         iter.clearCurEpoch();
 
          if (isrising)
             localtm -= rec.rising_calibr[fine];

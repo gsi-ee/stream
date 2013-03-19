@@ -95,6 +95,8 @@ namespace hadaq {
          base::H1handle fHitsPerBrd; //! data hits per board
 
          base::H1handle fChannels;  //! histogram with messages per channel
+         base::H1handle fErrors;    //! histogram with errors per channel
+         base::H1handle fUndHits;   //! histogram with undetected hits per channel
          base::H1handle fMsgsKind;  //! messages kinds
          base::H1handle fAllFine;   //! histogram of all fine counters
          base::H1handle fAllCoarse; //! histogram of all coarse counters
