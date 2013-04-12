@@ -31,11 +31,13 @@ NEWGO4_DO          = $(NEWGO4_DICT).$(ObjSuf)
 
 NEWGO4_H           = $(STREAMSYS)/include/go4/TUserProcessor.h \
                      $(STREAMSYS)/include/go4/TStreamEvent.h \
+                     TUserSource.h \
                      TFirstStepProcessor.h \
                      TSecondStepProcessor.h \
                      TStreamAnalysis.h
 
 NEWGO4_S           = TUserProcessor.cxx \
+                     TUserSource.cxx \
                      TFirstStepProcessor.cxx \
                      TSecondStepProcessor.cxx \
                      TStreamEvent.cxx \

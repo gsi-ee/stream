@@ -81,13 +81,13 @@ hadaq::RawSubevent* hadaq::TrbIterator::nextSubevent()
          fSubCursor = ((uint8_t*) fSubCursor) + fulllen;
          fSubLen -= fulllen;
 
-         if (fSubLen < sizeof(hadaq::RawSubevent))
+         if (fSubLen < sizeof(hadaq::RawSubevent)) {
             fSubLen = 0;
-         else {
+         } else {
 
             unsigned align = ((uint8_t*) fSubCursor - (uint8_t*) fEvCursor) % 8;
 
-            if (align != 8) {
+            if (align != 0) {
                printf("Align problem %u != 0 of subevent relative to buffer begin\n", align);
 
                fSubCursor = ((uint8_t*) fSubCursor) + (8 - align);

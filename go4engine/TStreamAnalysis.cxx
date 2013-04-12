@@ -43,7 +43,7 @@ TStreamAnalysis::TStreamAnalysis(int argc, char** argv) :
    factory->DefEventProcessor("FirstProc","TFirstStepProcessor");// object name, class name
    factory->DefInputEvent("MBS","TGo4MbsEvent"); // object name, class name
    factory->DefOutputEvent("CBM","TStreamEvent"); // object name, class name
-   // factory->DefUserEventSource("TCBMUserSource"); // object name, class name
+   factory->DefUserEventSource("TUserSource"); // class name
 
    TGo4EventSourceParameter* sourcepar = new TGo4MbsFileParameter("file.lmd");
    TGo4FileStoreParameter* storepar = new TGo4FileStoreParameter("NoOutput");

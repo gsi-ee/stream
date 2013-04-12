@@ -6,6 +6,7 @@
 
 #pragma link C++ class TStreamEvent+;
 #pragma link C++ class TUserProcessor+;
+#pragma link C++ class TUserSource+;
 #pragma link C++ class TFirstStepProcessor+;
 #pragma link C++ class TSecondStepProcessor+;
 

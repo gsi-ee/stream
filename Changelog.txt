@@ -222,7 +222,7 @@ Without filling current NX code works 2x times faster
 1. Add new application for FPGA TDC testing on TRB3. 
    First provide possibility for raw printout of the data.
 2. Fill different per-channel raw histograms for FPGA TDC (of course, optionally)
-3. Implement manual calibration mode for FPGA TDC. Manula means one could generate calibration
+3. Implement manual calibration mode for FPGA TDC. Manual means one could generate calibration
    once (in form of binary file) and than reuse it for analysis of other data
 4. Allow to disable some TDC channels, also allow to disable calibration of some channels
  
@@ -239,3 +239,10 @@ Without filling current NX code works 2x times faster
 19.03.2013
 1. Analyze fine counter of TDC hit message if it was missed hit or counter out of allowed 
    range. Let configure subevents ID for CTS and TDC.
+   
+12.04.2013
+1. Provide user source for hld files. Later one could extend it to any other user sources,
+   mainly for different files formats. 
+2. Strange results with UDP generators - show wrong alignment of subevents. Must
+   be checked with real TRB3 data.    
+   
