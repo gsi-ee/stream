@@ -38,6 +38,8 @@ namespace hadaq {
          base::H1handle fSubevSize;  //! HADAQ subevent size
          base::H1handle fLostRate;   //! lost rate
 
+         base::H1handle fTdcDistr;   //! distribution of data over TDCs
+
          bool fPrintRawData;
 
          /** Returns true when processor used to select trigger signal
@@ -50,7 +52,7 @@ namespace hadaq {
          void AddSub(TdcProcessor* tdc, unsigned id);
 
          /** Scan FPGA-TDC data, distribute over sub-processors */
-         void ScanTDCV3(hadaq::RawSubevent* sub);
+         void ScanSubEvent(hadaq::RawSubevent* sub);
 
       public:
 

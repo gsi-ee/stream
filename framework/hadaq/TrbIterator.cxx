@@ -22,7 +22,9 @@ hadaq::RawEvent* hadaq::TrbIterator::nextEvent()
    } else {
       hadaq::RawEvent* prev = (hadaq::RawEvent*) fEvCursor;
 
-      unsigned fulllen = prev->GetSize();
+      unsigned fulllen = prev->GetPaddedSize();
+
+//      printf("nextEvent fEvLen = %u evlen = %u\n", fEvLen, fulllen);
 
       if (fulllen >= fEvLen) {
          if (fulllen > fEvLen)
@@ -36,7 +38,7 @@ hadaq::RawEvent* hadaq::TrbIterator::nextEvent()
    }
 
    if ((fEvCursor!=0) && (fEvLen!=0) && (fEvLen < sizeof(hadaq::RawEvent))) {
-      printf("Strange hadaq::RawEvent length %u\n", fEvLen);
+      printf("Strange hadaq::RawEvent length %u minumum %u\n", (unsigned) fEvLen, (unsigned) sizeof(hadaq::RawEvent));
       fEvCursor = 0;
       fEvLen = 0;
    }
@@ -56,19 +58,19 @@ hadaq::RawSubevent* hadaq::TrbIterator::nextSubevent()
    if (fSubCursor == 0) {
       fSubCursor = ((uint8_t*) ev) + sizeof(hadaq::RawEvent);
 
-      fSubLen = ev->GetSize();
+      fSubLen = ev->GetPaddedSize();
 
       if (fSubLen > sizeof(hadaq::RawEvent)) {
          fSubLen -= sizeof(hadaq::RawEvent);
       } else {
-         printf("Wrong hadaq::RawEvent length %u\n", ev->GetSize());
+         printf("Wrong hadaq::RawEvent length %u header size %u\n", (unsigned) ev->GetSize(), (unsigned) sizeof(hadaq::RawEvent));
          fSubLen = 0;
       }
    } else {
 
       hadaq::RawSubevent* sub = (hadaq::RawSubevent*) fSubCursor;
 
-      unsigned fulllen = sub->GetSize();
+      unsigned fulllen = sub->GetPaddedSize();
 
 //      printf ("Shift to next subevent size %u  fulllen %u\n", fulllen, fSubLen);
 
@@ -89,10 +91,6 @@ hadaq::RawSubevent* hadaq::TrbIterator::nextSubevent()
 
             if (align != 0) {
                printf("Align problem %u != 0 of subevent relative to buffer begin\n", align);
-
-               fSubCursor = ((uint8_t*) fSubCursor) + (8 - align);
-
-               fSubLen -= (8-align);
             }
          }
       }

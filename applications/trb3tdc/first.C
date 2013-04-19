@@ -8,16 +8,18 @@ void first()
    hadaq::TrbProcessor* trb3 = new hadaq::TrbProcessor(0);
 
 //   trb3->SetHadaqCTSId(0x8000);
-//   trb3->SetHadaqTDCId(0xC000);
+   trb3->SetHadaqTDCId(0x800);
 
-   trb3->SetPrintRawData(false);
+   trb3->SetPrintRawData(true);
 
    // create processor for hits from TDC3, only 5 channels are enabled, edges_mask
-   hadaq::TdcProcessor* tdc3 = new hadaq::TdcProcessor(trb3, 3, 5, 0x1);
+   hadaq::TdcProcessor* tdc3 = new hadaq::TdcProcessor(trb3, 1, 65, 0x1);
 
    for (int n=1;n<4;n++)
       tdc3->SetRefChannel(n, n+1);
    tdc3->DisableCalibrationFor(0);
+
+//   tdc3->SetEveryEpoch(true);
 
 //   tdc3->LoadCalibration("test3.cal");
 //   tdc3->SetAutoCalibration(100000);

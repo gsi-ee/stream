@@ -111,6 +111,8 @@ namespace hadaq {
 
          bool      fPrintRawData;    //! if true, raw data will be printed
 
+         bool      fEveryEpoch;      //! if true, each hit must be supplied with epoch
+
          /** Returns true when processor used to select trigger signal
           * TDC not yet able to perform trigger selection */
          virtual bool doTriggerSelection() const { return false; }
@@ -157,6 +159,10 @@ namespace hadaq {
          void DisableCalibrationFor(unsigned firstch, unsigned lastch = 0);
 
          void SetRefChannel(unsigned ch, unsigned refch);
+
+         /** If set, each hit must be supplied with epoch message */
+         void SetEveryEpoch(bool on) { fEveryEpoch = on; }
+         bool IsEveryEpoch() const { return fEveryEpoch; }
 
          void SetAutoCalibration(long cnt = 100000) { fAutoCalibration = cnt; }
 

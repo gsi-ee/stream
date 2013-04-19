@@ -21,7 +21,8 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fIter2(),
    fEdgeMask(edge_mask),
    fAutoCalibration(0),
-   fPrintRawData(false)
+   fPrintRawData(false),
+   fEveryEpoch(false)
 {
    fMsgPerBrd = mgr()->MakeH1("MsgPerTDC", "Number of messages per TDC", fMaxBrdId, 0, fMaxBrdId, "tdc");
    fErrPerBrd = mgr()->MakeH1("ErrPerTDC", "Number of errors per TDC", fMaxBrdId, 0, fMaxBrdId, "tdc");
@@ -230,7 +231,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             continue;
          }
 
-         iter.clearCurEpoch();
+         if (IsEveryEpoch())
+            iter.clearCurEpoch();
 
          if (chid >= NumChannels()) {
             printf("TDC Channel number problem %u\n", chid);

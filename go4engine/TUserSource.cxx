@@ -130,17 +130,17 @@ Bool_t TUserSource::NextEvent(TGo4MbsEvent* target)
 	//! We fill complete hadaq event into one mbs subevent, not to lose header information
 	//! decomposing hades subevents is left to the user analysis processor!
 
-	fiEventLen = (fxBufsize/sizeof(Short_t)) ; // data payload of mbs is full hades event in buffer
 	fxSubevHead.fsProcid = base::proc_TRBEvent; // mark to be processed by TTrbProc
-	int evcounter = ((hadaq::RawEvent*) fxBuffer)->GetSeqNr();
-//	cout <<"Next Event is filling mbs event, fullid:"<<fxSubevHead.fiFullid<<", nr:"<<evcounter<< endl;
-	target->AddSubEvent(fxSubevHead.fiFullid, (Short_t*) fxBuffer, fiEventLen + 2, kTRUE);
-	target->SetDlen(fiEventLen+2+4); // total length of pseudo mbs event
-//	cout <<"Next Event setting event length:"<<fiEventLen+2+4<< endl;
 
-	target->SetCount(evcounter);
+	target->AddSubEvent(fxSubevHead.fiFullid, (Short_t*) fxBuffer, fxBufsize/sizeof(Short_t) + 2, kTRUE);
 
-//	return kFALSE; // this means we need another file buffer for this event, what is never the case since buffer contains just one event
+	target->SetCount(((hadaq::RawEvent*) fxBuffer)->GetSeqNr());
+
+	// set total MBS event length, which must include MBS header itself
+	target->SetDlen(fxBufsize/sizeof(Short_t) + 2 + 6);
+
+//   printf("Produce event of size %u intlen %u \n", (unsigned)fxBufsize, (unsigned) target->GetIntLen()*4);
+
 	return kTRUE; // event is ready
 }
 

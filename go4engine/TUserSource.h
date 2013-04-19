@@ -40,9 +40,6 @@ class TUserSource : public TGo4EventSource {
       /** points to end of buffer */
       Short_t* fxBufEnd;
 
-      /** Length of current event data in shorts */
-      Int_t fiEventLen;
-
       /** read next buffer from file into memory */
       Bool_t NextBuffer();
 

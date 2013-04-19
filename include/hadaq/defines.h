@@ -130,6 +130,13 @@ namespace hadaq {
 
          uint32_t GetSize() const { return Value(&evtSize); }
 
+         uint32_t GetPaddedSize()
+         {
+            uint32_t hedsize = GetSize();
+            while ((hedsize % 8) != 0) hedsize++;
+            return hedsize;
+         }
+
          uint32_t GetId() const { return Value(&evtId); }
 
          uint32_t GetSeqNr() const { return Value(&evtSeqNr); }
@@ -205,6 +212,13 @@ namespace hadaq {
          }
 
          uint32_t GetSize() const { return Value(&subEvtSize); }
+
+         uint32_t GetPaddedSize()
+         {
+            uint32_t hedsize = GetSize();
+            while ((hedsize % 8) != 0) hedsize++;
+            return hedsize;
+         }
 
          uint32_t GetDecoding() const { return Value(&subEvtDecoding); }
 

@@ -22,6 +22,8 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid) :
 
    fLostRate = MakeH1("LostRate", "Relative number of lost packets", 1000, 0, 1., "data lost");
 
+   fTdcDistr = MakeH1("TdcDistr", "Data distribution over TDCs", 32, 0, 32, "tdc");
+
    fHadaqCTSId = 0x8000;
    fHadaqTDCId = 0xC000;
 
@@ -89,15 +91,9 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
 {
    if (buf.null()) return false;
 
-//   buf().format;
-//   buf().boardid;
+//   RAWPRINT("TRB3 - first scan of buffer %u\n", buf().datalen);
 
-//   buf().buf
-
-//   buf().datalen
-
-
-   RAWPRINT("TRB3 - first scan of buffer %u\n", buf().datalen);
+//   printf("Scan TRB buffer size %u\n", buf().datalen);
 
    hadaq::TrbIterator iter(buf().buf, buf().datalen);
 
@@ -121,7 +117,7 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
          // use only 16-bit in trigger number while CTS make a lot of errors in higher 8 bits
          AccountTriggerId((sub->GetTrigNr() >> 8) & 0xffff);
 
-         ScanTDCV3(sub);
+         ScanSubEvent(sub);
 
          subcnt++;
       }
@@ -133,7 +129,7 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
    return true;
 }
 
-void hadaq::TrbProcessor::ScanTDCV3(hadaq::RawSubevent* sub)
+void hadaq::TrbProcessor::ScanSubEvent(hadaq::RawSubevent* sub)
 {
    // this is first scan of subevent from TRB3 data
    // our task is statistic over all messages we will found
@@ -150,7 +146,7 @@ void hadaq::TrbProcessor::ScanTDCV3(hadaq::RawSubevent* sub)
    unsigned syncNumber(0);
    bool findSync(false);
 
-   RAWPRINT("Scan TRB3 raw event 4-bytes size %u\n", trbSubEvSize);
+//   RAWPRINT("Scan TRB3 raw event 4-bytes size %u\n", trbSubEvSize);
 //   printf("Scan TRB3 raw data\n");
 
    while (ix < trbSubEvSize) {
@@ -158,6 +154,8 @@ void hadaq::TrbProcessor::ScanTDCV3(hadaq::RawSubevent* sub)
       uint32_t data = sub->Data(ix++);
 
       unsigned datalen = (data >> 16) & 0xFFFF;
+
+//      RAWPRINT("Subevent id 0x%04x len %u\n", (data & 0xFFFF), datalen);
 
       // ===========  this is header for TDC, build inside the TRB3 =================
       if ((data & 0xFF00) == 0xB000) {
@@ -171,10 +169,11 @@ void hadaq::TrbProcessor::ScanTDCV3(hadaq::RawSubevent* sub)
       }
 
 
-
       //! ================= RICH-FEE TDC header ========================
       if ((data & 0xFF00) == fHadaqTDCId) {
          unsigned tdcid = data & 0xFF;
+
+         FillH1(fTdcDistr, tdcid);
 
          RAWPRINT ("   RICH-TDC header: 0x%08x, brd=%u, size=%u\n", (unsigned) data, tdcid, datalen);
 
@@ -184,9 +183,10 @@ void hadaq::TrbProcessor::ScanTDCV3(hadaq::RawSubevent* sub)
             while (iter.next()) iter.printmsg();
          }
 
-         TdcProcessor* subproc = fMap[tdcid];
+         SubProcMap::iterator iter = fMap.find(tdcid);
 
-         if (subproc) {
+         if (iter != fMap.end()) {
+            TdcProcessor* subproc = iter->second;
 
             base::Buffer buf;
             buf.makenew((datalen+1)*4);
@@ -200,8 +200,9 @@ void hadaq::TrbProcessor::ScanTDCV3(hadaq::RawSubevent* sub)
 
             subproc->AddNextBuffer(buf);
             subproc->SetNewDataFlag(true);
-         } else
-            printf("Did not find processor for TDC %u - skip data %u\n", tdcid, datalen);
+         } else {
+            RAWPRINT("Did not find processor for TDC %u - skip data %u\n", tdcid, datalen);
+         }
 
          ix+=datalen;
 
@@ -268,8 +269,8 @@ void hadaq::TrbProcessor::ScanTDCV3(hadaq::RawSubevent* sub)
 //         continue;
 //      }
 //
-//      printf("Unknown header %x length %u in TDC subevent\n", data & 0xFFFF, datalen);
-//      ix+=datalen;
+      RAWPRINT("Unknown header %x length %u in TDC subevent\n", data & 0xFFFF, datalen);
+      ix+=datalen;
    }
 
    if (findSync) {
