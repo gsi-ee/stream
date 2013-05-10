@@ -7,6 +7,7 @@
 #pragma link C++ nestedclasses;
 
 // here is base classes
+#pragma link C++ namespace base;
 #pragma link C++ class base::Buffer+;
 #pragma link C++ class base::SubEvent+;
 #pragma link C++ class base::LocalStampConverter+;
@@ -23,6 +24,12 @@
 #pragma link C++ typedef base::H1handle;
 #pragma link C++ typedef base::H2handle;
 #pragma link C++ typedef base::C1handle;
+
+// here is dabc classes
+#pragma link C++ namespace dabc;
+#pragma link C++ class dabc::BasicFile+;
+#pragma link C++ class dabc::FileInterface+;
+#pragma link C++ class dabc::BinaryFile+;
 
 // here is classes for nXYTER processing
 #pragma link C++ namespace nx;
@@ -45,6 +52,11 @@
 
 // HADAQ processing
 #pragma link C++ namespace hadaq;
+#pragma link C++ class hadaq::HadTu+;
+#pragma link C++ class hadaq::HadTuId+;
+#pragma link C++ class hadaq::RawEvent+;
+#pragma link C++ class hadaq::RawSubevent+;
+#pragma link C++ class hadaq::HldFile+;
 #pragma link C++ class hadaq::TrbProcessor+;
 #pragma link C++ class hadaq::TrbIterator+;
 #pragma link C++ class hadaq::TdcMessage+;

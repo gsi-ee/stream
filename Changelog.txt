@@ -250,3 +250,8 @@ Without filling current NX code works 2x times faster
 1. Fix several problems with hld files usage. Mainly problem was due to 8-bytes padding
    of hadaq events/subevents, which was not takes into account. In DABC similar code was
    implemented correctly from beginning.
+   
+10.05.2013
+1. Unified HADAQ structures between DABC and Stream analysis.
+   Idea to use as much as possible common code in both frameworks.
+2. Use hadaq::HldFile from DABC for user source.

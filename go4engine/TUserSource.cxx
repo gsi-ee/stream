@@ -15,174 +15,107 @@
 
 #include "hadaq/defines.h"
 
-
 #define Trb_BUFSIZE 0x80000
 
 
 TUserSource::TUserSource() :
    TGo4EventSource("default Trb source"),
-   fbIsOpen(kFALSE),
    fxArgs(""),
    fiPort(0),
-   fxFile(0),
-   fxBuffer(0),
-   fxBufsize(0),
-   fxCursor(0),
-   fxBufEnd(0)
+   fxFile(),
+   fxBuffer(0)
 {
 }
 
 TUserSource::TUserSource(const char* name,
-						       const char* args,
-						       Int_t port) :
-	TGo4EventSource(name),
-	fbIsOpen(kFALSE),
-	fxArgs(args),
-	fiPort(port),
-	fxFile(0),
-	fxBuffer(0),
-	fxBufsize(0),
-	fxCursor(0),
-	fxBufEnd(0)
+       const char* args,
+       Int_t port) :
+   TGo4EventSource(name),
+   fxArgs(args),
+   fiPort(port),
+   fxFile(),
+   fxBuffer(0)
 {
    Open();
 }
 
 TUserSource::TUserSource(TGo4UserSourceParameter* par) :
-	TGo4EventSource(" "),
-	fbIsOpen(kFALSE),
-	fxArgs(""),
-	fiPort(0),
-	fxFile(0),
-	fxBuffer(0),
-	fxBufsize(0),
-	fxCursor(0),
-	fxBufEnd(0)
+   TGo4EventSource(" "),
+   fxArgs(""),
+   fiPort(0),
+   fxFile(),
+   fxBuffer(0)
 {
-	if(par)
-	{
-		SetName(par->GetName());
-		SetPort(par->GetPort());
-		SetArgs(par->GetExpression());
-		Open();
-	}
-	else
-	{
-		TGo4Log::Error("TUserSource constructor with zero parameter!");
-	}
+   if(par) {
+      SetName(par->GetName());
+      SetPort(par->GetPort());
+      SetArgs(par->GetExpression());
+      Open();
+   } else {
+      TGo4Log::Error("TUserSource constructor with zero parameter!");
+   }
 }
 
 TUserSource::~TUserSource()
 {
-	Close();
+  Close();
 }
 
 Bool_t TUserSource::CheckEventClass(TClass* cl)
 {
-	return cl->InheritsFrom(TGo4MbsEvent::Class());
-}
-
-std::streamsize TUserSource::ReadFile(Char_t* dest, size_t len)
-{
-	fxFile->read(dest, len);
-	if(fxFile->eof() || !fxFile->good())
-	{
-		SetCreateStatus(1);
-		SetErrMess(Form("End of input file %s", GetName()));
-		SetEventStatus(1);
-		throw TGo4EventEndException(this);
-	}
-	//cout <<"ReadFile reads "<< (hex) << fxFile->gcount()<<" bytes to 0x"<< (hex) <<(int) dest<< endl;
-	return fxFile->gcount();
-}
-
-Bool_t TUserSource::NextBuffer()
-{
-	//! Each buffer contains one full event:
-	//! First read event header:
-	ReadFile(fxBuffer, sizeof(hadaq::RawEvent));
-
-	//! Then read rest of buffer from file
-	size_t evlen = ((hadaq::RawEvent*) fxBuffer)->GetSize();
-	
-	//! Account padding of events to 8 byte boundaries:
-	while((evlen % 8) != 0)
-	{
-		evlen++;
-//		cout << "Next Buffer extends for padding the length to " << evlen << endl;
-	}
-//	cout << "Next Buffer reads event of size:" << evlen << endl;
-	if(evlen > Trb_BUFSIZE)
-	{
-		SetErrMess(Form("Next event length 0x%x bigger than read buffer limit 0x%x", (unsigned) evlen, (unsigned) Trb_BUFSIZE));
-		SetEventStatus(1);
-		throw TGo4EventEndException(this);
-	}
-	ReadFile(fxBuffer + sizeof(hadaq::RawEvent), evlen - sizeof(hadaq::RawEvent));
-	fxBufsize = evlen;
-	fxBufEnd = (Short_t*)(fxBuffer+evlen);
-	return kTRUE;
-
-}
-
-Bool_t TUserSource::NextEvent(TGo4MbsEvent* target)
-{
-	//! We fill complete hadaq event into one mbs subevent, not to lose header information
-	//! decomposing hades subevents is left to the user analysis processor!
-
-	fxSubevHead.fsProcid = base::proc_TRBEvent; // mark to be processed by TTrbProc
-
-	target->AddSubEvent(fxSubevHead.fiFullid, (Short_t*) fxBuffer, fxBufsize/sizeof(Short_t) + 2, kTRUE);
-
-	target->SetCount(((hadaq::RawEvent*) fxBuffer)->GetSeqNr());
-
-	// set total MBS event length, which must include MBS header itself
-	target->SetDlen(fxBufsize/sizeof(Short_t) + 2 + 6);
-
-//   printf("Produce event of size %u intlen %u \n", (unsigned)fxBufsize, (unsigned) target->GetIntLen()*4);
-
-	return kTRUE; // event is ready
+  return cl->InheritsFrom(TGo4MbsEvent::Class());
 }
 
 Bool_t TUserSource::BuildEvent(TGo4EventElement* dest)
 {
-	TGo4MbsEvent* evnt = dynamic_cast<TGo4MbsEvent*> (dest);
-	if (evnt==0) return kFALSE;
-	// this generic loop is intended to handle buffers with several events. we keep it here,
-	// although our "buffers" consists of single events.
-	do	{
-		NextBuffer(); // note: next buffer will throw exception on end of file
-	}	while (!NextEvent(evnt));
+   TGo4MbsEvent* evnt = dynamic_cast<TGo4MbsEvent*> (dest);
+   if ((evnt==0) || (fxBuffer==0)) return kFALSE;
 
-	return kTRUE;
+   uint32_t bufsize = Trb_BUFSIZE;
+
+   if (fxFile.eof() || !fxFile.ReadBuffer(fxBuffer, &bufsize, true)) {
+      SetCreateStatus(1);
+      SetErrMess(Form("End of input file %s", GetName()));
+      SetEventStatus(1);
+      throw TGo4EventEndException(this);
+      return kFALSE;
+   }
+
+   TGo4SubEventHeader10 fxSubevHead;
+   memset(&fxSubevHead, 0, sizeof(fxSubevHead));
+   fxSubevHead.fsProcid = base::proc_TRBEvent; // mark to be processed by TTrbProc
+
+   evnt->AddSubEvent(fxSubevHead.fiFullid, (Short_t*) fxBuffer, bufsize/sizeof(Short_t) + 2, kTRUE);
+
+   evnt->SetCount(((hadaq::RawEvent*) fxBuffer)->GetSeqNr());
+
+   // set total MBS event length, which must include MBS header itself
+   evnt->SetDlen(bufsize/sizeof(Short_t) + 2 + 6);
+
+   return kTRUE; // event is ready
 }
 
 Int_t TUserSource::Open()
 {
-	if(fbIsOpen) return -1;
-	TGo4Log::Info("Open of TUserSource");
+   if(fxFile.isOpened()) return -1;
+   TGo4Log::Info("Open of TUserSource");
 
-	//! Open connection/file
-	fxFile = new std::ifstream(GetName(), ios::binary);
-	if((fxFile==0) || !fxFile->good()) {
-		delete fxFile; fxFile = 0;
-		SetCreateStatus(1);
-		SetErrMess(Form("Eror opening user file:%s", GetName()));
-		throw TGo4EventErrorException(this);
-	}
-	fxBuffer = new Char_t[Trb_BUFSIZE];
-
-	fbIsOpen = kTRUE;
-	return 0;
+   //! Open connection/file
+   if(!fxFile.OpenRead(GetName())) {
+      SetCreateStatus(1);
+      SetErrMess(Form("Eror opening user file:%s", GetName()));
+      throw TGo4EventErrorException(this);
+   }
+   fxBuffer = new Char_t[Trb_BUFSIZE];
+   return 0;
 }
+
 
 Int_t TUserSource::Close()
 {
-	if(!fbIsOpen) return -1;
-	TGo4Log::Info("Close of TUserSource");
-	delete [] fxBuffer;
-	Int_t status = 0;	//! Closestatus of source
-	delete fxFile;
-	fbIsOpen = kFALSE;
-	return status;
+   if(!fxFile.isOpened()) return -1;
+   TGo4Log::Info("Close of TUserSource");
+   delete [] fxBuffer; fxBuffer = 0;
+   fxFile.Close();
+   return 0;
 }

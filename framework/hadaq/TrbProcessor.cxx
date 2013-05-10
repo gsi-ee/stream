@@ -10,7 +10,6 @@
 
 #define RAWPRINT( args ...) if(IsPrintRawData()) printf( args )
 
-
 hadaq::TrbProcessor::TrbProcessor(unsigned brdid) :
    base::StreamProc("TRB", brdid),
    fMap()

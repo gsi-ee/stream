@@ -91,8 +91,6 @@ Bool_t TFirstStepProcessor::BuildEvent(TGo4EventElement* outevnt)
 
       if (IsRawAnalysis()) {
 
-         //TGo4Log::Info("Skip data");
-
          SkipAllData();
 
       } else {

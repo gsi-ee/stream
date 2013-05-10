@@ -14,7 +14,7 @@ void first()
    // lower 8 bit are used as tdc number
    trb3->SetHadaqTDCId(0x800);
 
-   trb3->SetPrintRawData(true);
+   trb3->SetPrintRawData(false);
 
    // create processor for hits from TDC
    // par1 - pointer on trb3 board

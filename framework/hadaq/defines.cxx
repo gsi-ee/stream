@@ -1,6 +1,9 @@
 #include "hadaq/defines.h"
 
 #include <stdio.h>
+#include <sys/time.h>
+#include <time.h>
+
 
 void hadaq::RawEvent::Dump()
 {
@@ -8,6 +11,33 @@ void hadaq::RawEvent::Dump()
          (unsigned) GetSeqNr(), (unsigned) GetId(), (unsigned) GetSize());
 }
 
+void hadaq::RawEvent::InitHeader(uint32_t id)
+{
+   tuDecoding = EvtDecoding_64bitAligned;
+   SetId(id);
+   SetSize(sizeof(hadaq::RawEvent));
+   // timestamp at creation of structure:
+   time_t tempo = time(NULL);
+   struct tm* gmTime = gmtime(&tempo);
+   uint32_t date = 0, clock = 0;
+   date |= gmTime->tm_year << 16;
+   date |= gmTime->tm_mon << 8;
+   date |= gmTime->tm_mday;
+   SetDate(date);
+   clock |= gmTime->tm_hour << 16;
+   clock |= gmTime->tm_min << 8;
+   clock |= gmTime->tm_sec;
+   SetTime(clock);
+}
+
+uint32_t hadaq::RawEvent::CreateRunId()
+{
+   struct timeval tv;
+   gettimeofday(&tv, NULL);
+   return tv.tv_sec - hadaq::HADAQ_TIMEOFFSET;
+}
+
+// ===========================================================
 
 void hadaq::RawSubevent::Dump(bool print_raw_data)
 {
