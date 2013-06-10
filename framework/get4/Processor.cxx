@@ -37,7 +37,7 @@ get4::Processor::Processor(unsigned rocid, unsigned get4mask, base::OpticSplitte
 
 //   printf("Start histo creation\n");
 
-   fMsgsKind = MakeH1("MsgKind", "kind of messages", 8, 0, 8, "xbin:NOP,-,EPOCH,SYNC,AUX,EPOCH2,GET4,SYS;kind");
+   fMsgsKind = MakeH1("MsgKind", "kind of messages", 12, 0, 12, "xbin:NOP,-,EPOCH,SYNC,AUX,EPOCH2,GET4,SYS,EP32,SL32,ERR32,HIT32;kind");
    fSysTypes = MakeH1("SysTypes", "Distribution of system messages", 16, 0, 16, "systype");
    fMsgPerGet4 = MakeH1("PerGet4", "Distribution of hits between Get4", 16, 0, 16, "get4");
 
@@ -65,6 +65,8 @@ get4::Processor::Processor(unsigned rocid, unsigned get4mask, base::OpticSplitte
          GET4[get4].fFalCoarseTm[n] = MakeH1("FallingCoarse", "falling edge coarse time", 4096, 0, 4096., "bin");
 
          GET4[get4].fFalFineTm[n] = MakeH1("FallingFine", "falling fine time", 128, 0, 128, "bin");
+
+         GET4[get4].fTotTm[n] = MakeH1("Tot", "time-over-threshold", 256, 0, 256, "bin");
       }
    }
 
@@ -149,7 +151,8 @@ bool get4::Processor::FirstBufferScan(const base::Buffer& buf)
 
       msgcnt++;
 
-      FillH1(fMsgsKind, msg.getMessageType());
+      if (msg.getMessageType() != base::MSG_SYS)
+         FillH1(fMsgsKind, msg.getMessageType());
 
       // this time used for histograming and print selection
 
@@ -216,7 +219,6 @@ bool get4::Processor::FirstBufferScan(const base::Buffer& buf)
                FillH1(GET4[get4].fFalCoarseTm[ch], ts / 128);
                FillH1(GET4[get4].fFalFineTm[ch], ts % 128);
             }
-
 
             break;
          }
@@ -290,7 +292,50 @@ bool get4::Processor::FirstBufferScan(const base::Buffer& buf)
          }
 
          case base::MSG_SYS: {
-            FillH1(fSysTypes, msg.getSysMesType());
+
+            if (msg.isGet4V10R32()) {
+
+               FillH1(fMsgsKind, 8 + msg.getGet4V10R32MessageType());
+
+               if (msg.is32bitHit()) {
+
+                  unsigned get4 = msg.getGet4V10R32ChipId();
+
+                  FillH1(fMsgPerGet4, get4);
+                  if (!get4_in_use(get4)) break;
+
+                  unsigned ch = msg.getGet4V10R32HitChan();
+                  unsigned edge = 0;
+                  unsigned ts = msg.getGet4V10R32HitTimeBin();
+                  unsigned tot = msg.getGet4V10R32HitTot();
+
+                  // fill rising and falling edges together
+                  FillH1(GET4[get4].fChannels, ch + edge*0.5);
+
+                  if (fRefChannelId == get4 * 100 + ch*10 + edge) {
+                     base::LocalTimeMarker marker;
+                     marker.localid = (get4+1) * 100 + ch*10 + edge;
+                     marker.localtm = localtm;
+
+                     // printf("GET4 TRIGGER: %10.9f\n", marker.localtm);
+
+                     AddTriggerMarker(marker);
+                  }
+
+                  FillH1(GET4[get4].fRisCoarseTm[ch], ts / 128);
+                  FillH1(GET4[get4].fRisFineTm[ch], ts % 128);
+
+                  FillH1(GET4[get4].fTotTm[ch], tot);
+
+                  FillH1(GET4[get4].fFalCoarseTm[ch], (ts+tot) / 128);
+                  FillH1(GET4[get4].fFalFineTm[ch], (ts+tot) % 128);
+               }
+
+            } else {
+               FillH1(fMsgsKind, base::MSG_SYS);
+
+               FillH1(fSysTypes, msg.getSysMesType());
+            }
             break;
          }
       } // switch
@@ -350,7 +395,6 @@ bool get4::Processor::SecondBufferScan(const base::Buffer& buf)
          case base::MSG_HIT:
             break;
 
-
          case base::MSG_GET4: {
             base::GlobalTime_t localtm = fIter2.getMsgTime();
 
@@ -371,6 +415,19 @@ bool get4::Processor::SecondBufferScan(const base::Buffer& buf)
             break;
 
          case base::MSG_SYS:
+            if (msg.is32bitHit()) {
+               base::GlobalTime_t localtm = fIter2.getMsgTime();
+
+               base::GlobalTime_t globaltm = LocalToGlobalTime(localtm, &help_index);
+
+               unsigned indx = TestHitTime(globaltm, get4_in_use(msg.getGet4Number()));
+
+               if (indx < fGlobalMarks.size())
+                  AddMessage(indx, (get4::SubEvent*) fGlobalMarks.item(indx).subev, get4::MessageExt(msg, globaltm));
+
+               break;
+            }
+
             break;
       } // switch
 

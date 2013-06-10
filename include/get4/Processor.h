@@ -14,10 +14,11 @@ namespace get4 {
 
       base::H1handle fChannels;  //! histogram with channels
 
-      base::H1handle fRisCoarseTm[NumChannels]; //! histograms of rising stamp for each channel
-      base::H1handle fFalCoarseTm[NumChannels]; //! histograms of falling stamp for each channel
-      base::H1handle fRisFineTm[NumChannels]; //! histograms of rising stamp for each channel
-      base::H1handle fFalFineTm[NumChannels]; //! histograms of falling stamp for each channel
+      base::H1handle fRisCoarseTm[NumChannels]; ///< histograms of rising stamp for each channel
+      base::H1handle fFalCoarseTm[NumChannels]; ///< histograms of falling stamp for each channel
+      base::H1handle fRisFineTm[NumChannels];   ///< histograms of rising stamp for each channel
+      base::H1handle fFalFineTm[NumChannels];   ///< histograms of falling stamp for each channel
+      base::H1handle fTotTm[NumChannels];       ///< histograms of time-over threshold for each channel
 
       Get4Rec();
    };

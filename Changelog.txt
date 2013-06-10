@@ -255,3 +255,8 @@ Without filling current NX code works 2x times faster
 1. Unified HADAQ structures between DABC and Stream analysis.
    Idea to use as much as possible common code in both frameworks.
 2. Use hadaq::HldFile from DABC for user source.
+
+10.06.2013
+1. Add support of the 32-bit Get4 readout. 
+   For the moment it is done via SYS messages.
+   No any special configuration needed. Not yet tested.

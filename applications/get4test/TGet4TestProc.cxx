@@ -78,16 +78,23 @@ void TGet4TestProc::Process(TStreamEvent* ev)
        for (unsigned cnt=0;cnt<sub0->Size();cnt++) {
           const get4::Message& msg = sub0->msg(cnt).msg();
 
-          unsigned indx = code(0, msg.getGet4Number(), msg.getGet4ChNum());
+          bool is32bit = msg.is32bitHit();
+
+          unsigned indx = is32bit ? code (0, msg.getGet4V10R32ChipId(), msg.getGet4V10R32HitChan()) :
+                  code(0, msg.getGet4Number(), msg.getGet4ChNum()) ;
 
           iter = fMap.find(indx);
           if (iter == fMap.end()) continue;
 
-
           TGet4TestRec& rec = iter->second;
           rec.hitcnt++;
 
-          rec.set_edge(msg.getGet4Edge(), msg.getGet4Ts());
+          if (is32bit) {
+             rec.set_edge(1, msg.getGet4V10R32HitTimeBin());
+             rec.set_edge(0, msg.getGet4V10R32HitTimeBin() + msg.getGet4V10R32HitTot());
+          } else {
+             rec.set_edge(msg.getGet4Edge(), msg.getGet4Ts());
+          }
 
           double width = rec.calc_width();
           if (width!=0.) rec.fWidth->Fill(width);

@@ -130,7 +130,44 @@ void get4::Message::printData(std::ostream& os, unsigned kind, uint32_t epoch, d
                   timeInSec, getGet4Number(), getGet4ChNum(), getGet4Edge(), getGet4Ts(), getGet4CRC() );
             os << buf << std::endl;
             break;
+         case base::MSG_SYS:
+            if (isGet4V10R32()) {
+               snprintf(buf, sizeof(buf), "32-bit Roc:%u Get4:0x%02x ", getRocNumber(), (unsigned) getGet4V10R32ChipId());
+
+               os << buf;
+
+               switch (getGet4V10R32MessageType()) {
+                  case MSG_GET4_EPOCH:
+                     snprintf(buf, sizeof(buf), "@%17.11f Epoch2:%10u 0x%08x sync:%u",
+                           timeInSec, (unsigned) getGet4V10R32EpochNumber(),
+                           (unsigned) getGet4V10R32EpochNumber(),
+                           (unsigned) getGet4V10R32SyncFlag());
+                     break;
+                  case MSG_GET4_SLOWCTRL:
+                     snprintf(buf, sizeof(buf), "Slow control chn:0x%x edge:0x%x typ:0x%x data:0x%04x",
+                           (unsigned) getGet4V10R32SlChan(), (unsigned) getGet4V10R32SlEdge(), (unsigned) getGet4V10R32SlType(), (unsigned) getGet4V10R32SlData());
+                     break;
+                  case MSG_GET4_ERROR:
+                     snprintf(buf, sizeof(buf), "Error chn:0x%x edge:0x%x data:0x%04x",
+                           (unsigned) getGet4V10R32ErrorChan(), (unsigned) getGet4V10R32ErrorEdge(), (unsigned) getGet4V10R32ErrorData());
+                     break;
+                  case MSG_GET4_HIT:
+                     snprintf(buf, sizeof(buf), "@%17.11f HIT chn:0x%x ts:0x%04x fine:0x%03x tot:0x%3x dll:%x",
+                           timeInSec,
+                           (unsigned) getGet4V10R32HitChan(),
+                           (unsigned) getGet4V10R32HitTs(),
+                           (unsigned) getGet4V10R32HitFt(),
+                           (unsigned) getGet4V10R32HitTot(),
+                           (unsigned) getGet4V10R32HitDllFlag());
+                     break;
+               }
+            } else {
+               kind = kind & ~base::msg_print_Human;
+               if (kind==0) kind = base::msg_print_Prefix | base::msg_print_Data;
+            }
+            break;
          default:
+
             kind = kind & ~base::msg_print_Human;
             if (kind==0) kind = base::msg_print_Prefix | base::msg_print_Data;
       }
@@ -176,58 +213,86 @@ void get4::Message::printData(std::ostream& os, unsigned kind, uint32_t epoch, d
          case base::MSG_SYS: {
             char sysbuf[256];
 
-            switch (getSysMesType()) {
-              case base::SYSMSG_DAQ_START:
-                 snprintf(sysbuf, sizeof(sysbuf), "DAQ started");
-                 break;
-              case base::SYSMSG_DAQ_FINISH:
-                 snprintf(sysbuf, sizeof(sysbuf), "DAQ finished");
-                 break;
-              case base::SYSMSG_SYNC_PARITY:
-                 snprintf(sysbuf, sizeof(sysbuf), "SYNC parity error ");
-                 break;
-              case base::SYSMSG_DAQ_RESUME:
-                 snprintf(sysbuf, sizeof(sysbuf), "DAQ resume after high/low water");
-                 break;
-              case base::SYSMSG_FIFO_RESET:
-                 snprintf(sysbuf, sizeof(sysbuf), "FIFO reset");
-                 break;
-              case base::SYSMSG_USER: {
-                 const char* subtyp = "";
-                 if (getSysMesData()==base::SYSMSG_USER_CALIBR_ON) subtyp = "Calibration ON"; else
-                 if (getSysMesData()==base::SYSMSG_USER_CALIBR_OFF) subtyp = "Calibration OFF"; else
-                 if (getSysMesData()==base::SYSMSG_USER_RECONFIGURE) subtyp = "Reconfigure";
-                 snprintf(sysbuf, sizeof(sysbuf), "User message 0x%08x %s", getSysMesData(), subtyp);
-                 break;
-              }
-              case base::SYSMSG_PACKETLOST:
-                 snprintf(sysbuf, sizeof(sysbuf), "Packet lost");
-                 break;
-              case base::SYSMSG_GET4_EVENT: {
-                 // uint32_t data           = getSysMesData();
-                 uint32_t get4_pattern   = getField(16, 6); //(data>>16) & 0x3f;
-                 uint32_t get4_eventType = getBit(22);      //(data>>7)  & 0xfff;
-                 uint32_t get4_TS        = getField(23,12); //(data>>6)  & 0x1;
-                 uint32_t get4_chip      = getField(40, 8); // data      & 0xff;
-                 if(get4_eventType==1)
-                    snprintf(sysbuf, sizeof(sysbuf),
-                          "Get4:0x%02x TS:0x%03x Pattern:0x%02x - GET4 External Sync Event", get4_chip, get4_TS, get4_pattern);
-                 else
-                    snprintf(sysbuf, sizeof(sysbuf),
-                          "Get4:0x%02x TS:0x%03x ErrCode:0x%02x - GET4 Error Event", get4_chip, get4_TS, get4_pattern);
-                 break;
-              }
-              case base::SYSMSG_CLOSYSYNC_ERROR:
-                 snprintf(sysbuf, sizeof(sysbuf), "Closy synchronization error");
-                 break;
-              case base::SYSMSG_TS156_SYNC:
-                 snprintf(sysbuf, sizeof(sysbuf), "156.25MHz timestamp reset");
-                 break;
-              default:
-                 snprintf(sysbuf, sizeof(sysbuf), "unknown system message type ");
-            }
+            if (isGet4V10R32()) {
+               switch (getGet4V10R32MessageType()) {
+                  case MSG_GET4_EPOCH:
+                     snprintf(sysbuf, sizeof(sysbuf), "Epoch2:0x%08x sync:%u", (unsigned)  getGet4V10R32EpochNumber(), (unsigned) getGet4V10R32SyncFlag());
+                     break;
+                  case MSG_GET4_SLOWCTRL:
+                     snprintf(sysbuf, sizeof(sysbuf), "Slow control chn:0x%x edge:0x%x typ:0x%x data:0x%04x",
+                           (unsigned) getGet4V10R32SlChan(), (unsigned) getGet4V10R32SlEdge(), (unsigned) getGet4V10R32SlType(), (unsigned) getGet4V10R32SlData());
+                     break;
+                  case MSG_GET4_ERROR:
+                     snprintf(sysbuf, sizeof(sysbuf), "Error chn:0x%x edge:0x%x data:0x%04x",
+                           (unsigned) getGet4V10R32ErrorChan(), (unsigned) getGet4V10R32ErrorEdge(), (unsigned) getGet4V10R32ErrorData());
+                     break;
+                  case MSG_GET4_HIT:
+                     snprintf(sysbuf, sizeof(sysbuf), "HIT chn:0x%x ts:0x%04x fine:0x%03x tot:0x%3x dll:%x",
+                           (unsigned) getGet4V10R32HitChan(),
+                           (unsigned) getGet4V10R32HitTs(),
+                           (unsigned) getGet4V10R32HitFt(),
+                           (unsigned) getGet4V10R32HitTot(),
+                           (unsigned) getGet4V10R32HitDllFlag());
+                     break;
+               }
 
-            snprintf(buf, sizeof(buf), "SysType:%2x Data:%8x : %s", getSysMesType(), getSysMesData(), sysbuf);
+               snprintf(buf, sizeof(buf), "Get4:0x%02x 32-bit %s", (unsigned) getGet4V10R32ChipId(), sysbuf);
+
+            } else {
+
+               switch (getSysMesType()) {
+                  case base::SYSMSG_DAQ_START:
+                     snprintf(sysbuf, sizeof(sysbuf), "DAQ started");
+                     break;
+                  case base::SYSMSG_DAQ_FINISH:
+                     snprintf(sysbuf, sizeof(sysbuf), "DAQ finished");
+                     break;
+                  case base::SYSMSG_SYNC_PARITY:
+                     snprintf(sysbuf, sizeof(sysbuf), "SYNC parity error ");
+                     break;
+                  case base::SYSMSG_DAQ_RESUME:
+                     snprintf(sysbuf, sizeof(sysbuf), "DAQ resume after high/low water");
+                     break;
+                  case base::SYSMSG_FIFO_RESET:
+                     snprintf(sysbuf, sizeof(sysbuf), "FIFO reset");
+                     break;
+                  case base::SYSMSG_USER: {
+                     const char* subtyp = "";
+                     if (getSysMesData()==base::SYSMSG_USER_CALIBR_ON) subtyp = "Calibration ON"; else
+                        if (getSysMesData()==base::SYSMSG_USER_CALIBR_OFF) subtyp = "Calibration OFF"; else
+                           if (getSysMesData()==base::SYSMSG_USER_RECONFIGURE) subtyp = "Reconfigure";
+                     snprintf(sysbuf, sizeof(sysbuf), "User message 0x%08x %s", getSysMesData(), subtyp);
+                     break;
+                  }
+                  case base::SYSMSG_PACKETLOST:
+                     snprintf(sysbuf, sizeof(sysbuf), "Packet lost");
+                     break;
+                  case base::SYSMSG_GET4_EVENT: {
+                     // uint32_t data           = getSysMesData();
+                     uint32_t get4_pattern   = getField(16, 6); //(data>>16) & 0x3f;
+                     uint32_t get4_eventType = getBit(22);      //(data>>7)  & 0xfff;
+                     uint32_t get4_TS        = getField(23,12); //(data>>6)  & 0x1;
+                     uint32_t get4_chip      = getField(40, 8); // data      & 0xff;
+                     if(get4_eventType==1)
+                        snprintf(sysbuf, sizeof(sysbuf),
+                              "Get4:0x%02x TS:0x%03x Pattern:0x%02x - GET4 External Sync Event", get4_chip, get4_TS, get4_pattern);
+                     else
+                        snprintf(sysbuf, sizeof(sysbuf),
+                              "Get4:0x%02x TS:0x%03x ErrCode:0x%02x - GET4 Error Event", get4_chip, get4_TS, get4_pattern);
+                     break;
+                  }
+                  case base::SYSMSG_CLOSYSYNC_ERROR:
+                     snprintf(sysbuf, sizeof(sysbuf), "Closy synchronization error");
+                     break;
+                  case base::SYSMSG_TS156_SYNC:
+                     snprintf(sysbuf, sizeof(sysbuf), "156.25MHz timestamp reset");
+                     break;
+                  default:
+                     snprintf(sysbuf, sizeof(sysbuf), "unknown system message type ");
+               }
+
+               snprintf(buf, sizeof(buf), "SysType:%2x Data:%8x : %s", getSysMesType(), getSysMesData(), sysbuf);
+            }
 
             break;
          }

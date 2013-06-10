@@ -44,6 +44,12 @@ namespace get4 {
                      fEpoch2[fMsg.getEpoch2ChipNumber() & 0xf] = fMsg.getEpoch2Number();
                      fConvGet4.MoveRef(((uint64_t) fMsg.getEpoch2Number()) << 19);
                      break;
+                  case base::MSG_SYS:
+                     if (fMsg.is32bitEpoch2()) {
+                        fEpoch2[fMsg.getGet4V10R32ChipId() & 0xf] = fMsg.getGet4V10R32EpochNumber();
+                        fConvGet4.MoveRef(((uint64_t) fMsg.getGet4V10R32EpochNumber()) << 19);
+                     }
+                     break;
                }
                return true;
             }
@@ -98,8 +104,18 @@ namespace get4 {
                   return FullTimeStamp2(fMsg.getEpoch2Number(), 0);
                case base::MSG_GET4:
                   return FullTimeStamp2(fEpoch2[fMsg.getGet4Number() & 0xf], fMsg.getGet4Ts());
+               case base::MSG_SYS: {
+                  if (fMsg.isGet4V10R32())
+                     switch (fMsg.getGet4V10R32MessageType()) {
+                        case MSG_GET4_EPOCH: return FullTimeStamp2(fMsg.getGet4V10R32EpochNumber(), 0);
+                        case MSG_GET4_SLOWCTRL: return FullTimeStamp2(fEpoch2[fMsg.getGet4V10R32ChipId() & 0xf], 0);
+                        case MSG_GET4_ERROR: return FullTimeStamp2(fEpoch2[fMsg.getGet4V10R32ChipId() & 0xf], 0);
+                        case MSG_GET4_HIT: return FullTimeStamp2(fEpoch2[fMsg.getGet4V10R32ChipId() & 0xf], fMsg.getGet4V10R32HitTimeBin());
+                     }
+
+                     break;
+                  }
             }
-            // this is not important, but just return meaningful value not far away from last
             return 0;
          }
 
@@ -118,7 +134,10 @@ namespace get4 {
                case base::MSG_GET4:
                   return fConvGet4.ToSeconds(FullTimeStamp2(fEpoch2[fMsg.getGet4Number() & 0xf], fMsg.getGet4Ts()));
                case base::MSG_SYS:
-                  return fConvRoc.ToSeconds(FullTimeStamp(fEpoch, 0));
+                  if (fMsg.isGet4V10R32())
+                     return fConvGet4.ToSeconds(getMsgStamp2());
+                  else
+                     return fConvRoc.ToSeconds(FullTimeStamp(fEpoch, 0));
             }
             return 0;
          }
