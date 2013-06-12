@@ -4,7 +4,7 @@ void first() {
    // this is just for testing, we redirect data from splitter to processor
    // base::OpticSplitter* split = new base::OpticSplitter(0x0);
 
-   get4::Processor* proc = new get4::Processor(0, 0x3);
+   get4::Processor* proc = new get4::Processor(0, 0xF);
 
    // ignore all SYNC messages, do not use them for time synchronization
    proc->SetNoSyncSource();
@@ -12,7 +12,9 @@ void first() {
    // ignore all 250 MHz messages for timing, useful when clocks are not synchronized
    proc->SetIgnore250Mhz();
 
-   // proc->SetRawScanOnly(true);
+// proc->SetRawScanOnly(true);
+   
+//   proc->SetPrint(100000);
 
    // proc->SetHistFilling(false);
 

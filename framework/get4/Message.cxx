@@ -132,35 +132,43 @@ void get4::Message::printData(std::ostream& os, unsigned kind, uint32_t epoch, d
             break;
          case base::MSG_SYS:
             if (isGet4V10R32()) {
-               snprintf(buf, sizeof(buf), "32-bit Roc:%u Get4:0x%02x ", getRocNumber(), (unsigned) getGet4V10R32ChipId());
+               snprintf(buf, sizeof(buf), "Msg:%X Roc:%u ", 8+getGet4V10R32MessageType(), getRocNumber());
 
                os << buf;
 
                switch (getGet4V10R32MessageType()) {
                   case MSG_GET4_EPOCH:
-                     snprintf(buf, sizeof(buf), "@%17.11f Epoch2:%10u 0x%08x sync:%u",
-                           timeInSec, (unsigned) getGet4V10R32EpochNumber(),
+                     snprintf(buf, sizeof(buf), "EP32 @%17.11f 32bit:%10u 0x%08x get4:%u sync:%u",
+                           timeInSec, 
                            (unsigned) getGet4V10R32EpochNumber(),
+                           (unsigned) getGet4V10R32EpochNumber(),
+                           (unsigned) getGet4V10R32ChipId(),
                            (unsigned) getGet4V10R32SyncFlag());
                      break;
                   case MSG_GET4_SLOWCTRL:
-                     snprintf(buf, sizeof(buf), "Slow control chn:0x%x edge:0x%x typ:0x%x data:0x%04x",
-                           (unsigned) getGet4V10R32SlChan(), (unsigned) getGet4V10R32SlEdge(), (unsigned) getGet4V10R32SlType(), (unsigned) getGet4V10R32SlData());
+                     snprintf(buf, sizeof(buf), "SC32 get4:%u chn:0x%x edge:0x%x typ:0x%x data:0x%04x",
+                           (unsigned) getGet4V10R32ChipId(),
+                           (unsigned) getGet4V10R32SlChan(), (unsigned) getGet4V10R32SlEdge(), 
+                           (unsigned) getGet4V10R32SlType(), (unsigned) getGet4V10R32SlData());
                      break;
                   case MSG_GET4_ERROR:
-                     snprintf(buf, sizeof(buf), "Error chn:0x%x edge:0x%x data:0x%04x",
-                           (unsigned) getGet4V10R32ErrorChan(), (unsigned) getGet4V10R32ErrorEdge(), (unsigned) getGet4V10R32ErrorData());
+                     snprintf(buf, sizeof(buf), "ER32 get4:%u chn:0x%x edge:0x%x data:0x%04x",
+                           (unsigned) getGet4V10R32ChipId(),
+                           (unsigned) getGet4V10R32ErrorChan(), 
+                           (unsigned) getGet4V10R32ErrorEdge(), (unsigned) getGet4V10R32ErrorData());
                      break;
                   case MSG_GET4_HIT:
-                     snprintf(buf, sizeof(buf), "@%17.11f HIT chn:0x%x ts:0x%04x fine:0x%03x tot:0x%3x dll:%x",
+                     snprintf(buf, sizeof(buf), "HT32 @%17.11f get4:%u chn:0x%x ts:0x%04x fine:0x%03x tot:0x%3x dll:%x",
                            timeInSec,
+                           (unsigned) getGet4V10R32ChipId(),
                            (unsigned) getGet4V10R32HitChan(),
                            (unsigned) getGet4V10R32HitTs(),
                            (unsigned) getGet4V10R32HitFt(),
                            (unsigned) getGet4V10R32HitTot(),
                            (unsigned) getGet4V10R32HitDllFlag());
                      break;
-               }
+                }
+              os << buf << std::endl;
             } else {
                kind = kind & ~base::msg_print_Human;
                if (kind==0) kind = base::msg_print_Prefix | base::msg_print_Data;

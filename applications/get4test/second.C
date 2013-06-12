@@ -9,5 +9,9 @@ void second() {
 
    p->Add(0,1); // add all channels of get4 1
 
+   p->Add(0,2); // add all channels of get4 0
+
+   p->Add(0,3); // add all channels of get4 1
+
    p->MakeHistos(); // make summary histograms
 }

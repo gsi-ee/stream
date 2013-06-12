@@ -101,7 +101,7 @@ void TGet4TestProc::Process(TStreamEvent* ev)
        }
 
     } else {
-       TGo4Log::Error("Not found GET4 data for ROC0 in event %10.9f", ev->GetTriggerTime()*1e-9);
+       TGo4Log::Error("Not found GET4 data for ROC0 in event %10.9f s", ev->GetTriggerTime());
     }
 
     for (TGet4TestMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++) {
