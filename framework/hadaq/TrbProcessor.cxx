@@ -31,6 +31,7 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid) :
    fTakenTriggerCnt = 0;
 
    fPrintRawData = false;
+   fCrossProcess = false;
 
    // this is raw-scan processor, therefore no synchronization is required for it
    SetSynchronisationRequired(false);
@@ -119,6 +120,16 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
          ScanSubEvent(sub);
 
          subcnt++;
+      }
+
+      // we scan in all TDC processors newly add buffers
+      // this is required to
+      if (IsCrossProcess()) {
+         for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
+            iter->second->ScanNewBuffers();
+
+         for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
+            iter->second->AfterFill(&fMap);
       }
 
 //      printf("Finish event processing\n");

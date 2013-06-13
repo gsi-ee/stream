@@ -22,7 +22,8 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fEdgeMask(edge_mask),
    fAutoCalibration(0),
    fPrintRawData(false),
-   fEveryEpoch(false)
+   fEveryEpoch(false),
+   fCrossProcess(false)
 {
    fMsgPerBrd = mgr()->MakeH1("MsgPerTDC", "Number of messages per TDC", fMaxBrdId, 0, fMaxBrdId, "tdc");
    fErrPerBrd = mgr()->MakeH1("ErrPerTDC", "Number of errors per TDC", fMaxBrdId, 0, fMaxBrdId, "tdc");
@@ -64,6 +65,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    if (trb) {
       trb->AddSub(this, tdcid);
       fPrintRawData = trb->IsPrintRawData();
+      fCrossProcess = trb->IsCrossProcess();
    }
 
    fNewDataFlag = false;
@@ -106,10 +108,12 @@ void hadaq::TdcProcessor::UserPostLoop()
 }
 
 
-void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch)
+void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned reftdc)
 {
-   if ((ch<NumChannels()) && (refch<NumChannels()))
+   if ((ch<NumChannels()) && (refch<NumChannels())) {
       fCh[ch].refch = refch;
+      fCh[ch].reftdc = reftdc == 0xffffffff ? GetBoardId() : reftdc;
+   }
 }
 
 
@@ -121,36 +125,49 @@ void hadaq::TdcProcessor::BeforeFill()
    }
 }
 
-void hadaq::TdcProcessor::AfterFill()
+void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
 {
    bool docalibration(true), isany(false);
 
    for (unsigned ch=0;ch<NumChannels();ch++) {
 
       unsigned ref = fCh[ch].refch;
+      unsigned reftdc = fCh[ch].reftdc;
+      if (reftdc==0xffffffff) reftdc = GetBoardId();
 
-      if ((ref<NumChannels()) && (ref!=ch)) {
-         if (DoRisingEdge() && (fCh[ch].first_rising_tm !=0 ) && (fCh[ref].first_rising_tm !=0)) {
-            double diff = (fCh[ch].first_rising_tm - fCh[ref].first_rising_tm)*1e9;
+      TdcProcessor* refproc = 0;
+      if (reftdc == GetBoardId()) refproc = this; else
+      if (subprocmap!=0) {
+         SubProcMap::iterator iter = subprocmap->find(reftdc);
+         if (iter != subprocmap->end()) refproc = iter->second;
+      }
+
+      RAWPRINT("TDC%u Ch:%u Try to use as ref TDC%u %u proc:%p\n", GetBoardId(), ch, reftdc, ref, refproc);
+
+      if ((refproc!=0) && (ref<refproc->NumChannels()) && ((ref!=ch) || (refproc!=this))) {
+         if (DoRisingEdge() && (fCh[ch].first_rising_tm !=0 ) && (refproc->fCh[ref].first_rising_tm !=0)) {
+            double diff = (fCh[ch].first_rising_tm - refproc->fCh[ref].first_rising_tm)*1e9;
 
             FillH1(fCh[ch].fRisingRef, diff);
-            FillH1(fCh[ch].fRisingCoarseRef, 0. + fCh[ch].first_rising_coarse - fCh[ref].first_rising_coarse);
+            FillH1(fCh[ch].fRisingCoarseRef, 0. + fCh[ch].first_rising_coarse - refproc->fCh[ref].first_rising_coarse);
             FillH2(fCh[ch].fRisingRef2D, diff, fCh[ch].first_rising_fine);
-            FillH2(fCh[ch].fRisingRef2D, diff-0.5, fCh[ref].first_rising_fine);
+            FillH2(fCh[ch].fRisingRef2D, diff-0.5, refproc->fCh[ref].first_rising_fine);
             FillH2(fCh[ch].fRisingRef2D, diff-1.0, fCh[ch].first_rising_coarse/4);
-            RAWPRINT("Difference rising %u %u  %12.3f  %12.3f  %7.3f  coarse %03x - %03x = %4d  fine %03x %03x \n", ch, ref,
-                  fCh[ch].first_rising_tm*1e9,  fCh[ref].first_rising_tm*1e9, (fCh[ch].first_rising_tm - fCh[ref].first_rising_tm)*1e9,
-                  fCh[ch].first_rising_coarse, fCh[ref].first_rising_coarse, (int) fCh[ch].first_rising_coarse - fCh[ref].first_rising_coarse,
-                  fCh[ch].first_rising_fine, fCh[ref].first_rising_fine);
+            RAWPRINT("Difference rising %u:%u %u:%u  %12.3f  %12.3f  %7.3f  coarse %03x - %03x = %4d  fine %03x %03x \n",
+                  GetBoardId(), ch, reftdc, ref,
+                  fCh[ch].first_rising_tm*1e9,  refproc->fCh[ref].first_rising_tm*1e9, (fCh[ch].first_rising_tm - refproc->fCh[ref].first_rising_tm)*1e9,
+                  fCh[ch].first_rising_coarse, refproc->fCh[ref].first_rising_coarse, (int) (fCh[ch].first_rising_coarse - refproc->fCh[ref].first_rising_coarse),
+                  fCh[ch].first_rising_fine, refproc->fCh[ref].first_rising_fine);
          }
 
-         if (DoFallingEdge() && (fCh[ch].first_falling_tm !=0 ) && (fCh[ref].first_falling_tm !=0)) {
-            FillH1(fCh[ch].fFallingRef, (fCh[ch].first_falling_tm - fCh[ref].first_falling_tm)*1e9);
-            FillH1(fCh[ch].fFallingCoarseRef, 0. + fCh[ch].first_falling_coarse - fCh[ref].first_falling_coarse);
-            RAWPRINT("Difference falling %u %u  %12.3f  %12.3f  %7.3f  coarse %03x - %03x = %4d  fine %03x %03x \n", ch, ref,
-                     fCh[ch].first_falling_tm*1e9,  fCh[ref].first_falling_tm*1e9, (fCh[ch].first_falling_tm - fCh[ref].first_falling_tm)*1e9,
-                     fCh[ch].first_falling_coarse, fCh[ref].first_falling_coarse, (int) fCh[ch].first_falling_coarse - fCh[ref].first_falling_coarse,
-                     fCh[ch].first_falling_fine, fCh[ref].first_falling_fine);
+         if (DoFallingEdge() && (fCh[ch].first_falling_tm !=0 ) && (refproc->fCh[ref].first_falling_tm !=0)) {
+            FillH1(fCh[ch].fFallingRef, (fCh[ch].first_falling_tm - refproc->fCh[ref].first_falling_tm)*1e9);
+            FillH1(fCh[ch].fFallingCoarseRef, 0. + fCh[ch].first_falling_coarse - refproc->fCh[ref].first_falling_coarse);
+            RAWPRINT("Difference falling %u:%u %u:%u  %12.3f  %12.3f  %7.3f  coarse %03x - %03x = %4d  fine %03x %03x \n",
+                     GetBoardId(), ch, reftdc, ref,
+                     fCh[ch].first_falling_tm*1e9, refproc->fCh[ref].first_falling_tm*1e9, (fCh[ch].first_falling_tm - refproc->fCh[ref].first_falling_tm)*1e9,
+                     fCh[ch].first_falling_coarse, fCh[ref].first_falling_coarse, (int) (fCh[ch].first_falling_coarse - refproc->fCh[ref].first_falling_coarse),
+                     fCh[ch].first_falling_fine, refproc->fCh[ref].first_falling_fine);
          }
       }
 
@@ -379,7 +396,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          TestHitTime(LocalToGlobalTime(ch0time, &help_index), false, true);
    }
 
-   if (first_scan) AfterFill();
+   if (first_scan && !fCrossProcess) AfterFill();
 
    return !iserr;
 }

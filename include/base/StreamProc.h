@@ -204,7 +204,8 @@ namespace base {
          /** Provide next port of data to the processor */
          virtual bool AddNextBuffer(const Buffer& buf);
 
-         /** Scanning all new buffers in the queue */
+         /** \brief Scanning all new buffers in the queue
+          *  \returns true when any new data was scanned */
          virtual bool ScanNewBuffers();
 
          /** With new calibration set (where possible) time of buffers */

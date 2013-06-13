@@ -3,14 +3,19 @@
 
 #include "base/StreamProc.h"
 
-#include "hadaq/defines.h"
+#include <map>
 
+#include "hadaq/defines.h"
 #include "hadaq/TdcMessage.h"
 #include "hadaq/TdcIterator.h"
 
 namespace hadaq {
 
    class TrbProcessor;
+   class TdcProcessor;
+
+   typedef std::map<unsigned,TdcProcessor*> SubProcMap;
+
 
    enum { FineCounterBins = 600 };
 
@@ -28,6 +33,7 @@ namespace hadaq {
 
          struct ChannelRec {
             unsigned refch;                //! reference channel for specified
+            unsigned reftdc;               //! tdc of reference channel,
             bool docalibr;                 //! if false, simple calibration will be used
             base::H1handle fRisingFine;    //! histogram of all fine counters
             base::H1handle fRisingCoarse;  //! histogram of all coarse counters
@@ -56,6 +62,7 @@ namespace hadaq {
 
             ChannelRec() :
                refch(0),
+               reftdc(0xffffffff),
                docalibr(true),
                fRisingFine(0),
                fRisingCoarse(0),
@@ -94,24 +101,26 @@ namespace hadaq {
          base::H1handle fErrPerBrd;  //! errors per board
          base::H1handle fHitsPerBrd; //! data hits per board
 
-         base::H1handle fChannels;  //! histogram with messages per channel
-         base::H1handle fErrors;    //! histogram with errors per channel
-         base::H1handle fUndHits;   //! histogram with undetected hits per channel
-         base::H1handle fMsgsKind;  //! messages kinds
-         base::H1handle fAllFine;   //! histogram of all fine counters
-         base::H1handle fAllCoarse; //! histogram of all coarse counters
+         base::H1handle fChannels;   //! histogram with messages per channel
+         base::H1handle fErrors;     //! histogram with errors per channel
+         base::H1handle fUndHits;    //! histogram with undetected hits per channel
+         base::H1handle fMsgsKind;   //! messages kinds
+         base::H1handle fAllFine;    //! histogram of all fine counters
+         base::H1handle fAllCoarse;  //! histogram of all coarse counters
 
          std::vector<ChannelRec>  fCh; //! histogram for individual channels
 
-         bool   fNewDataFlag;         //! flag used by TRB processor to indicate if new data was added
-         unsigned  fEdgeMask;         //! fill histograms 1 - rising, 2 - falling, 3 - both
-         long      fAutoCalibration;  //! indicates minimal number of counts in each channel required to produce calibration
+         bool        fNewDataFlag;    //! flag used by TRB processor to indicate if new data was added
+         unsigned    fEdgeMask;       //! fill histograms 1 - rising, 2 - falling, 3 - both
+         long        fAutoCalibration;//! indicates minimal number of counts in each channel required to produce calibration
 
          std::string fWriteCalibr;    //! file which should be written at the end of data processing
 
-         bool      fPrintRawData;    //! if true, raw data will be printed
+         bool      fPrintRawData;     //! if true, raw data will be printed
 
-         bool      fEveryEpoch;      //! if true, each hit must be supplied with epoch
+         bool      fEveryEpoch;       //! if true, each hit must be supplied with epoch
+
+         bool      fCrossProcess;     //! if true, AfterFill will be called by Trb processor
 
          /** Returns true when processor used to select trigger signal
           * TDC not yet able to perform trigger selection */
@@ -137,13 +146,12 @@ namespace hadaq {
 
          /** These methods used to fill different raw histograms during first scan */
          void BeforeFill();
-         void AfterFill();
+         void AfterFill(SubProcMap* subproc = 0);
 
          void CalibrateChannel(long* statistic, float* calibr);
          void CopyCalibration(float* calibr, base::H1handle hcalibr);
          void ProduceCalibration(bool clear_stat);
          void StoreCalibration(const std::string& fname);
-
 
       public:
 
@@ -158,7 +166,12 @@ namespace hadaq {
 
          void DisableCalibrationFor(unsigned firstch, unsigned lastch = 0);
 
-         void SetRefChannel(unsigned ch, unsigned refch);
+         /** Set reference signal for the TDC channel ch
+          * \param refch   specifies number of reference channel
+          * \param reftdc  specifies tdc id, used for ref channel.
+          * Default (0xffffffff) same TDC will be used
+          * To be able use other TDCs, one should enable TTrbProcessor::SetCrossProcess(true);   */
+         void SetRefChannel(unsigned ch, unsigned refch, unsigned reftdc = 0xffffffff);
 
          /** If set, each hit must be supplied with epoch message */
          void SetEveryEpoch(bool on) { fEveryEpoch = on; }
@@ -190,8 +203,8 @@ namespace hadaq {
          {
             return DoBufferScan(buf, false);
          }
-
    };
+
 }
 
 #endif

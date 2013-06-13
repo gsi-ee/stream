@@ -260,3 +260,9 @@ Without filling current NX code works 2x times faster
 1. Add support of the 32-bit Get4 readout. 
    For the moment it is done via SYS messages.
    No any special configuration needed. Not yet tested.
+
+13.06.2013
+1. Implement work-around for callculating references between TRB3 TDC channels from
+   different TDCs. Normally such analysis should be implemented in second stept, 
+   but now do it at the level of TrbProcessor at the end of event unpacking. 
+      

@@ -257,18 +257,23 @@ bool base::StreamProc::ScanNewBuffers()
 {
 //   printf("Scan buffers last %u size %u\n", fQueueScanIndex, fQueue.size());
 
+   bool isany = false;
+
    while (fQueueScanIndex < fQueue.size()) {
       base::Buffer& buf = fQueue.item(fQueueScanIndex);
       // if first scan failed, release buffer
       // TODO: probably, one could remove buffer immediately
-      if (!FirstBufferScan(buf)) buf.reset();
+      if (!FirstBufferScan(buf))
+         buf.reset();
+      else
+         isany = true;
       fQueueScanIndex++;
    }
 
    // for raw scanning any other steps are not interesting
    if (IsRawScanOnly()) SkipAllData();
 
-   return true;
+   return isany;
 }
 
 bool base::StreamProc::ScanNewBuffersTm()
