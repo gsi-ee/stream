@@ -15,9 +15,9 @@ get4::Iterator::Iterator(int fmt) :
    // we decide to add 512 ns to GET4 times
    fConvGet4.SetT0(-512*20);
 
-   // time stamp itself is 19 bits plus 28 bit of GET4 epoch
+   // time stamp itself is 19 bits plus 24 bit of GET4 epoch
    // bining is 50 ps
-   fConvGet4.SetTimeSystem(19+28, 50e-12);
+   fConvGet4.SetTimeSystem(19+24, 50e-12);
 
 }
 

@@ -5,13 +5,8 @@ void second() {
 
    TGet4TestProc* p = new TGet4TestProc("Get4Test");
 
-   p->Add(0,0); // add all channels of get4 0
-
-   p->Add(0,1); // add all channels of get4 1
-
-   p->Add(0,2); // add all channels of get4 0
-
-   p->Add(0,3); // add all channels of get4 1
+   for (int get4=0;get4<5;get4++)
+     p->Add(0,get4); // add all channels of get4 0..5 on ROC0
 
    p->MakeHistos(); // make summary histograms
 }

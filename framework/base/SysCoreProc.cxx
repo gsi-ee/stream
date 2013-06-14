@@ -38,6 +38,8 @@ void base::SysCoreProc::CreateBasicHistograms()
 {
    fALLt = MakeH1("ALL_t", "Time distribution of all messages", 10000, 0., 1000., "s");
 
+   fHITt = MakeH1("HIT_t", "Time distribution of hit messages", 10000, 0., 1000., "s");
+
    fAUXt[0] = MakeH1("AUX0_t", "Time distribution of AUX0 signal", 10000, 0., 1000., "s");
    fAUXt[1] = MakeH1("AUX1_t", "Time distribution of AUX1 signal", 10000, 0., 1000., "s");
    fAUXt[2] = MakeH1("AUX2_t", "Time distribution of AUX2 signal", 10000, 0., 1000., "s");

@@ -182,6 +182,9 @@ bool nx::Processor::FirstBufferScan(const base::Buffer& buf)
             break;
 
          case base::MSG_HIT: {
+
+            FillH1(fHITt, msgtm);
+
             unsigned nxid = msg.getNxNumber();
             unsigned nxch = msg.getNxChNum();
             unsigned nxadc = msg.getNxAdcValue();

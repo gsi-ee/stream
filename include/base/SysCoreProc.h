@@ -29,6 +29,7 @@ namespace base {
 
          base::H1handle fMsgPerBrd;  //! common histogram for all boards with similar prefix
          base::H1handle fALLt;       //! histogram for all messages times
+         base::H1handle fHITt;       //! histogram for hit messages only
          base::H1handle fAUXt[4];    //! histogram for AUX times
          base::H1handle fSYNCt[2];   //! histogram for SYNC times
 

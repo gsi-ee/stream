@@ -18,7 +18,7 @@ void first()
 
    // enable cross processing only when one want to specify reference channel from other TDCs
    // in this case processing 'crosses' border of TDC and need to access data from other TDC
-   // trb3->SetCrossProcess(true);
+   trb3->SetCrossProcess(true);
 
    for (int tdcid=1;tdcid<=4;tdcid++) {
 
@@ -37,7 +37,7 @@ void first()
       // one also able specify reference from other TDCs
       // but one should enable CrossProcessing for trb3
       // Here we set as reference channel 0 on tdc 1
-      // tdc->SetRefChannel(0, 0, 1);
+      tdc->SetRefChannel(0, 0, 1);
 
       // for old FPGA code one should have epoch for each hit, no longer necessary
       // tdc->SetEveryEpoch(true);

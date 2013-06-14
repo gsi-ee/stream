@@ -169,6 +169,9 @@ bool get4::Processor::FirstBufferScan(const base::Buffer& buf)
       if (CheckPrint(msgtm, 1e-6))
          fIter1.printMessage(base::msg_print_Human);
 
+//      if (msg.is32bitSlow())
+//         fIter1.printMessage(base::msg_print_Human);
+
       bool ignoremsg = false;
 
       switch (msg.getMessageType()) {
@@ -188,7 +191,8 @@ bool get4::Processor::FirstBufferScan(const base::Buffer& buf)
          }
 
          case base::MSG_GET4: {
-            // must be ignored
+
+            FillH1(fHITt, msgtm);
 
             unsigned get4 = msg.getGet4Number();
 
@@ -298,6 +302,8 @@ bool get4::Processor::FirstBufferScan(const base::Buffer& buf)
                FillH1(fMsgsKind, 8 + msg.getGet4V10R32MessageType());
 
                if (msg.is32bitHit()) {
+
+                  FillH1(fHITt, msgtm);
 
                   unsigned get4 = msg.getGet4V10R32ChipId();
 
@@ -420,7 +426,7 @@ bool get4::Processor::SecondBufferScan(const base::Buffer& buf)
 
                base::GlobalTime_t globaltm = LocalToGlobalTime(localtm, &help_index);
 
-               unsigned indx = TestHitTime(globaltm, get4_in_use(msg.getGet4Number()));
+               unsigned indx = TestHitTime(globaltm, get4_in_use(msg.getGet4V10R32ChipId()));
 
                if (indx < fGlobalMarks.size())
                   AddMessage(indx, (get4::SubEvent*) fGlobalMarks.item(indx).subev, get4::MessageExt(msg, globaltm));

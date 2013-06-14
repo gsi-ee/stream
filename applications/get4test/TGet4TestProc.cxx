@@ -70,7 +70,7 @@ void TGet4TestProc::Process(TStreamEvent* ev)
     get4::SubEvent* sub0 = dynamic_cast<get4::SubEvent*> (ev->GetSubEvent("ROC0"));
 
     if (sub0!=0) {
-       // TGo4Log::Info("Find GET4 data for ROC0 size %u  trigger: %10.9f", sub0->fExtMessages.size(), ev->GetTriggerTime()*1e-9);
+       //TGo4Log::Info("Find GET4 data for ROC0 size %u  trigger: %10.9f", sub0->Size(), ev->GetTriggerTime());
        fMultipl->Fill(sub0->Size());
 
        TGet4TestMap::iterator iter;
@@ -87,12 +87,14 @@ void TGet4TestProc::Process(TStreamEvent* ev)
           if (iter == fMap.end()) continue;
 
           TGet4TestRec& rec = iter->second;
-          rec.hitcnt++;
+
 
           if (is32bit) {
+             rec.hitcnt+=2;
              rec.set_edge(1, msg.getGet4V10R32HitTimeBin());
              rec.set_edge(0, msg.getGet4V10R32HitTimeBin() + msg.getGet4V10R32HitTot());
           } else {
+             rec.hitcnt++;
              rec.set_edge(msg.getGet4Edge(), msg.getGet4Ts());
           }
 
