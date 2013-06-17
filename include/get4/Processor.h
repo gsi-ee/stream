@@ -33,6 +33,14 @@ namespace get4 {
          base::H1handle fMsgsKind;   //! histogram with messages kinds
          base::H1handle fSysTypes;   //! histogram with system types
          base::H1handle fMsgPerGet4;   //! histogram with system types
+         
+         base::H2handle fSlMsgPerGet4; //! histogram with slow control per GET4
+         base::H2handle fScalerPerGet4; //! histogram with slow control scaler per GET4
+         base::H2handle fDeadPerGet4; //! histogram with slow control dead time per GET4
+         base::H2handle fSpiPerGet4; //! histogram with slow control Spi per GET4
+         base::H2handle fSeuPerGet4; //! histogram with slow control SEU counter per GET4
+
+         base::H2handle fDllPerGet4; //! histogram with DLL flag per GET4
 
          std::vector<get4::Get4Rec> GET4;      //! usage masks for nxyters
 

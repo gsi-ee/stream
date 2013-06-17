@@ -40,6 +40,14 @@ get4::Processor::Processor(unsigned rocid, unsigned get4mask, base::OpticSplitte
    fMsgsKind = MakeH1("MsgKind", "kind of messages", 12, 0, 12, "xbin:NOP,-,EPOCH,SYNC,AUX,EPOCH2,GET4,SYS,EP32,SL32,ERR32,HIT32;kind");
    fSysTypes = MakeH1("SysTypes", "Distribution of system messages", 16, 0, 16, "systype");
    fMsgPerGet4 = MakeH1("PerGet4", "Distribution of hits between Get4", 16, 0, 16, "get4");
+   
+   fSlMsgPerGet4  = MakeH2("SlPerGet4",  "Distribution of Slow control messages between Get4", 16, 0, 16, 4, 0, 4, "get4; SL type");
+   fScalerPerGet4 = MakeH2("ScalerGet4", "Distribution of SL Scaler values between Get4", 16, 0, 16, 4096, 0, 8192, "get4");
+   fDeadPerGet4   = MakeH2("DeadTmGet4", "Distribution of Dead Time values between Get4", 16, 0, 16, 2048, 0, 4096, "get4");
+   fSpiPerGet4    = MakeH2("SpiOutGet4", "Distribution of SPI Out between Get4", 16, 0, 16, 820, 0, 8200, "get4");
+   fSeuPerGet4    = MakeH2("SeuScaGet4", "Distribution of SEU scaler values between Get4", 16, 0, 16, 410, 0, 410, "get4; SEU");
+
+   fDllPerGet4    = MakeH2("DllPerGet4", "DLL flag values for all hits, Get4 as unit, ch as sub-unit", 4*16, 0, 16, 2, 0, 2, "get4.ch; DLL Flag");
 
    CreateBasicHistograms();
 
@@ -318,6 +326,9 @@ bool get4::Processor::FirstBufferScan(const base::Buffer& buf)
                   // fill rising and falling edges together
                   FillH1(GET4[get4].fChannels, ch + edge*0.5);
 
+                  // DLL lock
+                  FillH2(fDllPerGet4, get4 + ch*0.25, msg.getGet4V10R32HitDllFlag() );
+
                   if (fRefChannelId == get4 * 100 + ch*10 + edge) {
                      base::LocalTimeMarker marker;
                      marker.localid = (get4+1) * 100 + ch*10 + edge;
@@ -335,6 +346,26 @@ bool get4::Processor::FirstBufferScan(const base::Buffer& buf)
 
                   FillH1(GET4[get4].fFalCoarseTm[ch], (ts+tot) / 128);
                   FillH1(GET4[get4].fFalFineTm[ch], (ts+tot) % 128);
+               }
+               else if (msg.is32bitSlow()) {
+                  unsigned get4 = msg.getGet4V10R32ChipId();
+                  FillH2( (base::H1handle)fSlMsgPerGet4,  get4, msg.getGet4V10R32SlType() );
+                  switch( msg.getGet4V10R32SlType() ) {
+                     case 0:
+                        FillH2(fScalerPerGet4,  get4, msg.getGet4V10R32SlData());
+                        break;
+                     case 1:
+                        FillH2(fDeadPerGet4,  get4, msg.getGet4V10R32SlData());
+                        break;
+                     case 2:
+                        FillH2(fSpiPerGet4,  get4, msg.getGet4V10R32SlData());
+                        break;
+                     case 3:
+                        FillH2(fSeuPerGet4,  get4, msg.getGet4V10R32SlData());
+                        break;
+                     default:
+                        break;
+                  }   
                }
 
             } else {
