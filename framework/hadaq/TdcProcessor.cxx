@@ -47,7 +47,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
       if (DoRisingEdge()) {
          fCh[ch].fRisingFine = MakeH1("RisingFine", "Rising fine counter", FineCounterBins, 0, FineCounterBins, "fine");
          fCh[ch].fRisingCoarse = MakeH1("RisingCoarse", "Rising coarse counter", 2048, 0, 2048, "coarse");
-         fCh[ch].fRisingRef = MakeH1("RisingRef", "Difference to reference channel", 20000, -100., +100., "ns");
+         fCh[ch].fRisingRef = MakeH1("RisingRef", "Difference to reference channel", 200000, -100., +100., "ns");
          fCh[ch].fRisingCoarseRef = MakeH1("RisingCoarseRef", "Difference to rising coarse counter in ref channel", 4096, -2048, 2048, "coarse");
          fCh[ch].fRisingRef2D = MakeH2("RisingRef2D", "Difference to reference channel", 400, -1., +1., 100, 0, 500, "ns");
          fCh[ch].fRisingCalibr = MakeH1("RisingCalibr", "Rising calibration function", FineCounterBins, 0, FineCounterBins, "fine");
@@ -172,9 +172,14 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
       }
 
       if ((fAutoCalibration>0) && fCh[ch].docalibr) {
-         isany = true;
-         if (DoRisingEdge() && (fCh[ch].all_rising_stat<fAutoCalibration)) docalibration = false;
-         if (DoFallingEdge() && (fCh[ch].all_falling_stat<fAutoCalibration)) docalibration = false;
+         if (DoRisingEdge() && (fCh[ch].all_rising_stat > 0)) {
+            isany = true;
+            if (fCh[ch].all_rising_stat<fAutoCalibration) docalibration = false;
+         }
+         if (DoFallingEdge() && (fCh[ch].all_falling_stat > 0)) {
+            isany = true;
+            if (fCh[ch].all_falling_stat<fAutoCalibration) docalibration = false;
+         }
       }
    }
 

@@ -61,7 +61,7 @@ namespace hadaq {
 
 
             ChannelRec() :
-               refch(0),
+               refch(0xffffff),
                reftdc(0xffffffff),
                docalibr(true),
                fRisingFine(0),
