@@ -411,7 +411,7 @@ void hadaq::TdcProcessor::AppendTrbSync(uint32_t syncid)
    memcpy(fQueue.back().ptr(), &syncid, 4);
 }
 
-void hadaq::TdcProcessor::CalibrateChannel(long* statistic, float* calibr)
+void hadaq::TdcProcessor::CalibrateChannel(unsigned nch, long* statistic, float* calibr)
 {
    double sum(0.);
    for (int n=0;n<FineCounterBins;n++) {
@@ -420,9 +420,9 @@ void hadaq::TdcProcessor::CalibrateChannel(long* statistic, float* calibr)
    }
 
    if (sum<1000) {
-      printf("Too few counts %5.0f for calibration of fine counter\n", sum);
+      printf("TDC:%u Ch:%u Too few counts %5.0f for calibration of fine counter\n", GetBoardId(), nch, sum);
    } else {
-//      printf("There are %5.0f counts \n", sum);
+      printf("TDC:%u Ch:%u Cnts: %7.0f produce calibration\n", GetBoardId(), nch, sum);
    }
 
 
@@ -452,14 +452,14 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat)
    for (unsigned ch=0;ch<NumChannels();ch++) {
       if (fCh[ch].docalibr) {
          if (DoRisingEdge()) {
-            CalibrateChannel(fCh[ch].rising_stat, fCh[ch].rising_calibr);
+            CalibrateChannel(ch, fCh[ch].rising_stat, fCh[ch].rising_calibr);
             if (clear_stat) {
                for (unsigned n=0;n<FineCounterBins;n++) fCh[ch].rising_stat[n] = 0;
                fCh[ch].all_rising_stat = 0;
             }
          }
          if (DoFallingEdge()) {
-            CalibrateChannel(fCh[ch].falling_stat, fCh[ch].falling_calibr);
+            CalibrateChannel(ch, fCh[ch].falling_stat, fCh[ch].falling_calibr);
             if (clear_stat) {
                for (unsigned n=0;n<FineCounterBins;n++) fCh[ch].falling_stat[n] = 0;
                fCh[ch].all_falling_stat = 0;

@@ -148,7 +148,7 @@ namespace hadaq {
          void BeforeFill();
          void AfterFill(SubProcMap* subproc = 0);
 
-         void CalibrateChannel(long* statistic, float* calibr);
+         void CalibrateChannel(unsigned nch, long* statistic, float* calibr);
          void CopyCalibration(float* calibr, base::H1handle hcalibr);
          void ProduceCalibration(bool clear_stat);
          void StoreCalibration(const std::string& fname);

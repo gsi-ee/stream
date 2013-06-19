@@ -20,7 +20,7 @@ void first()
    // in this case processing 'crosses' border of TDC and need to access data from other TDC
    trb3->SetCrossProcess(true);
 
-   for (int tdcid=1;tdcid<=4;tdcid++) {
+   for (int tdcid=0;tdcid<=4;tdcid++) {
 
       // create processor for hits from TDC
       // par1 - pointer on trb3 board
@@ -58,7 +58,7 @@ void first()
       // tdc->SetWriteCalibration(Form("test_tdc%d.cal", tdcid));
 
       // enable automatic calibration, specify required number of hits in each channel
-      // tdc->SetAutoCalibration(100000);
+      tdc->SetAutoCalibration(100000);
 
       // this will be required only when second analysis step will be introduced
       // and one wants to select only hits around some trigger signal for that analysis
