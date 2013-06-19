@@ -456,14 +456,14 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat)
 
    for (unsigned ch=0;ch<NumChannels();ch++) {
       if (fCh[ch].docalibr) {
-         if (DoRisingEdge()) {
+         if (DoRisingEdge() && (fCh[ch].rising_stat>0)) {
             CalibrateChannel(ch, fCh[ch].rising_stat, fCh[ch].rising_calibr);
             if (clear_stat) {
                for (unsigned n=0;n<FineCounterBins;n++) fCh[ch].rising_stat[n] = 0;
                fCh[ch].all_rising_stat = 0;
             }
          }
-         if (DoFallingEdge()) {
+         if (DoFallingEdge() && (fCh[ch].falling_stat>0)) {
             CalibrateChannel(ch, fCh[ch].falling_stat, fCh[ch].falling_calibr);
             if (clear_stat) {
                for (unsigned n=0;n<FineCounterBins;n++) fCh[ch].falling_stat[n] = 0;
