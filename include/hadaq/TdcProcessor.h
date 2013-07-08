@@ -164,6 +164,33 @@ namespace hadaq {
          inline bool DoRisingEdge() const { return fEdgeMask & rising_edge; }
          inline bool DoFallingEdge() const { return fEdgeMask & falling_edge; }
 
+         int GetNumHist() const { return 6; }
+
+         const char* GetHistName(int k) const {
+            switch(k) {
+               case 0: return "RisingFine";
+               case 1: return "RisingCoarse";
+               case 2: return "RisingRef";
+               case 3: return "FallingFine";
+               case 4: return "FallingCoarse";
+               case 5: return "FallingRef";
+            }
+            return "";
+         }
+
+         base::H1handle GetHist(unsigned ch, int k = 0) {
+            if (ch>=NumChannels()) return 0;
+            switch (k) {
+               case 0: return fCh[ch].fRisingFine;
+               case 1: return fCh[ch].fRisingCoarse;
+               case 2: return fCh[ch].fRisingRef;
+               case 3: return fCh[ch].fFallingFine;
+               case 4: return fCh[ch].fFallingCoarse;
+               case 5: return fCh[ch].fFallingRef;
+            }
+            return 0;
+         }
+
          void DisableCalibrationFor(unsigned firstch, unsigned lastch = 0);
 
          /** Set reference signal for the TDC channel ch

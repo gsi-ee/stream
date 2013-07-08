@@ -68,5 +68,38 @@ void first()
       // method set window for all TDCs at the same time
       //trb->SetTriggerWindow(-4e-7, -3e-7);
 
+#ifdef __GO4ANAMACRO__
+      int numx = 1;
+      int numy = 1;
+      while ((numx * numy) < tdc->NumChannels()) {
+         if (numx==numy) numx++; else numy++;
+      }
+
+      TGo4Picture** pic = new TGo4Picture*[tdc->GetNumHist()];
+      int* piccnt = new int[tdc->GetNumHist()];
+      for (int k=0;k<tdc->GetNumHist();k++) {
+         pic[k] = new TGo4Picture(Form("TDC%d_%s",tdcid, tdc->GetHistName(k)), Form("All %s", tdc->GetHistName(k)));
+         pic[k]->SetDivision(numy,numx);
+         piccnt[k] = 0;
+      }
+      for (int n=0;n<tdc->NumChannels();n++) {
+         int x = n % numx;
+         int y = n / numx;
+         for (int k=0;k<tdc->GetNumHist();k++) {
+            TObject* obj = (TObject*) tdc->GetHist(n, k);
+            if (obj) piccnt[k]++;
+            pic[k]->Pic(y,x)->AddObject(obj);
+         }
+      }
+      for (int k=0;k<tdc->GetNumHist();k++) {
+         if (piccnt[k] > 0) go4->AddPicture(pic[k]);
+                      else delete pic[k];
+      }
+      delete[] pic;
+      delete[] piccnt;
+
+#endif
+
    }
+
 }

@@ -73,9 +73,11 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fWriteCalibr.clear();
 }
 
+
 hadaq::TdcProcessor::~TdcProcessor()
 {
 }
+
 
 void hadaq::TdcProcessor::DisableCalibrationFor(unsigned firstch, unsigned lastch)
 {
