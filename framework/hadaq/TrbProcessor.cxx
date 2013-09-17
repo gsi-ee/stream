@@ -24,6 +24,7 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid) :
    fTdcDistr = MakeH1("TdcDistr", "Data distribution over TDCs", 32, 0, 32, "tdc");
 
    fHadaqCTSId = 0x8000;
+   fHadaqHUBId = 0x9000;
    fHadaqTDCId = 0xC000;
 
    fLastTriggerId = 0;
@@ -175,6 +176,16 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaq::RawSubevent* sub)
          RAWPRINT("    TRB3-TDC header: 0x%08x, TRB3-buildin TDC-FPGA brd=%u, size=%u  IGNORED\n", (unsigned) data, brdid, datalen);
 
          ix+=datalen;
+         continue;
+      }
+
+      if ((data & 0xFF00) == fHadaqHUBId) {
+         RAWPRINT ("   HUB header: 0x%08x, hub=%u, size=%u (ignore)\n", (unsigned) data, (unsigned) data & 0xFF, datalen);
+
+         // ix+=datalen;  // WORKAROUND !!!
+
+         // TODO: formally we should analyze HUB subevent as real subevent but
+         // we just skip header and continue to analyze data
          continue;
       }
 

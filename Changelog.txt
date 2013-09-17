@@ -270,4 +270,11 @@ Without filling current NX code works 2x times faster
 1. In hadaq::TdcProcessor add possibility to create pictures with all histograms.
    This is done in first.C script, where one can detect if script runs from the go4.
    In this case one can get access to histograms from TdcProcessor and create pictures 
-   with that histograms. Example in applications/trb3tdc/first.C file.   
+   with that histograms. Example in applications/trb3tdc/first.C file.
+   
+17.09.2013
+1. In hadaq::TrbProcessor add identifier for HUB header. Seems to be, in some
+   configuration FPGA which is working as HUB can add its header (was not so before).
+   This header can be just ignored, while it only marks portion of data, which is 
+   produced by HUB, but all identifiers like TDC are remained as before.
+         

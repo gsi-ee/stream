@@ -15,6 +15,7 @@ void hadaq::TdcMessage::print(double tm)
          break;
       case tdckind_Debug:
          printf("     tdc debug  0x%08x\n", (unsigned) fData);
+         break;
       case tdckind_Epoch:
          printf("     tdc epoch  0x%08x", (unsigned) fData);
          if (tm>=0) printf ("  tm:%9.2f", tm*1e9);

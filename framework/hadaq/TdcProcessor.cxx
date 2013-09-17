@@ -144,7 +144,7 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
          if (iter != subprocmap->end()) refproc = iter->second;
       }
 
-      RAWPRINT("TDC%u Ch:%u Try to use as ref TDC%u %u proc:%p\n", GetBoardId(), ch, reftdc, ref, refproc);
+      // RAWPRINT("TDC%u Ch:%u Try to use as ref TDC%u %u proc:%p\n", GetBoardId(), ch, reftdc, ref, refproc);
 
       if ((refproc!=0) && (ref<refproc->NumChannels()) && ((ref!=ch) || (refproc!=this))) {
          if (DoRisingEdge() && (fCh[ch].first_rising_tm !=0 ) && (refproc->fCh[ref].first_rising_tm !=0)) {

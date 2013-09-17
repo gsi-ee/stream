@@ -14,7 +14,11 @@ void first()
    // lower 8 bit are used as tdc number
    trb3->SetHadaqTDCId(0xC000);
 
-   trb3->SetPrintRawData(false);
+   // HUB subevent header id, here high 8 bit from 16 should be specified
+   // lower 8 bit are used as hub number
+   trb3->SetHadaqHUBId(0x9000);
+
+   trb3->SetPrintRawData(true);
 
    // enable cross processing only when one want to specify reference channel from other TDCs
    // in this case processing 'crosses' border of TDC and need to access data from other TDC

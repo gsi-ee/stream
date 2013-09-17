@@ -24,6 +24,7 @@ namespace hadaq {
          SubProcMap fMap;            ///< map of sub-processors
 
          unsigned fHadaqCTSId;       ///< identifier of CTS header in HADAQ event
+         unsigned fHadaqHUBId;       ///< identifier of HUB header in HADQ event
          unsigned fHadaqTDCId;       ///< identifier of TDC header in HADQ event
 
          unsigned fLastTriggerId;    ///< last seen trigger id
@@ -57,6 +58,7 @@ namespace hadaq {
          virtual ~TrbProcessor();
 
          void SetHadaqCTSId(unsigned id) { fHadaqCTSId = id; }
+         void SetHadaqHUBId(unsigned id) { fHadaqHUBId = id; }
          void SetHadaqTDCId(unsigned id) { fHadaqTDCId = id; }
 
          /** Set trigger window not only for itself, bit for all subprocessors */
