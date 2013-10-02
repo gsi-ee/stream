@@ -148,7 +148,15 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
 
       if ((refproc!=0) && (ref<refproc->NumChannels()) && ((ref!=ch) || (refproc!=this))) {
          if (DoRisingEdge() && (fCh[ch].first_rising_tm !=0 ) && (refproc->fCh[ref].first_rising_tm !=0)) {
-            double diff = (fCh[ch].first_rising_tm - refproc->fCh[ref].first_rising_tm)*1e9;
+
+            double tm = fCh[ch].first_rising_tm;
+            double tm_ref = refproc->fCh[ref].first_rising_tm;
+            if ((refproc!=this) && (ch>0) && (ref>0)) {
+               tm -= fCh[0].first_rising_tm;
+               tm_ref -= refproc->fCh[0].first_rising_tm;
+            }
+
+            double diff = (tm - tm_ref)*1e9;
 
             FillH1(fCh[ch].fRisingRef, diff);
             FillH1(fCh[ch].fRisingCoarseRef, 0. + fCh[ch].first_rising_coarse - refproc->fCh[ref].first_rising_coarse);
@@ -157,17 +165,28 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
             FillH2(fCh[ch].fRisingRef2D, diff-1.0, fCh[ch].first_rising_coarse/4);
             RAWPRINT("Difference rising %u:%u %u:%u  %12.3f  %12.3f  %7.3f  coarse %03x - %03x = %4d  fine %03x %03x \n",
                   GetBoardId(), ch, reftdc, ref,
-                  fCh[ch].first_rising_tm*1e9,  refproc->fCh[ref].first_rising_tm*1e9, (fCh[ch].first_rising_tm - refproc->fCh[ref].first_rising_tm)*1e9,
+                  tm*1e9,  tm_ref*1e9, diff,
                   fCh[ch].first_rising_coarse, refproc->fCh[ref].first_rising_coarse, (int) (fCh[ch].first_rising_coarse - refproc->fCh[ref].first_rising_coarse),
                   fCh[ch].first_rising_fine, refproc->fCh[ref].first_rising_fine);
          }
 
          if (DoFallingEdge() && (fCh[ch].first_falling_tm !=0 ) && (refproc->fCh[ref].first_falling_tm !=0)) {
-            FillH1(fCh[ch].fFallingRef, (fCh[ch].first_falling_tm - refproc->fCh[ref].first_falling_tm)*1e9);
+
+            double tm = fCh[ch].first_falling_tm;
+            double tm_ref = refproc->fCh[ref].first_falling_tm;
+
+            if ((refproc!=this) && (ch>0) && (ref>0)) {
+               tm -= fCh[0].first_falling_tm;
+               tm_ref -= refproc->fCh[0].first_falling_tm;
+            }
+
+            double diff = (tm - tm_ref)*1e9;
+
+            FillH1(fCh[ch].fFallingRef, diff);
             FillH1(fCh[ch].fFallingCoarseRef, 0. + fCh[ch].first_falling_coarse - refproc->fCh[ref].first_falling_coarse);
             RAWPRINT("Difference falling %u:%u %u:%u  %12.3f  %12.3f  %7.3f  coarse %03x - %03x = %4d  fine %03x %03x \n",
                      GetBoardId(), ch, reftdc, ref,
-                     fCh[ch].first_falling_tm*1e9, refproc->fCh[ref].first_falling_tm*1e9, (fCh[ch].first_falling_tm - refproc->fCh[ref].first_falling_tm)*1e9,
+                     tm*1e9, tm_ref*1e9, diff,
                      fCh[ch].first_falling_coarse, fCh[ref].first_falling_coarse, (int) (fCh[ch].first_falling_coarse - refproc->fCh[ref].first_falling_coarse),
                      fCh[ch].first_falling_fine, refproc->fCh[ref].first_falling_fine);
          }

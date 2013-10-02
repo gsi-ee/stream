@@ -277,4 +277,13 @@ Without filling current NX code works 2x times faster
    configuration FPGA which is working as HUB can add its header (was not so before).
    This header can be just ignored, while it only marks portion of data, which is 
    produced by HUB, but all identifiers like TDC are remained as before.
-         
+
+2.10.2013
+1. In hadaq::TdcProcessor substract time of channel 0 when calculating difference
+   between two channels on different TDCs. For instance, when channel 5 on TDC 3 should
+   be compared whith channel 7 on TDC 9, following calculation will be done:
+      diff = (tdc[3].ch[5] - tdc[3].ch[0]) - (tdc[9].ch[7] - tdc[9].ch[0]);
+   
+   
+    
+          
