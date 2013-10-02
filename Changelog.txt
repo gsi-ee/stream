@@ -283,7 +283,8 @@ Without filling current NX code works 2x times faster
    between two channels on different TDCs. For instance, when channel 5 on TDC 3 should
    be compared whith channel 7 on TDC 9, following calculation will be done:
       diff = (tdc[3].ch[5] - tdc[3].ch[0]) - (tdc[9].ch[7] - tdc[9].ch[0]);
-   
+2. Modify trb3tdc example to show how non subsequent ids can be specified.
+   Increase number of bins in "TdcDistr" overview histogram.    
    
     
           

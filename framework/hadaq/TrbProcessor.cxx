@@ -21,7 +21,7 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid) :
 
    fLostRate = MakeH1("LostRate", "Relative number of lost packets", 1000, 0, 1., "data lost");
 
-   fTdcDistr = MakeH1("TdcDistr", "Data distribution over TDCs", 32, 0, 32, "tdc");
+   fTdcDistr = MakeH1("TdcDistr", "Data distribution over TDCs", 64, 0, 64, "tdc");
 
    fHadaqCTSId = 0x8000;
    fHadaqHUBId = 0x9000;

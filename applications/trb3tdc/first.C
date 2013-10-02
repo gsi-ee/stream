@@ -24,7 +24,18 @@ void first()
    // in this case processing 'crosses' border of TDC and need to access data from other TDC
    // trb3->SetCrossProcess(true);
 
-   for (int tdcid=4;tdcid<=4;tdcid++) {
+
+   // this is array with available TDCs ids
+   // Full id, which is appeared in raw data, combined from value,
+   // provided in SetHadaqTDCId() and individual ID of each TDC
+   // For instance, if SetHadaqTDCId(0x8000) was called and tdcid=0x07,
+   // header in HADAQ raw data will have id 0x8007
+
+   int tdcmap[3] = { 0x02, 0x05, 0x07 };
+
+   for (int cnt=0;cnt<3;cnt++) {
+
+      int tdcid = tdcmap[cnt];
 
       // create processor for hits from TDC
       // par1 - pointer on trb3 board
