@@ -10,20 +10,15 @@ void first()
    // CTS subevent header id, all 16 bit
    // trb3->SetHadaqCTSId(0x8000);
 
-   // TDC subevent header id, here high 8 bit from 16 should be specified
-   // lower 8 bit are used as tdc number
-   trb3->SetHadaqTDCId(0xC000);
-
    // HUB subevent header id, here high 8 bit from 16 should be specified
    // lower 8 bit are used as hub number
    trb3->SetHadaqHUBId(0x9000);
 
-   trb3->SetPrintRawData(true);
+   trb3->SetPrintRawData(false);
 
    // enable cross processing only when one want to specify reference channel from other TDCs
    // in this case processing 'crosses' border of TDC and need to access data from other TDC
    // trb3->SetCrossProcess(true);
-
 
    // this is array with available TDCs ids
    // Full id, which is appeared in raw data, combined from value,
@@ -31,11 +26,21 @@ void first()
    // For instance, if SetHadaqTDCId(0x8000) was called and tdcid=0x07,
    // header in HADAQ raw data will have id 0x8007
 
-   int tdcmap[3] = { 0x02, 0x05, 0x07 };
+   int tdcmap[3] = { 0xC002, 0xC005, 0xD007 };
+
+   // TDC subevent header id, here high 8 bit from 16 should be specified
+   // lower 8 bit are used as tdc number
+   // Be aware that all TDCs have same prevfix
+   trb3->SetHadaqTDCId(tdcmap[0] & 0xFF00);
 
    for (int cnt=0;cnt<3;cnt++) {
 
-      int tdcid = tdcmap[cnt];
+      int tdcid = tdcmap[cnt] & 0x00FF;
+
+      if ((tdcmap[0] & 0xFF00) != (tdcmap[cnt] & 0xFF00)) {
+         fprintf(stderr, "!!!! Wrong prefix in TDC%d, do not match with TDC0  %X != %X\n", cnt, (tdcmap[cnt] & 0xFF00), (tdcmap[0] & 0xFF00));
+         exit(5);
+      }
 
       // create processor for hits from TDC
       // par1 - pointer on trb3 board
