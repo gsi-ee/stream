@@ -21,22 +21,19 @@ void first()
    // trb3->SetCrossProcess(true);
 
    // this is array with available TDCs ids
-   // Full id, which is appeared in raw data, combined from value,
-   // provided in SetHadaqTDCId() and individual ID of each TDC
-   // For instance, if SetHadaqTDCId(0x8000) was called and tdcid=0x07,
-   // header in HADAQ raw data will have id 0x8007
+   // It is required that high 8 bits are the same.
+   // These bits are used to separate TDC data from other data kinds
 
-   int tdcmap[3] = { 0xC002, 0xC005, 0xD007 };
+   int tdcmap[3] = { 0xC002, 0xC005, 0xC007 };
 
-   // TDC subevent header id, here high 8 bit from 16 should be specified
-   // lower 8 bit are used as tdc number
-   // Be aware that all TDCs have same prevfix
+   // TDC subevent header id
    trb3->SetHadaqTDCId(tdcmap[0] & 0xFF00);
 
    for (int cnt=0;cnt<3;cnt++) {
 
       int tdcid = tdcmap[cnt] & 0x00FF;
 
+      // verify prefix
       if ((tdcmap[0] & 0xFF00) != (tdcmap[cnt] & 0xFF00)) {
          fprintf(stderr, "!!!! Wrong prefix in TDC%d, do not match with TDC0  %X != %X\n", cnt, (tdcmap[cnt] & 0xFF00), (tdcmap[0] & 0xFF00));
          exit(5);
