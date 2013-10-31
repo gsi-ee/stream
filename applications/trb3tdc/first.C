@@ -123,7 +123,7 @@ void first()
    // This is a method to regularly invoke macro, where arbitrary action can be performed
    // One could specify period in seconds or function will be called for every event processed
 
-   new THookProc("my_hook();", 2.5);
+   // new THookProc("my_hook();", 2.5);
 
 }
 
@@ -131,7 +131,7 @@ void first()
 
 // this is example of hook function
 // here one gets access to all tdc processors and obtains Mean and RMS
-// value on the first channel for each TDC and prints on the disaply
+// value on the first channel for each TDC and prints on the display
 
 void my_hook()
 {
