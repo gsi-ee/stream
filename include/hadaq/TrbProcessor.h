@@ -73,6 +73,17 @@ namespace hadaq {
          void SetCrossProcess(bool on = true) { fCrossProcess = on; }
          bool IsCrossProcess() const { return fCrossProcess; }
 
+
+         unsigned NumSubProc() const { return fMap.size(); }
+         TdcProcessor* GetSubProc(unsigned n) const
+         {
+            for (SubProcMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
+               if (n==0) return iter->second;
+               n--;
+            }
+            return 0;
+         }
+
    };
 }
 

@@ -1,159 +1,120 @@
-21.11.2012  
-Start of project, first line of code
+31.10.2013
+1. Provide THookProc, which allows to regularly execute user code.
+   Plan to use with trb3tdc analysis to control stability of the TDC measurements.
+   Provide simple example in correspondent macro.
 
-23.11.2012 
-First checkin in repository
-
-26.11.2012
-Group all new classes in one directory and one library 
-
-27.11.2012 
-Change to the two-scan algorithm. Exactly two full scan of data are required.
-This simplifies logic how all kind of intermediate data can be processed.  
-As consequence, many events can be produced by scan of next buffer.
-Each processor fills its own subevent, which are than collected together in 
-common event.
-Provide Event and SubEvent classes. Implement event building.
-Code shows reasonable results with ROC data from CERN beamtime.
-
-27.11.2012 
-Remove user source class from go4wrapper. 
-Now event production works inside normal processor of the first 
-step and one can normally configure it with all available go4 sources.
-Many input events can be queued internally, many output events can
-be produced via SetKeepInputEvent() logic. 
-Thus N->M problematic is fully implemented! 
-
-27.11.2012
-Introduce simple typedefs for GlobalStamp_t and LocalStamp_t
-Provide local/global time for each buffer, liner interpolation of
-time between two sync markers, helper index to locate faster region 
-between two syncs.
-
-27.11.2012
-First test with cern-gem12 data, where aux2 on ROC4 was used as trigger.
-One need to implement special kind of "flush" trigger when no reference signals 
-for long time to avoid over-fill of all queues. Anyhow, first reasonable results! 
-
-28.11.2012
-Master time now can be assigned, by default processor with trigger source is used. 
-Flush trigger is implemented, it allows to avoid situation when many data without 
-trigger must be accumulated in the queues. Flush trigger generated about once 
-per buffer in master processor. cern-gem12 starts to look very reasonable. As next
-step, normal region-of-interest selection should be implemented, no-trigger-mode and
-configurable message sorting.    
-
-29.11.2012 
-Define trigger marker as time interval - first step direction Region-of-Interest
-concept. Later one could not only select events, but rather intervals which are
-than delivered to next steps. As next iteration, forwarding of complete data stream
-with regular time intervals (like 1 ms) should be implemented. 
-Message time sorting is implemented.  
-
-30.11.2012
-Attempt to implement last-epoch bit correction, many other side-effects are discovered
-with nXYTER/Optic readout, especially for CERN/SPS 2012 beamtime. Many open questions
-are remained. Allow to specify initialization script name - like setup_get4.C or 
-setup_cern_oct12.C. Calling arguments are:
-go4analysis -file file.lmd -args setup_get4.C
-Primary classes for GET4 analysis. 
-Possibility of raw analysis only.
-
-3.12.2012
-First test with running GET4 v1.0 setup. 
-Implement several basic histograms for GET4.
-
-7.12.2012
-Add reference channel for simple reference calculations
-in GET4 processor.
-Add second level for histogram prefixes like ROC0/GET4_2/Ch2
-
-10.12.2012
-One another method for last-epoch correction.
-While main problem is CERN/SPS beamtime, make heuristic for exactly
-this data. Seems to be, MSB bits gives us the best possibility for selection.
-With some other checks 99.5% of corrupted data can be repaired. 
-Rest are other errors (next-epoch problem or wrong bits is time stamp) 
-do not have any chance to be correctly fixed. My estimation gives 
-about 0.1% of such nasty messages.  
-
-11.12.2012
-First step to non-synchronized data streams. Any number of SYNCs can be
-produced now, simple algorithm looks for the same SYNC id to set global
-times and introduce time calibrations. Works with run87 of CERN/SPS beamtime.
-Fix problem with time uncertainty parameter for NX processing.
-Implement two-dimensional histograms. Add such in NX processing.
-One need to make histogram filling optional - can take significant amount of time. 
-Without filling current NX code works 2x times faster
-
-12.12.2012
-1) Reorganize libraries and code in newmonitor - introduce second step in analysis chain. 
-   At the moment this step will be go4-based code, one could make later same logic as with 
-   first step. Major difference to first step that in second step events are already defined
-   and one do not require any complex queueing of input data.
-   Second step also should be reinitialized via separate macro - named second.C.
-   There all sub-processors should be instantiated.  
-2) Introduce skeleton for get4test code, based on two-step approach.      
-3) Introduce SysCoreProc class, which should be base for all kind of ROC-based analysis.
-   Aim not to introduce common message loop (as in very first go4monitor) but
-   rather common structures and histograms.
-4) Add possibility to skip time synchronization for some streams. It is
-   useful when the only stream is used or when streams synchronized anyway,
-   like in optic case.
-5) Add possibility to define regions-of-interests in get4 based on some ref channel. 
-   For a now primitive (only single channel), later one could apply trigger-like 
-   logic to several Get4 channels (like in GSI beamtime nov-2012). 
-   Very preliminary, seems to be work with latest test data.  
+8.10.2013
+1. In applications/trb3tdc/first.C in clear form provide hardware ids for the TDCs.
+   Check that all ids conform to the coding convention.
    
-13.12.2012
-1) Create message and iterator classes for nx and get4 analysis. 
-   These were last connection to ROClib. Therefore from this point:     
-2) Move further development from ROClib to go4/app repository.
-   Main motivation - there are parts which could be interesting not only for CBM/ROC users.
-3) Rename to "stream" project. Name will probably change, but main idea - 
-   it is flexible stream-based analysis.
-4) Reorganize folder structure. Separate framework, go4engine and application.
-   Introduce project-wide build rules and Makefiles.
-5) In get4test application make analysis of selected hits. 
-   First produce only widths. Cleanup code of basic get4::Processor class.
-   Implement printing for get4, handle it via central SysCoreProc class  
+2.10.2013
+1. In hadaq::TdcProcessor substract time of channel 0 when calculating difference
+   between two channels on different TDCs. For instance, when channel 5 on TDC 3 should
+   be compared whith channel 7 on TDC 9, following calculation will be done:
+      diff = (tdc[3].ch[5] - tdc[3].ch[0]) - (tdc[9].ch[7] - tdc[9].ch[0]);
+2. Modify trb3tdc example to show how non subsequent ids can be specified.
+   Increase number of bins in "TdcDistr" overview histogram.    
    
-14.12.2012
-1) Avoid local-trigger duplication or very close distance between them.
-   Is a case with corrupted GET4 data. Now one can set minimal margin between
-   two consequent events. Implemented for both GET4 and NX.
-2) In get4test create summary histogram to see which channels have problems
-3) Ensure that cern-gem12 analysis works without SYNC usage.
-   Data flushing was activated for such case. Results histograms are the same. 
-4) Implement cern-gem12 code.    
+17.09.2013
+1. In hadaq::TrbProcessor add identifier for HUB header. Seems to be, in some
+   configuration FPGA which is working as HUB can add its header (was not so before).
+   This header can be just ignored, while it only marks portion of data, which is 
+   produced by HUB, but all identifiers like TDC are remained as before.
 
-17.12.2012
-1) Preliminary HADAQ code - only raw data scan at the moment
-2) Distribute code between TrbProcessor and TdcProcessor.  
-3) TrbProcessor navigates over TRB events-subevents and CTS data,
-4) TdcProcessor is special treatment of data from FPGA-TDC. 
-   It is sub-sub-processor relative to central manager. It is done while
-   for each TDC time synchronization should be performed separately.
-5) One can only see statistic over TDC channels, next step is TdcHit and TdcEvent
-   structures 
+8.07.2013
+1. In hadaq::TdcProcessor add possibility to create pictures with all histograms.
+   This is done in first.C script, where one can detect if script runs from the go4.
+   In this case one can get access to histograms from TdcProcessor and create pictures 
+   with that histograms. Example in applications/trb3tdc/first.C file.
    
-18.12.2012
-1) Introduce TdcMessage and TdcIterator classes. These are basic classes
-   for navigation via FPGA-TDC raw data.      
-   
-19.12.2012
-1) First try of synchronization with processor/subprocessor approach. 
-   Problem here that SYNC number registered by TRB3 itself, 
-   while SYNC time is recorded by every TDC individually. 
-   In such case TrbProcessor just split raw data between TdcProcessor's.
-   If found, SYNC messages placed in begin of raw data.
-2) RawScan mode introduced in StreamProc class. 
-   It indicates, than only raw data scan is performed - no any output data should
-   be expected from such processor. Such mode required for TrbProcessor which works
-   just like splitter.  
-3) If error found in the buffer (FirstBufferScan() returns false), 
-   buffer will be ignored in all consequent stages.    
+13.06.2013
+1. Implement work-around for callculating references between TRB3 TDC channels from
+   different TDCs. Normally such analysis should be implemented in second stept, 
+   but now do it at the level of TrbProcessor at the end of event unpacking. 
 
+10.06.2013
+1. Add support of the 32-bit Get4 readout. 
+   For the moment it is done via SYS messages.
+   No any special configuration needed. Not yet tested.
+
+10.05.2013
+1. Unified HADAQ structures between DABC and Stream analysis.
+   Idea to use as much as possible common code in both frameworks.
+2. Use hadaq::HldFile from DABC for user source.
+
+19.04.2013
+1. Fix several problems with hld files usage. Mainly problem was due to 8-bytes padding
+   of hadaq events/subevents, which was not takes into account. In DABC similar code was
+   implemented correctly from beginning.
+   
+12.04.2013
+1. Provide user source for hld files. Later one could extend it to any other user sources,
+   mainly for different files formats. 
+2. Strange results with UDP generators - show wrong alignment of subevents. Must
+   be checked with real TRB3 data.    
+   
+19.03.2013
+1. Analyze fine counter of TDC hit message if it was missed hit or counter out of allowed 
+   range. Let configure subevents ID for CTS and TDC.
+   
+18.03.2013
+1. Implement nxyter ADC baseline compensation, using old text files. Can be used for beamtime
+   analysis. Implementing of baseline measurement should be done.
+2. Fix several problems in cern-oct12 analysis, where NXYTER and FPGA TDC should be
+   correctly synchronized.    
+   
+14.03.2013
+1. Provide automatic calibration mode for FPGA TDC, allow to process only rising or only
+   falling edges. Optimize internal data structures and performance.
+   
+13.03.2013
+1. Add new application for FPGA TDC testing on TRB3. 
+   First provide possibility for raw printout of the data.
+2. Fill different per-channel raw histograms for FPGA TDC (of course, optionally)
+3. Implement manual calibration mode for FPGA TDC. Manual means one could generate calibration
+   once (in form of binary file) and than reuse it for analysis of other data
+4. Allow to disable some TDC channels, also allow to disable calibration of some channels
+ 
+12.02.2013
+1) Add possibility to switch on/off histogram filling
+2) Copy and modify Queue and RecordsQueue classes from DABC.
+   They allow to allocate and use fixed-space queue for complex
+   data types.
+3) Replacement of std::vectors by Queue class gave significant 
+   improvement in get4test, where long markers queue (~2000 items) are used.
+   Each vector::erase() operation is too expensive, where Queue::pop() 
+   does mostly nothing.
+4) As last change, RecordsQueue used for buffers queue. 
+   Probably not important for performance, but unified all queues.  
+
+8.02.2013
+1) Support of raw data format for Get4 and nXYTER. Simple modification, while
+   complete analysis does not depends on position of SYNC messages in the buffers
+2) Introducing OpticSplitter, which is required to split data after raw
+   optic readout. In this case ABB put messages from all ROCs in one data stream.
+
+17.01.2013
+1) In GET4 analysis treat correctly rising and falling edges.
+2) Make correct calculations of signal width in get4test
+3) Add leading edge difference to next channel in get4test
+4) Add possibility to ignore 250MHz times in get4 processor
+   to avoid problems with unsynchronized clocks 
+   
+21.12.2012
+1) Shift all time stamp classes into base/TimeStamp.h file
+2) Change NX and GET4 timing concept in messages/iterators/processors
+   Now everywhere LocalStampConverter is used to convert timestamps 
+   to local time in seconds. Change to seconds have consequence in
+   most places - time conditions, safety margins and some other constants
+   have been changed.
+3) Really separate functionality of nx::Message/Iterator and 
+   get4::Message/Iterator classes.  
+4) Change hadaq::TdcIterator and hadaq::TdcProcessor to use 
+   LocalStampConverter class and seconds as time units.
+5) In mbs::Processor use LocalStampConverter just to emulate time scale.
+   Every sync is just new second and LocalStampConverter prevents wrap 
+   of such artificial time scale
+            
 20.12.2012
 1) Use only valid syncs for synchronization - in case of TRB some SYNCs are dropped
    while one could not extract time stamp for them.
@@ -178,115 +139,159 @@ Without filling current NX code works 2x times faster
    will not wrap any longer and more smart calibration could be used for the 
    local/global time calculations. 
 
-21.12.2012
-1) Shift all time stamp classes into base/TimeStamp.h file
-2) Change NX and GET4 timing concept in messages/iterators/processors
-   Now everywhere LocalStampConverter is used to convert timestamps 
-   to local time in seconds. Change to seconds have consequence in
-   most places - time conditions, safety margins and some other constants
-   have been changed.
-3) Really separate functionality of nx::Message/Iterator and 
-   get4::Message/Iterator classes.  
-4) Change hadaq::TdcIterator and hadaq::TdcProcessor to use 
-   LocalStampConverter class and seconds as time units.
-5) In mbs::Processor use LocalStampConverter just to emulate time scale.
-   Every sync is just new second and LocalStampConverter prevents wrap 
-   of such artificial time scale
-            
-17.01.2013
-1) In GET4 analysis treat correctly rising and falling edges.
-2) Make correct calculations of signal width in get4test
-3) Add leading edge difference to next channel in get4test
-4) Add possibility to ignore 250MHz times in get4 processor
-   to avoid problems with unsynchronized clocks 
-   
-8.02.2013
-1) Support of raw data format for Get4 and nXYTER. Simple modification, while
-   complete analysis does not depends on position of SYNC messages in the buffers
-2) Introducing OpticSplitter, which is required to split data after raw
-   optic readout. In this case ABB put messages from all ROCs in one data stream.
-    
-12.02.2013
-1) Add possibility to switch on/off histogram filling
-2) Copy and modify Queue and RecordsQueue classes from DABC.
-   They allow to allocate and use fixed-space queue for complex
-   data types.
-3) Replacement of std::vectors by Queue class gave significant 
-   improvement in get4test, where long markers queue (~2000 items) are used.
-   Each vector::erase() operation is too expensive, where Queue::pop() 
-   does mostly nothing.
-4) As last change, RecordsQueue used for buffers queue. 
-   Probably not important for performance, but unified all queues.  
+19.12.2012
+1) First try of synchronization with processor/subprocessor approach. 
+   Problem here that SYNC number registered by TRB3 itself, 
+   while SYNC time is recorded by every TDC individually. 
+   In such case TrbProcessor just split raw data between TdcProcessor's.
+   If found, SYNC messages placed in begin of raw data.
+2) RawScan mode introduced in StreamProc class. 
+   It indicates, than only raw data scan is performed - no any output data should
+   be expected from such processor. Such mode required for TrbProcessor which works
+   just like splitter.  
+3) If error found in the buffer (FirstBufferScan() returns false), 
+   buffer will be ignored in all consequent stages.    
 
-13.03.2013
-1. Add new application for FPGA TDC testing on TRB3. 
-   First provide possibility for raw printout of the data.
-2. Fill different per-channel raw histograms for FPGA TDC (of course, optionally)
-3. Implement manual calibration mode for FPGA TDC. Manual means one could generate calibration
-   once (in form of binary file) and than reuse it for analysis of other data
-4. Allow to disable some TDC channels, also allow to disable calibration of some channels
- 
-14.03.2013
-1. Provide automatic calibration mode for FPGA TDC, allow to process only rising or only
-   falling edges. Optimize internal data structures and performance.
-   
-18.03.2013
-1. Implement nxyter ADC baseline compensation, using old text files. Can be used for beamtime
-   analysis. Implementing of baseline measurement should be done.
-2. Fix several problems in cern-oct12 analysis, where NXYTER and FPGA TDC should be
-   correctly synchronized.    
-   
-19.03.2013
-1. Analyze fine counter of TDC hit message if it was missed hit or counter out of allowed 
-   range. Let configure subevents ID for CTS and TDC.
-   
-12.04.2013
-1. Provide user source for hld files. Later one could extend it to any other user sources,
-   mainly for different files formats. 
-2. Strange results with UDP generators - show wrong alignment of subevents. Must
-   be checked with real TRB3 data.    
-   
-19.04.2013
-1. Fix several problems with hld files usage. Mainly problem was due to 8-bytes padding
-   of hadaq events/subevents, which was not takes into account. In DABC similar code was
-   implemented correctly from beginning.
-   
-10.05.2013
-1. Unified HADAQ structures between DABC and Stream analysis.
-   Idea to use as much as possible common code in both frameworks.
-2. Use hadaq::HldFile from DABC for user source.
+18.12.2012
+1) Introduce TdcMessage and TdcIterator classes. These are basic classes
+   for navigation via FPGA-TDC raw data.      
 
-10.06.2013
-1. Add support of the 32-bit Get4 readout. 
-   For the moment it is done via SYS messages.
-   No any special configuration needed. Not yet tested.
-
-13.06.2013
-1. Implement work-around for callculating references between TRB3 TDC channels from
-   different TDCs. Normally such analysis should be implemented in second stept, 
-   but now do it at the level of TrbProcessor at the end of event unpacking. 
-
-8.07.2013
-1. In hadaq::TdcProcessor add possibility to create pictures with all histograms.
-   This is done in first.C script, where one can detect if script runs from the go4.
-   In this case one can get access to histograms from TdcProcessor and create pictures 
-   with that histograms. Example in applications/trb3tdc/first.C file.
+17.12.2012
+1) Preliminary HADAQ code - only raw data scan at the moment
+2) Distribute code between TrbProcessor and TdcProcessor.  
+3) TrbProcessor navigates over TRB events-subevents and CTS data,
+4) TdcProcessor is special treatment of data from FPGA-TDC. 
+   It is sub-sub-processor relative to central manager. It is done while
+   for each TDC time synchronization should be performed separately.
+5) One can only see statistic over TDC channels, next step is TdcHit and TdcEvent
+   structures 
    
-17.09.2013
-1. In hadaq::TrbProcessor add identifier for HUB header. Seems to be, in some
-   configuration FPGA which is working as HUB can add its header (was not so before).
-   This header can be just ignored, while it only marks portion of data, which is 
-   produced by HUB, but all identifiers like TDC are remained as before.
+14.12.2012
+1) Avoid local-trigger duplication or very close distance between them.
+   Is a case with corrupted GET4 data. Now one can set minimal margin between
+   two consequent events. Implemented for both GET4 and NX.
+2) In get4test create summary histogram to see which channels have problems
+3) Ensure that cern-gem12 analysis works without SYNC usage.
+   Data flushing was activated for such case. Results histograms are the same. 
+4) Implement cern-gem12 code.    
 
-2.10.2013
-1. In hadaq::TdcProcessor substract time of channel 0 when calculating difference
-   between two channels on different TDCs. For instance, when channel 5 on TDC 3 should
-   be compared whith channel 7 on TDC 9, following calculation will be done:
-      diff = (tdc[3].ch[5] - tdc[3].ch[0]) - (tdc[9].ch[7] - tdc[9].ch[0]);
-2. Modify trb3tdc example to show how non subsequent ids can be specified.
-   Increase number of bins in "TdcDistr" overview histogram.    
+13.12.2012
+1) Create message and iterator classes for nx and get4 analysis. 
+   These were last connection to ROClib. Therefore from this point:     
+2) Move further development from ROClib to go4/app repository.
+   Main motivation - there are parts which could be interesting not only for CBM/ROC users.
+3) Rename to "stream" project. Name will probably change, but main idea - 
+   it is flexible stream-based analysis.
+4) Reorganize folder structure. Separate framework, go4engine and application.
+   Introduce project-wide build rules and Makefiles.
+5) In get4test application make analysis of selected hits. 
+   First produce only widths. Cleanup code of basic get4::Processor class.
+   Implement printing for get4, handle it via central SysCoreProc class  
+
+12.12.2012
+1) Reorganize libraries and code in newmonitor - introduce second step in analysis chain. 
+   At the moment this step will be go4-based code, one could make later same logic as with 
+   first step. Major difference to first step that in second step events are already defined
+   and one do not require any complex queueing of input data.
+   Second step also should be reinitialized via separate macro - named second.C.
+   There all sub-processors should be instantiated.  
+2) Introduce skeleton for get4test code, based on two-step approach.      
+3) Introduce SysCoreProc class, which should be base for all kind of ROC-based analysis.
+   Aim not to introduce common message loop (as in very first go4monitor) but
+   rather common structures and histograms.
+4) Add possibility to skip time synchronization for some streams. It is
+   useful when the only stream is used or when streams synchronized anyway,
+   like in optic case.
+5) Add possibility to define regions-of-interests in get4 based on some ref channel. 
+   For a now primitive (only single channel), later one could apply trigger-like 
+   logic to several Get4 channels (like in GSI beamtime nov-2012). 
+   Very preliminary, seems to be work with latest test data.  
    
-8.10.2013
-1. In applications/trb3tdc/first.C in clear form provide hardware ids for the TDCs.
-   Check that all ids conform to the coding convention.    
+11.12.2012
+First step to non-synchronized data streams. Any number of SYNCs can be
+produced now, simple algorithm looks for the same SYNC id to set global
+times and introduce time calibrations. Works with run87 of CERN/SPS beamtime.
+Fix problem with time uncertainty parameter for NX processing.
+Implement two-dimensional histograms. Add such in NX processing.
+One need to make histogram filling optional - can take significant amount of time. 
+Without filling current NX code works 2x times faster
+
+10.12.2012
+One another method for last-epoch correction.
+While main problem is CERN/SPS beamtime, make heuristic for exactly
+this data. Seems to be, MSB bits gives us the best possibility for selection.
+With some other checks 99.5% of corrupted data can be repaired. 
+Rest are other errors (next-epoch problem or wrong bits is time stamp) 
+do not have any chance to be correctly fixed. My estimation gives 
+about 0.1% of such nasty messages.  
+
+7.12.2012
+Add reference channel for simple reference calculations
+in GET4 processor.
+Add second level for histogram prefixes like ROC0/GET4_2/Ch2
+
+3.12.2012
+First test with running GET4 v1.0 setup. 
+Implement several basic histograms for GET4.
+
+30.11.2012
+Attempt to implement last-epoch bit correction, many other side-effects are discovered
+with nXYTER/Optic readout, especially for CERN/SPS 2012 beamtime. Many open questions
+are remained. Allow to specify initialization script name - like setup_get4.C or 
+setup_cern_oct12.C. Calling arguments are:
+go4analysis -file file.lmd -args setup_get4.C
+Primary classes for GET4 analysis. 
+Possibility of raw analysis only.
+
+29.11.2012 
+Define trigger marker as time interval - first step direction Region-of-Interest
+concept. Later one could not only select events, but rather intervals which are
+than delivered to next steps. As next iteration, forwarding of complete data stream
+with regular time intervals (like 1 ms) should be implemented. 
+Message time sorting is implemented.  
+
+28.11.2012
+Master time now can be assigned, by default processor with trigger source is used. 
+Flush trigger is implemented, it allows to avoid situation when many data without 
+trigger must be accumulated in the queues. Flush trigger generated about once 
+per buffer in master processor. cern-gem12 starts to look very reasonable. As next
+step, normal region-of-interest selection should be implemented, no-trigger-mode and
+configurable message sorting.    
+
+27.11.2012
+First test with cern-gem12 data, where aux2 on ROC4 was used as trigger.
+One need to implement special kind of "flush" trigger when no reference signals 
+for long time to avoid over-fill of all queues. Anyhow, first reasonable results! 
+
+27.11.2012
+Introduce simple typedefs for GlobalStamp_t and LocalStamp_t
+Provide local/global time for each buffer, liner interpolation of
+time between two sync markers, helper index to locate faster region 
+between two syncs.
+
+27.11.2012 
+Remove user source class from go4wrapper. 
+Now event production works inside normal processor of the first 
+step and one can normally configure it with all available go4 sources.
+Many input events can be queued internally, many output events can
+be produced via SetKeepInputEvent() logic. 
+Thus N->M problematic is fully implemented! 
+
+27.11.2012 
+Change to the two-scan algorithm. Exactly two full scan of data are required.
+This simplifies logic how all kind of intermediate data can be processed.  
+As consequence, many events can be produced by scan of next buffer.
+Each processor fills its own subevent, which are than collected together in 
+common event.
+Provide Event and SubEvent classes. Implement event building.
+Code shows reasonable results with ROC data from CERN beamtime.
+
+26.11.2012
+Group all new classes in one directory and one library 
+
+23.11.2012 
+First checkin in repository
+
+21.11.2012  
+Start of project, first line of code
           

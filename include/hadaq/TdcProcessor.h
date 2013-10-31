@@ -217,6 +217,11 @@ namespace hadaq {
 
          virtual void UserPostLoop();
 
+         base::H1handle GetChannelRefHist(unsigned ch, bool rising = true)
+            { return ch < fCh.size() ? (rising ? fCh[ch].fRisingRef : fCh[ch].fFallingRef) : 0; }
+
+         void ClearChannelRefHist(unsigned ch, bool rising = true)
+            { ClearH1(GetChannelRefHist(ch, rising)); }
 
          /** Scan all messages, find reference signals
           * if returned false, buffer has error and must be discarded */

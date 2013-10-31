@@ -30,6 +30,14 @@ base::ProcMgr* base::ProcMgr::instance()
    return fInstance;
 }
 
+base::StreamProc* base::ProcMgr::FindProc(const char* name) const
+{
+   for (unsigned n=0;n<fProc.size();n++) {
+      // printf("Delete processor %u %p\n", n, fProc[n]);
+      if (strcmp(name, fProc[n]->GetName())==0) return fProc[n];
+   }
+   return 0;
+}
 
 void base::ProcMgr::DeleteAllProcessors()
 {

@@ -34,14 +34,17 @@ NEWGO4_H           = $(STREAMSYS)/include/go4/TUserProcessor.h \
                      TUserSource.h \
                      TFirstStepProcessor.h \
                      TSecondStepProcessor.h \
-                     TStreamAnalysis.h
+                     TStreamAnalysis.h \
+                     THookProc.h 
 
 NEWGO4_S           = TUserProcessor.cxx \
                      TUserSource.cxx \
                      TFirstStepProcessor.cxx \
                      TSecondStepProcessor.cxx \
                      TStreamEvent.cxx \
-                     TStreamAnalysis.cxx
+                     TStreamAnalysis.cxx \
+                     THookProc.cxx 
+                     
 
 NEWGO4_O           = $(NEWGO4_S:.$(SrcSuf)=.$(ObjSuf))
 

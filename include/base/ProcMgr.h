@@ -64,6 +64,7 @@ namespace base {
 
          unsigned NumProc() const { return fProc.size(); }
          StreamProc* GetProc(unsigned n) const { return n<NumProc() ? fProc[n] : 0; }
+         StreamProc* FindProc(const char* name) const;
 
          virtual H1handle MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle = 0) { return 0; }
          virtual void FillH1(H1handle h1, double x, double weight = 1.) {}

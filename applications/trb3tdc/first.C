@@ -119,4 +119,37 @@ void first()
 
    }
 
+
+   // This is a method to regularly invoke macro, where arbitrary action can be performed
+   // One could specify period in seconds or function will be called for every event processed
+
+   new THookProc("my_hook();", 2.5);
+
+}
+
+
+
+// this is example of hook function
+// here one gets access to all tdc processors and obtains Mean and RMS
+// value on the first channel for each TDC and prints on the disaply
+
+void my_hook()
+{
+   hadaq::TrbProcessor* trb3 = base::ProcMgr::instance()->FindProc("TRB0");
+   if (trb3==0) return;
+
+   printf("Do extra work NUM %u\n", trb3->NumSubProc());
+
+   for (unsigned ntdc=0;ntdc<trb3->NumSubProc();ntdc++) {
+
+      hadaq::TdcProcessor* tdc = trb3->GetSubProc(ntdc);
+      if (tdc==0) continue;
+
+      TH1* hist = (TH1*) tdc->GetChannelRefHist(1);
+
+      printf("  TDC%u mean:%5.2f rms:%5.2f\n", tdc->GetBoardId(), hist->GetMean(), hist->GetRMS());
+
+      tdc->ClearChannelRefHist(1);
+   }
+
 }
