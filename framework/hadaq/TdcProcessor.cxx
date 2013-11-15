@@ -47,7 +47,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
       if (DoRisingEdge()) {
          fCh[ch].fRisingFine = MakeH1("RisingFine", "Rising fine counter", FineCounterBins, 0, FineCounterBins, "fine");
          fCh[ch].fRisingCoarse = MakeH1("RisingCoarse", "Rising coarse counter", 2048, 0, 2048, "coarse");
-         fCh[ch].fRisingRef = MakeH1("RisingRef", "Difference to reference channel", 200000, -100., +100., "ns");
+         fCh[ch].fRisingRef = MakeH1("RisingRef", "Difference to reference channel", 1200000, -1100., +100., "ns");
          fCh[ch].fRisingCoarseRef = MakeH1("RisingCoarseRef", "Difference to rising coarse counter in ref channel", 4096, -2048, 2048, "coarse");
          fCh[ch].fRisingRef2D = MakeH2("RisingRef2D", "Difference to reference channel", 400, -1., +1., 100, 0, 500, "ns");
          fCh[ch].fRisingCalibr = MakeH1("RisingCalibr", "Rising calibration function", FineCounterBins, 0, FineCounterBins, "fine");
@@ -112,9 +112,12 @@ void hadaq::TdcProcessor::UserPostLoop()
 
 void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned reftdc)
 {
-   if ((ch<NumChannels()) && (refch<NumChannels())) {
-      fCh[ch].refch = refch;
+   if (ch>=NumChannels()) return;
+   fCh[ch].refch = refch;
+   if (refch<NumChannels())) {
       fCh[ch].reftdc = reftdc == 0xffffffff ? GetBoardId() : reftdc;
+   } else {
+      fCh[ch].reftdc = GetBoardId();
    }
 }
 
@@ -163,7 +166,7 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
             FillH2(fCh[ch].fRisingRef2D, diff, fCh[ch].first_rising_fine);
             FillH2(fCh[ch].fRisingRef2D, diff-0.5, refproc->fCh[ref].first_rising_fine);
             FillH2(fCh[ch].fRisingRef2D, diff-1.0, fCh[ch].first_rising_coarse/4);
-            RAWPRINT("Difference rising %u:%u %u:%u  %12.3f  %12.3f  %7.3f  coarse %03x - %03x = %4d  fine %03x %03x \n",
+            RAWPRINT("Difference rising %u:%u\t %u:%u\t %12.3f\t %12.3f\t %7.3f  coarse %03x - %03x = %4d  fine %03x %03x \n",
                   GetBoardId(), ch, reftdc, ref,
                   tm*1e9,  tm_ref*1e9, diff,
                   fCh[ch].first_rising_coarse, refproc->fCh[ref].first_rising_coarse, (int) (fCh[ch].first_rising_coarse - refproc->fCh[ref].first_rising_coarse),
