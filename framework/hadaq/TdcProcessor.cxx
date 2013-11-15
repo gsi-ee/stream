@@ -114,7 +114,7 @@ void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned re
 {
    if (ch>=NumChannels()) return;
    fCh[ch].refch = refch;
-   if (refch<NumChannels())) {
+   if (refch<NumChannels()) {
       fCh[ch].reftdc = reftdc == 0xffffffff ? GetBoardId() : reftdc;
    } else {
       fCh[ch].reftdc = GetBoardId();
