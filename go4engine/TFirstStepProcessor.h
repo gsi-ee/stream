@@ -10,8 +10,8 @@ class TFirstStepProcessor : public TGo4EventProcessor,
    protected:
 
       long fTotalDataSize;
-      long fNumMbsBufs;
-      long fNumCbmEvents;
+      long fNumInpBufs;
+      long fNumOutEvents;
 
       static TString fDfltSetupScript;
 

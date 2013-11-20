@@ -60,7 +60,7 @@ hadaq::RawSubevent* hadaq::TrbIterator::nextSubevent()
 
       fSubLen = ev->GetPaddedSize();
 
-      if (fSubLen > sizeof(hadaq::RawEvent)) {
+      if (fSubLen >= sizeof(hadaq::RawEvent)) {
          fSubLen -= sizeof(hadaq::RawEvent);
       } else {
          printf("Wrong hadaq::RawEvent length %u header size %u\n", (unsigned) ev->GetSize(), (unsigned) sizeof(hadaq::RawEvent));

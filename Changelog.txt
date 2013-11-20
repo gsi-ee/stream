@@ -1,3 +1,9 @@
+20.11.2013
+1. Create 2-D histograms in TDC analysis only optionally and one can provide 
+   range and bins number for such histograms. 
+2. In TDC calibration set center of bin as calibration value.
+ 
+
 31.10.2013
 1. Provide THookProc, which allows to regularly execute user code.
    Plan to use with trb3tdc analysis to control stability of the TDC measurements.

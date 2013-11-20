@@ -10,8 +10,6 @@ class TUserProcessor : public TGo4EventProcessor {
    protected:
 
       long fTotalDataSize;
-      long fNumMbsBufs;
-      long fNumCbmEvents;
 
       static TString fDfltSetupScript;
 

@@ -38,13 +38,13 @@ TFirstStepProcessor::TFirstStepProcessor(const char* name) :
    }
 
    fTotalDataSize = 0;
-   fNumMbsBufs = 0;
-   fNumCbmEvents = 0;
+   fNumInpBufs = 0;
+   fNumOutEvents = 0;
 }
 
 TFirstStepProcessor::~TFirstStepProcessor()
 {
-   TGo4Log::Info("Input %ld  Output %ld  Total processed size = %ld", fNumMbsBufs, fNumCbmEvents, fTotalDataSize);
+   TGo4Log::Info("Input %ld  Output %ld  Total processed size = %ld", fNumInpBufs, fNumOutEvents, fTotalDataSize);
 }
 
 Bool_t TFirstStepProcessor::BuildEvent(TGo4EventElement* outevnt)
@@ -64,7 +64,7 @@ Bool_t TFirstStepProcessor::BuildEvent(TGo4EventElement* outevnt)
       // TGo4Log::Info("Accept new event %d", mbsev->GetIntLen()*4);
 
       fTotalDataSize += mbsev->GetIntLen()*4;
-      fNumMbsBufs++;
+      fNumInpBufs++;
 
       TGo4MbsSubEvent* psubevt = 0;
       mbsev->ResetIterator();
@@ -118,7 +118,7 @@ Bool_t TFirstStepProcessor::BuildEvent(TGo4EventElement* outevnt)
       SetKeepInputEvent(kTRUE);
       outevnt->SetValid(kTRUE);
 
-      fNumCbmEvents++;
+      fNumOutEvents++;
 
       return kTRUE;
    }

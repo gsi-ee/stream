@@ -42,7 +42,7 @@ TStreamAnalysis::TStreamAnalysis(int argc, char** argv) :
    TGo4StepFactory* factory = new TGo4StepFactory("Step1");
    factory->DefEventProcessor("FirstProc","TFirstStepProcessor");// object name, class name
    factory->DefInputEvent("MBS","TGo4MbsEvent"); // object name, class name
-   factory->DefOutputEvent("CBM","TStreamEvent"); // object name, class name
+   factory->DefOutputEvent("RAW","TStreamEvent"); // object name, class name
    factory->DefUserEventSource("TUserSource"); // class name
 
    TGo4EventSourceParameter* sourcepar = new TGo4MbsFileParameter("file.lmd");
@@ -66,9 +66,9 @@ TStreamAnalysis::TStreamAnalysis(int argc, char** argv) :
 
       TGo4StepFactory* factory2 = new TGo4StepFactory("Step2");
       factory2->DefEventProcessor("SecondProc","TSecondStepProcessor");// object name, class name
-      factory2->DefInputEvent("CBM","TStreamEvent"); // object name, class name
+      factory2->DefInputEvent("RAW","TStreamEvent"); // object name, class name
       factory2->DefOutputEvent("Second","TStreamEvent"); // object name, class name
-      // factory->DefUserEventSource("TCBMUserSource"); // object name, class name
+      // factory->DefUserEventSource("TRawUserSource"); // object name, class name
 
 //      TGo4EventSourceParameter* sourcepar = new TGo4MbsFileParameter("file.lmd");
 //      TGo4FileStoreParameter* storepar = new TGo4FileStoreParameter("NoOutput");

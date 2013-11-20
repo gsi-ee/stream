@@ -38,7 +38,6 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fAllFine = MakeH1("FineTm", "fine counter value", 1024, 0, 1024, "fine");
    fAllCoarse = MakeH1("CoarseTm", "coarse counter value", 2048, 0, 2048, "coarse");
 
-
    for (unsigned ch=0;ch<numchannels;ch++) {
       fCh.push_back(ChannelRec());
 
@@ -47,17 +46,17 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
       if (DoRisingEdge()) {
          fCh[ch].fRisingFine = MakeH1("RisingFine", "Rising fine counter", FineCounterBins, 0, FineCounterBins, "fine");
          fCh[ch].fRisingCoarse = MakeH1("RisingCoarse", "Rising coarse counter", 2048, 0, 2048, "coarse");
-         fCh[ch].fRisingRef = MakeH1("RisingRef", "Difference to reference channel", 1200000, -1100., +100., "ns");
-         fCh[ch].fRisingCoarseRef = MakeH1("RisingCoarseRef", "Difference to rising coarse counter in ref channel", 4096, -2048, 2048, "coarse");
-         fCh[ch].fRisingRef2D = MakeH2("RisingRef2D", "Difference to reference channel", 400, -1., +1., 100, 0, 500, "ns");
+         fCh[ch].fRisingRef = 0; // MakeH1("RisingRef", "Difference to reference channel", 1200000, -1100., +100., "ns");
+         fCh[ch].fRisingCoarseRef = 0; // MakeH1("RisingCoarseRef", "Difference to rising coarse counter in ref channel", 4096, -2048, 2048, "coarse");
+         fCh[ch].fRisingRef2D = 0; // MakeH2("RisingRef2D", "Difference to reference channel", 500, 4., 9., 100, 0, 500, "ns");
          fCh[ch].fRisingCalibr = MakeH1("RisingCalibr", "Rising calibration function", FineCounterBins, 0, FineCounterBins, "fine");
       }
 
       if (DoFallingEdge()) {
          fCh[ch].fFallingFine = MakeH1("FallingFine", "Falling fine counter", FineCounterBins, 0, FineCounterBins, "fine");
          fCh[ch].fFallingCoarse = MakeH1("FallingCoarse", "Falling coarse counter", 2048, 0, 2048, "coarse");
-         fCh[ch].fFallingRef = MakeH1("FallingRef", "Difference to reference channel", 20000, -100., +100., "ns");
-         fCh[ch].fFallingCoarseRef = MakeH1("FallingCoarseRef", "Difference to falling coarse counter in ref channel", 4096, -2048, 2048, "coarse");
+         fCh[ch].fFallingRef = 0; // MakeH1("FallingRef", "Difference to reference channel", 20000, -100., +100., "ns");
+         fCh[ch].fFallingCoarseRef = 0; // MakeH1("FallingCoarseRef", "Difference to falling coarse counter in ref channel", 4096, -2048, 2048, "coarse");
          fCh[ch].fFallingCalibr = MakeH1("FallingCalibr", "Falling calibration function", FineCounterBins, 0, FineCounterBins, "fine");
       }
    }
@@ -110,17 +109,37 @@ void hadaq::TdcProcessor::UserPostLoop()
 }
 
 
-void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned reftdc)
+void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned reftdc,
+                                        int npoints, double left, double right, bool twodim)
 {
    if (ch>=NumChannels()) return;
    fCh[ch].refch = refch;
    if (refch<NumChannels()) {
-      fCh[ch].reftdc = reftdc == 0xffffffff ? GetBoardId() : reftdc;
+      fCh[ch].reftdc = (reftdc >= 0xffff) ? GetBoardId() : reftdc;
    } else {
       fCh[ch].reftdc = GetBoardId();
    }
-}
 
+   if ((left < right) && (npoints>1)) {
+      SetSubPrefix("Ch", ch);
+      if (DoRisingEdge()) {
+
+      if (fCh[ch].fRisingRef == 0)
+         fCh[ch].fRisingRef = MakeH1("RisingRef", "Difference to reference channel", npoints, left, right, "ns");
+      if (fCh[ch].fRisingCoarseRef == 0)
+         fCh[ch].fRisingCoarseRef = MakeH1("RisingCoarseRef", "Difference to rising coarse counter in ref channel", 4096, -2048, 2048, "coarse");
+      if (twodim && (fCh[ch].fRisingRef2D==0))
+         fCh[ch].fRisingRef2D = MakeH2("RisingRef2D", "Difference to reference channel", 500, left, right, 100, 0, 500, "ns");
+      }
+
+      if (DoFallingEdge()) {
+         if (fCh[ch].fFallingRef == 0)
+            fCh[ch].fFallingRef = MakeH1("FallingRef", "Difference to reference channel", npoints, left, right, "ns");
+         if (fCh[ch].fFallingCoarseRef == 0)
+            fCh[ch].fFallingCoarseRef = MakeH1("FallingCoarseRef", "Difference to falling coarse counter in ref channel", 4096, -2048, 2048, "coarse");
+      }
+   }
+}
 
 void hadaq::TdcProcessor::BeforeFill()
 {
@@ -164,8 +183,8 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
             FillH1(fCh[ch].fRisingRef, diff);
             FillH1(fCh[ch].fRisingCoarseRef, 0. + fCh[ch].first_rising_coarse - refproc->fCh[ref].first_rising_coarse);
             FillH2(fCh[ch].fRisingRef2D, diff, fCh[ch].first_rising_fine);
-            FillH2(fCh[ch].fRisingRef2D, diff-0.5, refproc->fCh[ref].first_rising_fine);
-            FillH2(fCh[ch].fRisingRef2D, diff-1.0, fCh[ch].first_rising_coarse/4);
+            FillH2(fCh[ch].fRisingRef2D, diff-1., refproc->fCh[ref].first_rising_fine);
+            FillH2(fCh[ch].fRisingRef2D, diff-2., fCh[ch].first_rising_coarse/4);
             RAWPRINT("Difference rising %u:%u\t %u:%u\t %12.3f\t %12.3f\t %7.3f  coarse %03x - %03x = %4d  fine %03x %03x \n",
                   GetBoardId(), ch, reftdc, ref,
                   tm*1e9,  tm_ref*1e9, diff,
@@ -443,25 +462,23 @@ void hadaq::TdcProcessor::AppendTrbSync(uint32_t syncid)
 void hadaq::TdcProcessor::CalibrateChannel(unsigned nch, long* statistic, float* calibr)
 {
    double sum(0.);
-   for (int n=0;n<FineCounterBins;n++) {
-      calibr[n] = sum;
-      sum+=statistic[n];
-   }
+     for (int n=0;n<FineCounterBins;n++) {
+        sum+=statistic[n];
+        calibr[n] = sum;
+     }
 
    if (sum<1000) {
-      printf("TDC:%u Ch:%u Too few counts %5.0f for calibration of fine counter\n", GetBoardId(), nch, sum);
+      if (sum>0)
+         printf("TDC:%u Ch:%u Too few counts %5.0f for calibration of fine counter, use linear\n", GetBoardId(), nch, sum);
    } else {
       printf("TDC:%u Ch:%u Cnts: %7.0f produce calibration\n", GetBoardId(), nch, sum);
    }
 
-
    for (unsigned n=0;n<FineCounterBins;n++) {
-      if (sum<=0)
+      if (sum<=1000)
          calibr[n] = hadaq::TdcMessage::SimpleFineCalibr(n);
       else
-         calibr[n] = calibr[n] / sum * hadaq::TdcMessage::CoarseUnit();
-
-//      printf("   Ch[%3u] = %5.3f\n", n, calibr[n]*1e12);
+         calibr[n] = (calibr[n]-statistic[n]/2) / sum * hadaq::TdcMessage::CoarseUnit();
    }
 }
 
@@ -476,7 +493,7 @@ void hadaq::TdcProcessor::CopyCalibration(float* calibr, base::H1handle hcalibr)
 
 void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat)
 {
-   printf("Produce channels calibrations\n");
+   printf("TDC%d Produce channels calibrations\n", GetBoardId());
 
    for (unsigned ch=0;ch<NumChannels();ch++) {
       if (fCh[ch].docalibr) {

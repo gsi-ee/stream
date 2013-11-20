@@ -197,8 +197,14 @@ namespace hadaq {
           * \param refch   specifies number of reference channel
           * \param reftdc  specifies tdc id, used for ref channel.
           * Default (0xffffffff) same TDC will be used
-          * To be able use other TDCs, one should enable TTrbProcessor::SetCrossProcess(true);   */
-         void SetRefChannel(unsigned ch, unsigned refch, unsigned reftdc = 0xffffffff);
+          * To be able use other TDCs, one should enable TTrbProcessor::SetCrossProcess(true);
+          * If left-right range are specified, ref histograms are created.
+          * If twodim==true, 2-D histogram which will accumulate correlation between
+          * time difference to ref channel and:
+          *   fine_counter (shift 0 ns)
+          *   fine_counter of ref channel (shift -1 ns)
+          *   coarse_counter/4 (shift -2 ns) */
+         void SetRefChannel(unsigned ch, unsigned refch, unsigned reftdc = 0xffff, int npoints = 5000, double left = -10., double right = 10., bool twodim = false);
 
          /** If set, each hit must be supplied with epoch message */
          void SetEveryEpoch(bool on) { fEveryEpoch = on; }

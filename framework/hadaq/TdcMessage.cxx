@@ -27,7 +27,7 @@ void hadaq::TdcMessage::print(double tm)
       case tdckind_Hit3:
          printf("     tdc hit    0x%08x", (unsigned) fData);
          if (tm>=0) printf ("  tm:%9.2f", tm*1e9);
-         printf("   ch %3u isrising:%u tc 0x%3x tf 0x%3x\n",
+         printf("   ch %3u isrising:%u tc 0x%03x tf 0x%03x\n",
                  (unsigned) getHitChannel(), (unsigned)getHitEdge(),
                  (unsigned)getHitTmCoarse(), (unsigned)getHitTmFine());
          break;

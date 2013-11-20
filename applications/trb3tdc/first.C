@@ -3,7 +3,7 @@ void first()
 
    base::ProcMgr::instance()->SetRawAnalysis(true);
 
-   hadaq::TdcMessage::SetFineLimits(31, 500);
+   hadaq::TdcMessage::SetFineLimits(31, 421);
 
    hadaq::TrbProcessor* trb3 = new hadaq::TrbProcessor(0);
 
@@ -24,12 +24,12 @@ void first()
    // It is required that high 8 bits are the same.
    // These bits are used to separate TDC data from other data kinds
 
-   int tdcmap[3] = { 0xC002, 0xC005, 0xC007 };
+   int tdcmap[4] = { 0xC000, 0xC001, 0xC003, 0xC004 };
 
    // TDC subevent header id
    trb3->SetHadaqTDCId(tdcmap[0] & 0xFF00);
 
-   for (int cnt=0;cnt<3;cnt++) {
+   for (int cnt=0;cnt<4;cnt++) {
 
       int tdcid = tdcmap[cnt] & 0x00FF;
 
@@ -46,10 +46,14 @@ void first()
       // par4 - edges mask 0x1 - rising, 0x2 - trailing, 0x3 - both edges
       hadaq::TdcProcessor* tdc = new hadaq::TdcProcessor(trb3, tdcid, 65, 0x1);
 
+      if (cnt==3) {
+         tdc->SetRefChannel(2, 1, 0xffff, 5000,  4., 9., true);
+         tdc->SetRefChannel(8, 7, 0xffff, 5000,  4., 9., true);
+         tdc->SetRefChannel(1, 7, 0xffff, 5000, -5., 1., true);
+      }
+
       // specify reference channel for any other channel -
       // will appear as additional histogram with time difference between channels
-      for (int n=1;n<65;n++)
-         tdc->SetRefChannel(n, n+2);
       // for (int n=2;n<65;n=n+2)
       //   tdc->SetRefChannel(n, n-1);
 
@@ -66,7 +70,6 @@ void first()
       // 1) automatic calibration after N hits in every enabled channel
       // 2) generate calibration on base of provided data and than use it later statically for analysis
 
-
       // disable calibration for channel #0
       tdc->DisableCalibrationFor(0);
 
@@ -77,7 +80,7 @@ void first()
       // tdc->SetWriteCalibration(Form("test_%04x.cal", tdcmap[cnt]));
 
       // enable automatic calibration, specify required number of hits in each channel
-      tdc->SetAutoCalibration(100000);
+      //tdc->SetAutoCalibration(100000);
 
       // this will be required only when second analysis step will be introduced
       // and one wants to select only hits around some trigger signal for that analysis
