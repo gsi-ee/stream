@@ -71,10 +71,10 @@ void first()
       tdc->DisableCalibrationFor(0);
 
       // load static calibration at the beginning of the run
-      // tdc->LoadCalibration(Form("test_%d.cal", tdcid));
+      // tdc->LoadCalibration(Form("test_%04x.cal", tdcmap[cnt]));
 
       // calculate and write static calibration at the end of the run
-      // tdc->SetWriteCalibration(Form("test_%d.cal", tdcid));
+      // tdc->SetWriteCalibration(Form("test_%04x.cal", tdcmap[cnt]));
 
       // enable automatic calibration, specify required number of hits in each channel
       tdc->SetAutoCalibration(100000);

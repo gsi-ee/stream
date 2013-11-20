@@ -230,7 +230,7 @@ namespace hadaq {
             return DoBufferScan(buf, true);
          }
 
-         /** Scan buffer for selecting them inside trigger */
+         /** Scan buffer for selecting messages inside trigger window */
          virtual bool SecondBufferScan(const base::Buffer& buf)
          {
             return DoBufferScan(buf, false);
