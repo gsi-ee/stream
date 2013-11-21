@@ -169,15 +169,13 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaq::RawSubevent* sub)
 //      RAWPRINT("Subevent id 0x%04x len %u\n", (data & 0xFFFF), datalen);
 
       // ===========  this is header for TDC, build inside the TRB3 =================
-      if ((data & 0xFF00) == 0xB000) {
-         // do that ever you want
-         unsigned brdid = data & 0xFF;
-
-         RAWPRINT("    TRB3-TDC header: 0x%08x, TRB3-buildin TDC-FPGA brd=%u, size=%u  IGNORED\n", (unsigned) data, brdid, datalen);
-
-         ix+=datalen;
-         continue;
-      }
+//      if ((data & 0xFF00) == 0xB000) {
+//         // do that ever you want
+//         unsigned brdid = data & 0xFF;
+//         RAWPRINT("    TRB3-TDC header: 0x%08x, TRB3-buildin TDC-FPGA brd=%u, size=%u  IGNORED\n", (unsigned) data, brdid, datalen);
+//         ix+=datalen;
+//         continue;
+//      }
 
       if ((data & 0xFF00) == fHadaqHUBId) {
          RAWPRINT ("   HUB header: 0x%08x, hub=%u, size=%u (ignore)\n", (unsigned) data, (unsigned) data & 0xFF, datalen);
@@ -190,13 +188,13 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaq::RawSubevent* sub)
       }
 
 
-      //! ================= RICH-FEE TDC header ========================
+      //! ================= FPGA TDC header ========================
       if ((data & 0xFF00) == fHadaqTDCId) {
          unsigned tdcid = data & 0xFF;
 
          FillH1(fTdcDistr, tdcid);
 
-         RAWPRINT ("   RICH-TDC header: 0x%08x, brd=%u, size=%u\n", (unsigned) data, tdcid, datalen);
+         RAWPRINT ("   FPGA-TDC header: 0x%08x, brd=%u, size=%u\n", (unsigned) data, tdcid, datalen);
 
          if (IsPrintRawData()) {
             TdcIterator iter;
