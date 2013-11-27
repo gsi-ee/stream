@@ -124,7 +124,7 @@ base::H2handle base::StreamProc::MakeH2(const char* name, const char* title, int
 
    std::string htitle = fName;
    htitle.append(" ");
-   if (!fSubPrefixN.empty()) htitle += fSubPrefixN + " ";
+   if (!fSubPrefixN.empty()) htitle += fSubPrefixN.substr(0, fSubPrefixN.length()-1) + " ";
    htitle.append(title);
 
    return mgr()->MakeH2(hname.c_str(), htitle.c_str(), nbins1, left1, right1, nbins2, left2, right2, options);

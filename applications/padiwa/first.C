@@ -53,6 +53,8 @@ void first()
       if (cnt==0) {
          tdc->SetRefChannel(35, 33, 0xffff, 5000,  -100., 100., true);
          tdc->SetRefChannel(36, 35, 0xffff, 5000,  -100., 100., true);
+         // IMPORTANT: first channel id must be bigger than second
+         tdc->SetDoubleRefChannel(36, 35, 500, -10., 60., 500, -10., 60.);
       }
 
       // specify reference channel for any other channel -

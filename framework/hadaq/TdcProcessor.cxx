@@ -147,7 +147,7 @@ void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned re
             fCh[ch].fRisingCoarseRef = MakeH1("RisingCoarseRef", "Difference to rising coarse counter in ref channel", 4096, -2048, 2048, "coarse");
          if (twodim && (fCh[ch].fRisingRef2D==0)) {
             sprintf(sbuf, "corr diff %s and fine counter", refname);
-            fCh[ch].fRisingRef2D = MakeH2("RisingRef2D", sbuf, 500, left, right, 100, 0, 500, "ns");
+            fCh[ch].fRisingRef2D = MakeH2("RisingRef2D", sbuf, 500, left, right, 100, 0, 500, "ns;fine counter");
          }
       }
 
@@ -162,10 +162,34 @@ void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned re
    }
 }
 
+void hadaq::TdcProcessor::SetDoubleRefChannel(unsigned ch, unsigned refch,
+                                              int npx, double xmin, double xmax,
+                                              int npy, double ymin, double ymax)
+{
+   if ((ch>=NumChannels()) || (refch>=NumChannels())) return;
+   fCh[ch].doublerefch = refch;
+
+   SetSubPrefix("Ch", ch);
+
+   char sbuf[1024];
+   char saxis[1024];
+
+   if (DoRisingEdge()) {
+      if (fCh[ch].fRisingDoubleRef == 0) {
+         sprintf(sbuf, "double correlation to Ch%u", fCh[ch].doublerefch);
+         sprintf(saxis, "ch%u-ch%u ns;ch%u-ch%u ns", ch, fCh[ch].refch, refch, fCh[refch].refch);
+
+         fCh[ch].fRisingDoubleRef = MakeH2("RisingDoubleRef", sbuf, npx, xmin, xmax, npy, ymin, ymax, saxis);
+      }
+   }
+}
+
+
 void hadaq::TdcProcessor::BeforeFill()
 {
    for (unsigned ch=0;ch<NumChannels();ch++) {
       fCh[ch].first_rising_tm = 0;
+      fCh[ch].rising_ref_tm = 0.;
       fCh[ch].first_falling_tm = 0;
    }
 }
@@ -199,7 +223,9 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
                tm_ref -= refproc->fCh[0].first_rising_tm;
             }
 
-            double diff = (tm - tm_ref)*1e9;
+            fCh[ch].rising_ref_tm = tm - tm_ref;
+
+            double diff = fCh[ch].rising_ref_tm*1e9;
 
             FillH1(fCh[ch].fRisingRef, diff);
             FillH1(fCh[ch].fRisingCoarseRef, 0. + fCh[ch].first_rising_coarse - refproc->fCh[ref].first_rising_coarse);
@@ -211,6 +237,13 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
                   tm*1e9,  tm_ref*1e9, diff,
                   fCh[ch].first_rising_coarse, refproc->fCh[ref].first_rising_coarse, (int) (fCh[ch].first_rising_coarse - refproc->fCh[ref].first_rising_coarse),
                   fCh[ch].first_rising_fine, refproc->fCh[ref].first_rising_fine);
+
+            // make double reference only for local channels
+            if ((fCh[ch].doublerefch < NumChannels()) &&
+                (fCh[ch].fRisingDoubleRef != 0) &&
+                (fCh[fCh[ch].doublerefch].rising_ref_tm != 0)) {
+               FillH1(fCh[ch].fRisingDoubleRef, diff, fCh[fCh[ch].doublerefch].rising_ref_tm*1e9);
+            }
          }
 
          if (DoFallingEdge() && (fCh[ch].first_falling_tm !=0 ) && (refproc->fCh[ref].first_falling_tm !=0)) {

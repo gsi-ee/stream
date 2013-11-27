@@ -33,20 +33,23 @@ namespace hadaq {
 
          struct ChannelRec {
             unsigned refch;                //! reference channel for specified
-            unsigned reftdc;               //! tdc of reference channel,
+            unsigned reftdc;               //! tdc of reference channel
+            unsigned doublerefch;          //! double reference channel
             bool docalibr;                 //! if false, simple calibration will be used
             base::H1handle fRisingFine;    //! histogram of all fine counters
             base::H1handle fRisingCoarse;  //! histogram of all coarse counters
             base::H1handle fRisingRef;     //! histogram of all coarse counters
             base::H1handle fRisingCoarseRef; //! histogram
-            base::H2handle fRisingRef2D; //! histogram
             base::H1handle fRisingCalibr;  //! histogram of channel calibration function
+            base::H2handle fRisingRef2D;   //! histogram
+            base::H2handle fRisingDoubleRef; //! correlation with dif time from other chanel
             base::H1handle fFallingFine;   //! histogram of all fine counters
             base::H1handle fFallingCoarse; //! histogram of all coarse counters
             base::H1handle fFallingRef;    //! histogram of all coarse counters
             base::H1handle fFallingCoarseRef; //! histogram
             base::H1handle fFallingCalibr; //! histogram of channel calibration function
             double first_rising_tm;
+            double rising_ref_tm;
             double first_falling_tm;
             unsigned first_rising_coarse;
             unsigned first_falling_coarse;
@@ -63,19 +66,22 @@ namespace hadaq {
             ChannelRec() :
                refch(0xffffff),
                reftdc(0xffffffff),
+               doublerefch(0xffffff),
                docalibr(true),
                fRisingFine(0),
                fRisingCoarse(0),
                fRisingRef(0),
                fRisingCoarseRef(0),
-               fRisingRef2D(0),
                fRisingCalibr(0),
+               fRisingRef2D(0),
+               fRisingDoubleRef(0),
                fFallingFine(0),
                fFallingCoarse(0),
                fFallingRef(0),
                fFallingCoarseRef(0),
                fFallingCalibr(0),
                first_rising_tm(0.),
+               rising_ref_tm(0.),
                first_falling_tm(0.),
                first_rising_coarse(0),
                first_falling_coarse(0),
@@ -208,6 +214,10 @@ namespace hadaq {
           *   fine_counter of ref channel (shift -1 ns)
           *   coarse_counter/4 (shift -2 ns) */
          void SetRefChannel(unsigned ch, unsigned refch, unsigned reftdc = 0xffff, int npoints = 5000, double left = -10., double right = 10., bool twodim = false);
+
+         void SetDoubleRefChannel(unsigned ch, unsigned refch,
+                                  int npx = 200, double xmin = -10., double xmax = 10.,
+                                  int npy = 200, double ymin = -10., double ymax = 10.);
 
          /** If set, each hit must be supplied with epoch message */
          void SetEveryEpoch(bool on) { fEveryEpoch = on; }

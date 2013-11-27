@@ -1,8 +1,14 @@
+27.11.2013
+1. Suppress TDC errors after specified number of error shown (default 1000)
+2. Make histogram titles more clear
+3. Provide example for padiwa
+4. Make double correlation histograms in TDC, provide exmaple in padiwa
+
+
 20.11.2013
 1. Create 2-D histograms in TDC analysis only optionally and one can provide 
    range and bins number for such histograms. 
 2. In TDC calibration set center of bin as calibration value.
- 
 
 31.10.2013
 1. Provide THookProc, which allows to regularly execute user code.
