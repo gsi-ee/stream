@@ -95,9 +95,7 @@ void base::StreamProc::SetSubPrefix(const char* name, int indx, const char* subn
       fSubPrefixN.append("_");
    }
 
-
 }
-
 
 base::H1handle base::StreamProc::MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle)
 {
@@ -109,7 +107,7 @@ base::H1handle base::StreamProc::MakeH1(const char* name, const char* title, int
 
    std::string htitle = fName;
    htitle.append(" ");
-   if (!fSubPrefixN.empty()) htitle += fSubPrefixN + " ";
+   if (!fSubPrefixN.empty()) htitle += fSubPrefixN.substr(0, fSubPrefixN.length()-1) + " ";
    htitle.append(title);
 
    return mgr()->MakeH1(hname.c_str(), htitle.c_str(), nbins, left, right, xtitle);

@@ -39,6 +39,7 @@ namespace hadaq {
 
          bool fPrintRawData;         ///< true when raw data should be printed
          bool fCrossProcess;         ///< if true, cross-processing will be enabled
+         int  fPrintErrCnt;          ///< number of error messages, which could be printed
 
          /** Returns true when processor used to select trigger signal
           * TRB3 not yet able to perform trigger selection */
@@ -69,6 +70,9 @@ namespace hadaq {
 
          void SetPrintRawData(bool on = true) { fPrintRawData = on; }
          bool IsPrintRawData() const { return fPrintRawData; }
+
+         void SetPrintErrors(int cnt = 100) { fPrintErrCnt = cnt; }
+         bool CheckPrintError();
 
          void SetCrossProcess(bool on = true) { fCrossProcess = on; }
          bool IsCrossProcess() const { return fCrossProcess; }

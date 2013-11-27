@@ -17,6 +17,7 @@ unsigned hadaq::TdcProcessor::fMaxBrdId = 8;
 
 hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels, unsigned edge_mask) :
    base::StreamProc("TDC", tdcid),
+   fTrb(trb),
    fIter1(),
    fIter2(),
    fEdgeMask(edge_mask),
@@ -77,6 +78,11 @@ hadaq::TdcProcessor::~TdcProcessor()
 {
 }
 
+bool hadaq::TdcProcessor::CheckPrintError()
+{
+   return fTrb ? fTrb->CheckPrintError() : true;
+}
+
 
 void hadaq::TdcProcessor::DisableCalibrationFor(unsigned firstch, unsigned lastch)
 {
@@ -120,21 +126,36 @@ void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned re
       fCh[ch].reftdc = GetBoardId();
    }
 
+   char sbuf[1024];
+   char refname[1024];
+   if (fCh[ch].reftdc == GetBoardId()) {
+      sprintf(refname, "Ch%u", fCh[ch].refch);
+   } else {
+      sprintf(refname, "Ch%u TDC%u", fCh[ch].refch, fCh[ch].reftdc);
+   }
+
+
    if ((left < right) && (npoints>1)) {
       SetSubPrefix("Ch", ch);
       if (DoRisingEdge()) {
 
-      if (fCh[ch].fRisingRef == 0)
-         fCh[ch].fRisingRef = MakeH1("RisingRef", "Difference to reference channel", npoints, left, right, "ns");
-      if (fCh[ch].fRisingCoarseRef == 0)
-         fCh[ch].fRisingCoarseRef = MakeH1("RisingCoarseRef", "Difference to rising coarse counter in ref channel", 4096, -2048, 2048, "coarse");
-      if (twodim && (fCh[ch].fRisingRef2D==0))
-         fCh[ch].fRisingRef2D = MakeH2("RisingRef2D", "Difference to reference channel", 500, left, right, 100, 0, 500, "ns");
+         if (fCh[ch].fRisingRef == 0) {
+            sprintf(sbuf, "difference to %s", refname);
+            fCh[ch].fRisingRef = MakeH1("RisingRef", sbuf, npoints, left, right, "ns");
+         }
+         if (fCh[ch].fRisingCoarseRef == 0)
+            fCh[ch].fRisingCoarseRef = MakeH1("RisingCoarseRef", "Difference to rising coarse counter in ref channel", 4096, -2048, 2048, "coarse");
+         if (twodim && (fCh[ch].fRisingRef2D==0)) {
+            sprintf(sbuf, "corr diff %s and fine counter", refname);
+            fCh[ch].fRisingRef2D = MakeH2("RisingRef2D", sbuf, 500, left, right, 100, 0, 500, "ns");
+         }
       }
 
       if (DoFallingEdge()) {
-         if (fCh[ch].fFallingRef == 0)
-            fCh[ch].fFallingRef = MakeH1("FallingRef", "Difference to reference channel", npoints, left, right, "ns");
+         if (fCh[ch].fFallingRef == 0) {
+            sprintf(sbuf, "difference to %s", refname);
+            fCh[ch].fFallingRef = MakeH1("FallingRef", sbuf, npoints, left, right, "ns");
+         }
          if (fCh[ch].fFallingCoarseRef == 0)
             fCh[ch].fFallingCoarseRef = MakeH1("FallingCoarseRef", "Difference to falling coarse counter in ref channel", 4096, -2048, 2048, "coarse");
       }
@@ -291,7 +312,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
          if (!iter.isCurEpoch()) {
             // one expects epoch before each hit message, if not data are corrupted and we can ignore it
-            printf("Missing epoch for hit from channel %u\n", chid);
+            if (CheckPrintError())
+               printf("%5s Missing epoch for hit from channel %u\n", GetName(), chid);
             iserr = true;
             continue;
          }
@@ -300,21 +322,24 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             iter.clearCurEpoch();
 
          if (chid >= NumChannels()) {
-            printf("TDC Channel number problem %u\n", chid);
+            if (CheckPrintError())
+               printf("%5s Channel number problem %u\n", GetName(), chid);
             iserr = true;
             continue;
          }
 
          if (fine == 0x3FF) {
             // special case - missing hit, just ignore such value
-            printf("Missing hit in channel %u fine counter is %x\n", chid, fine);
+            if (CheckPrintError())
+               printf("%5s Missing hit in channel %u fine counter is %x\n", GetName(), chid, fine);
             FillH1(fUndHits, chid);
             continue;
          }
 
          if (fine >= FineCounterBins) {
             FillH1(fErrors, chid);
-            printf("Fine counter %u out of allowed range 0..%u in channel %u\n", fine, FineCounterBins, chid);
+            if (CheckPrintError())
+               printf("%5s Fine counter %u out of allowed range 0..%u in channel %u\n", GetName(), fine, FineCounterBins, chid);
             iserr = true;
             continue;
          }
@@ -393,7 +418,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
         case tdckind_Header: {
            unsigned errbits = msg.getHeaderErr();
            if (errbits && first_scan)
-              printf("%4s found error bits: 0x%x\n", GetName(), errbits);
+              if (CheckPrintError())
+                 printf("%5s found error bits: 0x%x\n", GetName(), errbits);
 
            break;
         }
@@ -402,7 +428,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
         case tdckind_Epoch:
            break;
         default:
-           printf("Unknown bits 0x%x in header\n", msg.getKind());
+           if (CheckPrintError())
+              printf("%5s Unknown bits 0x%x in header\n", GetName(), msg.getKind());
            break;
       }
    }

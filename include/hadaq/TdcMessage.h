@@ -92,7 +92,7 @@ namespace hadaq {
 
          void print(double tm = -1.);
 
-         static double CoarseUnit() { return 5e-9; }
+         static double CoarseUnit() { return 4.995e-9; }
 
          static double SimpleFineCalibr(unsigned fine)
          {

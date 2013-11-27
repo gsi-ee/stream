@@ -17,7 +17,8 @@ void first()
    trb3->SetPrintRawData(false);
 
    // set number of errors to be printed, default 1000
-   // trb3->SetPrintErrors(1000);
+   trb3->SetPrintErrors(100);
+
 
    // enable cross processing only when one want to specify reference channel from other TDCs
    // in this case processing 'crosses' border of TDC and need to access data from other TDC
@@ -27,7 +28,7 @@ void first()
    // It is required that high 8 bits are the same.
    // These bits are used to separate TDC data from other data kinds
 
-   int tdcmap[4] = { 0xC000, 0xC001, 0xC003, 0xC004 };
+   int tdcmap[4] = { 0x0200, 0x0201, 0x0202, 0x0203 };
 
    // TDC subevent header id
    trb3->SetHadaqTDCId(tdcmap[0] & 0xFF00);
@@ -49,10 +50,9 @@ void first()
       // par4 - edges mask 0x1 - rising, 0x2 - trailing, 0x3 - both edges
       hadaq::TdcProcessor* tdc = new hadaq::TdcProcessor(trb3, tdcid, 65, 0x1);
 
-      if (cnt==3) {
-         tdc->SetRefChannel(2, 1, 0xffff, 5000,  4., 9., true);
-         tdc->SetRefChannel(8, 7, 0xffff, 5000,  4., 9., true);
-         tdc->SetRefChannel(1, 7, 0xffff, 5000, -5., 1., true);
+      if (cnt==0) {
+         tdc->SetRefChannel(35, 33, 0xffff, 5000,  -100., 100., true);
+         tdc->SetRefChannel(36, 35, 0xffff, 5000,  -100., 100., true);
       }
 
       // specify reference channel for any other channel -
@@ -77,10 +77,10 @@ void first()
       tdc->DisableCalibrationFor(0);
 
       // load static calibration at the beginning of the run
-      // tdc->LoadCalibration(Form("test_%04x.cal", tdcmap[cnt]));
+      // tdc->LoadCalibration(Form("tdc2_%04x.cal", tdcmap[cnt]));
 
       // calculate and write static calibration at the end of the run
-      // tdc->SetWriteCalibration(Form("test_%04x.cal", tdcmap[cnt]));
+      // tdc->SetWriteCalibration(Form("tdc3_%04x.cal", tdcmap[cnt]));
 
       // enable automatic calibration, specify required number of hits in each channel
       //tdc->SetAutoCalibration(100000);

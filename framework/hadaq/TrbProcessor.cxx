@@ -33,6 +33,7 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid) :
 
    fPrintRawData = false;
    fCrossProcess = false;
+   fPrintErrCnt = 1000;
 
    // this is raw-scan processor, therefore no synchronization is required for it
    SetSynchronisationRequired(false);
@@ -44,6 +45,19 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid) :
 hadaq::TrbProcessor::~TrbProcessor()
 {
 }
+
+bool hadaq::TrbProcessor::CheckPrintError()
+{
+   if (fPrintErrCnt<=0) return false;
+
+   if (--fPrintErrCnt==0) {
+      printf("%5s Suppress all other errors ...\n", GetName());
+      return false;
+   }
+
+   return true;
+}
+
 
 void hadaq::TrbProcessor::AddSub(TdcProcessor* tdc, unsigned id)
 {

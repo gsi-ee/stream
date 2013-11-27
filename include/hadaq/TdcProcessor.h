@@ -93,6 +93,7 @@ namespace hadaq {
             }
          };
 
+         TrbProcessor* fTrb;         //! pointer on TRB processor
 
          TdcIterator fIter1;         //! iterator for the first scan
          TdcIterator fIter2;         //! iterator for the second scan
@@ -152,6 +153,8 @@ namespace hadaq {
          void CopyCalibration(float* calibr, base::H1handle hcalibr);
          void ProduceCalibration(bool clear_stat);
          void StoreCalibration(const std::string& fname);
+
+         bool CheckPrintError();
 
       public:
 
