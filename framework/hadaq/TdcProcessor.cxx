@@ -41,26 +41,10 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
 
    for (unsigned ch=0;ch<numchannels;ch++) {
       fCh.push_back(ChannelRec());
-
-      SetSubPrefix("Ch", ch);
-
-      if (DoRisingEdge()) {
-         fCh[ch].fRisingFine = MakeH1("RisingFine", "Rising fine counter", FineCounterBins, 0, FineCounterBins, "fine");
-         fCh[ch].fRisingCoarse = MakeH1("RisingCoarse", "Rising coarse counter", 2048, 0, 2048, "coarse");
-         fCh[ch].fRisingRef = 0; // MakeH1("RisingRef", "Difference to reference channel", 1200000, -1100., +100., "ns");
-         fCh[ch].fRisingCoarseRef = 0; // MakeH1("RisingCoarseRef", "Difference to rising coarse counter in ref channel", 4096, -2048, 2048, "coarse");
-         fCh[ch].fRisingRef2D = 0; // MakeH2("RisingRef2D", "Difference to reference channel", 500, 4., 9., 100, 0, 500, "ns");
-         fCh[ch].fRisingCalibr = MakeH1("RisingCalibr", "Rising calibration function", FineCounterBins, 0, FineCounterBins, "fine");
-      }
-
-      if (DoFallingEdge()) {
-         fCh[ch].fFallingFine = MakeH1("FallingFine", "Falling fine counter", FineCounterBins, 0, FineCounterBins, "fine");
-         fCh[ch].fFallingCoarse = MakeH1("FallingCoarse", "Falling coarse counter", 2048, 0, 2048, "coarse");
-         fCh[ch].fFallingRef = 0; // MakeH1("FallingRef", "Difference to reference channel", 20000, -100., +100., "ns");
-         fCh[ch].fFallingCoarseRef = 0; // MakeH1("FallingCoarseRef", "Difference to falling coarse counter in ref channel", 4096, -2048, 2048, "coarse");
-         fCh[ch].fFallingCalibr = MakeH1("FallingCalibr", "Falling calibration function", FineCounterBins, 0, FineCounterBins, "fine");
-      }
    }
+
+   // always create histograms for channel 0
+   CreateChannelHistograms(0);
 
    if (trb) {
       trb->AddSub(this, tdcid);
@@ -83,6 +67,33 @@ bool hadaq::TdcProcessor::CheckPrintError()
    return fTrb ? fTrb->CheckPrintError() : true;
 }
 
+bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
+{
+   if (ch>=NumChannels()) return false;
+
+   if (fCh[ch].fRisingFine || fCh[ch].fFallingFine) return true;
+
+   SetSubPrefix("Ch", ch);
+
+   if (DoRisingEdge()) {
+      fCh[ch].fRisingFine = MakeH1("RisingFine", "Rising fine counter", FineCounterBins, 0, FineCounterBins, "fine");
+      fCh[ch].fRisingCoarse = MakeH1("RisingCoarse", "Rising coarse counter", 2048, 0, 2048, "coarse");
+      fCh[ch].fRisingCalibr = MakeH1("RisingCalibr", "Rising calibration function", FineCounterBins, 0, FineCounterBins, "fine");
+      // copy calibration only when histogram created
+      CopyCalibration(fCh[ch].rising_calibr, fCh[ch].fRisingCalibr);
+   }
+
+   if (DoFallingEdge()) {
+      fCh[ch].fFallingFine = MakeH1("FallingFine", "Falling fine counter", FineCounterBins, 0, FineCounterBins, "fine");
+      fCh[ch].fFallingCoarse = MakeH1("FallingCoarse", "Falling coarse counter", 2048, 0, 2048, "coarse");
+      fCh[ch].fFallingCalibr = MakeH1("FallingCalibr", "Falling calibration function", FineCounterBins, 0, FineCounterBins, "fine");
+      // copy calibration only when histogram created
+      CopyCalibration(fCh[ch].falling_calibr, fCh[ch].fFallingCalibr);
+   }
+
+   return true;
+}
+
 
 void hadaq::TdcProcessor::DisableCalibrationFor(unsigned firstch, unsigned lastch)
 {
@@ -96,12 +107,12 @@ void hadaq::TdcProcessor::DisableCalibrationFor(unsigned firstch, unsigned lastc
 void hadaq::TdcProcessor::UserPreLoop()
 {
 //   printf("************************* hadaq::TdcProcessor preloop *******************\n");
-   for (unsigned ch=0;ch<NumChannels();ch++) {
+//   for (unsigned ch=0;ch<NumChannels();ch++) {
 
-      CopyCalibration(fCh[ch].rising_calibr, fCh[ch].fRisingCalibr);
+//      CopyCalibration(fCh[ch].rising_calibr, fCh[ch].fRisingCalibr);
 
-      CopyCalibration(fCh[ch].falling_calibr, fCh[ch].fFallingCalibr);
-   }
+//      CopyCalibration(fCh[ch].falling_calibr, fCh[ch].fFallingCalibr);
+//   }
 }
 
 void hadaq::TdcProcessor::UserPostLoop()
@@ -114,6 +125,18 @@ void hadaq::TdcProcessor::UserPostLoop()
    }
 }
 
+void hadaq::TdcProcessor::CreateHistograms(int *arr)
+{
+   if (arr==0) {
+      for (unsigned ch=0;ch<NumChannels();ch++)
+         CreateChannelHistograms(ch);
+   } else
+   while ((*arr>0) && (*arr < (int) NumChannels())) {
+      CreateChannelHistograms(*arr++);
+   }
+}
+
+
 
 void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned reftdc,
                                         int npoints, double left, double right, bool twodim)
@@ -125,15 +148,15 @@ void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned re
    } else {
       fCh[ch].reftdc = GetBoardId();
    }
+   CreateChannelHistograms(ch);
+   if (fCh[ch].reftdc == GetBoardId()) CreateChannelHistograms(refch);
 
-   char sbuf[1024];
-   char refname[1024];
+   char sbuf[1024], saxis[1024], refname[1024];
    if (fCh[ch].reftdc == GetBoardId()) {
       sprintf(refname, "Ch%u", fCh[ch].refch);
    } else {
       sprintf(refname, "Ch%u TDC%u", fCh[ch].refch, fCh[ch].reftdc);
    }
-
 
    if ((left < right) && (npoints>1)) {
       SetSubPrefix("Ch", ch);
@@ -141,13 +164,15 @@ void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned re
 
          if (fCh[ch].fRisingRef == 0) {
             sprintf(sbuf, "difference to %s", refname);
-            fCh[ch].fRisingRef = MakeH1("RisingRef", sbuf, npoints, left, right, "ns");
+            sprintf(saxis, "Ch%u - %s, ns", ch, refname);
+            fCh[ch].fRisingRef = MakeH1("RisingRef", sbuf, npoints, left, right, saxis);
          }
          if (fCh[ch].fRisingCoarseRef == 0)
             fCh[ch].fRisingCoarseRef = MakeH1("RisingCoarseRef", "Difference to rising coarse counter in ref channel", 4096, -2048, 2048, "coarse");
          if (twodim && (fCh[ch].fRisingRef2D==0)) {
             sprintf(sbuf, "corr diff %s and fine counter", refname);
-            fCh[ch].fRisingRef2D = MakeH2("RisingRef2D", sbuf, 500, left, right, 100, 0, 500, "ns;fine counter");
+            sprintf(saxis, "Ch%u - %s, ns;fine counter", ch, refname);
+            fCh[ch].fRisingRef2D = MakeH2("RisingRef2D", sbuf, 500, left, right, 100, 0, 500, saxis);
          }
       }
 
@@ -162,11 +187,17 @@ void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned re
    }
 }
 
-void hadaq::TdcProcessor::SetDoubleRefChannel(unsigned ch, unsigned refch,
+bool hadaq::TdcProcessor::SetDoubleRefChannel(unsigned ch1, unsigned ch2,
                                               int npx, double xmin, double xmax,
                                               int npy, double ymin, double ymax)
 {
-   if ((ch>=NumChannels()) || (refch>=NumChannels())) return;
+   if ((ch1>=NumChannels()) || (ch2>=NumChannels())) return false;
+
+   if ((fCh[ch1].refch>=NumChannels()) || (fCh[ch2].refch>=NumChannels())) return false;
+
+   unsigned ch = ch1, refch = ch2;
+   if (ch1<ch2) { ch = ch2; refch = ch1; }
+
    fCh[ch].doublerefch = refch;
 
    SetSubPrefix("Ch", ch);
@@ -182,6 +213,8 @@ void hadaq::TdcProcessor::SetDoubleRefChannel(unsigned ch, unsigned refch,
          fCh[ch].fRisingDoubleRef = MakeH2("RisingDoubleRef", sbuf, npx, xmin, xmax, npy, ymin, ymax, saxis);
       }
    }
+
+   return true;
 }
 
 
@@ -214,7 +247,7 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
       // RAWPRINT("TDC%u Ch:%u Try to use as ref TDC%u %u proc:%p\n", GetBoardId(), ch, reftdc, ref, refproc);
 
       if ((refproc!=0) && (ref<refproc->NumChannels()) && ((ref!=ch) || (refproc!=this))) {
-         if (DoRisingEdge() && (fCh[ch].first_rising_tm !=0 ) && (refproc->fCh[ref].first_rising_tm !=0)) {
+         if (DoRisingEdge() && (fCh[ch].first_rising_tm !=0) && (refproc->fCh[ref].first_rising_tm !=0)) {
 
             double tm = fCh[ch].first_rising_tm;
             double tm_ref = refproc->fCh[ref].first_rising_tm;
@@ -386,6 +419,9 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
          // fill histograms only for normal channels
          if (first_scan) {
+
+            // ensure that histograms are created
+            CreateChannelHistograms(chid);
 
             FillH1(fChannels, chid);
             FillH1(fAllFine, fine);
@@ -575,6 +611,7 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat)
       }
       if (DoRisingEdge())
          CopyCalibration(fCh[ch].rising_calibr, fCh[ch].fRisingCalibr);
+
       if (DoFallingEdge())
          CopyCalibration(fCh[ch].falling_calibr, fCh[ch].fFallingCalibr);
    }

@@ -3,6 +3,9 @@
 2. Make histogram titles more clear
 3. Provide example for padiwa
 4. Make double correlation histograms in TDC, provide exmaple in padiwa
+5. In TDC processor create histograms only when they really needed
+6. Provide method for explicit histogram creations for selected channels.
+   Can be used to ensure order how histograms folders are appeared in browser.
 
 
 20.11.2013

@@ -162,6 +162,8 @@ namespace hadaq {
 
          bool CheckPrintError();
 
+         bool CreateChannelHistograms(unsigned ch);
+
       public:
 
          TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels = MaxNumTdcChannels, unsigned edge_mask = 1);
@@ -200,6 +202,13 @@ namespace hadaq {
             return 0;
          }
 
+         /** Create basic histograms for specified channels.
+          * If array not specified, histograms for all channels are created.
+          * In array last element must be 0 or out of channel range. Call should be like:
+          * int channels[] = {33, 34, 35, 36, 0};
+          * tdc->CreateHistograms( channels ); */
+         void CreateHistograms(int *arr = 0);
+
          void DisableCalibrationFor(unsigned firstch, unsigned lastch = 0);
 
          /** Set reference signal for the TDC channel ch
@@ -215,7 +224,9 @@ namespace hadaq {
           *   coarse_counter/4 (shift -2 ns) */
          void SetRefChannel(unsigned ch, unsigned refch, unsigned reftdc = 0xffff, int npoints = 5000, double left = -10., double right = 10., bool twodim = false);
 
-         void SetDoubleRefChannel(unsigned ch, unsigned refch,
+         /** Fill double-reference histogram
+          * Required that for both channels references are specified via SetRefChannel() command. */
+         bool SetDoubleRefChannel(unsigned ch1, unsigned ch2,
                                   int npx = 200, double xmin = -10., double xmax = 10.,
                                   int npy = 200, double ymin = -10., double ymax = 10.);
 
