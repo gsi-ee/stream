@@ -16,6 +16,10 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid) :
 {
    mgr()->RegisterProc(this, base::proc_TRBEvent, brdid);
 
+   fMsgPerBrd = MakeH1("MsgPerTDC", "Number of messages per TDC", TdcProcessor::fMaxBrdId, 0, TdcProcessor::fMaxBrdId, "tdc");
+   fErrPerBrd = MakeH1("ErrPerTDC", "Number of errors per TDC", TdcProcessor::fMaxBrdId, 0, TdcProcessor::fMaxBrdId, "tdc");
+   fHitsPerBrd = MakeH1("HitsPerTDC", "Number of data hits per TDC", TdcProcessor::fMaxBrdId, 0, TdcProcessor::fMaxBrdId, "tdc");
+
    fEvSize = MakeH1("EvSize", "Event size", 500, 0, 5000, "bytes");
    fSubevSize = MakeH1("SubevSize", "Subevent size", 500, 0, 5000, "bytes");
 

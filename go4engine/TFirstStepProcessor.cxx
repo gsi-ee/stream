@@ -149,6 +149,8 @@ base::H1handle TFirstStepProcessor::MakeH1(const char* name, const char* title, 
    }
    delete arr;
 
+   SetMakeWithAutosave(kFALSE);
+
    TH1* histo1 = MakeTH1('I', name, title, nbins, left, right, newxtitle.Data());
 
    if (xbins.Length()>0) {
@@ -181,6 +183,8 @@ base::H2handle TFirstStepProcessor::MakeH2(const char* name, const char* title, 
                          else ytitle = part;
    }
    delete arr;
+
+   SetMakeWithAutosave(kFALSE);
 
    TH2* histo2 = MakeTH2('I', name, title, nbins1, left1, right1, nbins2, left2, right2, xtitle.Data(), ytitle.Data());
 

@@ -37,6 +37,10 @@ namespace hadaq {
 
          base::H1handle fTdcDistr;   ///< distribution of data over TDCs
 
+         base::H1handle fMsgPerBrd;  //! messages per board - from TRB
+         base::H1handle fErrPerBrd;  //! errors per board - from TRB
+         base::H1handle fHitsPerBrd; //! data hits per board - from TRB
+
          bool fPrintRawData;         ///< true when raw data should be printed
          bool fCrossProcess;         ///< if true, cross-processing will be enabled
          int  fPrintErrCnt;          ///< number of error messages, which could be printed

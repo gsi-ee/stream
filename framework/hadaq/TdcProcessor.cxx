@@ -26,9 +26,9 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fEveryEpoch(false),
    fCrossProcess(false)
 {
-   fMsgPerBrd = mgr()->MakeH1("MsgPerTDC", "Number of messages per TDC", fMaxBrdId, 0, fMaxBrdId, "tdc");
-   fErrPerBrd = mgr()->MakeH1("ErrPerTDC", "Number of errors per TDC", fMaxBrdId, 0, fMaxBrdId, "tdc");
-   fHitsPerBrd = mgr()->MakeH1("HitsPerTDC", "Number of data hits per TDC", fMaxBrdId, 0, fMaxBrdId, "tdc");
+   fMsgPerBrd = trb ? trb->fMsgPerBrd : 0;
+   fErrPerBrd = trb ? trb->fErrPerBrd : 0;
+   fHitsPerBrd = trb ? trb->fHitsPerBrd : 0;
 
    fChannels = MakeH1("Channels", "TDC channels", numchannels, 0, numchannels, "ch");
    fErrors = MakeH1("Errors", "Errors in TDC channels", numchannels, 0, numchannels, "ch");

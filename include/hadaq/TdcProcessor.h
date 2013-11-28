@@ -104,9 +104,9 @@ namespace hadaq {
          TdcIterator fIter1;         //! iterator for the first scan
          TdcIterator fIter2;         //! iterator for the second scan
 
-         base::H1handle fMsgPerBrd;  //! messages per board
-         base::H1handle fErrPerBrd;  //! errors per board
-         base::H1handle fHitsPerBrd; //! data hits per board
+         base::H1handle fMsgPerBrd;  //! messages per board - from TRB
+         base::H1handle fErrPerBrd;  //! errors per board - from TRB
+         base::H1handle fHitsPerBrd; //! data hits per board - from TRB
 
          base::H1handle fChannels;   //! histogram with messages per channel
          base::H1handle fErrors;     //! histogram with errors per channel

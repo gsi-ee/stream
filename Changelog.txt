@@ -1,3 +1,7 @@
+28.11.2013
+1. Always recreate histograms even when same histogram already exists.
+   To avoid ROOT warnings, one should delete auto-save file before starting go4. 
+
 27.11.2013
 1. Suppress TDC errors after specified number of error shown (default 1000)
 2. Make histogram titles more clear
@@ -6,7 +10,6 @@
 5. In TDC processor create histograms only when they really needed
 6. Provide method for explicit histogram creations for selected channels.
    Can be used to ensure order how histograms folders are appeared in browser.
-
 
 20.11.2013
 1. Create 2-D histograms in TDC analysis only optionally and one can provide 
