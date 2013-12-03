@@ -1,3 +1,7 @@
+3.12.2013
+1. Calculate multiplicity of each TDC channel and accumulate in histogram.
+
+
 28.11.2013
 1. Always recreate histograms even when same histogram already exists.
    To avoid ROOT warnings, one should delete auto-save file before starting go4. 

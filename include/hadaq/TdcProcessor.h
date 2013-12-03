@@ -38,6 +38,7 @@ namespace hadaq {
             bool docalibr;                 //! if false, simple calibration will be used
             base::H1handle fRisingFine;    //! histogram of all fine counters
             base::H1handle fRisingCoarse;  //! histogram of all coarse counters
+            base::H1handle fRisingMult;    //! number of hits per event
             base::H1handle fRisingRef;     //! histogram of all coarse counters
             base::H1handle fRisingCoarseRef; //! histogram
             base::H1handle fRisingCalibr;  //! histogram of channel calibration function
@@ -45,9 +46,12 @@ namespace hadaq {
             base::H2handle fRisingDoubleRef; //! correlation with dif time from other chanel
             base::H1handle fFallingFine;   //! histogram of all fine counters
             base::H1handle fFallingCoarse; //! histogram of all coarse counters
+            base::H1handle fFallingMult;   //! number of hits per event
             base::H1handle fFallingRef;    //! histogram of all coarse counters
             base::H1handle fFallingCoarseRef; //! histogram
             base::H1handle fFallingCalibr; //! histogram of channel calibration function
+            int rising_cnt;                //! number of rising hits in last event
+            int falling_cnt;               //! number of falling hits in last event
             double first_rising_tm;
             double rising_ref_tm;
             double first_falling_tm;
@@ -70,6 +74,7 @@ namespace hadaq {
                docalibr(true),
                fRisingFine(0),
                fRisingCoarse(0),
+               fRisingMult(0),
                fRisingRef(0),
                fRisingCoarseRef(0),
                fRisingCalibr(0),
@@ -77,9 +82,12 @@ namespace hadaq {
                fRisingDoubleRef(0),
                fFallingFine(0),
                fFallingCoarse(0),
+               fFallingMult(0),
                fFallingRef(0),
                fFallingCoarseRef(0),
                fFallingCalibr(0),
+               rising_cnt(0),
+               falling_cnt(0),
                first_rising_tm(0.),
                rising_ref_tm(0.),
                first_falling_tm(0.),
@@ -185,6 +193,8 @@ namespace hadaq {
                case 3: return "FallingFine";
                case 4: return "FallingCoarse";
                case 5: return "FallingRef";
+               case 6: return "RisingMult";
+               case 7: return "FallingMult";
             }
             return "";
          }
@@ -198,6 +208,8 @@ namespace hadaq {
                case 3: return fCh[ch].fFallingFine;
                case 4: return fCh[ch].fFallingCoarse;
                case 5: return fCh[ch].fFallingRef;
+               case 6: return fCh[ch].fRisingMult;
+               case 7: return fCh[ch].fFallingMult;
             }
             return 0;
          }

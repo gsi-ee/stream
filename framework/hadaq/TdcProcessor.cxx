@@ -78,6 +78,7 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
    if (DoRisingEdge()) {
       fCh[ch].fRisingFine = MakeH1("RisingFine", "Rising fine counter", FineCounterBins, 0, FineCounterBins, "fine");
       fCh[ch].fRisingCoarse = MakeH1("RisingCoarse", "Rising coarse counter", 2048, 0, 2048, "coarse");
+      fCh[ch].fRisingMult = MakeH1("RisingMult", "Rising event multiplicity", 128, 0, 128, "nhits");
       fCh[ch].fRisingCalibr = MakeH1("RisingCalibr", "Rising calibration function", FineCounterBins, 0, FineCounterBins, "fine");
       // copy calibration only when histogram created
       CopyCalibration(fCh[ch].rising_calibr, fCh[ch].fRisingCalibr);
@@ -86,6 +87,7 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
    if (DoFallingEdge()) {
       fCh[ch].fFallingFine = MakeH1("FallingFine", "Falling fine counter", FineCounterBins, 0, FineCounterBins, "fine");
       fCh[ch].fFallingCoarse = MakeH1("FallingCoarse", "Falling coarse counter", 2048, 0, 2048, "coarse");
+      fCh[ch].fFallingMult = MakeH1("FallingMult", "Falling event multiplicity", 128, 0, 128, "nhits");
       fCh[ch].fFallingCalibr = MakeH1("FallingCalibr", "Falling calibration function", FineCounterBins, 0, FineCounterBins, "fine");
       // copy calibration only when histogram created
       CopyCalibration(fCh[ch].falling_calibr, fCh[ch].fFallingCalibr);
@@ -243,6 +245,9 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
          SubProcMap::iterator iter = subprocmap->find(reftdc);
          if (iter != subprocmap->end()) refproc = iter->second;
       }
+
+      FillH1(fCh[ch].fRisingMult, fCh[ch].rising_cnt); fCh[ch].rising_cnt = 0;
+      FillH1(fCh[ch].fFallingMult, fCh[ch].falling_cnt); fCh[ch].falling_cnt = 0;
 
       // RAWPRINT("TDC%u Ch:%u Try to use as ref TDC%u %u proc:%p\n", GetBoardId(), ch, reftdc, ref, refproc);
 
@@ -430,6 +435,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             if (isrising) {
                rec.rising_stat[fine]++;
                rec.all_rising_stat++;
+               rec.rising_cnt++;
 
                FillH1(rec.fRisingFine, fine);
                FillH1(rec.fRisingCoarse, coarse);
@@ -442,6 +448,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             } else {
                rec.falling_stat[fine]++;
                rec.all_falling_stat++;
+               rec.falling_cnt++;
 
                FillH1(rec.fFallingFine, fine);
                FillH1(rec.fFallingCoarse, coarse);
