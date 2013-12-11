@@ -50,6 +50,9 @@ void first()
       hadaq::TdcProcessor* tdc = new hadaq::TdcProcessor(trb3, tdcid, 65, 0x1);
 
       if (cnt==3) {
+         int channels[] = { 1, 2, 7, 8, 0 };
+         tdc->CreateHistograms( channels );
+
          tdc->SetRefChannel(2, 1, 0xffff, 5000,  4., 9., true);
          tdc->SetRefChannel(8, 7, 0xffff, 5000,  4., 9., true);
          tdc->SetRefChannel(1, 7, 0xffff, 5000, -5., 1., true);
