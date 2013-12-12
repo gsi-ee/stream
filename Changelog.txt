@@ -1,7 +1,8 @@
 12.12.2013
-1. Implement conditional print when time difference to refchannel blong to 
-   specified interval. Works only when channel 0 used as reference, while
-   only than one still has access to raw data.  
+1. Implement conditional print when time difference to refchannel belong to 
+   specified interval. Works only when reference channel from same TDC and
+   when ref channel smaller than specified. Conditions can be seen and adjusted
+   from the go4 gui. 
 
 6.12.2013
 1. When channel 0 used as reference, try to account all hits in channel when

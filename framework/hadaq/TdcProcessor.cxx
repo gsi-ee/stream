@@ -223,9 +223,16 @@ bool hadaq::TdcProcessor::SetDoubleRefChannel(unsigned ch1, unsigned ch2,
 bool hadaq::TdcProcessor::EnableRefCondPrint(unsigned ch, double left, double right, int numprint)
 {
    if (ch>=NumChannels()) return false;
-   if (fCh[ch].refch!=0) {
-      fprintf(stderr,"Only when reference channel 0, conditional print can be enabled\n");
+   if (fCh[ch].refch >= NumChannels()) {
+      fprintf(stderr,"Reference channel not specified, conditional print cannot work\n");
       return false;
+   }
+   if (fCh[ch].reftdc != GetBoardId()) {
+      fprintf(stderr,"Only when reference channel on same TDC specified, conditional print can be enabled\n");
+      return false;
+   }
+   if (fCh[ch].refch > ch) {
+      fprintf(stderr,"Reference channel %u bigger than channel id %u, conditional print may not work\n", fCh[ch].refch, ch);
    }
 
    SetSubPrefix("Ch", ch);
@@ -471,17 +478,23 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                   rec.first_rising_tm = localtm;
                   rec.first_rising_coarse = coarse;
                   rec.first_rising_fine = fine;
+
+                  if ((rec.rising_cond_prnt>0) && (rec.reftdc == GetBoardId()) &&
+                      (rec.refch < NumChannels()) && (fCh[rec.refch].first_rising_tm!=0)) {
+                     double diff = (localtm - fCh[rec.refch].first_rising_tm) * 1e9;
+                     if (TestC1(rec.fRisingRefCond, diff) == 0) {
+                        rec.rising_cond_prnt--;
+                        rawprint = true;
+                        printf ("TDC%u ch%u detect rising diff %8.3f ns\n", GetBoardId(), chid, diff);
+                     }
+                  }
                }
 
                // special case - when ref channel defined as 0, fill all hits
                if ((chid!=0) && (rec.refch==0) && (rec.reftdc == GetBoardId()) && (fCh[0].first_rising_tm!=0)) {
-                  double diff = (localtm - fCh[0].first_rising_tm)*1e9;
-                  FillH1(rec.fRisingRef, diff);
-                  if ((rec.rising_cond_prnt>0) && TestC1(rec.fRisingRefCond, diff)) {
-                     rec.rising_cond_prnt--;
-                     rawprint = true;
-                  }
+                  FillH1(rec.fRisingRef, (localtm - fCh[0].first_rising_tm)*1e9);
                }
+
             } else {
                rec.falling_stat[fine]++;
                rec.all_falling_stat++;
@@ -493,15 +506,21 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                   rec.first_falling_tm = localtm;
                   rec.first_falling_coarse = coarse;
                   rec.first_falling_fine = fine;
+
+                  if ((rec.falling_cond_prnt>0) && (rec.reftdc == GetBoardId()) &&
+                      (rec.refch < NumChannels()) && (fCh[rec.refch].first_falling_tm!=0)) {
+                     double diff = (localtm - fCh[rec.refch].first_falling_tm) * 1e9;
+                     if (TestC1(rec.fFallingRefCond, diff) == 0) {
+                        rec.falling_cond_prnt--;
+                        rawprint = true;
+                        printf ("TDC%u ch%u detect falling diff %8.3f ns\n", GetBoardId(), chid, diff);
+                     }
+                  }
+
                }
 
                if ((chid!=0) && (rec.refch==0) && (rec.reftdc == GetBoardId()) && (fCh[0].first_falling_tm!=0)) {
-                  double diff = (localtm - fCh[0].first_falling_tm)*1e9;
-                  FillH1(rec.fFallingRef, diff);
-                  if ((rec.falling_cond_prnt>0) && TestC1(rec.fFallingRefCond, diff)) {
-                     rec.falling_cond_prnt--;
-                     rawprint = true;
-                  }
+                  FillH1(rec.fFallingRef, (localtm - fCh[0].first_falling_tm)*1e9);
                }
             }
 
