@@ -1,6 +1,14 @@
+12.12.2013
+1. Implement conditional print when time difference to refchannel blong to 
+   specified interval. Works only when channel 0 used as reference, while
+   only than one still has access to raw data.  
+
+6.12.2013
+1. When channel 0 used as reference, try to account all hits in channel when
+   filling histograms.
+
 3.12.2013
 1. Calculate multiplicity of each TDC channel and accumulate in histogram.
-
 
 28.11.2013
 1. Always recreate histograms even when same histogram already exists.

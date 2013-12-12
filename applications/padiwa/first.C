@@ -54,6 +54,10 @@ void first()
          int channels[] = {33, 34, 35, 36, 0};
          tdc->CreateHistograms( channels );
 
+         // this is example how to specify conditional print when using channel 0 as reference
+         // tdc->SetRefChannel(33, 0, 0xffff, 5000,  -100., 100., true);
+         // tdc->EnableRefCondPrint(33, -20., -10., 1000);
+
          tdc->SetRefChannel(35, 33, 0xffff, 5000,  -100., 100., true);
          tdc->SetRefChannel(36, 35, 0xffff, 5000,  -100., 100., true);
          // IMPORTANT: for both channels references should be already specified

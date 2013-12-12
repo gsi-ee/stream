@@ -37,11 +37,11 @@ namespace base {
 
          BuffersQueue fQueue;                     //!
 
-         unsigned     fQueueScanIndex;            //!< index of next buffer which should be scanned
-         unsigned     fQueueScanIndexTm;          //!< index of buffer to scan and set correct times of the buffer head
+         unsigned        fQueueScanIndex;         //!< index of next buffer which should be scanned
+         unsigned        fQueueScanIndexTm;       //!< index of buffer to scan and set correct times of the buffer head
 
-         bool         fRawScanOnly;               //!< indicates if only raw scan will be done, processor will not be used for any data selection
-         bool         fHistFilling;               //!< indicates if histograms should be fillled
+         bool            fRawScanOnly;            //!< indicates if only raw scan will be done, processor will not be used for any data selection
+         bool            fHistFilling;            //!< indicates if histograms should be fillled
 
          bool            fIsSynchronisationRequired; //!< true if sync is required
          SyncMarksQueue  fSyncs;                  //!< list of sync markers

@@ -220,6 +220,30 @@ bool hadaq::TdcProcessor::SetDoubleRefChannel(unsigned ch1, unsigned ch2,
 }
 
 
+bool hadaq::TdcProcessor::EnableRefCondPrint(unsigned ch, double left, double right, int numprint)
+{
+   if (ch>=NumChannels()) return false;
+   if (fCh[ch].refch!=0) {
+      fprintf(stderr,"Only when reference channel 0, conditional print can be enabled\n");
+      return false;
+   }
+
+   SetSubPrefix("Ch", ch);
+
+   if (DoRisingEdge()) {
+      fCh[ch].fRisingRefCond = MakeC1("RisingRefPrint", left, right, fCh[ch].fRisingRef);
+      fCh[ch].rising_cond_prnt = numprint > 0 ? numprint : 100000000;
+   }
+
+   if (DoFallingEdge()) {
+      fCh[ch].fFallingRefCond = MakeC1("FallingRefPrint", left, right, fCh[ch].fFallingRef);
+      fCh[ch].falling_cond_prnt = numprint > 0 ? numprint : 100000000;
+   }
+
+   return true;
+}
+
+
 void hadaq::TdcProcessor::BeforeFill()
 {
    for (unsigned ch=0;ch<NumChannels();ch++) {
@@ -265,7 +289,9 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
 
             double diff = fCh[ch].rising_ref_tm*1e9;
 
-            FillH1(fCh[ch].fRisingRef, diff);
+            // when refch is 0 on same board, histogram already filled
+            if ((ref!=0) || (refproc!=this)) FillH1(fCh[ch].fRisingRef, diff);
+
             FillH1(fCh[ch].fRisingCoarseRef, 0. + fCh[ch].first_rising_coarse - refproc->fCh[ref].first_rising_coarse);
             FillH2(fCh[ch].fRisingRef2D, diff, fCh[ch].first_rising_fine);
             FillH2(fCh[ch].fRisingRef2D, diff-1., refproc->fCh[ref].first_rising_fine);
@@ -296,7 +322,9 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
 
             double diff = (tm - tm_ref)*1e9;
 
-            FillH1(fCh[ch].fFallingRef, diff);
+            // when refch is 0 on same board, histogram already filled
+            if ((ref!=0) || (refproc!=this)) FillH1(fCh[ch].fFallingRef, diff);
+
             FillH1(fCh[ch].fFallingCoarseRef, 0. + fCh[ch].first_falling_coarse - refproc->fCh[ref].first_falling_coarse);
             RAWPRINT("Difference falling %u:%u %u:%u  %12.3f  %12.3f  %7.3f  coarse %03x - %03x = %4d  fine %03x %03x \n",
                      GetBoardId(), ch, reftdc, ref,
@@ -340,7 +368,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
    unsigned cnt(0), hitcnt(0);
 
-   bool iserr(false), isfirstepoch(false);
+   bool iserr(false), isfirstepoch(false), rawprint(false);
 
    uint32_t first_epoch(0);
 
@@ -445,6 +473,15 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                   rec.first_rising_fine = fine;
                }
 
+               // special case - when ref channel defined as 0, fill all hits
+               if ((chid!=0) && (rec.refch==0) && (rec.reftdc == GetBoardId()) && (fCh[0].first_rising_tm!=0)) {
+                  double diff = (localtm - fCh[0].first_rising_tm)*1e9;
+                  FillH1(rec.fRisingRef, diff);
+                  if ((rec.rising_cond_prnt>0) && TestC1(rec.fRisingRefCond, diff)) {
+                     rec.rising_cond_prnt--;
+                     rawprint = true;
+                  }
+               }
             } else {
                rec.falling_stat[fine]++;
                rec.all_falling_stat++;
@@ -456,6 +493,15 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                   rec.first_falling_tm = localtm;
                   rec.first_falling_coarse = coarse;
                   rec.first_falling_fine = fine;
+               }
+
+               if ((chid!=0) && (rec.refch==0) && (rec.reftdc == GetBoardId()) && (fCh[0].first_falling_tm!=0)) {
+                  double diff = (localtm - fCh[0].first_falling_tm)*1e9;
+                  FillH1(rec.fFallingRef, diff);
+                  if ((rec.falling_cond_prnt>0) && TestC1(rec.fFallingRefCond, diff)) {
+                     rec.falling_cond_prnt--;
+                     rawprint = true;
+                  }
                }
             }
 
@@ -548,6 +594,13 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    }
 
    if (first_scan && !fCrossProcess) AfterFill();
+
+   if (rawprint) {
+      printf("RAW data of TDC%u\n", GetBoardId());
+      TdcIterator iter;
+      iter.assign((uint32_t*) buf.ptr(4), buf.datalen()/4 -1, false);
+      while (iter.next()) iter.printmsg();
+   }
 
    return !iserr;
 }

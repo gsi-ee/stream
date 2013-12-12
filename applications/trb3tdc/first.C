@@ -56,6 +56,10 @@ void first()
          tdc->SetRefChannel(2, 1, 0xffff, 5000,  4., 9., true);
          tdc->SetRefChannel(8, 7, 0xffff, 5000,  4., 9., true);
          tdc->SetRefChannel(1, 7, 0xffff, 5000, -5., 1., true);
+
+         // this is example how to specify conditional print when using channel 0 as reference
+         //tdc->SetRefChannel(7, 0, 0xffff, 5000,  -10., 10., true);
+         //tdc->EnableRefCondPrint(7, -20., -10., 1000);
       }
 
       // specify reference channel for any other channel -

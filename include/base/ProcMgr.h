@@ -78,8 +78,8 @@ namespace base {
          virtual void ChangeC1(C1handle c1, double left, double right) {}
          /** Condition check 0 - inside, -1 left , +1 - right
           * If variable dist specified, will contain distance to left (-1) or right (+1) boundary   */
-         virtual int TestC1(C1handle c1, double value, double* dist = 0) { return false; }
-         virtual double GetC1Limit(C1handle c1, bool isleft = true) { return 0; }
+         virtual int TestC1(C1handle c1, double value, double* dist = 0) { return 0; }
+         virtual double GetC1Limit(C1handle c1, bool isleft = true) { return 0.; }
 
          // this is list of generic methods for common data processing
 

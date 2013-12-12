@@ -40,6 +40,7 @@ namespace hadaq {
             base::H1handle fRisingCoarse;  //! histogram of all coarse counters
             base::H1handle fRisingMult;    //! number of hits per event
             base::H1handle fRisingRef;     //! histogram of all coarse counters
+            base::C1handle fRisingRefCond; //! condition to print raw events
             base::H1handle fRisingCoarseRef; //! histogram
             base::H1handle fRisingCalibr;  //! histogram of channel calibration function
             base::H2handle fRisingRef2D;   //! histogram
@@ -48,6 +49,7 @@ namespace hadaq {
             base::H1handle fFallingCoarse; //! histogram of all coarse counters
             base::H1handle fFallingMult;   //! number of hits per event
             base::H1handle fFallingRef;    //! histogram of all coarse counters
+            base::C1handle fFallingRefCond; //! condition to print raw events
             base::H1handle fFallingCoarseRef; //! histogram
             base::H1handle fFallingCalibr; //! histogram of channel calibration function
             int rising_cnt;                //! number of rising hits in last event
@@ -65,7 +67,8 @@ namespace hadaq {
             float rising_calibr[FineCounterBins];
             long falling_stat[FineCounterBins];
             float falling_calibr[FineCounterBins];
-
+            int rising_cond_prnt;
+            int falling_cond_prnt;
 
             ChannelRec() :
                refch(0xffffff),
@@ -76,6 +79,7 @@ namespace hadaq {
                fRisingCoarse(0),
                fRisingMult(0),
                fRisingRef(0),
+               fRisingRefCond(0),
                fRisingCoarseRef(0),
                fRisingCalibr(0),
                fRisingRef2D(0),
@@ -84,6 +88,7 @@ namespace hadaq {
                fFallingCoarse(0),
                fFallingMult(0),
                fFallingRef(0),
+               fFallingRefCond(0),
                fFallingCoarseRef(0),
                fFallingCalibr(0),
                rising_cnt(0),
@@ -96,7 +101,9 @@ namespace hadaq {
                first_rising_fine(0),
                first_falling_fine(0),
                all_rising_stat(0),
-               all_falling_stat(0)
+               all_falling_stat(0),
+               rising_cond_prnt(-1),
+               falling_cond_prnt(-1)
             {
                for (unsigned n=0;n<FineCounterBins;n++) {
                   rising_stat[n] = 0;
@@ -241,6 +248,12 @@ namespace hadaq {
          bool SetDoubleRefChannel(unsigned ch1, unsigned ch2,
                                   int npx = 200, double xmin = -10., double xmax = 10.,
                                   int npy = 200, double ymin = -10., double ymax = 10.);
+
+         /** Enable print of TDC data when time difference to ref channel belong to specified interval
+          * Work ONLY when reference channel 0 is used.
+          * One could set maximum number of events to print
+          * In any case one should first set reference channel  */
+         bool EnableRefCondPrint(unsigned ch, double left = -10, double right = 10, int numprint = 0);
 
          /** If set, each hit must be supplied with epoch message */
          void SetEveryEpoch(bool on) { fEveryEpoch = on; }

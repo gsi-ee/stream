@@ -252,11 +252,10 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaq::RawSubevent* sub)
          //hTrbTriggerCount->Fill(5);          //! TRB - CTS
          //hTrbTriggerCount->Fill(0);          //! TRB TOTAL
 
-
          data = sub->Data(ix++); datalen--;
          unsigned trigtype = (data & 0xFFFF);
-         unsigned trignum = (data >> 16) & 0xF;
-         RAWPRINT("     CTS trigtype: 0x%x, trignum=0x%x\n", trigtype, trignum);
+         unsigned trignum = (data >> 16) & 0xFFFF;
+         RAWPRINT("     CTS trigtype: 0x%04x, trignum=0x%04x\n", trigtype, trignum);
 
          while (datalen-- > 1) {
             //! Look only for the CTS data
