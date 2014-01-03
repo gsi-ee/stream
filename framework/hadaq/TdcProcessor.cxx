@@ -145,11 +145,8 @@ void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned re
 {
    if (ch>=NumChannels()) return;
    fCh[ch].refch = refch;
-   if (refch<NumChannels()) {
-      fCh[ch].reftdc = (reftdc >= 0xffff) ? GetBoardId() : reftdc;
-   } else {
-      fCh[ch].reftdc = GetBoardId();
-   }
+   fCh[ch].reftdc = (reftdc >= 0xffff) ? GetBoardId() : reftdc;
+
    CreateChannelHistograms(ch);
    if (fCh[ch].reftdc == GetBoardId()) CreateChannelHistograms(refch);
 
@@ -169,8 +166,10 @@ void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned re
             sprintf(saxis, "Ch%u - %s, ns", ch, refname);
             fCh[ch].fRisingRef = MakeH1("RisingRef", sbuf, npoints, left, right, saxis);
          }
+
          if (fCh[ch].fRisingCoarseRef == 0)
             fCh[ch].fRisingCoarseRef = MakeH1("RisingCoarseRef", "Difference to rising coarse counter in ref channel", 4096, -2048, 2048, "coarse");
+
          if (twodim && (fCh[ch].fRisingRef2D==0)) {
             sprintf(sbuf, "corr diff %s and fine counter", refname);
             sprintf(saxis, "Ch%u - %s, ns;fine counter", ch, refname);
@@ -268,7 +267,7 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
 
       unsigned ref = fCh[ch].refch;
       unsigned reftdc = fCh[ch].reftdc;
-      if (reftdc==0xffffffff) reftdc = GetBoardId();
+      if (reftdc>=0xffff) reftdc = GetBoardId();
 
       TdcProcessor* refproc = 0;
       if (reftdc == GetBoardId()) refproc = this; else
