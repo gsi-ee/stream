@@ -1,3 +1,6 @@
+3.01.2014
+1. Implement double-reference also with channels from other TDCs. 
+
 12.12.2013
 1. Implement conditional print when time difference to refchannel belong to 
    specified interval. Works only when reference channel from same TDC and

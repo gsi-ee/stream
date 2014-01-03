@@ -192,14 +192,24 @@ bool hadaq::TdcProcessor::SetDoubleRefChannel(unsigned ch1, unsigned ch2,
                                               int npx, double xmin, double xmax,
                                               int npy, double ymin, double ymax)
 {
-   if ((ch1>=NumChannels()) || (ch2>=NumChannels())) return false;
+   if ((ch1>=NumChannels()) || (fCh[ch1].refch>=NumChannels()))  return false;
 
-   if ((fCh[ch1].refch>=NumChannels()) || (fCh[ch2].refch>=NumChannels())) return false;
+   unsigned reftdc = 0xffff;
+   if (ch2 > 1000) { reftdc = (ch2-1000) / 1000; ch2 = ch2 % 1000; }
+   if (reftdc >= 0xffff) reftdc = GetBoardId();
 
    unsigned ch = ch1, refch = ch2;
-   if (ch1<ch2) { ch = ch2; refch = ch1; }
+
+   if (reftdc == GetBoardId()) {
+      if ((ch2>=NumChannels()) || (fCh[ch2].refch>=NumChannels()))  return false;
+      if (ch1<ch2) { ch = ch2; refch = ch1; }
+   } else {
+      if (reftdc > GetBoardId())
+         printf("WARNING - double ref channel from TDC with higher ID %u > %u\n", reftdc, GetBoardId());
+   }
 
    fCh[ch].doublerefch = refch;
+   fCh[ch].doublereftdc = reftdc;
 
    SetSubPrefix("Ch", ch);
 
@@ -208,8 +218,13 @@ bool hadaq::TdcProcessor::SetDoubleRefChannel(unsigned ch1, unsigned ch2,
 
    if (DoRisingEdge()) {
       if (fCh[ch].fRisingDoubleRef == 0) {
-         sprintf(sbuf, "double correlation to Ch%u", fCh[ch].doublerefch);
-         sprintf(saxis, "ch%u-ch%u ns;ch%u-ch%u ns", ch, fCh[ch].refch, refch, fCh[refch].refch);
+         if (reftdc == GetBoardId()) {
+            sprintf(sbuf, "double correlation to Ch%u", refch);
+            sprintf(saxis, "ch%u-ch%u ns;ch%u-ch%u ns", ch, fCh[ch].refch, refch, fCh[refch].refch);
+         } else {
+            sprintf(sbuf, "double correlation to TDC%u Ch%u", reftdc, refch);
+            sprintf(saxis, "ch%u-ch%u ns;tdc%u refch%u ns", ch, fCh[ch].refch, reftdc, refch);
+         }
 
          fCh[ch].fRisingDoubleRef = MakeH2("RisingDoubleRef", sbuf, npx, xmin, xmax, npy, ymin, ymax, saxis);
       }
@@ -309,11 +324,11 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
                   fCh[ch].first_rising_fine, refproc->fCh[ref].first_rising_fine);
 
             // make double reference only for local channels
-            if ((fCh[ch].doublerefch < NumChannels()) &&
-                (fCh[ch].fRisingDoubleRef != 0) &&
-                (fCh[fCh[ch].doublerefch].rising_ref_tm != 0)) {
-               FillH1(fCh[ch].fRisingDoubleRef, diff, fCh[fCh[ch].doublerefch].rising_ref_tm*1e9);
-            }
+            // if ((fCh[ch].doublerefch < NumChannels()) &&
+            //    (fCh[ch].fRisingDoubleRef != 0) &&
+            //    (fCh[fCh[ch].doublerefch].rising_ref_tm != 0)) {
+            //   FillH1(fCh[ch].fRisingDoubleRef, diff, fCh[fCh[ch].doublerefch].rising_ref_tm*1e9);
+            // }
          }
 
          if (DoFallingEdge() && (fCh[ch].first_falling_tm !=0 ) && (refproc->fCh[ref].first_falling_tm !=0)) {
@@ -337,6 +352,24 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
                      tm*1e9, tm_ref*1e9, diff,
                      fCh[ch].first_falling_coarse, fCh[ref].first_falling_coarse, (int) (fCh[ch].first_falling_coarse - refproc->fCh[ref].first_falling_coarse),
                      fCh[ch].first_falling_fine, refproc->fCh[ref].first_falling_fine);
+         }
+      }
+
+      // fill double-reference histogram, using data from any reference TDC
+      if ((fCh[ch].doublerefch < NumChannels()) && (fCh[ch].fRisingDoubleRef!=0)) {
+         ref = fCh[ch].doublerefch;
+         reftdc = fCh[ch].doublereftdc;
+         if (reftdc>=0xffff) reftdc = GetBoardId();
+         refproc = 0;
+         if (reftdc == GetBoardId()) refproc = this; else
+         if (subprocmap!=0) {
+             SubProcMap::iterator iter = subprocmap->find(reftdc);
+             if (iter != subprocmap->end()) refproc = iter->second;
+         }
+
+         if ((refproc!=0) && (ref<refproc->NumChannels()) && ((ref!=ch) || (refproc!=this))) {
+            if ((fCh[ch].rising_ref_tm != 0) && (refproc->fCh[ref].rising_ref_tm != 0))
+               FillH1(fCh[ch].fRisingDoubleRef, fCh[ch].rising_ref_tm*1e9, refproc->fCh[ref].rising_ref_tm*1e9);
          }
       }
 

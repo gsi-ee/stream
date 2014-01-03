@@ -35,6 +35,7 @@ namespace hadaq {
             unsigned refch;                //! reference channel for specified
             unsigned reftdc;               //! tdc of reference channel
             unsigned doublerefch;          //! double reference channel
+            unsigned doublereftdc;         //! tdc of double reference channel
             bool docalibr;                 //! if false, simple calibration will be used
             base::H1handle fRisingFine;    //! histogram of all fine counters
             base::H1handle fRisingCoarse;  //! histogram of all coarse counters
@@ -74,6 +75,7 @@ namespace hadaq {
                refch(0xffffff),
                reftdc(0xffffffff),
                doublerefch(0xffffff),
+               doublereftdc(0xffffff),
                docalibr(true),
                fRisingFine(0),
                fRisingCoarse(0),
@@ -244,7 +246,8 @@ namespace hadaq {
          void SetRefChannel(unsigned ch, unsigned refch, unsigned reftdc = 0xffff, int npoints = 5000, double left = -10., double right = 10., bool twodim = false);
 
          /** Fill double-reference histogram
-          * Required that for both channels references are specified via SetRefChannel() command. */
+          * Required that for both channels references are specified via SetRefChannel() command.
+          * If ch2 > 1000, than channel from other TDC can be used. tdcid = (ch2 - 1000) / 1000 */
          bool SetDoubleRefChannel(unsigned ch1, unsigned ch2,
                                   int npx = 200, double xmin = -10., double xmax = 10.,
                                   int npy = 200, double ymin = -10., double ymax = 10.);
