@@ -55,13 +55,13 @@ namespace hadaq {
             base::H1handle fFallingCalibr; //! histogram of channel calibration function
             int rising_cnt;                //! number of rising hits in last event
             int falling_cnt;               //! number of falling hits in last event
-            double first_rising_tm;
+            double rising_hit_tm;
             double rising_ref_tm;
-            double first_falling_tm;
-            unsigned first_rising_coarse;
-            unsigned first_falling_coarse;
-            unsigned first_rising_fine;
-            unsigned first_falling_fine;
+            double falling_hit_tm;
+            unsigned rising_coarse;
+            unsigned falling_coarse;
+            unsigned rising_fine;
+            unsigned falling_fine;
             long all_rising_stat;
             long all_falling_stat;
             long rising_stat[FineCounterBins];
@@ -95,13 +95,13 @@ namespace hadaq {
                fFallingCalibr(0),
                rising_cnt(0),
                falling_cnt(0),
-               first_rising_tm(0.),
+               rising_hit_tm(0.),
                rising_ref_tm(0.),
-               first_falling_tm(0.),
-               first_rising_coarse(0),
-               first_falling_coarse(0),
-               first_rising_fine(0),
-               first_falling_fine(0),
+               falling_hit_tm(0.),
+               rising_coarse(0),
+               falling_coarse(0),
+               rising_fine(0),
+               falling_fine(0),
                all_rising_stat(0),
                all_falling_stat(0),
                rising_cond_prnt(-1),
@@ -145,6 +145,8 @@ namespace hadaq {
          bool      fEveryEpoch;       //! if true, each hit must be supplied with epoch
 
          bool      fCrossProcess;     //! if true, AfterFill will be called by Trb processor
+
+         bool      fUseLastHit;       //! if true, last hit will be used in reference calculations
 
          /** Returns true when processor used to select trigger signal
           * TDC not yet able to perform trigger selection */
@@ -270,6 +272,13 @@ namespace hadaq {
 
          void SetPrintRawData(bool on = true) { fPrintRawData = on; }
          bool IsPrintRawData() const { return fPrintRawData; }
+
+         /** When enabled, last hit time in the channel used for reference time calculations
+          * By default, first hit time is used
+          * Special case is reference to channel 0 - here all hits will be used */
+         void SetUseLastHit(bool on = true) { fUseLastHit = on; }
+
+         bool IsUseLastHist() const { return fUseLastHit; }
 
          virtual void UserPreLoop();
 

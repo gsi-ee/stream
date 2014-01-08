@@ -74,6 +74,9 @@ void first()
       // for old FPGA code one should have epoch for each hit, no longer necessary
       // tdc->SetEveryEpoch(true);
 
+      // When enabled, time of last hit will be used for reference calculations
+      // tdc->SetUseLastHit(true);
+
 
       // next parameters are about time calibration - there are two possibilities
       // 1) automatic calibration after N hits in every enabled channel

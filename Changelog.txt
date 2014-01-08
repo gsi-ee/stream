@@ -1,3 +1,7 @@
+8.01.2014
+1. Provide TdcProcessor::SetUseLastHit(), which allow to use last hit for ref time
+   calculations
+
 3.01.2014
 1. Implement double-reference also with channels from other TDCs. 
 

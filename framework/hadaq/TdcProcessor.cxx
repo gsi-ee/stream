@@ -24,7 +24,8 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fAutoCalibration(0),
    fPrintRawData(false),
    fEveryEpoch(false),
-   fCrossProcess(false)
+   fCrossProcess(false),
+   fUseLastHit(false)
 {
    fMsgPerBrd = trb ? trb->fMsgPerBrd : 0;
    fErrPerBrd = trb ? trb->fErrPerBrd : 0;
@@ -268,9 +269,9 @@ bool hadaq::TdcProcessor::EnableRefCondPrint(unsigned ch, double left, double ri
 void hadaq::TdcProcessor::BeforeFill()
 {
    for (unsigned ch=0;ch<NumChannels();ch++) {
-      fCh[ch].first_rising_tm = 0;
+      fCh[ch].rising_hit_tm = 0;
       fCh[ch].rising_ref_tm = 0.;
-      fCh[ch].first_falling_tm = 0;
+      fCh[ch].falling_hit_tm = 0;
    }
 }
 
@@ -296,14 +297,14 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
 
       // RAWPRINT("TDC%u Ch:%u Try to use as ref TDC%u %u proc:%p\n", GetBoardId(), ch, reftdc, ref, refproc);
 
-      if ((refproc!=0) && (ref<refproc->NumChannels()) && ((ref!=ch) || (refproc!=this))) {
-         if (DoRisingEdge() && (fCh[ch].first_rising_tm !=0) && (refproc->fCh[ref].first_rising_tm !=0)) {
+      if ((refproc!=0) && (ref>0) && (ref<refproc->NumChannels()) && ((ref!=ch) || (refproc!=this))) {
+         if (DoRisingEdge() && (fCh[ch].rising_hit_tm != 0) && (refproc->fCh[ref].rising_hit_tm != 0)) {
 
-            double tm = fCh[ch].first_rising_tm;
-            double tm_ref = refproc->fCh[ref].first_rising_tm;
+            double tm = fCh[ch].rising_hit_tm;
+            double tm_ref = refproc->fCh[ref].rising_hit_tm;
             if ((refproc!=this) && (ch>0) && (ref>0)) {
-               tm -= fCh[0].first_rising_tm;
-               tm_ref -= refproc->fCh[0].first_rising_tm;
+               tm -= fCh[0].rising_hit_tm;
+               tm_ref -= refproc->fCh[0].rising_hit_tm;
             }
 
             fCh[ch].rising_ref_tm = tm - tm_ref;
@@ -313,15 +314,15 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
             // when refch is 0 on same board, histogram already filled
             if ((ref!=0) || (refproc!=this)) FillH1(fCh[ch].fRisingRef, diff);
 
-            FillH1(fCh[ch].fRisingCoarseRef, 0. + fCh[ch].first_rising_coarse - refproc->fCh[ref].first_rising_coarse);
-            FillH2(fCh[ch].fRisingRef2D, diff, fCh[ch].first_rising_fine);
-            FillH2(fCh[ch].fRisingRef2D, diff-1., refproc->fCh[ref].first_rising_fine);
-            FillH2(fCh[ch].fRisingRef2D, diff-2., fCh[ch].first_rising_coarse/4);
+            FillH1(fCh[ch].fRisingCoarseRef, 0. + fCh[ch].rising_coarse - refproc->fCh[ref].rising_coarse);
+            FillH2(fCh[ch].fRisingRef2D, diff, fCh[ch].rising_fine);
+            FillH2(fCh[ch].fRisingRef2D, diff-1., refproc->fCh[ref].rising_fine);
+            FillH2(fCh[ch].fRisingRef2D, diff-2., fCh[ch].rising_coarse/4);
             RAWPRINT("Difference rising %u:%u\t %u:%u\t %12.3f\t %12.3f\t %7.3f  coarse %03x - %03x = %4d  fine %03x %03x \n",
                   GetBoardId(), ch, reftdc, ref,
                   tm*1e9,  tm_ref*1e9, diff,
-                  fCh[ch].first_rising_coarse, refproc->fCh[ref].first_rising_coarse, (int) (fCh[ch].first_rising_coarse - refproc->fCh[ref].first_rising_coarse),
-                  fCh[ch].first_rising_fine, refproc->fCh[ref].first_rising_fine);
+                  fCh[ch].rising_coarse, refproc->fCh[ref].rising_coarse, (int) (fCh[ch].rising_coarse - refproc->fCh[ref].rising_coarse),
+                  fCh[ch].rising_fine, refproc->fCh[ref].rising_fine);
 
             // make double reference only for local channels
             // if ((fCh[ch].doublerefch < NumChannels()) &&
@@ -331,14 +332,14 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
             // }
          }
 
-         if (DoFallingEdge() && (fCh[ch].first_falling_tm !=0 ) && (refproc->fCh[ref].first_falling_tm !=0)) {
+         if (DoFallingEdge() && (fCh[ch].falling_hit_tm != 0) && (refproc->fCh[ref].falling_hit_tm != 0)) {
 
-            double tm = fCh[ch].first_falling_tm;
-            double tm_ref = refproc->fCh[ref].first_falling_tm;
+            double tm = fCh[ch].falling_hit_tm;
+            double tm_ref = refproc->fCh[ref].falling_hit_tm;
 
             if ((refproc!=this) && (ch>0) && (ref>0)) {
-               tm -= fCh[0].first_falling_tm;
-               tm_ref -= refproc->fCh[0].first_falling_tm;
+               tm -= fCh[0].falling_hit_tm;
+               tm_ref -= refproc->fCh[0].falling_hit_tm;
             }
 
             double diff = (tm - tm_ref)*1e9;
@@ -346,12 +347,12 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
             // when refch is 0 on same board, histogram already filled
             if ((ref!=0) || (refproc!=this)) FillH1(fCh[ch].fFallingRef, diff);
 
-            FillH1(fCh[ch].fFallingCoarseRef, 0. + fCh[ch].first_falling_coarse - refproc->fCh[ref].first_falling_coarse);
+            FillH1(fCh[ch].fFallingCoarseRef, 0. + fCh[ch].falling_coarse - refproc->fCh[ref].falling_coarse);
             RAWPRINT("Difference falling %u:%u %u:%u  %12.3f  %12.3f  %7.3f  coarse %03x - %03x = %4d  fine %03x %03x \n",
                      GetBoardId(), ch, reftdc, ref,
                      tm*1e9, tm_ref*1e9, diff,
-                     fCh[ch].first_falling_coarse, fCh[ref].first_falling_coarse, (int) (fCh[ch].first_falling_coarse - refproc->fCh[ref].first_falling_coarse),
-                     fCh[ch].first_falling_fine, refproc->fCh[ref].first_falling_fine);
+                     fCh[ch].falling_coarse, fCh[ref].falling_coarse, (int) (fCh[ch].falling_coarse - refproc->fCh[ref].falling_coarse),
+                     fCh[ch].falling_fine, refproc->fCh[ref].falling_fine);
          }
       }
 
@@ -506,14 +507,15 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
                FillH1(rec.fRisingFine, fine);
                FillH1(rec.fRisingCoarse, coarse);
-               if (rec.first_rising_tm == 0.) {
-                  rec.first_rising_tm = localtm;
-                  rec.first_rising_coarse = coarse;
-                  rec.first_rising_fine = fine;
+
+               if ((rec.rising_hit_tm == 0.) || fUseLastHit) {
+                  rec.rising_hit_tm = localtm;
+                  rec.rising_coarse = coarse;
+                  rec.rising_fine = fine;
 
                   if ((rec.rising_cond_prnt>0) && (rec.reftdc == GetBoardId()) &&
-                      (rec.refch < NumChannels()) && (fCh[rec.refch].first_rising_tm!=0)) {
-                     double diff = (localtm - fCh[rec.refch].first_rising_tm) * 1e9;
+                      (rec.refch < NumChannels()) && (fCh[rec.refch].rising_hit_tm!=0)) {
+                     double diff = (localtm - fCh[rec.refch].rising_hit_tm) * 1e9;
                      if (TestC1(rec.fRisingRefCond, diff) == 0) {
                         rec.rising_cond_prnt--;
                         rawprint = true;
@@ -523,8 +525,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                }
 
                // special case - when ref channel defined as 0, fill all hits
-               if ((chid!=0) && (rec.refch==0) && (rec.reftdc == GetBoardId()) && (fCh[0].first_rising_tm!=0)) {
-                  FillH1(rec.fRisingRef, (localtm - fCh[0].first_rising_tm)*1e9);
+               if ((chid!=0) && (rec.refch==0) && (rec.reftdc == GetBoardId()) && (fCh[0].rising_hit_tm!=0)) {
+                  FillH1(rec.fRisingRef, (localtm - fCh[0].rising_hit_tm)*1e9);
                }
 
             } else {
@@ -534,14 +536,14 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
                FillH1(rec.fFallingFine, fine);
                FillH1(rec.fFallingCoarse, coarse);
-               if (rec.first_falling_tm == 0.) {
-                  rec.first_falling_tm = localtm;
-                  rec.first_falling_coarse = coarse;
-                  rec.first_falling_fine = fine;
+               if ((rec.falling_hit_tm == 0.) || fUseLastHit) {
+                  rec.falling_hit_tm = localtm;
+                  rec.falling_coarse = coarse;
+                  rec.falling_fine = fine;
 
                   if ((rec.falling_cond_prnt>0) && (rec.reftdc == GetBoardId()) &&
-                      (rec.refch < NumChannels()) && (fCh[rec.refch].first_falling_tm!=0)) {
-                     double diff = (localtm - fCh[rec.refch].first_falling_tm) * 1e9;
+                      (rec.refch < NumChannels()) && (fCh[rec.refch].falling_hit_tm!=0)) {
+                     double diff = (localtm - fCh[rec.refch].falling_hit_tm) * 1e9;
                      if (TestC1(rec.fFallingRefCond, diff) == 0) {
                         rec.falling_cond_prnt--;
                         rawprint = true;
@@ -551,8 +553,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
                }
 
-               if ((chid!=0) && (rec.refch==0) && (rec.reftdc == GetBoardId()) && (fCh[0].first_falling_tm!=0)) {
-                  FillH1(rec.fFallingRef, (localtm - fCh[0].first_falling_tm)*1e9);
+               if ((chid!=0) && (rec.refch==0) && (rec.reftdc == GetBoardId()) && (fCh[0].falling_hit_tm!=0)) {
+                  FillH1(rec.fFallingRef, (localtm - fCh[0].falling_hit_tm)*1e9);
                }
             }
 

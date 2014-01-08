@@ -151,8 +151,6 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
             iter->second->AfterFill(&fMap);
       }
 
-//      printf("Finish event processing\n");
-
    }
 
    return true;
