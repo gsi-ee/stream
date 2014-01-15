@@ -42,6 +42,7 @@ void first() {
 
    hadaq::TrbProcessor* trb3 = new hadaq::TrbProcessor(0);
    trb3->SetPrintRawData(false);
+   trb3->SetSyncIds(0x3, 0x1); // identifier of SYNC message in CTS data
 
    hadaq::TdcProcessor* tdc1 = new hadaq::TdcProcessor(trb3, 1);
    hadaq::TdcProcessor* tdc2 = new hadaq::TdcProcessor(trb3, 2);

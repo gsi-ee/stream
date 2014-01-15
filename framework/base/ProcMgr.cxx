@@ -2,13 +2,16 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+
 #include "base/StreamProc.h"
+#include "base/EventProc.h"
 
 base::ProcMgr* base::ProcMgr::fInstance = 0;
 
 base::ProcMgr::ProcMgr() :
    fProc(),
    fMap(),
+   fEvProc(),
    fTriggers(10000),    // FIXME: size should be configurable
    fTimeMasterIndex(DummyIndex),
    fRawAnalysisOnly(false)
@@ -50,6 +53,66 @@ void base::ProcMgr::DeleteAllProcessors()
    fProc.clear();
 }
 
+
+base::H1handle base::ProcMgr::MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle)
+{
+   // put dummy virtual function here to avoid ACLiC warnings
+   return 0;
+}
+
+void base::ProcMgr::FillH1(H1handle h1, double x, double weight)
+{
+   // put dummy virtual function here to avoid ACLiC warnings
+}
+
+double base::ProcMgr::GetH1Content(H1handle h1, int nbin)
+{
+   // put dummy virtual function here to avoid ACLiC warnings
+   return 0;
+}
+
+void base::ProcMgr::ClearH1(base::H1handle h1)
+{
+   // put dummy virtual function here to avoid ACLiC warnings
+}
+
+base::H2handle base::ProcMgr::MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options)
+{
+   // put dummy virtual function here to avoid ACLiC warnings
+   return 0;
+}
+
+void base::ProcMgr::FillH2(H1handle h2, double x, double y, double weight)
+{
+   // put dummy virtual function here to avoid ACLiC warnings
+}
+
+base::C1handle base::ProcMgr::MakeC1(const char* name, double left, double right, base::H1handle h1)
+{
+   // put dummy virtual function here to avoid ACLiC warnings
+   return 0;
+}
+
+void base::ProcMgr::ChangeC1(C1handle c1, double left, double right)
+{
+   // put dummy virtual function here to avoid ACLiC warnings
+}
+
+int base::ProcMgr::TestC1(C1handle c1, double value, double* dist)
+{
+   // put dummy virtual function here to avoid ACLiC warnings
+   return 0;
+}
+
+double base::ProcMgr::GetC1Limit(C1handle c1, bool isleft)
+{
+   // put dummy virtual function here to avoid ACLiC warnings
+   return 0;
+}
+
+
+
+
 void base::ProcMgr::UserPreLoop()
 {
    for (unsigned n=0;n<fProc.size();n++)
@@ -69,6 +132,14 @@ base::ProcMgr* base::ProcMgr::AddProc(StreamProc* proc)
    fInstance->fProc.push_back(proc);
    return fInstance;
 }
+
+base::ProcMgr*  base::ProcMgr::AddProc(EventProc* proc)
+{
+   if (fInstance==0) return 0;
+   fInstance->fEvProc.push_back(proc);
+   return fInstance;
+}
+
 
 bool base::ProcMgr::RegisterProc(StreamProc* proc, unsigned kind, unsigned brdid)
 {
@@ -111,7 +182,7 @@ void base::ProcMgr::ProvideRawData(const Buffer& buf)
 
    unsigned index = buf().kind * MaxBrdId + buf().boardid;
 
-   ProcessorsMap::iterator it = fMap.find(index);
+   StreamProcMap::iterator it = fMap.find(index);
 
    if (it == fMap.end()) return;
 
@@ -194,13 +265,9 @@ bool base::ProcMgr::AnalyzeSyncMarkers()
    }
 
    // we require at least 2 syncs on each stream
-   // TODO: later one can ignore optional streams here
    for (unsigned n=0;n<fProc.size();n++) {
 
-
-      //printf("Proc %s sync required %s\n",fProc[n]->GetName(), fProc[n]->IsSynchronisationRequired() ? "true" : "false");
-
-      if (fProc[n]->IsSynchronisationRequired() && (fProc[n]->numSyncs() < 2)) {
+      if (fProc[n]->numSyncs() < fProc[n]->minNumSyncRequired()) {
           printf("No enough %u syncs on processor %s!!!\n", fProc[n]->numSyncs(), fProc[n]->GetName());
           // exit(5);
           isenough = false;
@@ -281,14 +348,13 @@ bool base::ProcMgr::AnalyzeSyncMarkers()
 
 skip_sync_scanning:
 
-   // we require at least two valid syncs on each stream
+   // we require at least two valid syncs on each stream for interpolation
    for (unsigned n=0;n<fProc.size();n++) {
 
       // one can simply ignore optional streams here
 
       // every processor need at least two valid syncs for time calibrations
-      if (fProc[n]->IsSynchronisationRequired() &&
-           (fProc[n]->fSyncScanIndex < 2)) return false;
+      if (fProc[n]->numReadySyncs() < fProc[n]->minNumSyncRequired()) return false;
 
       // let also assign global times for the buffers here
       fProc[n]->ScanNewBuffersTm();
@@ -358,10 +424,13 @@ bool base::ProcMgr::ScanDataForNewTriggers()
    // which we already distribute to each processor. In fact, this could run in
    // individual thread of each processor
 
-//   printf("--------------- ScanDataForNewTriggers -------------- \n");
+   // printf("--------------- ScanDataForNewTriggers numproc %u-------------- \n", (unsigned) fProc.size());
 
-   for (unsigned n=0;n<fProc.size();n++)
+   for (unsigned n=0;n<fProc.size();n++) {
+      // printf("Scan in %u %p %s\n", n, fProc[n], fProc[n]->GetName());
       fProc[n]->ScanDataForNewTriggers();
+      // printf("Did scan in %u %p %s\n", n, fProc[n], fProc[n]->GetName());
+   }
 
    return true;
 }
@@ -369,8 +438,6 @@ bool base::ProcMgr::ScanDataForNewTriggers()
 
 bool base::ProcMgr::ProduceNextEvent(base::Event* &evt)
 {
-//   printf("Try to produce data for %u triggers\n", fTriggers.size());
-
    // at this moment each processor should finish with buffers scanning
    // for special cases (like MBS or EPICS) processor itself should declare that
    // triggers in between are correctly filled
@@ -384,6 +451,8 @@ bool base::ProcMgr::ProduceNextEvent(base::Event* &evt)
       unsigned local = fProc[n]->NumReadySubevents();
       if (local<numready) numready = local;
    }
+
+   // printf("Try to produce data for %u triggers numready %u\n", fTriggers.size(), numready);
 
    while (numready > 0) {
 
@@ -412,9 +481,17 @@ bool base::ProcMgr::ProduceNextEvent(base::Event* &evt)
          fProc[n]->AppendSubevent(evt);
       fTriggers.pop();
 
-      //   printf("PRODUCE EVENT\n");
       return true;
    }
 
    return false;
 }
+
+void base::ProcMgr::ProcessEvent(base::Event* evt)
+{
+   if (evt==0) return;
+
+   for (unsigned n=0;n<fEvProc.size();n++)
+      fEvProc[n]->Process(evt);
+}
+

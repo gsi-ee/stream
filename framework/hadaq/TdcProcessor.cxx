@@ -16,7 +16,7 @@ unsigned hadaq::TdcProcessor::fMaxBrdId = 8;
 #define RAWPRINT( args ...) if(IsPrintRawData()) printf( args )
 
 hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels, unsigned edge_mask) :
-   base::StreamProc("TDC", tdcid),
+   base::StreamProc("TDC", tdcid, false),
    fTrb(trb),
    fIter1(),
    fIter2(),
@@ -25,7 +25,10 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fPrintRawData(false),
    fEveryEpoch(false),
    fCrossProcess(false),
-   fUseLastHit(false)
+   fUseLastHit(false),
+   fUseNativeTrigger(false),
+   fCompensateEpochReset(false),
+   fCompensateEpochCounter(0)
 {
    fMsgPerBrd = trb ? trb->fMsgPerBrd : 0;
    fErrPerBrd = trb ? trb->fErrPerBrd : 0;
@@ -49,8 +52,12 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
 
    if (trb) {
       trb->AddSub(this, tdcid);
+      // when normal trigger is used as sync points, than use trigger time on right side to calculate global time
+      if (trb->IsUseTriggerAsSync()) SetSynchronisationKind(sync_Right);
+      if ((trb->NumSubProc()==1) && trb->IsUseTriggerAsSync()) fUseNativeTrigger = true;
       fPrintRawData = trb->IsPrintRawData();
       fCrossProcess = trb->IsCrossProcess();
+      fCompensateEpochReset = trb->fCompensateEpochReset;
    }
 
    fNewDataFlag = false;
@@ -93,6 +100,8 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
       // copy calibration only when histogram created
       CopyCalibration(fCh[ch].falling_calibr, fCh[ch].fFallingCalibr);
    }
+
+   SetSubPrefix();
 
    return true;
 }
@@ -404,13 +413,19 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    // copy first 4 bytes - it is syncid
    memcpy(&syncid, buf.ptr(), 4);
 
-   // printf("TDC board %u SYNC %x\n", GetBoardId(), (unsigned) syncid);
-
    unsigned cnt(0), hitcnt(0);
 
    bool iserr(false), isfirstepoch(false), rawprint(false);
 
    uint32_t first_epoch(0);
+
+   unsigned epoch_shift = 0;
+   if (fCompensateEpochReset) {
+      if (first_scan) buf().user_tag = fCompensateEpochCounter;
+      epoch_shift = buf().user_tag;
+   }
+
+//   printf("TDC%u %s scan tag = %u len %u\n", GetBoardId(), first_scan ? "FIRST" : "SECOND", buf().user_tag, buf.datalen()/4 -1);
 
    TdcIterator& iter = first_scan ? fIter1 : fIter2;
 
@@ -428,7 +443,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
    while (iter.next()) {
 
-//      msg.print();
+      // if (!first_scan) msg.print();
 
       if ((cnt==0) && !msg.isHeaderMsg()) iserr = true;
 
@@ -437,9 +452,20 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       if (first_scan)
          FillH1(fMsgsKind, msg.getKind() >> 29);
 
-      if ((cnt==2) && msg.isEpochMsg()) {
-         isfirstepoch = true;
-         first_epoch = msg.getEpochValue();
+      if (msg.isEpochMsg()) {
+
+         uint32_t ep = iter.getCurEpoch();
+
+         if (fCompensateEpochReset) {
+            ep += epoch_shift;
+            iter.setCurEpoch(ep);
+         }
+
+         // second message always should be epoch of channel 0
+         if (cnt==2) {
+            isfirstepoch = true;
+            first_epoch = ep;
+         }
       }
 
       if (msg.isHitMsg()) {
@@ -490,8 +516,12 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          else
             localtm -= rec.falling_calibr[fine];
 
+         if ((chid==0) && (ch0time<0.)) ch0time = localtm;
+
          // fill histograms only for normal channels
          if (first_scan) {
+
+            // if (chid>0) printf("%s HIT ch %u tm %12.9f diff %12.9f\n", GetName(), chid, localtm, localtm - ch0time);
 
             // ensure that histograms are created
             CreateChannelHistograms(chid);
@@ -558,28 +588,25 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                }
             }
 
-            if (!iserr) hitcnt++;
-         }
-
-         if (!iserr) {
-            if ((minimtm<1.) || (localtm < minimtm))
-               minimtm = localtm;
-
-            // remember position of channel 0 - it could be used for SYNC settings
-            if ((chid==0) && isrising) {
-               ch0time = localtm;
+            if (!iserr) {
+               hitcnt++;
+               if ((minimtm<1.) || (localtm < minimtm)) minimtm = localtm;
             }
-         }
+         } else
 
-         // here we check if hit can be assigned to the events
-         if (!first_scan && !iserr && (chid>0)) {
+         // for second scan we check if hit can be assigned to the events
+         if ((chid>0) && !iserr) {
             base::GlobalTime_t globaltm = LocalToGlobalTime(localtm, &help_index);
 
-            // use first channel only for flushing
+            // printf("TDC%u Test TDC message local:%11.9f global:%11.9f\n", GetBoardId(), localtm, globaltm);
+
+            // we test hist, but do not allow to close events
             unsigned indx = TestHitTime(globaltm, true, false);
 
-            if (indx < fGlobalMarks.size())
+            if (indx < fGlobalMarks.size()) {
+               // printf("!!!!!!!!!!!!!!!!!!!!!! ADD %s message ch %u diff %12.9f !!!!!!!!!!!!!!!!\n", GetName(), chid, globaltm - fGlobalMarks.item(indx).globaltm);
                AddMessage(indx, (hadaq::TdcSubEvent*) fGlobalMarks.item(indx).subev, hadaq::TdcMessageExt(msg, globaltm));
+            }
          }
 
          continue;
@@ -609,14 +636,31 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       }
    }
 
-   if (isfirstepoch && !iserr)
+   if (isfirstepoch && !iserr) {
+      // if we want to compensate epoch reset, use epoch of trigger channel+1
+      // +1 to exclude small probability of hits after trigger with epoch+1 value
+      if (fCompensateEpochReset && first_scan)
+         fCompensateEpochCounter = first_epoch+1;
+
       iter.setRefEpoch(first_epoch);
+   }
 
    if (first_scan) {
 
+      // if we use trigger as time marker
+      if (fUseNativeTrigger && (ch0time>=0)) {
+         base::LocalTimeMarker marker;
+         marker.localid = 1;
+         marker.localtm = ch0time;
+
+         // printf("%s Create TRIGGER %11.9f\n", GetName(), ch0time);
+
+         AddTriggerMarker(marker);
+      }
+
       if ((syncid != 0xffffffff) && (ch0time>=0)) {
 
-//         printf("SYNC %u localtm %12.9f\n", syncid, ch0time);
+         // printf("%s Create SYNC %u tm %12.9f\n", GetName(), syncid, ch0time);
          base::SyncMarker marker;
          marker.uniqueid = syncid;
          marker.localid = 0;
@@ -648,12 +692,14 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
    if (first_scan && !fCrossProcess) AfterFill();
 
-   if (rawprint) {
+   if (rawprint && first_scan) {
       printf("RAW data of TDC%u\n", GetBoardId());
       TdcIterator iter;
       iter.assign((uint32_t*) buf.ptr(4), buf.datalen()/4 -1, false);
       while (iter.next()) iter.printmsg();
    }
+
+   // printf("TDC%u %s scan tag = %u err = %d\n", GetBoardId(), first_scan ? "FIRST" : "SECOND", buf().user_tag, iserr);
 
    return !iserr;
 }

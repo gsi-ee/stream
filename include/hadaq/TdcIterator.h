@@ -25,7 +25,7 @@ namespace hadaq {
 
       public:
 
-         TdcIterator() :
+         TdcIterator(unsigned epochbitlen = 28) :
             fBuf(0),
             fBuflen(0),
             fSwapped(false),
@@ -33,9 +33,9 @@ namespace hadaq {
             fCurEpoch(DummyEpoch),
             fConv()
          {
-            // we have 11 bits for coarse stamp and 32 bits for epoch
+            // we have 11 bits for coarse stamp and 28 bits for epoch
             // each bin is 5 ns
-            fConv.SetTimeSystem(11+32, hadaq::TdcMessage::CoarseUnit());
+            fConv.SetTimeSystem(epochbitlen + 11, hadaq::TdcMessage::CoarseUnit());
          }
 
          void assign(uint32_t* buf, unsigned len, bool swapped = true)
@@ -96,6 +96,9 @@ namespace hadaq {
 
          /** Clear current epoch value */
          void clearCurEpoch() { fCurEpoch = DummyEpoch; }
+
+         /** Set value of current epoch */
+         void setCurEpoch(uint32_t val) { fCurEpoch = val; }
 
          /** Return value of current epoch */
          uint32_t getCurEpoch() const { return fCurEpoch; }

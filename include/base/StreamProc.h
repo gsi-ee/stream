@@ -7,33 +7,34 @@
 
 #include "base/Markers.h"
 
-#include "base/ProcMgr.h"
+#include "base/Processor.h"
 
 namespace base {
 
    /** Class base::StreamProc is abstract processor of data streams
-    * from nXYTER or GET4s or any other kind of data.
+    * from TRB3 or GET4 or nXYTER or any other kind of data.
     * Main motivation for the class is unify way how data-streams can be processed
     * and how all kind of time calculations could be done.  */
 
    class Event;
 
-   class StreamProc {
+   class StreamProc : public Processor {
       friend class ProcMgr;
 
-      protected:
+      public:
+         enum SyncKind {
+            sync_None,         //!< no synchronization
+            sync_Inter,        //!< use time interpolation between two markers
+            sync_Left,         //!< use sync marker on left side
+            sync_Right         //!< use sync marker on right side
+         };
 
-         enum { DummyBrdId = 0xffffffff };
+
+      protected:
 
          typedef RecordsQueue<base::Buffer, false> BuffersQueue;
 
          typedef RecordsQueue<base::SyncMarker, false> SyncMarksQueue;
-
-         std::string fName;                       //! processor name, used for event naming
-
-         unsigned   fBoardId;                     //! identifier, used mostly for debugging
-
-         ProcMgr*   fMgr;                         //!
 
          BuffersQueue fQueue;                     //!
 
@@ -41,9 +42,8 @@ namespace base {
          unsigned        fQueueScanIndexTm;       //!< index of buffer to scan and set correct times of the buffer head
 
          bool            fRawScanOnly;            //!< indicates if only raw scan will be done, processor will not be used for any data selection
-         bool            fHistFilling;            //!< indicates if histograms should be fillled
 
-         bool            fIsSynchronisationRequired; //!< true if sync is required
+         SyncKind        fSynchronisationKind;    //!< kind of synchronization
          SyncMarksQueue  fSyncs;                  //!< list of sync markers
          unsigned        fSyncScanIndex;          //!< sync scan index, indicate number of syncs which can really be used for synchronization
          bool            fSyncFlag;               //!< boolean, used in sync adjustment procedure
@@ -59,10 +59,6 @@ namespace base {
 
          bool fTimeSorting;                       //!< defines if time sorting should be used for the messages
 
-         std::string   fPrefix;                   //!< prefix, used for histogram names
-         std::string   fSubPrefixD;               //!< sub-prefix for histogram directory
-         std::string   fSubPrefixN;               //!< sub-prefix for histogram names
-
          base::H1handle fTriggerTm;  //! histogram with time relative to the trigger
          base::H1handle fMultipl;    //! histogram of event multiplicity
 
@@ -74,43 +70,13 @@ namespace base {
          /** Make constructor protected - no way to create base class instance */
          StreamProc(const char* name = "", unsigned brdid = DummyBrdId, bool basehist = true);
 
-         void SetBoardId(unsigned id) { fBoardId = id; }
-
-         /** Set subprefix for histograms and conditions */
-         void SetSubPrefix(const char* subname = "", int indx = -1, const char* subname2 = "", int indx2 = -1);
-
-         H1handle MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle = 0);
-         inline void FillH1(H1handle h1, double x, double weight = 1.)
-         {
-            if (IsHistFilling() && (h1!=0)) mgr()->FillH1(h1, x, weight);
-         }
-
-         inline double GetH1Content(H1handle h1, int nbin)
-         {
-            return mgr()->GetH1Content(h1, nbin);
-         }
-
-         inline void ClearH1(base::H1handle h1)
-         {
-            if (IsHistFilling()) mgr()->ClearH1(h1);
-         }
-
-         H2handle MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options = 0);
-         inline void FillH2(H1handle h2, double x, double y, double weight = 1.)
-         {
-            if (IsHistFilling() && (h2!=0)) mgr()->FillH2(h2, x, y, weight);
-         }
-
-         C1handle MakeC1(const char* name, double left, double right, H1handle h1 = 0);
-         void ChangeC1(C1handle c1, double left, double right);
-         int TestC1(C1handle c1, double value, double* dist = 0);
-         double GetC1Limit(C1handle c1, bool isleft = true);
-
          /** Method indicate if any kind of time-synchronization technique
-          * should be applied for the processor.
-          * If true, sync messages must be produced by processor and will be used.
-          * If false, local time stamps could be immediately used (with any necessary conversion) */
-         void SetSynchronisationRequired(bool on = true) { fIsSynchronisationRequired = on; }
+          * should be applied for the processor. Following values can be applied:
+          *   0 - no sync, local time will be used (with any necessary conversion)
+          *   1 - interpolation, for every hit sync on left and right side should be used
+          *   2 - sync message on left side will be used for calibration
+          *   3 - sync message on left side will be used for calibration */
+         void SetSynchronisationKind(SyncKind kind = sync_Inter) { fSynchronisationKind = kind; }
 
          void AddSyncMarker(SyncMarker& marker);
 
@@ -168,19 +134,14 @@ namespace base {
 
          virtual ~StreamProc();
 
-         //  void AssignMgr(ProcMgr* m) { fMgr = m; }
-         ProcMgr* mgr() const { return fMgr; }
-
-         const char* GetName() const { return fName.c_str(); }
-
-         unsigned GetBoardId() const { return fBoardId; }
-
          /** Enable/disable time sorting of data in output event */
          void SetTimeSorting(bool on) { fTimeSorting = on; }
          bool IsTimeSorting() const { return fTimeSorting; }
 
          /** Set minimal distance between two triggers */
          void SetTriggerMargin(double margin = 0.) { fTriggerAcceptMaring = margin; }
+
+         void CreateTriggerHist(unsigned multipl = 40, unsigned nbins = 2500, double left = -1e-6, double right = 4e-6);
 
          /** Set window relative to some reference signal, which will be used as
           * region-of-interest interval to select messages from the stream */
@@ -192,14 +153,22 @@ namespace base {
          void SetRawScanOnly(bool on = true) { fRawScanOnly = on; }
          bool IsRawScanOnly() const { return fRawScanOnly; }
 
-         void SetHistFilling(bool on = true) { fHistFilling = on; }
-         bool IsHistFilling() const { return fHistFilling; }
-
          /** Method indicate if any kind of time-synchronization technique
           * should be applied for the processor.
           * If true, sync messages must be produced by processor and will be used.
           * If false, local time stamps could be immediately used (with any necessary conversion) */
-         bool IsSynchronisationRequired() const { return fIsSynchronisationRequired; }
+         bool IsSynchronisationRequired() const { return fSynchronisationKind != sync_None; }
+
+         /** Returns minimal number of syncs required for time synchronisation */
+         unsigned minNumSyncRequired() const {
+            switch (fSynchronisationKind) {
+               case sync_None:  return 0;
+               case sync_Inter: return 2;
+               case sync_Left:  return 1;
+               case sync_Right: return 1;
+            }
+            return 0;
+         }
 
          /** Provide next port of data to the processor */
          virtual bool AddNextBuffer(const Buffer& buf);
@@ -238,11 +207,6 @@ namespace base {
 
          /** Append data for first trigger to the main event */
          virtual bool AppendSubevent(base::Event* evt);
-
-
-         virtual void UserPreLoop() {}
-
-         virtual void UserPostLoop() {}
 
          /** Central method to scan new data in the queue
           * This should include:

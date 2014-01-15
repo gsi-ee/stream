@@ -20,7 +20,7 @@ mbs::Processor::Processor() :
    fLastSync2 = 0;
 
    // this is raw-scan processor, therefore no synchronization is required for it
-   // SetSynchronisationRequired(false);
+   SetSynchronisationKind(sync_None);
 
    // only raw scan, data can be immediately removed
    // SetRawScanOnly(true);

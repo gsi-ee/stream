@@ -11,15 +11,12 @@ unsigned base::StreamProc::fMarksQueueCapacity = 10000;
 unsigned base::StreamProc::fBufsQueueCapacity = 100;
 
 base::StreamProc::StreamProc(const char* name, unsigned brdid, bool basehist) :
-   fName(name),
-   fBoardId(0),
-   fMgr(0),
+   base::Processor(name, brdid),
    fQueue(fBufsQueueCapacity),
    fQueueScanIndex(0),
    fQueueScanIndexTm(0),
    fRawScanOnly(false),
-   fHistFilling(true),
-   fIsSynchronisationRequired(true),
+   fSynchronisationKind(sync_Inter),
    fSyncs(fMarksQueueCapacity),
    fSyncScanIndex(0),
    fLocalMarks(fMarksQueueCapacity),
@@ -29,144 +26,43 @@ base::StreamProc::StreamProc(const char* name, unsigned brdid, bool basehist) :
    fGlobalTrigScanIndex(0),
    fGlobalTrigRightIndex(0),
    fTimeSorting(false),
-   fPrefix(),
-   fSubPrefixD(),
-   fSubPrefixN()
+   fTriggerTm(0),
+   fMultipl(0),
+   fTriggerWindow(0)
 {
-   if (brdid < DummyBrdId) {
-      char sbuf[100];
-      snprintf(sbuf, sizeof(sbuf), "%u", brdid);
-      fName.append(sbuf);
-      fBoardId = brdid;
-   }
-
-   fPrefix = fName;
-
    fMgr = base::ProcMgr::AddProc(this);
 
-   if (basehist) {
-      fTriggerTm = MakeH1("TriggerTm", "Time relative to trigger", 2500, -1e-6, 4e-6, "s");
-      fMultipl = MakeH1("Multipl", "Subevent multiplicity", 40, 0., 40., "hits");
-      fTriggerWindow = MakeC1("TrWindow", 5e-7, 10e-7, fTriggerTm);
-   }
+   if (basehist) CreateTriggerHist(40, 2500, -1e-6, 4e-6);
 }
 
 
 base::StreamProc::~StreamProc()
 {
-//   printf("Start bufs clear\n");
    fSyncs.clear();
    fQueue.clear();
    fLocalMarks.clear();
    // TODO: cleanup of event data
    fGlobalMarks.clear();
-//   printf("Done bufs clear\n");
 }
 
-void base::StreamProc::SetSubPrefix(const char* name, int indx, const char* subname2, int indx2)
+void base::StreamProc::CreateTriggerHist(unsigned multipl, unsigned nbins, double left, double right)
 {
-   if ((name==0) || (*name==0)) {
-      fSubPrefixD.clear();
-      fSubPrefixN.clear();
-      return;
-   }
+   SetSubPrefix();
 
-   fSubPrefixN = name;
-   fSubPrefixD = name;
-   if (indx>=0) {
-      char sbuf[100];
-      snprintf(sbuf,sizeof(sbuf), "%d", indx);
-      fSubPrefixD.append(sbuf);
-      fSubPrefixN.append(sbuf);
-   }
-   fSubPrefixD.append("/");
-   fSubPrefixN.append("_");
-
-   if ((subname2!=0) && (*subname2!=0)) {
-      fSubPrefixD.append(subname2);
-      fSubPrefixN.append(subname2);
-      if (indx2>=0) {
-         char sbuf[100];
-         snprintf(sbuf,sizeof(sbuf), "%d", indx2);
-         fSubPrefixD.append(sbuf);
-         fSubPrefixN.append(sbuf);
-      }
-      fSubPrefixD.append("/");
-      fSubPrefixN.append("_");
-   }
-
+   fTriggerTm = MakeH1("TriggerTm", "Time relative to trigger", nbins, left, right, "s");
+   fMultipl = MakeH1("Multipl", "Subevent multiplicity", multipl, 0, multipl, "hits");
+   fTriggerWindow = MakeC1("TrWindow", 5e-7, 10e-7, fTriggerTm);
 }
 
-base::H1handle base::StreamProc::MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle)
-{
-   std::string hname = fPrefix + "/";
-   if (!fSubPrefixD.empty()) hname += fSubPrefixD;
-   hname += fPrefix + "_";
-   if (!fSubPrefixN.empty()) hname += fSubPrefixN;
-   hname.append(name);
-
-   std::string htitle = fName;
-   htitle.append(" ");
-   if (!fSubPrefixN.empty()) htitle += fSubPrefixN.substr(0, fSubPrefixN.length()-1) + " ";
-   htitle.append(title);
-
-   return mgr()->MakeH1(hname.c_str(), htitle.c_str(), nbins, left, right, xtitle);
-}
-
-
-base::H2handle base::StreamProc::MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options)
-{
-   std::string hname = fPrefix + "/";
-   if (!fSubPrefixD.empty()) hname += fSubPrefixD;
-   hname += fPrefix + "_";
-   if (!fSubPrefixN.empty()) hname += fSubPrefixN;
-   hname.append(name);
-
-   std::string htitle = fName;
-   htitle.append(" ");
-   if (!fSubPrefixN.empty()) htitle += fSubPrefixN.substr(0, fSubPrefixN.length()-1) + " ";
-   htitle.append(title);
-
-   return mgr()->MakeH2(hname.c_str(), htitle.c_str(), nbins1, left1, right1, nbins2, left2, right2, options);
-}
-
-
-base::C1handle base::StreamProc::MakeC1(const char* name, double left, double right, H1handle h1)
-{
-   std::string cname = fPrefix + "/";
-   if (!fSubPrefixD.empty()) cname += fSubPrefixD;
-   cname += fPrefix + "_";
-   if (!fSubPrefixN.empty()) cname += fSubPrefixN;
-   cname.append(name);
-
-   return mgr()->MakeC1(cname.c_str(), left, right, h1);
-}
-
-
-void base::StreamProc::ChangeC1(C1handle c1, double left, double right)
-{
-   mgr()->ChangeC1(c1, left, right);
-}
-
-
-int base::StreamProc::TestC1(C1handle c1, double value, double* dist)
-{
-   return mgr()->TestC1(c1, value, dist);
-}
-
-
-double base::StreamProc::GetC1Limit(C1handle c1, bool isleft)
-{
-   return mgr()->GetC1Limit(c1, isleft);
-}
 
 base::GlobalTime_t base::StreamProc::LocalToGlobalTime(base::GlobalTime_t localtm, unsigned* indx)
 {
    // method uses helper index to locate faster interval where interpolation could be done
-   // value of index is following
+   // For the interpolation value of index is following
    //  0                      - last value left to the first sync
    //  [1..numReadySyncs()-1] - last value between indx-1 and indx syncs
    //  numReadySyncs()        - last value right to the last sync
+   // For the left/right side sync index indicates sync number used
 
    // TODO: one could probably use some other methods of time conversion
 
@@ -179,7 +75,7 @@ base::GlobalTime_t base::StreamProc::LocalToGlobalTime(base::GlobalTime_t localt
    }
 
    // use liner approximation only when more than one sync available
-   if (numReadySyncs()>1) {
+   if ((fSynchronisationKind==sync_Inter) && (numReadySyncs()>1)) {
 
       // we should try to use helper index only if it is inside existing sync range
       bool try_indx = (indx!=0) && (*indx>0) && (*indx < (numReadySyncs() - 1));
@@ -197,6 +93,7 @@ base::GlobalTime_t base::StreamProc::LocalToGlobalTime(base::GlobalTime_t localt
             if (try_indx && ((*indx - 1) == n)) continue;
          }
 
+         // TODO: make time diff via LocalStampConverter
          double dist1 = localtm - getSync(n).localtm;
          double dist2 = getSync(n+1).localtm - localtm;
 
@@ -206,7 +103,7 @@ base::GlobalTime_t base::StreamProc::LocalToGlobalTime(base::GlobalTime_t localt
             //return getSync(*indx).globaltm*k1 + getSync(*indx+1).globaltm*k2;
 
             if ((dist1>0) && ((diff1/dist1 < 0.9) || (diff1/dist1 > 1.1))) {
-               printf("Something wrong with time calc %8.6f %8.6f\n", dist1, diff1);
+               printf("Something wrong with time calc %10.9g %10.9g\n", dist1, diff1);
 
                printf("%s converting localtm %12.9f dist1 %12.9f dist2 %12.9f\n", GetName(), localtm, dist1, dist2);
 
@@ -223,6 +120,37 @@ base::GlobalTime_t base::StreamProc::LocalToGlobalTime(base::GlobalTime_t localt
          }
       }
    }
+
+   // time will be calibrated with the SYNC on the left side
+   if (fSynchronisationKind==sync_Left) {
+      printf("fSynchronisationKind==sync_Left not yet implemented\n");
+      exit(7);
+   }
+
+   // time will be calibrated with the SYNC on the right side
+   if (fSynchronisationKind==sync_Right) {
+
+      unsigned cnt = 0;
+      bool use_selected = false;
+      if ((indx!=0) && (*indx < numReadySyncs())) { cnt = *indx; use_selected = true; }
+
+      while (cnt < numReadySyncs()) {
+
+         // TODO: make time diff via LocalStampConverter
+         double dist1 = getSync(cnt).localtm - localtm;
+
+         // be sure that marker on right side
+         if (dist1>=0) {
+            if ((cnt==0) || ((localtm - getSync(cnt-1).localtm) > 0)) {
+               if (indx) *indx = cnt;
+               return getSync(cnt).globaltm - dist1;
+            }
+         }
+
+         if (use_selected) { cnt = 0; use_selected = false; } else cnt++;
+      }
+   }
+
 
    // this is just shift relative to boundary SYNC markers
    // only possible when distance in nanoseconds
@@ -282,6 +210,8 @@ bool base::StreamProc::ScanNewBuffersTm()
    // for raw processor no any time is interesting
    if (IsRawScanOnly()) return true;
 
+   // printf("%s ScanNewBuffersTm() indx %u size %u\n", GetName(), fQueueScanIndexTm, fQueue.size());
+
    while (fQueueScanIndexTm < fQueue.size()) {
       base::Buffer& buf = fQueue.item(fQueueScanIndexTm);
 
@@ -292,8 +222,12 @@ bool base::StreamProc::ScanNewBuffersTm()
 
          GlobalTime_t tm = LocalToGlobalTime(buf().local_tm, &sync_index);
 
+         // printf("%s Scan buffer %u local %12.9f global %12.9f sync_index %u\n", GetName(), fQueueScanIndexTm, buf().local_tm, tm, sync_index);
+
          // only accept time calculation when interpolation
-         if (IsSynchronisationRequired() && !IsSyncIndexWithInterpolation(sync_index)) break;
+         if ((fSynchronisationKind==sync_Inter) && !IsSyncIndexWithInterpolation(sync_index)) break;
+         // when sync on the left side is last, wait for next sync
+         if ((fSynchronisationKind==sync_Left) && (sync_index==numReadySyncs()-1)) break;
 
          buf().global_tm = tm;
       }
@@ -501,7 +435,7 @@ bool base::StreamProc::CollectTriggers(GlobalMarksQueue& trigs)
 
 //      printf("Start scan trig local %u %u sync_indx %u %12.9f\n", num_trig, fLocalMarks.size(), syncindx, marker.globaltm*1e-9);
 
-      if (IsSynchronisationRequired()) {
+      if (fSynchronisationKind == sync_Inter) {
          // when synchronization used, one should verify where exact our local trigger is
 
          // this is a case when marker right to the last sync
@@ -511,6 +445,12 @@ bool base::StreamProc::CollectTriggers(GlobalMarksQueue& trigs)
             printf("Strange - trigger time left to first sync - try to continue\n");
          }
       }
+
+      if (fSynchronisationKind == sync_Left) {
+         // when sync marker on left side and it is last marker, wait for better time
+         if (syncindx == numReadySyncs()-1) break;
+      }
+
 
       fLocalMarks.pop();
       trigs.push(marker);
@@ -670,7 +610,7 @@ bool base::StreamProc::ScanDataForNewTriggers()
    // time of last trigger is used to check which buffers can be scanned
    // time of last buffer is used to check which triggers we could check
 
-//   printf("Proc:%p  Try scan data numtrig %u scan tm %u raw %u\n", GetName(), fGlobalMarks.size(), fQueueScanIndexTm, IsRawScanOnly());
+   // printf("Proc:%s  Try scan data numtrig %u scan tm %u raw %u\n", GetName(), fGlobalMarks.size(), fQueueScanIndexTm, IsRawScanOnly());
 
    // never do any seconds scan in such situation
    if (IsRawScanOnly()) return true;

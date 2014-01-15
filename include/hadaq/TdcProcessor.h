@@ -148,6 +148,12 @@ namespace hadaq {
 
          bool      fUseLastHit;       //! if true, last hit will be used in reference calculations
 
+         bool      fUseNativeTrigger;  //! if true, TRB3 trigger is used as event time
+
+         bool      fCompensateEpochReset; //! if true, compensates epoch reset
+
+         unsigned  fCompensateEpochCounter;  //! counter to compensate epoch reset
+
          /** Returns true when processor used to select trigger signal
           * TDC not yet able to perform trigger selection */
          virtual bool doTriggerSelection() const { return false; }

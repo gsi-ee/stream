@@ -4,8 +4,13 @@
 #include "TH1.h"
 #include "TH2.h"
 #include "TObjArray.h"
+#include "TROOT.h"
+#include "TSystem.h"
+#include "TString.h"
 
 #include "TGo4EventErrorException.h"
+
+#include "base/ProcMgr.h"
 
 #include "go4/TStreamEvent.h"
 #include "go4/TUserProcessor.h"
@@ -24,8 +29,15 @@ TSecondStepProcessor::TSecondStepProcessor(const char* name) :
 
    TGo4Log::Info("Create TSecondStepProcessor %s", name);
 
-   if (ExecuteScript(fDfltSetupScript.Data()) == -1) {
-      TGo4Log::Error("Cannot setup second analysis step with %s script", fDfltSetupScript.Data());
+   if (gSystem->Getenv("STREAMSYS")==0) {
+      TGo4Log::Error("STREAMSYS variable not defined");
+      throw TGo4EventErrorException(this);
+   }
+
+   gROOT->ProcessLine(".include $STREAMSYS/include");
+
+   if (ExecuteScript(TString::Format("%s+", fDfltSetupScript.Data()).Data()) == -1) {
+      TGo4Log::Error("Cannot setup second analysis step with %s script in ACLiC mode", fDfltSetupScript.Data());
       throw TGo4EventErrorException(this);
    }
 }
@@ -52,17 +64,14 @@ Bool_t TSecondStepProcessor::BuildEvent(TGo4EventElement* outevnt)
 {
 //   TGo4Log::Info("Start processing!!!");
 
-   TStreamEvent* cbmev = (TStreamEvent*) GetInputEvent();
+   TStreamEvent* event = (TStreamEvent*) GetInputEvent();
 
-   if (cbmev==0)
+   if ((event==0) || (base::ProcMgr::instance()==0))
       throw TGo4EventErrorException(this);
 
-   if (!cbmev->IsValid()) return kFALSE;
+   if (!event->IsValid()) return kFALSE;
 
-   for (Int_t n=0; n<=fProc.GetLast(); n++) {
-      TUserProcessor* proc = (TUserProcessor*) fProc[n];
-      proc->Process(cbmev);
-   }
+   base::ProcMgr::instance()->ProcessEvent(event);
 
    outevnt->SetValid(kFALSE);
 

@@ -21,7 +21,9 @@ namespace base {
       void*         buf;        // raw data
       unsigned      datalen;    // length of raw data
 
-      RawDataRec() : refcnt(0), kind(0), boardid(0), format(0), local_tm(0), global_tm(0), buf(0), datalen(0) {}
+      unsigned      user_tag;   // arbitrary data, can be used for any additional data
+
+      RawDataRec() : refcnt(0), kind(0), boardid(0), format(0), local_tm(0), global_tm(0), buf(0), datalen(0), user_tag(0) {}
 
       void reset()
       {
@@ -33,6 +35,7 @@ namespace base {
          global_tm = 0;
          buf = 0;
          datalen = 0;
+         user_tag = 0;
       }
    };
 

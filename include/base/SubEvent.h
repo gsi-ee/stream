@@ -46,8 +46,8 @@ namespace base {
          {
          }
 
-         MessageExt(const MsgClass& msg, double globaltm) :
-            fMessage(msg),
+         MessageExt(const MsgClass& _msg, double globaltm) :
+            fMessage(_msg),
             fGlobalTime(globaltm)
          {
          }
@@ -89,7 +89,7 @@ namespace base {
          ~SubEventEx() {}
 
          /** Add new message to sub-event */
-         void AddMsg(const MsgClass& msg) { fExtMessages.push_back(msg); }
+         void AddMsg(const MsgClass& _msg) { fExtMessages.push_back(_msg); }
 
          /** Returns number of messages */
          unsigned Size() const { return fExtMessages.size(); }

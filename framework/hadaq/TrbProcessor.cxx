@@ -11,7 +11,7 @@
 #define RAWPRINT( args ...) if(IsPrintRawData()) printf( args )
 
 hadaq::TrbProcessor::TrbProcessor(unsigned brdid) :
-   base::StreamProc("TRB", brdid),
+   base::StreamProc("TRB", brdid, false),
    fMap()
 {
    mgr()->RegisterProc(this, base::proc_TRBEvent, brdid);
@@ -35,12 +35,18 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid) :
    fLostTriggerCnt = 0;
    fTakenTriggerCnt = 0;
 
+   fSyncTrigMask = 0;
+   fSyncTrigValue = 0;
+
+   fUseTriggerAsSync = false;
+   fCompensateEpochReset = false;
+
    fPrintRawData = false;
    fCrossProcess = false;
    fPrintErrCnt = 1000;
 
    // this is raw-scan processor, therefore no synchronization is required for it
-   SetSynchronisationRequired(false);
+   SetSynchronisationKind(sync_None);
 
    // only raw scan, data can be immediately removed
    SetRawScanOnly(true);
@@ -73,8 +79,10 @@ void hadaq::TrbProcessor::SetTriggerWindow(double left, double right)
 {
    base::StreamProc::SetTriggerWindow(left, right);
 
-   for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
+   for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++) {
+      iter->second->CreateTriggerHist(16, 3000, -2e-6, 1e-6);
       iter->second->SetTriggerWindow(left, right);
+   }
 }
 
 
@@ -136,7 +144,7 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
          // use only 16-bit in trigger number while CTS make a lot of errors in higher 8 bits
          AccountTriggerId((sub->GetTrigNr() >> 8) & 0xffff);
 
-         ScanSubEvent(sub);
+         ScanSubEvent(sub, ev->GetSeqNr());
 
          subcnt++;
       }
@@ -156,7 +164,7 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
    return true;
 }
 
-void hadaq::TrbProcessor::ScanSubEvent(hadaq::RawSubevent* sub)
+void hadaq::TrbProcessor::ScanSubEvent(hadaq::RawSubevent* sub, unsigned trb3eventid)
 {
    // this is first scan of subevent from TRB3 data
    // our task is statistic over all messages we will found
@@ -255,21 +263,19 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaq::RawSubevent* sub)
          unsigned trignum = (data >> 16) & 0xFFFF;
          RAWPRINT("     CTS trigtype: 0x%04x, trignum=0x%04x\n", trigtype, trignum);
 
-         while (datalen-- > 1) {
+         while (datalen-- > 0) {
             //! Look only for the CTS data
             data = sub->Data(ix++);
             RAWPRINT("     CTS word: 0x%08x\n", (unsigned) data);
+
+            if ((datalen==0) && (fSyncTrigMask!=0) && ((trigtype & fSyncTrigMask) == fSyncTrigValue)) {
+               //! Last CTS word - SYNC number
+               syncNumber = (data & 0xFFFFFF);
+               findSync = true;
+               RAWPRINT("     Find SYNC %u\n", (unsigned) syncNumber);
+            }
          }
 
-         data = sub->Data(ix++);
-
-         //! Last CTS word - SYNC number
-         syncNumber = (data & 0xFFFFFF);
-         if ((trigtype & 0x3) == 1) {
-            findSync = true;
-         }
-
-         RAWPRINT("     CTS word: 0x%08x - SYNC number %u real:%s \n", (unsigned) data, syncNumber, (findSync ? "true" : "false"));
          continue;
       }
 
@@ -306,6 +312,12 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaq::RawSubevent* sub)
       RAWPRINT("Unknown header %x length %u in TDC subevent\n", data & 0xFFFF, datalen);
       ix+=datalen;
    }
+
+   if (fUseTriggerAsSync) {
+      findSync = true;
+      syncNumber = trb3eventid;
+   }
+
 
    if (findSync) {
 

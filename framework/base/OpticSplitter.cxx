@@ -12,7 +12,7 @@ base::OpticSplitter::OpticSplitter(unsigned brdid) :
    mgr()->RegisterProc(this, base::proc_RawData, brdid);
 
    // this is raw-scan processor, therefore no synchronization is required for it
-   SetSynchronisationRequired(false);
+   SetSynchronisationKind(sync_None);
 
    // only raw scan, data can be immediately removed
    SetRawScanOnly(true);

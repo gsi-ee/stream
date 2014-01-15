@@ -52,9 +52,9 @@ Bool_t TFirstStepProcessor::BuildEvent(TGo4EventElement* outevnt)
 //   TGo4Log::Info("Start processing!!!");
 
    TGo4MbsEvent* mbsev = (TGo4MbsEvent*) GetInputEvent();
-   base::Event* cbmev = (TStreamEvent*) outevnt;
+   base::Event* event = (TStreamEvent*) outevnt;
 
-   if ((mbsev==0) || (cbmev==0))
+   if ((mbsev==0) || (event==0))
       throw TGo4EventErrorException(this);
 
    if (!IsKeepInputEvent()) {
@@ -111,7 +111,7 @@ Bool_t TFirstStepProcessor::BuildEvent(TGo4EventElement* outevnt)
     //  TGo4Log::Info("Keep event %d", mbsev->GetIntLen()*4);
    }
 
-   if (ProduceNextEvent(cbmev)) {
+   if (ProduceNextEvent(event)) {
 
       // TGo4Log::Info("Produce event");
 

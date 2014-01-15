@@ -14,6 +14,8 @@
 #pragma link C++ class base::Event+;
 #pragma link C++ class base::Message+;
 #pragma link C++ class base::Iterator+;
+#pragma link C++ class base::Processor+;
+#pragma link C++ class base::EventProc+;
 #pragma link C++ class base::StreamProc+;
 #pragma link C++ class base::SysCoreProc+;
 #pragma link C++ class base::OpticSplitter+;

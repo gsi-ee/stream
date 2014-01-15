@@ -61,7 +61,7 @@ namespace base {
          void SetSyncSource(unsigned id)
          {
             fSyncSource = id;
-            SetSynchronisationRequired(fSyncSource < 2);
+            SetSynchronisationKind(fSyncSource < 2 ? sync_Inter : sync_None);
          }
 
          /** This declares that local time stamp will be used.

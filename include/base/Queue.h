@@ -71,16 +71,16 @@ namespace base {
          {
          }
 
-         Queue(unsigned capacity) :
+         Queue(unsigned _capacity) :
             fQueue(0),
             fBorder(0),
             fCapacity(0),
             fSize(0),
             fHead(0),
             fTail(0),
-            fInitSize(capacity)
+            fInitSize(_capacity)
          {
-            Allocate(capacity);
+            Allocate(_capacity);
          }
 
          virtual ~Queue()
@@ -89,13 +89,13 @@ namespace base {
             fQueue = 0;
          }
 
-         void Init(unsigned capacity)
+         void Init(unsigned _capacity)
          {
-            fInitSize = capacity;
-            Allocate(capacity);
+            fInitSize = _capacity;
+            Allocate(_capacity);
          }
 
-         void Allocate(unsigned capacity)
+         void Allocate(unsigned _capacity)
          {
             if (fCapacity>0) {
                delete[] fQueue;
@@ -104,8 +104,8 @@ namespace base {
                fBorder = 0;
             }
 
-            if (capacity>0) {
-              fCapacity = capacity;
+            if (_capacity>0) {
+              fCapacity = _capacity;
               fSize = 0;
               fQueue = new T [fCapacity];
               fBorder = fQueue + fCapacity;
@@ -256,9 +256,9 @@ namespace base {
             if (indx>=fSize)
                EOUT(("Wrong item index %u", indx));
             #endif
-            T* item = fTail + indx;
-            if (item>=fBorder) item -= fCapacity;
-            return *item;
+            T* _item = fTail + indx;
+            if (_item>=fBorder) _item -= fCapacity;
+            return *_item;
          }
 
          T* item_ptr(unsigned indx) const
@@ -326,7 +326,7 @@ namespace base {
       public:
          RecordsQueue() : Parent() {}
 
-         RecordsQueue(unsigned capacity) : Parent(capacity) {}
+         RecordsQueue(unsigned _capacity) : Parent(_capacity) {}
 
          T& front() const { return Parent::front(); }
 

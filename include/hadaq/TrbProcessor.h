@@ -45,6 +45,13 @@ namespace hadaq {
          bool fCrossProcess;         ///< if true, cross-processing will be enabled
          int  fPrintErrCnt;          ///< number of error messages, which could be printed
 
+         unsigned fSyncTrigMask;     ///< mask which should be applied for trigger type
+         unsigned fSyncTrigValue;    ///< value from trigger type (after mask) which corresponds to sync message
+
+         bool fUseTriggerAsSync;     ///< when true, trigger number used as sync message between TRBs
+
+         bool fCompensateEpochReset;  ///< when true, artificially create contigious epoch value
+
          /** Returns true when processor used to select trigger signal
           * TRB3 not yet able to perform trigger selection */
          virtual bool doTriggerSelection() const { return false; }
@@ -55,7 +62,7 @@ namespace hadaq {
          void AddSub(TdcProcessor* tdc, unsigned id);
 
          /** Scan FPGA-TDC data, distribute over sub-processors */
-         void ScanSubEvent(hadaq::RawSubevent* sub);
+         void ScanSubEvent(hadaq::RawSubevent* sub, unsigned trb3eventid);
 
       public:
 
@@ -81,6 +88,23 @@ namespace hadaq {
          void SetCrossProcess(bool on = true) { fCrossProcess = on; }
          bool IsCrossProcess() const { return fCrossProcess; }
 
+         /** Set sync mask and value which, should be obtained from
+          * trigger type to detect CBM sync message in CTS sub-event
+          * Code is following:
+          * if ((trig_type & mask) == value) syncnum = sub->LastData();  */
+         void SetSyncIds(unsigned mask, unsigned value)
+         {
+            fSyncTrigMask = mask;
+            fSyncTrigValue = value;
+         }
+
+         /** Use TRB trigger number as SYNC message.
+          * By this we synchronize all TDCs on all TRB boards by trigger number */
+         void SetUseTriggerAsSync(bool on = true) { fUseTriggerAsSync = on; }
+         bool IsUseTriggerAsSync() const { return fUseTriggerAsSync; }
+
+         /** When enabled, artificially create contigious epoch value */
+         void SetCompensateEpochReset(bool on = true) { fCompensateEpochReset = on; }
 
          unsigned NumSubProc() const { return fMap.size(); }
          TdcProcessor* GetSubProc(unsigned n) const
