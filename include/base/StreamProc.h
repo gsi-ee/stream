@@ -41,7 +41,7 @@ namespace base {
          unsigned        fQueueScanIndex;         //!< index of next buffer which should be scanned
          unsigned        fQueueScanIndexTm;       //!< index of buffer to scan and set correct times of the buffer head
 
-         bool            fRawScanOnly;            //!< indicates if only raw scan will be done, processor will not be used for any data selection
+         AnalysisKind    fAnalysisKind;           //!< defines that processor is doing
 
          SyncKind        fSynchronisationKind;    //!< kind of synchronization
          SyncMarksQueue  fSyncs;                  //!< list of sync markers
@@ -150,8 +150,12 @@ namespace base {
 
          /** Method set raw-scan only mode for processor
           * Processor will not be used for any data selection */
-         void SetRawScanOnly(bool on = true) { fRawScanOnly = on; }
-         bool IsRawScanOnly() const { return fRawScanOnly; }
+         void SetRawScanOnly() { fAnalysisKind = kind_RawOnly; }
+         bool IsRawScanOnly() const { return fAnalysisKind == kind_RawOnly; }
+
+         bool IsTriggeredAnalysis() const { return fAnalysisKind == kind_Triggered; }
+
+         bool IsStreamAnalysis() const { return fAnalysisKind == kind_Stream; }
 
          /** Method indicate if any kind of time-synchronization technique
           * should be applied for the processor.

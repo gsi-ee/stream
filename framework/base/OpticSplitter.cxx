@@ -15,7 +15,7 @@ base::OpticSplitter::OpticSplitter(unsigned brdid) :
    SetSynchronisationKind(sync_None);
 
    // only raw scan, data can be immediately removed
-   SetRawScanOnly(true);
+   SetRawScanOnly();
 }
 
 base::OpticSplitter::~OpticSplitter()

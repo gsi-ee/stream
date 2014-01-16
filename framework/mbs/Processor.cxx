@@ -23,7 +23,7 @@ mbs::Processor::Processor() :
    SetSynchronisationKind(sync_None);
 
    // only raw scan, data can be immediately removed
-   // SetRawScanOnly(true);
+   // SetRawScanOnly();
 
    // LocalStampConverter used just to emulate time scale.
    //  Every sync is just new second and LocalStampConverter prevents wrap

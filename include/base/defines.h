@@ -25,6 +25,12 @@ namespace base {
       proc_TRBEvent     = 31    //!< container for TRB frontend data
    };
 
+   enum AnalysisKind {
+      kind_RawOnly,     //!< make first scan only, no output produced
+      kind_Triggered,   //!< triggered mode, after each input event single output event is produced and all data flushed
+      kind_Stream       //!< normal analysis
+   };
+
 
    typedef void* H1handle;
    typedef void* H2handle;

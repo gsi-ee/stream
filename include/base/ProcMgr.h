@@ -37,9 +37,9 @@ namespace base {
          StreamProcMap            fMap;             //! map for fast access
          std::vector<EventProc*>  fEvProc;          //! all event processors
          GlobalMarksQueue         fTriggers;        //!< list of current triggers
-         unsigned  fTimeMasterIndex;                //!< processor index, which time is used for all other subsystems
-         bool      fRawAnalysisOnly;                //!< ignore all events, only single scan, not ouput events
-         EventStore*  fStore;                       //!< data store
+         unsigned                 fTimeMasterIndex; //!< processor index, which time is used for all other subsystems
+         AnalysisKind             fAnalysisKind;    //!< ignore all events, only single scan, not ouput events
+         EventStore              *fStore;           //!< data store
 
          static ProcMgr* fInstance;                 //!
 
@@ -89,8 +89,13 @@ namespace base {
 
          // this is list of generic methods for common data processing
 
-         bool IsRawAnalysis() const { return fRawAnalysisOnly; }
-         void SetRawAnalysis(bool on) { fRawAnalysisOnly = on; }
+         bool IsRawAnalysis() const { return fAnalysisKind == kind_RawOnly; }
+         void SetRawAnalysis(bool on = true) { fAnalysisKind = on ? kind_RawOnly : kind_Stream; }
+
+         bool IsTriggeredAnalysis() const { return fAnalysisKind == kind_Triggered; }
+         void SetTriggeredAnalysis(bool on = true) { fAnalysisKind = on ? kind_Triggered : kind_Stream; }
+
+         bool IsStreamAnalysis() const { return fAnalysisKind == kind_Stream; }
 
          /** Set sorting flag for all registered processors */
          void SetTimeSorting(bool on);

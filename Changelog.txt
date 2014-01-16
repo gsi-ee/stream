@@ -12,7 +12,9 @@
    ROOT-engine (without go4), using such classes.
 7. Provide different levels of histograms filling. For hadaq::TdcProcessor
    use such level to exclude complex histograms when such histograms not required. 
-      
+8. Implement triggered mode, when all input data must be processed at once and flushed.
+   Use such mode for TRB3/TDC processing.
+
 
 15.01.2014
 1. Implement correct flushing of data in hadaq::TdcProcessor (via trigger time)

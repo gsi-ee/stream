@@ -536,6 +536,13 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
          if ((chid==0) && (ch0time<0.)) ch0time = localtm;
 
+         if (IsTriggeredAnalysis()) {
+            if ((ch0time<0.) && CheckPrintError())
+               printf("%5s channel 0 time not found when first HIT in channel %u appears\n", GetName(), chid);
+
+            localtm -= ch0time;
+         }
+
          // fill histograms only for normal channels
          if (first_scan) {
 
@@ -567,7 +574,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                      if (TestC1(rec.fRisingRefCond, diff) == 0) {
                         rec.rising_cond_prnt--;
                         rawprint = true;
-                        printf ("TDC%u ch%u detect rising diff %8.3f ns\n", GetBoardId(), chid, diff);
+                        // printf ("TDC%u ch%u detect rising diff %8.3f ns\n", GetBoardId(), chid, diff);
                      }
                   }
                }
@@ -595,7 +602,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                      if (TestC1(rec.fFallingRefCond, diff) == 0) {
                         rec.falling_cond_prnt--;
                         rawprint = true;
-                        printf ("TDC%u ch%u detect falling diff %8.3f ns\n", GetBoardId(), chid, diff);
+                        // printf ("TDC%u ch%u detect falling diff %8.3f ns\n", GetBoardId(), chid, diff);
                      }
                   }
 

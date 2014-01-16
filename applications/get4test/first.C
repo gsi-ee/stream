@@ -12,7 +12,7 @@ void first() {
    // ignore all 250 MHz messages for timing, useful when clocks are not synchronized
    proc->SetIgnore250Mhz();
 
-//  proc->SetRawScanOnly(true);
+//  proc->SetRawScanOnly();
    
 //   proc->SetPrint(10000000);
 

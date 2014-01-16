@@ -15,7 +15,7 @@ base::StreamProc::StreamProc(const char* name, unsigned brdid, bool basehist) :
    fQueue(fBufsQueueCapacity),
    fQueueScanIndex(0),
    fQueueScanIndexTm(0),
-   fRawScanOnly(false),
+   fAnalysisKind(kind_Stream),
    fSynchronisationKind(sync_Inter),
    fSyncs(fMarksQueueCapacity),
    fSyncScanIndex(0),
@@ -273,6 +273,9 @@ bool base::StreamProc::VerifyFlushTime(const base::GlobalTime_t& flush_time)
 
 void base::StreamProc::AddSyncMarker(base::SyncMarker& marker)
 {
+   // ignore sync marker when not doing stream analysis
+   if (!IsStreamAnalysis()) return;
+
    if (!IsSynchronisationRequired()) {
       printf("No sync should be supplied !!!!!\n");
       exit(5);
@@ -289,6 +292,9 @@ void base::StreamProc::AddSyncMarker(base::SyncMarker& marker)
 
 bool base::StreamProc::AddTriggerMarker(LocalTimeMarker& marker, double tm_range)
 {
+   // ignore trigger marker when not doing stream analysis
+   if (!IsStreamAnalysis()) return true;
+
    // last local trigger is remembered to exclude trigger duplication or
    // too close distances
 
@@ -569,7 +575,7 @@ unsigned base::StreamProc::TestHitTime(const base::GlobalTime_t& hittime, bool n
 
 //        printf("Find message on the right side from event %u distance %8.6f time %8.6f\n", indx, dist, triggertm);
 
-          if (can_close_event && (dist>MaximumDisorderTm())) {
+          if (can_close_event && IsStreamAnalysis() && (dist>MaximumDisorderTm())) {
              if (indx==fGlobalTrigScanIndex) {
 //                if (fGlobalTrig[indx].normal())
 //                   printf("Declare trigger %12.9f ready\n", marker.globaltm);
@@ -587,10 +593,6 @@ unsigned base::StreamProc::TestHitTime(const base::GlobalTime_t& hittime, bool n
           // distance will be negative
        }
     }
-
-//   if (res_indx == fGlobalTrig.size()) {
-//      printf("non-assigned hit\n");
-//   }
 
    // account hit time in histogram
    if (normal_hit && (best_indx<fGlobalMarks.size()))
@@ -615,65 +617,79 @@ bool base::StreamProc::ScanDataForNewTriggers()
    // never do any seconds scan in such situation
    if (IsRawScanOnly()) return true;
 
-   // never scan last buffer
-   if (fQueueScanIndexTm < 2) return true;
-
    // never scan when no triggers are exists
    if (fGlobalMarks.size() == 0) return true;
 
-   // define triggers which we could scan
-   fGlobalTrigRightIndex = fGlobalTrigScanIndex;
 
-   if (fGlobalMarks.size() > 1) {
-
-      if (fQueueScanIndexTm > fQueue.size()) {
-         printf("Something wrong with index fQueueScanIndexTm %u\n", fQueueScanIndexTm);
-         exit(12);
-      }
-
-      // define buffer index, which will be used for time boundary calculations
-      // normally it should be last buffer with time assigned
-      unsigned buffer_index_tm = fQueueScanIndexTm-1;
-
-//      printf("Start search from index %u\n", buffer_index_tm);
-
-      while (fQueue.item(buffer_index_tm).null()) {
-         buffer_index_tm--;
-         // last buffer should remain in queue anyway
-         if (buffer_index_tm==0) return true;
-      }
-      // this is maximum time for the trigger which has chance to get all data from buffer with index fQueue.size()-2
-      double trigger_time_limit = fQueue.item(buffer_index_tm).rec().global_tm - GetC1Limit(fTriggerWindow, false) - MaximumDisorderTm();
-
-//      printf("Trigger time limit is %12.9f\n", trigger_time_limit*1e-9);
-
-      while (fGlobalTrigRightIndex < fGlobalMarks.size()-1) {
-         if (fGlobalMarks.item(fGlobalTrigRightIndex).globaltm > trigger_time_limit) break;
-         fGlobalTrigRightIndex++;
-      }
-   }
-
-   if (fGlobalTrigRightIndex==0) {
-      // printf("No triggers are select for scanning\n");
-      return true;
-   }
-
-   // at the same time, we must define upper_buf_limit to exclude case
-   // that trigger time will be generated after we scan and drop buffer
-
+   // defines how many buffer will be processed
    unsigned upper_buf_limit = 0;
 
-   double buffer_timeboundary = fGlobalMarks.item(fGlobalTrigRightIndex-1).globaltm + GetC1Limit(fTriggerWindow, true) - MaximumDisorderTm();
+   if (IsTriggeredAnalysis()) {
 
-   while (upper_buf_limit < fQueueScanIndexTm - 1) {
-      // only when next buffer start tm less than left boundary of last trigger,
-      // one can include previous buffer into the scan
-      base::Buffer& buf = fQueue.item(upper_buf_limit+1);
+      // just scan everything - all bufs belong to the trigger
+      upper_buf_limit = fQueue.size();
 
-      if (!buf.null())
-         if (buf.rec().global_tm > buffer_timeboundary) break;
-//      printf("Buffer %12.9f will be scanned, boundary %12.9f\n", fQueue.item(upper_buf_limit).rec().globaltm*1e-9, buffer_timeboundary*1e-9);
-      upper_buf_limit++;
+      fGlobalTrigScanIndex = 0;
+      fGlobalTrigRightIndex = 1;
+
+   } else {
+
+      // never scan last buffer
+      if (fQueueScanIndexTm < 2) return true;
+
+      // define triggers which we could scan
+      fGlobalTrigRightIndex = fGlobalTrigScanIndex;
+
+      if (fGlobalMarks.size() > 1) {
+
+         if (fQueueScanIndexTm > fQueue.size()) {
+            printf("Something wrong with index fQueueScanIndexTm %u\n", fQueueScanIndexTm);
+            exit(12);
+         }
+
+         // define buffer index, which will be used for time boundary calculations
+         // normally it should be last buffer with time assigned
+         unsigned buffer_index_tm = fQueueScanIndexTm-1;
+
+         //      printf("Start search from index %u\n", buffer_index_tm);
+
+         while (fQueue.item(buffer_index_tm).null()) {
+            buffer_index_tm--;
+            // last buffer should remain in queue anyway
+            if (buffer_index_tm==0) return true;
+         }
+         // this is maximum time for the trigger which has chance to get all data from buffer with index fQueue.size()-2
+         double trigger_time_limit = fQueue.item(buffer_index_tm).rec().global_tm - GetC1Limit(fTriggerWindow, false) - MaximumDisorderTm();
+
+         //      printf("Trigger time limit is %12.9f\n", trigger_time_limit*1e-9);
+
+         while (fGlobalTrigRightIndex < fGlobalMarks.size()-1) {
+            if (fGlobalMarks.item(fGlobalTrigRightIndex).globaltm > trigger_time_limit) break;
+            fGlobalTrigRightIndex++;
+         }
+      }
+
+      if (fGlobalTrigRightIndex==0) {
+         // printf("No triggers are select for scanning\n");
+         return true;
+      }
+
+      // at the same time, we must define upper_buf_limit to exclude case
+      // that trigger time will be generated after we scan and drop buffer
+
+      double buffer_timeboundary = fGlobalMarks.item(fGlobalTrigRightIndex-1).globaltm + GetC1Limit(fTriggerWindow, true) - MaximumDisorderTm();
+
+      while (upper_buf_limit < fQueueScanIndexTm - 1) {
+         // only when next buffer start tm less than left boundary of last trigger,
+         // one can include previous buffer into the scan
+         base::Buffer& buf = fQueue.item(upper_buf_limit+1);
+
+         if (!buf.null())
+            if (buf.rec().global_tm > buffer_timeboundary) break;
+         //      printf("Buffer %12.9f will be scanned, boundary %12.9f\n", fQueue.item(upper_buf_limit).rec().globaltm*1e-9, buffer_timeboundary*1e-9);
+         upper_buf_limit++;
+      }
+
    }
 
    // if ((upper_buf_limit==0) && (fQueue.size()>5)) {
@@ -715,6 +731,10 @@ bool base::StreamProc::ScanDataForNewTriggers()
    // at the same time all sync will be skipped as well
 
    SkipBuffers(upper_buf_limit);
+
+
+   // we mark first (and the only) event as ready
+   if (IsTriggeredAnalysis()) fGlobalTrigScanIndex = 1;
 
 //   printf("After skip buffers queue size %u\n", fQueue.size());
 

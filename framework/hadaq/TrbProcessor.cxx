@@ -52,7 +52,7 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid) :
    SetSynchronisationKind(sync_None);
 
    // only raw scan, data can be immediately removed
-   SetRawScanOnly(true);
+   SetRawScanOnly();
 }
 
 hadaq::TrbProcessor::~TrbProcessor()
@@ -83,7 +83,7 @@ void hadaq::TrbProcessor::SetTriggerWindow(double left, double right)
    base::StreamProc::SetTriggerWindow(left, right);
 
    for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++) {
-      iter->second->CreateTriggerHist(16, 3000, -2e-6, 1e-6);
+      iter->second->CreateTriggerHist(16, 3000, -2e-6, 2e-6);
       iter->second->SetTriggerWindow(left, right);
    }
 }

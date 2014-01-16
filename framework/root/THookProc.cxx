@@ -6,7 +6,7 @@ THookProc::THookProc(const char* cmd, Double_t period) :
    fPeriod(period),
    fWatch()
 {
-   SetRawScanOnly(true);
+   SetRawScanOnly();
    SetSynchronisationKind(sync_None);
    fWatch.Start();
 }

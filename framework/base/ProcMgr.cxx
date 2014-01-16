@@ -19,7 +19,7 @@ base::ProcMgr::ProcMgr() :
    fEvProc(),
    fTriggers(10000),                // FIXME: size should be configurable
    fTimeMasterIndex(DummyIndex),
-   fRawAnalysisOnly(false),
+   fAnalysisKind(kind_Stream),
    fStore(0)
 {
    if (fInstance==0) fInstance = this;
@@ -118,14 +118,18 @@ double base::ProcMgr::GetC1Limit(C1handle c1, bool isleft)
 }
 
 
-
-
 void base::ProcMgr::UserPreLoop()
 {
    for (unsigned n=0;n<fProc.size();n++) {
       if (fProc[n]==0) continue;
 
       if (fStore && fProc[n]->IsStoreEnabled()) fProc[n]->StartStore(fStore);
+      if (fProc[n]->fAnalysisKind!=kind_RawOnly)
+         fProc[n]->fAnalysisKind = fAnalysisKind;
+
+      if (!IsStreamAnalysis())
+         fProc[n]->SetSynchronisationKind(base::StreamProc::sync_None);
+
       fProc[n]->UserPreLoop();
    }
 
@@ -256,6 +260,12 @@ bool base::ProcMgr::AnalyzeSyncMarkers()
    // TODO: configure which processor is time master
    // TODO: work with unsynchronized SYNC messages - not always the same id in the front
    // TODO: process not only last sync message
+
+   // in raw analysis we should not call this function
+   if (IsRawAnalysis()) return false;
+
+   // in triggered analysis synchronization already done by trigger
+   if (IsTriggeredAnalysis()) return true;
 
    bool isenough = true;
 
@@ -398,12 +408,20 @@ bool base::ProcMgr::CollectNewTriggers()
    // one should create special "flush" trigger which force
    // flushing of the data
 
+   if (IsRawAnalysis()) return false;
+
    // first collect triggers from the processors
    for (unsigned n=0;n<fProc.size();n++)
       fProc[n]->CollectTriggers(fTriggers);
 
 //   printf("CollectNewTriggers\n");
 
+   if (IsTriggeredAnalysis()) {
+
+      // be sure to have at least one trigger in the list
+      if (fTriggers.size()==0)
+         fTriggers.push(GlobalMarker(0.));
+   } else
    // create flush event when master has already two buffers and
    // time is reached by all sub-systems
    if (fProc.size() > 0) {
