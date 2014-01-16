@@ -38,6 +38,8 @@ void first()
    // TDC subevent header id
    trb3->SetHadaqTDCId(tdcmap[0] & 0xFF00);
 
+   trb3->SetHistFilling(1); // only basic histograms, all TDC channels are disabled
+
    for (int cnt=0;cnt<4;cnt++) {
 
       int tdcid = tdcmap[cnt] & 0x00FF;
@@ -57,13 +59,15 @@ void first()
 
       tdc->SetUseLastHit(true);
 
+      // all reference histograms will be filled only
+      // when trb3->SetHistFilling(4) will be called
+
       if (cnt==0) {
          int channels0[] = {chOffset+1, chOffset+2, chOffset+3, chOffset+4, 0};
          tdc->CreateHistograms( channels0 );
 
          tdc->SetRefChannel(chOffset+1, 0, 0xffff, 10000,  -2000., 1000., false);
          tdc->SetRefChannel(chOffset+2, 0, 0xffff, 10000,  -2000., 1000., false);
-    
 
          tdc->SetRefChannel(chOffset+3, chOffset+1, 0xffff, 4800,  -20., 100., true);
          tdc->SetRefChannel(chOffset+4, chOffset+1, 0xffff, 5000,  0., 500., true);
@@ -86,23 +90,6 @@ void first()
          tdc->SetRefChannel(6, 5, 0xffff, 1500,  0., 300., true);
       }
 
-  
-
-
-      // specify reference channel for any other channel -
-      // will appear as additional histogram with time difference between channels
-      // for (int n=2;n<65;n=n+2)
-      //   tdc->SetRefChannel(n, n-1);
-
-      // one also able specify reference from other TDCs
-      // but one should enable CrossProcessing for trb3
-      // Here we set as reference channel 0 on tdc 1
-      // tdc->SetRefChannel(0, 0, 1);
-
-      // for old FPGA code one should have epoch for each hit, no longer necessary
-      // tdc->SetEveryEpoch(true);
-
-
       // next parameters are about time calibration - there are two possibilities
       // 1) automatic calibration after N hits in every enabled channel
       // 2) generate calibration on base of provided data and than use it later statically for analysis
@@ -118,82 +105,8 @@ void first()
 
       // enable automatic calibration, specify required number of hits in each channel
       //tdc->SetAutoCalibration(100000);
-
-      // this will be required only when second analysis step will be introduced
-      // and one wants to select only hits around some trigger signal for that analysis
-
-      // method set window for all TDCs at the same time
-      //trb->SetTriggerWindow(-4e-7, -3e-7);
-
-#ifdef __GO4ANAMACRO__
-      int numx = 1;
-      int numy = 1;
-      while ((numx * numy) < tdc->NumChannels()) {
-         if (numx==numy) numx++; else numy++;
-      }
-
-      TGo4Picture** pic = new TGo4Picture*[tdc->GetNumHist()];
-      int* piccnt = new int[tdc->GetNumHist()];
-      for (int k=0;k<tdc->GetNumHist();k++) {
-         pic[k] = new TGo4Picture(Form("TDC%d_%s",tdcid, tdc->GetHistName(k)), Form("All %s", tdc->GetHistName(k)));
-         pic[k]->SetDivision(numy,numx);
-         piccnt[k] = 0;
-      }
-      for (int n=0;n<tdc->NumChannels();n++) {
-         int x = n % numx;
-         int y = n / numx;
-         for (int k=0;k<tdc->GetNumHist();k++) {
-            TObject* obj = (TObject*) tdc->GetHist(n, k);
-            if (obj) piccnt[k]++;
-            pic[k]->Pic(y,x)->AddObject(obj);
-         }
-      }
-      for (int k=0;k<tdc->GetNumHist();k++) {
-         if (piccnt[k] > 0) go4->AddPicture(pic[k]);
-                      else delete pic[k];
-      }
-      delete[] pic;
-      delete[] piccnt;
-
-#endif
-
    }
 
    // method set window for all TDCs at the same time
-   trb3->SetTriggerWindow(-4e-7, -1e-9);
-
-   base::StreamProc::SetBufsQueueCapacity(100);
-
-
-   // This is a method to regularly invoke macro, where arbitrary action can be performed
-   // One could specify period in seconds or function will be called for every event processed
-
-   // new THookProc("my_hook();", 2.5);
-}
-
-
-
-// this is example of hook function
-// here one gets access to all tdc processors and obtains Mean and RMS
-// value on the first channel for each TDC and prints on the display
-
-void my_hook()
-{
-   hadaq::TrbProcessor* trb3 = base::ProcMgr::instance()->FindProc("TRB0");
-   if (trb3==0) return;
-
-   printf("Do extra work NUM %u\n", trb3->NumSubProc());
-
-   for (unsigned ntdc=0;ntdc<trb3->NumSubProc();ntdc++) {
-
-      hadaq::TdcProcessor* tdc = trb3->GetSubProc(ntdc);
-      if (tdc==0) continue;
-
-      TH1* hist = (TH1*) tdc->GetChannelRefHist(1);
-
-      printf("  TDC%u mean:%5.2f rms:%5.2f\n", tdc->GetBoardId(), hist->GetMean(), hist->GetRMS());
-
-      tdc->ClearChannelRefHist(1);
-   }
-
+   trb3->SetTriggerWindow(-4e-7, -0.2e-7);
 }

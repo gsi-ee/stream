@@ -10,7 +10,9 @@
    Produced tree can be directly used in go4 or ROOT.   
 6. Move ROOT-relevant classes to main library, later one could provide
    ROOT-engine (without go4), using such classes.
-   
+7. Provide different levels of histograms filling. For hadaq::TdcProcessor
+   use such level to exclude complex histograms when such histograms not required. 
+      
 
 15.01.2014
 1. Implement correct flushing of data in hadaq::TdcProcessor (via trigger time)

@@ -30,25 +30,6 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fCompensateEpochReset(false),
    fCompensateEpochCounter(0)
 {
-   fMsgPerBrd = trb ? trb->fMsgPerBrd : 0;
-   fErrPerBrd = trb ? trb->fErrPerBrd : 0;
-   fHitsPerBrd = trb ? trb->fHitsPerBrd : 0;
-
-   fChannels = MakeH1("Channels", "TDC channels", numchannels, 0, numchannels, "ch");
-   fErrors = MakeH1("Errors", "Errors in TDC channels", numchannels, 0, numchannels, "ch");
-   fUndHits = MakeH1("UndetectedHits", "Undetected hits in TDC channels", numchannels, 0, numchannels, "ch");
-
-   fMsgsKind = MakeH1("MsgKind", "kind of messages", 8, 0, 8, "xbin:Reserved,Header,Debug,Epoch,Hit,-,-,-;kind");
-
-   fAllFine = MakeH1("FineTm", "fine counter value", 1024, 0, 1024, "fine");
-   fAllCoarse = MakeH1("CoarseTm", "coarse counter value", 2048, 0, 2048, "coarse");
-
-   for (unsigned ch=0;ch<numchannels;ch++) {
-      fCh.push_back(ChannelRec());
-   }
-
-   // always create histograms for channel 0
-   CreateChannelHistograms(0);
 
    if (trb) {
       trb->AddSub(this, tdcid);
@@ -58,7 +39,38 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
       fPrintRawData = trb->IsPrintRawData();
       fCrossProcess = trb->IsCrossProcess();
       fCompensateEpochReset = trb->fCompensateEpochReset;
+
+      SetHistFilling(trb->HistFillLevel());
    }
+
+   fMsgPerBrd = trb ? trb->fMsgPerBrd : 0;
+   fErrPerBrd = trb ? trb->fErrPerBrd : 0;
+   fHitsPerBrd = trb ? trb->fHitsPerBrd : 0;
+
+   fChannels = 0;
+   fErrors = 0;
+   fUndHits = 0;
+   fMsgsKind = 0;
+   fAllFine = 0;
+   fAllCoarse = 0;
+
+   if (HistFillLevel() > 1) {
+      fChannels = MakeH1("Channels", "TDC channels", numchannels, 0, numchannels, "ch");
+      fErrors = MakeH1("Errors", "Errors in TDC channels", numchannels, 0, numchannels, "ch");
+      fUndHits = MakeH1("UndetectedHits", "Undetected hits in TDC channels", numchannels, 0, numchannels, "ch");
+
+      fMsgsKind = MakeH1("MsgKind", "kind of messages", 8, 0, 8, "xbin:Reserved,Header,Debug,Epoch,Hit,-,-,-;kind");
+
+      fAllFine = MakeH1("FineTm", "fine counter value", 1024, 0, 1024, "fine");
+      fAllCoarse = MakeH1("CoarseTm", "coarse counter value", 2048, 0, 2048, "coarse");
+   }
+
+   for (unsigned ch=0;ch<numchannels;ch++) {
+      fCh.push_back(ChannelRec());
+   }
+
+   // always create histograms for channel 0
+   CreateChannelHistograms(0);
 
    fNewDataFlag = false;
 
@@ -77,7 +89,7 @@ bool hadaq::TdcProcessor::CheckPrintError()
 
 bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
 {
-   if (ch>=NumChannels()) return false;
+   if ((HistFillLevel() < 3) || (ch>=NumChannels())) return false;
 
    if (fCh[ch].fRisingFine || fCh[ch].fFallingFine) return true;
 
@@ -149,11 +161,10 @@ void hadaq::TdcProcessor::CreateHistograms(int *arr)
 }
 
 
-
 void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned reftdc,
                                         int npoints, double left, double right, bool twodim)
 {
-   if (ch>=NumChannels()) return;
+   if ((ch>=NumChannels()) || (HistFillLevel()<4)) return;
    fCh[ch].refch = refch;
    fCh[ch].reftdc = (reftdc >= 0xffff) ? GetBoardId() : reftdc;
 
@@ -202,6 +213,8 @@ bool hadaq::TdcProcessor::SetDoubleRefChannel(unsigned ch1, unsigned ch2,
                                               int npx, double xmin, double xmax,
                                               int npy, double ymin, double ymax)
 {
+   if (HistFillLevel()<4) return false;
+
    if ((ch1>=NumChannels()) || (fCh[ch1].refch>=NumChannels()))  return false;
 
    unsigned reftdc = 0xffff;
@@ -286,8 +299,8 @@ void hadaq::TdcProcessor::BeforeFill()
 
 void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
 {
-   bool docalibration(true), isany(false);
-
+   // complete logic only when hist level is specified
+   if (HistFillLevel()>=4)
    for (unsigned ch=0;ch<NumChannels();ch++) {
 
       unsigned ref = fCh[ch].refch;
@@ -382,21 +395,26 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
                FillH1(fCh[ch].fRisingDoubleRef, fCh[ch].rising_ref_tm*1e9, refproc->fCh[ref].rising_ref_tm*1e9);
          }
       }
-
-      if ((fAutoCalibration>0) && fCh[ch].docalibr) {
-         if (DoRisingEdge() && (fCh[ch].all_rising_stat > 0)) {
-            isany = true;
-            if (fCh[ch].all_rising_stat<fAutoCalibration) docalibration = false;
-         }
-         if (DoFallingEdge() && (fCh[ch].all_falling_stat > 0)) {
-            isany = true;
-            if (fCh[ch].all_falling_stat<fAutoCalibration) docalibration = false;
-         }
-      }
    }
 
-   if (docalibration && isany)
-      ProduceCalibration(true);
+   if (fAutoCalibration>0) {
+      bool docalibration(true), isany(false);
+      for (unsigned ch=0;ch<NumChannels();ch++) {
+         if (fCh[ch].docalibr) {
+            if (DoRisingEdge() && (fCh[ch].all_rising_stat > 0)) {
+               isany = true;
+               if (fCh[ch].all_rising_stat<fAutoCalibration) docalibration = false;
+            }
+            if (DoFallingEdge() && (fCh[ch].all_falling_stat > 0)) {
+               isany = true;
+               if (fCh[ch].all_falling_stat<fAutoCalibration) docalibration = false;
+            }
+         }
+      }
+
+      if (docalibration && isany)
+         ProduceCalibration(true);
+   }
 }
 
 

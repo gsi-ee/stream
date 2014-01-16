@@ -2,6 +2,7 @@
 #define THOOKPROC_H
 
 #include "base/StreamProc.h"
+
 #include "TInterpreter.h"
 #include "TStopwatch.h"
 
@@ -13,31 +14,9 @@ class THookProc : public base::StreamProc {
       TStopwatch fWatch;
 
    public:
-      THookProc(const char* cmd, Double_t period = 0.) :
-         base::StreamProc("Hook"),
-         fCmd(cmd),
-         fPeriod(period),
-         fWatch()
-      {
-         SetRawScanOnly(true);
-         fWatch.Start();
-      }
+      THookProc(const char* cmd, Double_t period = 0.);
 
-      virtual bool ScanNewBuffers()
-      {
-         if (fPeriod>0.) {
-            if (fWatch.RealTime() > fPeriod) {
-               fWatch.Start(kTRUE);
-            } else {
-               fWatch.Start(kFALSE);
-               return true;
-            }
-         }
-
-         gInterpreter->ProcessLine(fCmd.Data());
-
-         return true;
-      }
+      virtual bool ScanNewBuffers();
 };
 
 #endif

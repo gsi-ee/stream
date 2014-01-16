@@ -13,7 +13,7 @@ base::Processor::Processor(const char* name, unsigned brdid) :
    fPrefix(),
    fSubPrefixD(),
    fSubPrefixN(),
-   fHistFilling(true),
+   fHistFilling(99),
    fStoreEnabled(false)
 {
    if (brdid < DummyBrdId) {
@@ -69,6 +69,8 @@ void base::Processor::SetSubPrefix(const char* name, int indx, const char* subna
 
 base::H1handle base::Processor::MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle)
 {
+   if (!IsHistFilling()) return 0;
+
    std::string hname = fPrefix + "/";
    if (!fSubPrefixD.empty()) hname += fSubPrefixD;
    hname += fPrefix + "_";
@@ -86,6 +88,8 @@ base::H1handle base::Processor::MakeH1(const char* name, const char* title, int 
 
 base::H2handle base::Processor::MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options)
 {
+   if (!IsHistFilling()) return 0;
+
    std::string hname = fPrefix + "/";
    if (!fSubPrefixD.empty()) hname += fSubPrefixD;
    hname += fPrefix + "_";

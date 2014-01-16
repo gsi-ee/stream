@@ -3,6 +3,8 @@
 #include "base/EventProc.h"
 #include "base/Event.h"
 #include "base/SubEvent.h"
+#include "base/EventStore.h"
+
 #include "hadaq/TdcSubEvent.h"
 
 class PadiwaProc : public base::EventProc {
@@ -31,6 +33,12 @@ class PadiwaProc : public base::EventProc {
          hCorr = MakeH2("Corr","Correlation between fast and slow", 100, 0., 100., 100, 0., 200., "fast, ns;slow, ns");
       }
       
+      
+      virtual void StartStore(base::EventStore* store) 
+      {
+         store->DataBranch(GetName(), fHits, "[4]/D");
+      }
+      
       void ResetHits() 
       {
          for (unsigned n=0;n<4;n++) fHits[n] = 0;
@@ -48,14 +56,14 @@ class PadiwaProc : public base::EventProc {
       double GetFast() const { return fHits[1] - fHits[0]; }
       double GetSlow() const { return fHits[3] - fHits[2]; }
       
-      virtual void Process(base::Event* ev) 
+      virtual bool Process(base::Event* ev) 
       {
          ResetHits();
          
          hadaq::TdcSubEvent* sub = 
                dynamic_cast<hadaq::TdcSubEvent*> (ev->GetSubEvent(fTdcId));
          
-         if (sub==0) return;
+         if (sub==0) return false;
          // printf("%s process sub %p\n", GetName(), sub);
          
          for (unsigned cnt=0;cnt<sub->Size();cnt++) {
@@ -70,11 +78,13 @@ class PadiwaProc : public base::EventProc {
             // printf("   %s id %u time %12.9f\n", GetName(), id, fHits[id]);
          }
          
-         if (!IsComplete()) return;
+         if (IsComplete()) {
+            FillH1(hFast, GetFast()*1e9);
+            FillH1(hSlow, GetSlow()*1e9);
+            FillH2(hCorr, GetFast()*1e9, GetSlow()*1e9);
+         }
          
-         FillH1(hFast, GetFast()*1e9);
-         FillH1(hSlow, GetSlow()*1e9);
-         FillH2(hCorr, GetFast()*1e9, GetSlow()*1e9);
+         return true;
       }
 };
 
@@ -84,21 +94,38 @@ class TestProc : public base::EventProc {
       PadiwaProc* fProc1;     //!< first processor
       PadiwaProc* fProc2;     //!< second processor
       base::H2handle  hCorr;  //!< correlation between padiwas
+      double fX, fY;          //!< calcualted coordinates 
       
    public:
       TestProc(PadiwaProc* proc1, PadiwaProc* proc2) : 
          base::EventProc("TEST"),
          fProc1(proc1),
-         fProc2(proc2)
+         fProc2(proc2),
+         fX(0), fY(0)
       {
          hCorr = MakeH2("Corr","Correlation between detector and trigger", 80, -10., 30., 500, 0., 500., "trigger, ns;detector, ns");
+         
+         SetStoreEnabled();
       }
 
-      virtual void Process(base::Event*) 
+      virtual void StartStore(base::EventStore* store) 
+      {
+         store->DataBranch("testx", &fX, "/D");
+         store->DataBranch("testy", &fY, "/D");
+      }
+      
+      virtual bool Process(base::Event*) 
       {
          if ((fProc2->GetHit(2)!=0) && (fProc1->GetHit(3)!=0)) {
-            FillH2(hCorr, (fProc2->GetHit(2) - fProc2->GetHit(0))*1e9, (fProc1->GetHit(3) - fProc1->GetHit(0))*1e9);
+            fX = (fProc2->GetHit(2) - fProc2->GetHit(0))*1e9;
+            fY = (fProc1->GetHit(3) - fProc1->GetHit(0))*1e9;
+            FillH2(hCorr, fX, fY);
+            return (fX>0) && (fY>0);
          }
+         
+         fX = 0; fY = 0;
+         // event is not complete and should not be stored
+         return false;
       }
       
 };
@@ -106,8 +133,13 @@ class TestProc : public base::EventProc {
 
 void second() 
 {
+   base::ProcMgr::instance()->CreateStore("file.root");
+   
    PadiwaProc* proc1 = new PadiwaProc(0, "TDC0", 48);
+   proc1->SetStoreEnabled();
+   
    PadiwaProc* proc2 = new PadiwaProc(1, "TDC3", 0);
+   proc2->SetStoreEnabled();
    
    new TestProc(proc1, proc2);
 }

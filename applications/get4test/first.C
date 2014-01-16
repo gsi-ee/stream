@@ -16,8 +16,6 @@ void first() {
    
 //   proc->SetPrint(10000000);
 
-   // proc->SetHistFilling(false);
-
    // use channel 0 on Get4 as reference
    proc->setRefChannel(0, 2);
 

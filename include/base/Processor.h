@@ -23,7 +23,7 @@ namespace base {
          std::string   fPrefix;                   //!< prefix, used for histogram names
          std::string   fSubPrefixD;               //!< sub-prefix for histogram directory
          std::string   fSubPrefixN;               //!< sub-prefix for histogram names
-         bool          fHistFilling;              //!< enables/disables histogram filling
+         int           fHistFilling;              //!< level of histogram filling
          bool          fStoreEnabled;             //!< if true, store will be enabled for processor
 
          /** Make constructor protected - no way to create base class instance */
@@ -80,8 +80,9 @@ namespace base {
          const char* GetName() const { return fName.c_str(); }
          unsigned GetBoardId() const { return fBoardId; }
 
-         void SetHistFilling(bool on = true) { fHistFilling = on; }
-         bool IsHistFilling() const { return fHistFilling; }
+         void SetHistFilling(int lvl = 99) { fHistFilling = lvl; }
+         bool IsHistFilling() const { return fHistFilling > 0; }
+         int  HistFillLevel() const { return fHistFilling; }
 
          void SetStoreEnabled(bool on = true) { fStoreEnabled = on; }
          bool IsStoreEnabled() const { return fStoreEnabled; }

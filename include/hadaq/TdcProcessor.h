@@ -21,7 +21,14 @@ namespace hadaq {
 
    /** This is specialized sub-processor for FPGA-TDC.
     * Normally it should be used together with TrbProcessor,
-    * which the only can provide data  */
+    * which the only can provide data
+    * Following levels of histograms filling are working
+    *  0 - none
+    *  1 - only basic statistic from TRB
+    *  2 - generic statistic over TDC channels
+    *  3 - basic per-channel histograms with IDs
+    *  4 - per-channel histograms with references
+    **/
 
    class TdcProcessor : public base::StreamProc {
 
