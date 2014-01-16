@@ -74,4 +74,9 @@
 #pragma link C++ class mbs::SubEvent+;
 #pragma link C++ class mbs::Processor+;
 
+// ROOT classes
+#pragma link C++ class THookProc+;
+#pragma link C++ class TTreeStore+;
+
+
 #endif

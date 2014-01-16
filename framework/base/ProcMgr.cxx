@@ -7,6 +7,10 @@
 #include "base/EventProc.h"
 #include "base/EventStore.h"
 
+#ifdef WITH_ROOT
+#include "root/TTreeStore.h"
+#endif
+
 base::ProcMgr* base::ProcMgr::fInstance = 0;
 
 base::ProcMgr::ProcMgr() :
@@ -523,5 +527,12 @@ void base::ProcMgr::ProcessEvent(base::Event* evt)
 
 bool base::ProcMgr::CreateStore(const char* storename)
 {
+#ifdef WITH_ROOT
+   if (fStore!=0) delete fStore;
+
+   fStore = new TTreeStore(storename);
+   return true;
+#else
    return false;
+#endif
 }

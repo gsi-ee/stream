@@ -31,15 +31,10 @@ NEWGO4_DO          = $(NEWGO4_DICT).$(ObjSuf)
 
 NEWGO4_H           = TStreamEvent.h \
                      TUserSource.h \
-                     TFirstStepProcessor.h \
-                     TTreeStore.h \
-                     THookProc.h 
+                     TFirstStepProcessor.h
 
 NEWGO4_S           = TUserSource.cxx \
-                     TFirstStepProcessor.cxx \
-                     TTreeStore.cxx \
-                     THookProc.cxx 
-                     
+                     TFirstStepProcessor.cxx
 
 NEWGO4_O           = $(NEWGO4_S:.$(SrcSuf)=.$(ObjSuf))
 

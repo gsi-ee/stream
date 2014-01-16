@@ -8,7 +8,7 @@ ifdef debug
 CXXOPT      += -g
 endif
 
-CXXOPT       += -O2 -fPIC -Wall $(INCLUDES:%=-I%) 
+CXXOPT       += -O2 -fPIC -Wall $(INCLUDES:%=-I%) $(DEFINITIONS:%=-D%) 
 LD            = g++
 CXX           = g++
 
@@ -32,6 +32,12 @@ NEWLIB_SRCS =    $(wildcard base/*.cxx) \
 NEWLIB_OBJS = $(patsubst %.cxx, %.o, $(NEWLIB_SRCS))
 NEWLIB_DEPS = $(patsubst %.cxx, %.d, $(NEWLIB_SRCS))
 
+NEWLIBROOT_HEADERS = $(wildcard $(STREAMSYS)/include/root/*.h)               
+NEWLIBROOT_SRCS    = $(wildcard root/*.cxx)               
+NEWLIBROOT_OBJS    = $(patsubst %.cxx, %.o, $(NEWLIBROOT_SRCS))
+NEWLIBROOT_DEPS    = $(patsubst %.cxx, %.d, $(NEWLIBROOT_SRCS))
+
+
 NEWLIBDICT_LIBNAME = $(STREAMSYS)/lib/libStreamDict
 NEWLIBDICT_LIB = $(NEWLIBDICT_LIBNAME).so
 NEWLIBDICT_MAP = $(NEWLIBDICT_LIBNAME).rootmap
@@ -42,32 +48,36 @@ NEWLIBDICT_HDR = $(NEWLIBDICT_NAME).h
 NEWLIBDICT_SRC = $(NEWLIBDICT_NAME).cxx
 NEWLIBDICT_OBJ = $(NEWLIBDICT_NAME).o
 
-
 all: lib dict
 
 lib: $(NEWLIB)
 
 clean:
-	rm -f $(NEWLIB) $(NEWLIB_OBJS) $(NEWLIB_DEPS) $(NEWLIBDICT_MAP) $(NEWLIBDICT_NAME).*
+	rm -f $(NEWLIB) $(NEWLIB_OBJS) $(NEWLIB_DEPS) $(NEWLIBROOT_OBJS) $(NEWLIBROOT_DEPS) $(NEWLIBDICT_MAP) $(NEWLIBDICT_NAME).*
 
 
 ifdef IS_ROOT
+
 
 $(NEWLIBDICT_MAP): $(NEWLIBDICT_LIB)
 	@echo 'Building: $@'
 	@rlibmap -o $@ -l $(NEWLIBDICT_LIB) -d $(NEWLIB) -c $(NEWLIBDICT_LINKDEF)
 
-$(NEWLIBDICT_SRC): $(NEWLIBDICT_LINKDEF) $(NEWLIB_HEADERS)
-	@rootcint -f $@ -c -p -I../include $(NEWLIB_HEADERS) $(NEWLIBDICT_LINKDEF)
+$(NEWLIBDICT_SRC): $(NEWLIBDICT_LINKDEF) $(NEWLIB_HEADERS) $(NEWLIBROOT_HEADERS)
+	@rootcint -f $@ -c -p -I../include $(NEWLIB_HEADERS) $(NEWLIBROOT_HEADERS) $(NEWLIBDICT_LINKDEF)
 
 $(NEWLIBDICT_OBJ): CXXOPT += $(shell root-config --cflags)
 $(NEWLIBDICT_OBJ): INCLUDES += $(STREAMSYS)/include
 
-$(NEWLIBDICT_LIB): $(NEWLIBDICT_OBJ)
+$(NEWLIBDICT_LIB): $(NEWLIBDICT_OBJ) $(NEWLIBROOT_OBJS)
 	@echo 'Building: $@'
-	@$(LD) -o $@ -shared -O $(NEWLIBDICT_OBJ)
+	@$(LD) -o $@ -shared -O $(NEWLIBDICT_OBJ) $(NEWLIBROOT_OBJS)
 
 dict: $(NEWLIBDICT_LIB) $(NEWLIBDICT_MAP)
+
+$(NEWLIBROOT_OBJS) $(NEWLIBROOT_DEPS) : CXXOPT += $(shell root-config --cflags)
+
+base/ProcMgr.o : DEFINITIONS += WITH_ROOT
 
 else
 
@@ -93,6 +103,6 @@ $(NEWLIB) : $(NEWLIB_OBJS)
 	$(CXX) -c $< $(CXXOPT) -o $@
 
 ifeq ($(findstring $(MAKECMDGOALS), clean),)
--include $(NEWLIB_DEPS)
+-include $(NEWLIB_DEPS) $(NEWLIBROOT_DEPS)
 endif
 	

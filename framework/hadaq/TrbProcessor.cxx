@@ -16,6 +16,9 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid) :
 {
    mgr()->RegisterProc(this, base::proc_TRBEvent, brdid);
 
+
+   printf("Create TrbProcessor %s\n", GetName());
+
    fMsgPerBrd = MakeH1("MsgPerTDC", "Number of messages per TDC", TdcProcessor::fMaxBrdId, 0, TdcProcessor::fMaxBrdId, "tdc");
    fErrPerBrd = MakeH1("ErrPerTDC", "Number of errors per TDC", TdcProcessor::fMaxBrdId, 0, TdcProcessor::fMaxBrdId, "tdc");
    fHitsPerBrd = MakeH1("HitsPerTDC", "Number of data hits per TDC", TdcProcessor::fMaxBrdId, 0, TdcProcessor::fMaxBrdId, "tdc");

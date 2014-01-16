@@ -8,6 +8,8 @@
    into second.C script.
 5. In mami-jan14 application provide example how event store can be used.
    Produced tree can be directly used in go4 or ROOT.   
+6. Move ROOT-relevant classes to main library, later one could provide
+   ROOT-engine (without go4), using such classes.
    
 
 15.01.2014
