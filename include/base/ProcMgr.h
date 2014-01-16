@@ -17,7 +17,8 @@ namespace base {
 
    class StreamProc;
    class EventProc;
-   class Processor;
+   class EventStore;
+
 
    class ProcMgr {
 
@@ -38,6 +39,7 @@ namespace base {
          GlobalMarksQueue         fTriggers;        //!< list of current triggers
          unsigned  fTimeMasterIndex;                //!< processor index, which time is used for all other subsystems
          bool      fRawAnalysisOnly;                //!< ignore all events, only single scan, not ouput events
+         EventStore*  fStore;                       //!< data store
 
          static ProcMgr* fInstance;                 //!
 
@@ -81,6 +83,9 @@ namespace base {
           * If variable dist specified, will contain distance to left (-1) or right (+1) boundary   */
          virtual int TestC1(C1handle c1, double value, double* dist = 0);
          virtual double GetC1Limit(C1handle c1, bool isleft = true);
+
+         // create data store, for the moment - ROOT tree
+         virtual bool CreateStore(const char* storename);
 
          // this is list of generic methods for common data processing
 

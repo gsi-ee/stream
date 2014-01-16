@@ -21,7 +21,10 @@ namespace base {
 
          virtual ~EventProc() {}
 
-         virtual void Process(Event*) {}
+         /** Generic event processor
+          * If returns false, processing will be aborted and event will not be stored */
+
+         virtual bool Process(Event*) { return true; }
 
    };
 

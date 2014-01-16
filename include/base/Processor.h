@@ -24,6 +24,7 @@ namespace base {
          std::string   fSubPrefixD;               //!< sub-prefix for histogram directory
          std::string   fSubPrefixN;               //!< sub-prefix for histogram names
          bool          fHistFilling;              //!< enables/disables histogram filling
+         bool          fStoreEnabled;             //!< if true, store will be enabled for processor
 
          /** Make constructor protected - no way to create base class instance */
          Processor(const char* name = "", unsigned brdid = DummyBrdId);
@@ -68,6 +69,8 @@ namespace base {
 
          double GetC1Limit(C1handle c1, bool isleft = true);
 
+         virtual void StartStore(EventStore*) {}
+
       public:
 
          virtual ~Processor();
@@ -79,6 +82,9 @@ namespace base {
 
          void SetHistFilling(bool on = true) { fHistFilling = on; }
          bool IsHistFilling() const { return fHistFilling; }
+
+         void SetStoreEnabled(bool on = true) { fStoreEnabled = on; }
+         bool IsStoreEnabled() const { return fStoreEnabled; }
 
          virtual void UserPreLoop() {}
 

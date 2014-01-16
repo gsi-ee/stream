@@ -49,8 +49,8 @@ void base::StreamProc::CreateTriggerHist(unsigned multipl, unsigned nbins, doubl
 {
    SetSubPrefix();
 
-   fTriggerTm = MakeH1("TriggerTm", "Time relative to trigger", nbins, left, right, "s");
-   fMultipl = MakeH1("Multipl", "Subevent multiplicity", multipl, 0, multipl, "hits");
+   fTriggerTm = MakeH1("TriggerTm", "Time relative to trigger", nbins, left, right, "reuse;s");
+   fMultipl = MakeH1("Multipl", "Subevent multiplicity", multipl, 0, multipl, "reuse;hits");
    fTriggerWindow = MakeC1("TrWindow", 5e-7, 10e-7, fTriggerTm);
 }
 

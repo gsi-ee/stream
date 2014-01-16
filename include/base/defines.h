@@ -30,7 +30,6 @@ namespace base {
    typedef void* H2handle;
    typedef void* C1handle;
 
-
 }
 
 

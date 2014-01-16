@@ -13,7 +13,8 @@ base::Processor::Processor(const char* name, unsigned brdid) :
    fPrefix(),
    fSubPrefixD(),
    fSubPrefixN(),
-   fHistFilling(true)
+   fHistFilling(true),
+   fStoreEnabled(false)
 {
    if (brdid < DummyBrdId) {
       char sbuf[100];

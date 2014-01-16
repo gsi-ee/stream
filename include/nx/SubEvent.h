@@ -20,8 +20,8 @@ namespace nx {
 
          MessageExt() : base::MessageExt<nx::Message>(), fCorrectedADC(0) {}
 
-         MessageExt(const nx::Message& msg, double globaltm, float adc = 0.) :
-            base::MessageExt<nx::Message>(msg, globaltm),
+         MessageExt(const nx::Message& _msg, double globaltm, float adc = 0.) :
+            base::MessageExt<nx::Message>(_msg, globaltm),
             fCorrectedADC(adc)
          {
          }

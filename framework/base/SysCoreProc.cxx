@@ -26,7 +26,7 @@ base::SysCoreProc::SysCoreProc(const char* name, unsigned brdid, OpticSplitter* 
    sprintf(sbuf1, "MsgPer%s", name);
    sprintf(sbuf2, "Number of messages per %s", name);
 
-   fMsgPerBrd = mgr()->MakeH1(sbuf1, sbuf2, fMaxBrdId, 0, fMaxBrdId, "brdid");
+   fMsgPerBrd = mgr()->MakeH1(sbuf1, sbuf2, fMaxBrdId, 0, fMaxBrdId, "brdid;reuse");
 }
 
 base::SysCoreProc::~SysCoreProc()

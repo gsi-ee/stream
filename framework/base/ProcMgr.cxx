@@ -5,6 +5,7 @@
 
 #include "base/StreamProc.h"
 #include "base/EventProc.h"
+#include "base/EventStore.h"
 
 base::ProcMgr* base::ProcMgr::fInstance = 0;
 
@@ -12,15 +13,17 @@ base::ProcMgr::ProcMgr() :
    fProc(),
    fMap(),
    fEvProc(),
-   fTriggers(10000),    // FIXME: size should be configurable
+   fTriggers(10000),                // FIXME: size should be configurable
    fTimeMasterIndex(DummyIndex),
-   fRawAnalysisOnly(false)
+   fRawAnalysisOnly(false),
+   fStore(0)
 {
    if (fInstance==0) fInstance = this;
 }
 
 base::ProcMgr::~ProcMgr()
 {
+   if (fStore!=0) { delete fStore; fStore = 0; }
 
    DeleteAllProcessors();
    // printf("Delete processors done\n");
@@ -115,14 +118,33 @@ double base::ProcMgr::GetC1Limit(C1handle c1, bool isleft)
 
 void base::ProcMgr::UserPreLoop()
 {
-   for (unsigned n=0;n<fProc.size();n++)
-      if (fProc[n]) fProc[n]->UserPreLoop();
+   for (unsigned n=0;n<fProc.size();n++) {
+      if (fProc[n]==0) continue;
+
+      if (fStore && fProc[n]->IsStoreEnabled()) fProc[n]->StartStore(fStore);
+      fProc[n]->UserPreLoop();
+   }
+
+   for (unsigned n=0;n<fEvProc.size();n++) {
+      if (fEvProc[n]==0) continue;
+      if (fStore && fEvProc[n]->IsStoreEnabled()) fEvProc[n]->StartStore(fStore);
+      fEvProc[n]->UserPreLoop();
+   }
 }
 
 void base::ProcMgr::UserPostLoop()
 {
    for (unsigned n=0;n<fProc.size();n++)
       if (fProc[n]) fProc[n]->UserPostLoop();
+
+   for (unsigned n=0;n<fEvProc.size();n++)
+      if (fEvProc[n]) fEvProc[n]->UserPostLoop();
+
+   // close store file already here
+   if (fStore!=0) {
+      delete fStore;
+      fStore = 0;
+   }
 }
 
 
@@ -491,7 +513,15 @@ void base::ProcMgr::ProcessEvent(base::Event* evt)
 {
    if (evt==0) return;
 
+   // call event processors one after another until event is discarded
    for (unsigned n=0;n<fEvProc.size();n++)
-      fEvProc[n]->Process(evt);
+      if (!fEvProc[n]->Process(evt)) return;
+
+   if (fStore!=0)
+      fStore->Fill();
 }
 
+bool base::ProcMgr::CreateStore(const char* storename)
+{
+   return false;
+}

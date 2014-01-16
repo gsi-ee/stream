@@ -189,6 +189,8 @@ namespace hadaq {
 
          bool CreateChannelHistograms(unsigned ch);
 
+         virtual void StartStore(base::EventStore*) {}
+
       public:
 
          TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels = MaxNumTdcChannels, unsigned edge_mask = 1);

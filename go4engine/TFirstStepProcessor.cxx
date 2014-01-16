@@ -4,12 +4,15 @@
 #include "TH1.h"
 #include "TH2.h"
 #include "TObjArray.h"
+#include "TSystem.h"
+#include "TROOT.h"
+#include "TUrl.h"
 
 #include "TGo4WinCond.h"
 #include "TGo4MbsEvent.h"
 #include "TGo4MbsSubEvent.h"
 
-#include "go4/TStreamEvent.h"
+#include "TStreamEvent.h"
 
 #include "TGo4EventErrorException.h"
 //#include "TGo4EventTimeoutException.h"
@@ -32,18 +35,39 @@ TFirstStepProcessor::TFirstStepProcessor(const char* name) :
 {
    TGo4Log::Info("Create TFirstStepProcessor %s", name);
 
-   if (ExecuteScript(fDfltSetupScript.Data()) == -1) {
-      TGo4Log::Error("Cannot setup analysis with %s script", fDfltSetupScript.Data());
-      throw TGo4EventErrorException(this);
+   if (gSystem->AccessPathName("first.C") == 0) {
+      if (ExecuteScript("first.C") == -1) {
+         TGo4Log::Error("Cannot setup analysis with first.C script");
+         throw TGo4EventErrorException(this);
+      }
+   }
+
+   if (gSystem->AccessPathName("second.C") == 0) {
+
+      if (gSystem->Getenv("STREAMSYS")==0) {
+         TGo4Log::Error("STREAMSYS shell variable not configured");
+         throw TGo4EventErrorException(this);
+      }
+
+      gROOT->ProcessLine(".include $STREAMSYS/include");
+
+      if (ExecuteScript("second.C+") == -1) {
+         TGo4Log::Error("Cannot setup analysis with second.C script");
+         throw TGo4EventErrorException(this);
+      }
    }
 
    fTotalDataSize = 0;
    fNumInpBufs = 0;
    fNumOutEvents = 0;
+
+   base::ProcMgr::UserPreLoop();
 }
 
 TFirstStepProcessor::~TFirstStepProcessor()
 {
+   base::ProcMgr::UserPostLoop();
+
    TGo4Log::Info("Input %ld  Output %ld  Total processed size = %ld", fNumInpBufs, fNumOutEvents, fTotalDataSize);
 }
 
@@ -81,39 +105,41 @@ Bool_t TFirstStepProcessor::BuildEvent(TGo4EventElement* outevnt)
 
 //         TGo4Log::Info("  find subevent kind %2u brd %2u fmt %u len %d", buf().kind, buf().boardid, buf().format, buf().datalen);
 
-         ProvideRawData(buf);
+         base::ProcMgr::ProvideRawData(buf);
       }
 
       //TGo4Log::Info("Start scanning");
 
       // scan new data
-      ScanNewData();
+      base::ProcMgr::ScanNewData();
 
       if (IsRawAnalysis()) {
 
-         SkipAllData();
+         base::ProcMgr::SkipAllData();
 
       } else {
 
          //TGo4Log::Info("Analyze data");
 
          // analyze new sync markers
-         if (AnalyzeSyncMarkers()) {
+         if (base::ProcMgr::AnalyzeSyncMarkers()) {
 
             // get and redistribute new triggers
-            CollectNewTriggers();
+            base::ProcMgr::CollectNewTriggers();
 
             // scan for new triggers
-            ScanDataForNewTriggers();
+            base::ProcMgr::ScanDataForNewTriggers();
          }
       }
    } else {
     //  TGo4Log::Info("Keep event %d", mbsev->GetIntLen()*4);
    }
 
-   if (ProduceNextEvent(event)) {
+   if (base::ProcMgr::ProduceNextEvent(event)) {
 
       // TGo4Log::Info("Produce event");
+
+      base::ProcMgr::ProcessEvent(event);
 
       SetKeepInputEvent(kTRUE);
       outevnt->SetValid(kTRUE);
@@ -140,18 +166,23 @@ base::H1handle TFirstStepProcessor::MakeH1(const char* name, const char* title, 
    TString newxtitle(xtitle ? xtitle : "");
    TString xbins;
 
+   char kind = 'I';
+   Bool_t useexisting = kFALSE;
+
    TObjArray* arr = newxtitle.Length() > 0 ? newxtitle.Tokenize(";") : 0;
 
-   for (int n=0; n<= (arr ? arr->GetLast() : -1);n++) {
+   for (int n=0;  n<= (arr ? arr->GetLast() : -1);n++) {
       TString part = arr->At(n)->GetName();
-      if (part.Index("xbin:")==0) { xbins = part; xbins.Remove(0, 5); }
-       else newxtitle = part;
+      if (part.Index("xbin:")==0) { xbins = part; xbins.Remove(0, 5); } else
+      if (part.Index("kind:")==0) { kind = part[5]; } else
+      if (part.Index("reuse")==0) { useexisting = kTRUE; } else
+         newxtitle = part;
    }
    delete arr;
 
-   SetMakeWithAutosave(kFALSE);
+   SetMakeWithAutosave(useexisting);
 
-   TH1* histo1 = MakeTH1('I', name, title, nbins, left, right, newxtitle.Data());
+   TH1* histo1 = MakeTH1(kind, name, title, nbins, left, right, newxtitle.Data());
 
    if (xbins.Length()>0) {
       arr = xbins.Tokenize(",");
@@ -175,18 +206,23 @@ base::H2handle TFirstStepProcessor::MakeH2(const char* name, const char* title, 
 
    TObjArray* arr = (options && *options) ? TString(options).Tokenize(";") : 0;
 
+   char kind = 'I';
+   Bool_t useexisting = kFALSE;
+
    for (int n=0; n<= (arr ? arr->GetLast() : -1);n++) {
       TString part = arr->At(n)->GetName();
       if (part.Index("xbin:")==0) { xbins = part; xbins.Remove(0, 5); } else
       if (part.Index("ybin:")==0) { ybins = part; ybins.Remove(0, 5); } else
+      if (part.Index("kind:")==0) { kind = part[5]; } else
+      if (part.Index("reuse")==0) { useexisting = kTRUE; } else
       if (xtitle.Length()==0) xtitle = part;
                          else ytitle = part;
    }
    delete arr;
 
-   SetMakeWithAutosave(kFALSE);
+   SetMakeWithAutosave(useexisting);
 
-   TH2* histo2 = MakeTH2('I', name, title, nbins1, left1, right1, nbins2, left2, right2, xtitle.Data(), ytitle.Data());
+   TH2* histo2 = MakeTH2(kind, name, title, nbins1, left1, right1, nbins2, left2, right2, xtitle.Data(), ytitle.Data());
 
    if (xbins.Length()>0) {
       arr = xbins.Tokenize(",");

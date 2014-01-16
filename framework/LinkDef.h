@@ -19,6 +19,7 @@
 #pragma link C++ class base::StreamProc+;
 #pragma link C++ class base::SysCoreProc+;
 #pragma link C++ class base::OpticSplitter+;
+#pragma link C++ class base::EventStore+;
 #pragma link C++ class base::ProcMgr+;
 #pragma link C++ class base::SyncMarker+;
 #pragma link C++ class base::LocalTimeMarker+;

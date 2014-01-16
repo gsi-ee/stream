@@ -20,8 +20,6 @@ get4::Get4Rec::Get4Rec() :
    }
 }
 
-
-
 get4::Processor::Processor(unsigned rocid, unsigned get4mask, base::OpticSplitter* spl) :
    base::SysCoreProc("ROC", rocid, spl),
    fIter1(),

@@ -1,3 +1,15 @@
+16.01.2014
+1. Introduce EventStore class, which should be used to store events and (or)
+   results of events processing
+2. Provide in go4engine TTreeStore, which implements ROOT TTree for the store.
+   In fact, TTree syntax will be used for EventStore
+3. Simplify go4engine - keep only first step, remove analysis and second step.
+4. Refactorize cern-gem12 and get4test applications, move complete code
+   into second.C script.
+5. In mami-jan14 application provide example how event store can be used.
+   Produced tree can be directly used in go4 or ROOT.   
+   
+
 15.01.2014
 1. Implement correct flushing of data in hadaq::TdcProcessor (via trigger time)
 2. Implement three different ways to recalculate time from local to global:
@@ -8,14 +20,12 @@
 4. Provide example for mami-jan14 beamtime. There are two PadiwaProc and 
    final TestProc, which do exactely the job.  
 
-
 14.01.2014
 1. Allow to use normal TRB3 trigger as timer marker for the events. 
    At the same time use trigger time for time synchronisation between TDCs.   
 2. Provide possibility to artificially compensate epoch counter reset by TRB3.
    In sych case epoch counter will be contigious and complete logic of
    stream framework can be used. 
-
 
 8.01.2014
 1. Provide TdcProcessor::SetUseLastHit(), which allow to use last hit for ref time

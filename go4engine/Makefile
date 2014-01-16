@@ -29,20 +29,15 @@ NEWGO4_DH          = $(NEWGO4_DICT).$(HedSuf)
 NEWGO4_DS          = $(NEWGO4_DICT).$(SrcSuf)
 NEWGO4_DO          = $(NEWGO4_DICT).$(ObjSuf)
 
-NEWGO4_H           = $(STREAMSYS)/include/go4/TUserProcessor.h \
-                     $(STREAMSYS)/include/go4/TStreamEvent.h \
+NEWGO4_H           = TStreamEvent.h \
                      TUserSource.h \
                      TFirstStepProcessor.h \
-                     TSecondStepProcessor.h \
-                     TStreamAnalysis.h \
+                     TTreeStore.h \
                      THookProc.h 
 
-NEWGO4_S           = TUserProcessor.cxx \
-                     TUserSource.cxx \
+NEWGO4_S           = TUserSource.cxx \
                      TFirstStepProcessor.cxx \
-                     TSecondStepProcessor.cxx \
-                     TStreamEvent.cxx \
-                     TStreamAnalysis.cxx \
+                     TTreeStore.cxx \
                      THookProc.cxx 
                      
 
