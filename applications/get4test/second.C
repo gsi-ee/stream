@@ -130,7 +130,7 @@ class TGet4TestProc : public base::EventProc {
          fHitPerCh = MakeH1("GET4TEST/HitPerCh", "Number of hits per channel", fMap.size(), 0, fMap.size(), xbin.Data());
       }
 
-      virtual void StartStore(base::EventStore*)
+      virtual void CreateBranch(TTree*)
       {
       }
 

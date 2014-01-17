@@ -46,7 +46,7 @@ class TGemProc : public base::EventProc {
       }
 
 
-      virtual void StartStore(base::EventStore*)
+      virtual void CreateBranch(TTree*)
       {
       }
 

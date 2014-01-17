@@ -451,9 +451,9 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
    unsigned help_index(0);
 
-   double localtm(0.), minimtm(-1.), ch0time(-1);
+   double localtm(0.), minimtm(0), ch0time(0);
 
-//   printf("TDC%u scan\n", GetBoardId());
+//   printf("TDC%u scan first %d buflen %u rec %p\n", GetBoardId(), first_scan, buf.datalen()/4 -1, &(buf()));
 
    if (first_scan) BeforeFill();
 
@@ -463,12 +463,19 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
       // if (!first_scan) msg.print();
 
-      if ((cnt==0) && !msg.isHeaderMsg()) iserr = true;
-
       cnt++;
 
       if (first_scan)
          FillH1(fMsgsKind, msg.getKind() >> 29);
+
+      if (cnt==1) {
+         if (!msg.isHeaderMsg()) {
+            iserr = true;
+            if (CheckPrintError())
+               printf("%5s Missing header message\n", GetName());
+         }
+         continue;
+      }
 
       if (msg.isEpochMsg()) {
 
@@ -484,6 +491,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             isfirstepoch = true;
             first_epoch = ep;
          }
+         continue;
       }
 
       if (msg.isHitMsg()) {
@@ -534,14 +542,16 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          else
             localtm -= rec.falling_calibr[fine];
 
-         if ((chid==0) && (ch0time<0.)) ch0time = localtm;
+         if ((chid==0) && (ch0time==0)) ch0time = localtm;
 
          if (IsTriggeredAnalysis()) {
-            if ((ch0time<0.) && CheckPrintError())
+            if ((ch0time==0) && CheckPrintError())
                printf("%5s channel 0 time not found when first HIT in channel %u appears\n", GetName(), chid);
 
             localtm -= ch0time;
          }
+
+         // printf("%s first %d ch %3u tm %12.9f\n", GetName(), first_scan, chid, localtm);
 
          // fill histograms only for normal channels
          if (first_scan) {
@@ -615,12 +625,13 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
             if (!iserr) {
                hitcnt++;
-               if ((minimtm<1.) || (localtm < minimtm)) minimtm = localtm;
+               if ((minimtm==0) || (localtm < minimtm)) minimtm = localtm;
             }
          } else
 
          // for second scan we check if hit can be assigned to the events
          if ((chid>0) && !iserr) {
+
             base::GlobalTime_t globaltm = LocalToGlobalTime(localtm, &help_index);
 
             // printf("TDC%u Test TDC message local:%11.9f global:%11.9f\n", GetBoardId(), localtm, globaltm);
@@ -673,7 +684,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    if (first_scan) {
 
       // if we use trigger as time marker
-      if (fUseNativeTrigger && (ch0time>=0)) {
+      if (fUseNativeTrigger && (ch0time!=0)) {
          base::LocalTimeMarker marker;
          marker.localid = 1;
          marker.localtm = ch0time;
@@ -683,7 +694,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          AddTriggerMarker(marker);
       }
 
-      if ((syncid != 0xffffffff) && (ch0time>=0)) {
+      if ((syncid != 0xffffffff) && (ch0time!=0)) {
 
          // printf("%s Create SYNC %u tm %12.9f\n", GetName(), syncid, ch0time);
          base::SyncMarker marker;
@@ -694,10 +705,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          AddSyncMarker(marker);
       }
 
-      if (!iserr && (minimtm>=0.))
-         buf().local_tm = minimtm;
-      else
-         iserr = true;
+      buf().local_tm = minimtm;
 
 //      printf("Proc:%p first scan iserr:%d  minm: %12.9f\n", this, iserr, minimtm*1e-9);
 
@@ -711,7 +719,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    } else {
 
       // use first channel only for flushing
-      if (ch0time>=0)
+      if (ch0time!=0)
          TestHitTime(LocalToGlobalTime(ch0time, &help_index), false, true);
    }
 
@@ -725,6 +733,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    }
 
    // printf("TDC%u %s scan tag = %u err = %d\n", GetBoardId(), first_scan ? "FIRST" : "SECOND", buf().user_tag, iserr);
+
+//   printf("TDC%u res %d first %d buflen %u rec %p\n", GetBoardId(), !iserr, first_scan, buf.datalen()/4 -1, &(buf()));
 
    return !iserr;
 }

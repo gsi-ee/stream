@@ -394,16 +394,20 @@ bool base::StreamProc::SkipBuffers(unsigned num_skip)
       fQueueScanIndex-=num_skip;
    } else {
       fQueueScanIndex = 0;
-      printf("!!! Problem with skipping and fQueueScanIndex !!!\n");
-      exit(7);
+      if (IsStreamAnalysis()) {
+         printf("!!! Problem with skipping and fQueueScanIndex !!!\n");
+         exit(7);
+      }
    }
 
    if (fQueueScanIndexTm>=num_skip) {
       fQueueScanIndexTm-=num_skip;
    } else {
       fQueueScanIndexTm = 0;
-      printf("!!! Problem with skipping and fQueueScanIndexTm !!!\n");
-      exit(7);
+      if (IsStreamAnalysis()) {
+         printf("!!! Problem with skipping and fQueueScanIndexTm !!!\n");
+         exit(7);
+      }
    }
 
    return true;
@@ -619,7 +623,6 @@ bool base::StreamProc::ScanDataForNewTriggers()
 
    // never scan when no triggers are exists
    if (fGlobalMarks.size() == 0) return true;
-
 
    // defines how many buffer will be processed
    unsigned upper_buf_limit = 0;

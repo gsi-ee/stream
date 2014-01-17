@@ -69,7 +69,7 @@ namespace base {
 
          double GetC1Limit(C1handle c1, bool isleft = true);
 
-         virtual void StartStore(EventStore*) {}
+         virtual void CreateBranch(TTree*) {}
 
       public:
 

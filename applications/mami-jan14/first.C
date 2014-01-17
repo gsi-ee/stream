@@ -1,6 +1,6 @@
 void first()
 {
-   base::ProcMgr::instance()->SetRawAnalysis(false);
+   base::ProcMgr::instance()->SetTriggeredAnalysis();
 
    hadaq::TdcMessage::SetFineLimits(31, 421);
 
@@ -23,10 +23,10 @@ void first()
    // trb3->SetCrossProcess(true);
 
    // enable time synchronization by trigger number
-   trb3->SetUseTriggerAsSync(true);
+   // trb3->SetUseTriggerAsSync(true);
 
    // we artificically made contigious value for epoch
-   trb3->SetCompensateEpochReset(true);
+   // trb3->SetCompensateEpochReset(true);
 
    // this is array with available TDCs ids
    // It is required that high 8 bits are the same.
@@ -57,6 +57,7 @@ void first()
       // par4 - edges mask 0x1 - rising, 0x2 - trailing, 0x3 - both edges
       hadaq::TdcProcessor* tdc = new hadaq::TdcProcessor(trb3, tdcid, 65, 0x1);
 
+      // which hit used for reference histograms filling
       tdc->SetUseLastHit(true);
 
       // all reference histograms will be filled only
@@ -95,7 +96,7 @@ void first()
       // 2) generate calibration on base of provided data and than use it later statically for analysis
 
       // disable calibration for channel #0
-      tdc->DisableCalibrationFor(0);
+      // tdc->DisableCalibrationFor(0);
 
       // load static calibration at the beginning of the run
       tdc->LoadCalibration(Form("tdc3_%04x.cal", tdcmap[cnt]));

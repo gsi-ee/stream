@@ -139,10 +139,13 @@ Bool_t TFirstStepProcessor::BuildEvent(TGo4EventElement* outevnt)
 
       // TGo4Log::Info("Produce event");
 
-      base::ProcMgr::ProcessEvent(event);
+      Bool_t store = base::ProcMgr::ProcessEvent(event);
 
-      SetKeepInputEvent(kTRUE);
-      outevnt->SetValid(kTRUE);
+      // only for stream analysis we need possibility to produce as much events as possible
+      if (base::ProcMgr::IsStreamAnalysis())
+         SetKeepInputEvent(kTRUE);
+
+      outevnt->SetValid(store);
 
       fNumOutEvents++;
 

@@ -75,7 +75,7 @@ $(NEWLIBDICT_LIB): $(NEWLIBDICT_OBJ) $(NEWLIBROOT_OBJS)
 
 dict: $(NEWLIBDICT_LIB) $(NEWLIBDICT_MAP)
 
-$(NEWLIBROOT_OBJS) $(NEWLIBROOT_DEPS) : CXXOPT += $(shell root-config --cflags)
+$(NEWLIBROOT_OBJS) $(NEWLIBROOT_DEPS) base/ProcMgr.o : CXXOPT += $(shell root-config --cflags)
 
 base/ProcMgr.o : DEFINITIONS += WITH_ROOT
 

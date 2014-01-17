@@ -9,6 +9,9 @@
 #include "base/Markers.h"
 #include "base/Event.h"
 
+class TTree;
+class TFile;
+
 namespace base {
 
    /** Class base::ProcMgr is central manager of processors and interface
@@ -39,7 +42,8 @@ namespace base {
          GlobalMarksQueue         fTriggers;        //!< list of current triggers
          unsigned                 fTimeMasterIndex; //!< processor index, which time is used for all other subsystems
          AnalysisKind             fAnalysisKind;    //!< ignore all events, only single scan, not ouput events
-         EventStore              *fStore;           //!< data store
+         TFile                   *fFile;            //!< file with the tree, if 0 - tree is external
+         TTree                   *fTree;            //!< data store
 
          static ProcMgr* fInstance;                 //!
 
@@ -85,7 +89,8 @@ namespace base {
          virtual double GetC1Limit(C1handle c1, bool isleft = true);
 
          // create data store, for the moment - ROOT tree
-         virtual bool CreateStore(const char* storename);
+         bool CreateStore(const char* storename);
+         bool CloseStore();
 
          // this is list of generic methods for common data processing
 
@@ -128,7 +133,7 @@ namespace base {
          bool ProduceNextEvent(base::Event* &evt);
 
          /** Process event - consequently calls all event processors */
-         void ProcessEvent(base::Event* evt);
+         bool ProcessEvent(base::Event* evt);
 
          void UserPreLoop();
 

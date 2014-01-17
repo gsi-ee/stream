@@ -196,7 +196,7 @@ namespace hadaq {
 
          bool CreateChannelHistograms(unsigned ch);
 
-         virtual void StartStore(base::EventStore*) {}
+         virtual void CreateBranch(TTree*) {}
 
       public:
 

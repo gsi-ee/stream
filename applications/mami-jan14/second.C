@@ -1,9 +1,10 @@
 #include <stdio.h>
 
+#include "TTree.h"
+
 #include "base/EventProc.h"
 #include "base/Event.h"
 #include "base/SubEvent.h"
-#include "base/EventStore.h"
 
 #include "hadaq/TdcSubEvent.h"
 
@@ -34,9 +35,9 @@ class PadiwaProc : public base::EventProc {
       }
       
       
-      virtual void StartStore(base::EventStore* store) 
+      virtual void CreateBranch(TTree* t)
       {
-         store->DataBranch(GetName(), fHits, "[4]/D");
+         t->Branch(GetName(), fHits, "hits[4]/D");
       }
       
       void ResetHits() 
@@ -69,6 +70,7 @@ class PadiwaProc : public base::EventProc {
          for (unsigned cnt=0;cnt<sub->Size();cnt++) {
             const hadaq::TdcMessageExt& ext = sub->msg(cnt);
             
+            // exclude all channels which has nothing to do with Padiwa
             if ((ext.msg().getHitChannel()<=fChId) ||
                 (ext.msg().getHitChannel()>fChId+4)) continue;
             
@@ -108,10 +110,10 @@ class TestProc : public base::EventProc {
          SetStoreEnabled();
       }
 
-      virtual void StartStore(base::EventStore* store) 
+      virtual void CreateBranch(TTree* t)
       {
-         store->DataBranch("testx", &fX, "/D");
-         store->DataBranch("testy", &fY, "/D");
+         t->Branch("testx", &fX, "X/D");
+         t->Branch("testy", &fY, "Y/D");
       }
       
       virtual bool Process(base::Event*) 

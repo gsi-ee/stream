@@ -5,10 +5,10 @@
 
 #include "base/StreamProc.h"
 #include "base/EventProc.h"
-#include "base/EventStore.h"
 
 #ifdef WITH_ROOT
-#include "root/TTreeStore.h"
+#include "TTree.h"
+#include "TFile.h"
 #endif
 
 base::ProcMgr* base::ProcMgr::fInstance = 0;
@@ -20,14 +20,15 @@ base::ProcMgr::ProcMgr() :
    fTriggers(10000),                // FIXME: size should be configurable
    fTimeMasterIndex(DummyIndex),
    fAnalysisKind(kind_Stream),
-   fStore(0)
+   fFile(0),
+   fTree(0)
 {
    if (fInstance==0) fInstance = this;
 }
 
 base::ProcMgr::~ProcMgr()
 {
-   if (fStore!=0) { delete fStore; fStore = 0; }
+   CloseStore();
 
    DeleteAllProcessors();
    // printf("Delete processors done\n");
@@ -123,7 +124,7 @@ void base::ProcMgr::UserPreLoop()
    for (unsigned n=0;n<fProc.size();n++) {
       if (fProc[n]==0) continue;
 
-      if (fStore && fProc[n]->IsStoreEnabled()) fProc[n]->StartStore(fStore);
+      if (fTree && fProc[n]->IsStoreEnabled()) fProc[n]->CreateBranch(fTree);
       if (fProc[n]->fAnalysisKind!=kind_RawOnly)
          fProc[n]->fAnalysisKind = fAnalysisKind;
 
@@ -135,7 +136,7 @@ void base::ProcMgr::UserPreLoop()
 
    for (unsigned n=0;n<fEvProc.size();n++) {
       if (fEvProc[n]==0) continue;
-      if (fStore && fEvProc[n]->IsStoreEnabled()) fEvProc[n]->StartStore(fStore);
+      if (fTree && fEvProc[n]->IsStoreEnabled()) fEvProc[n]->CreateBranch(fTree);
       fEvProc[n]->UserPreLoop();
    }
 }
@@ -149,10 +150,7 @@ void base::ProcMgr::UserPostLoop()
       if (fEvProc[n]) fEvProc[n]->UserPostLoop();
 
    // close store file already here
-   if (fStore!=0) {
-      delete fStore;
-      fStore = 0;
-   }
+   CloseStore();
 }
 
 
@@ -468,13 +466,8 @@ bool base::ProcMgr::ScanDataForNewTriggers()
    // which we already distribute to each processor. In fact, this could run in
    // individual thread of each processor
 
-   // printf("--------------- ScanDataForNewTriggers numproc %u-------------- \n", (unsigned) fProc.size());
-
-   for (unsigned n=0;n<fProc.size();n++) {
-      // printf("Scan in %u %p %s\n", n, fProc[n], fProc[n]->GetName());
+   for (unsigned n=0;n<fProc.size();n++)
       fProc[n]->ScanDataForNewTriggers();
-      // printf("Did scan in %u %p %s\n", n, fProc[n], fProc[n]->GetName());
-   }
 
    return true;
 }
@@ -531,26 +524,48 @@ bool base::ProcMgr::ProduceNextEvent(base::Event* &evt)
    return false;
 }
 
-void base::ProcMgr::ProcessEvent(base::Event* evt)
+bool base::ProcMgr::ProcessEvent(base::Event* evt)
 {
-   if (evt==0) return;
+   if (evt==0) return false;
 
    // call event processors one after another until event is discarded
    for (unsigned n=0;n<fEvProc.size();n++)
-      if (!fEvProc[n]->Process(evt)) return;
+      if (!fEvProc[n]->Process(evt)) return false;
 
-   if (fStore!=0)
-      fStore->Fill();
+#ifdef WITH_ROOT
+   if (fTree) fTree->Fill();
+#endif
+
+   return true;
 }
 
-bool base::ProcMgr::CreateStore(const char* storename)
+bool base::ProcMgr::CreateStore(const char* fname)
 {
 #ifdef WITH_ROOT
-   if (fStore!=0) delete fStore;
-
-   fStore = new TTreeStore(storename);
+   if (fTree) return true;
+   fFile = TFile::Open(fname, "RECREATE","Store for stream events");
+   if (fFile==0) return false;
+   fTree = new TTree("T", "Tree with stream data");
    return true;
 #else
    return false;
 #endif
 }
+
+bool base::ProcMgr::CloseStore()
+{
+#ifdef WITH_ROOT
+   if (fTree && fFile) {
+      fFile->cd();
+      fTree->Write();
+      delete fTree;
+      fTree = 0;
+      delete fFile;
+      fFile = 0;
+   }
+   return true;
+#else
+   return false;
+#endif
+}
+
