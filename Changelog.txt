@@ -4,6 +4,7 @@
 2. Use full 2-byte in TDC numbering, allow to specify how id appears in the name.
 3. Provide several common methods in hadaq::TrbProcessor to create TDCs
    and load calibrations - make it analouge to hydra2 code.
+4. Register store tree in the go4 - one could see tree structure in the browser  
 
 
 16.01.2014

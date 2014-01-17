@@ -4,8 +4,6 @@
 
 #include "base/EventProc.h"
 #include "base/Event.h"
-#include "base/SubEvent.h"
-
 #include "hadaq/TdcSubEvent.h"
 
 class PadiwaProc : public base::EventProc {
@@ -24,43 +22,43 @@ class PadiwaProc : public base::EventProc {
          base::EventProc("Padiwa%u", padiwaid),
          fTdcId(_tdcid),
          fChId(_chid)
-         
+
       {
          // printf("Create %s for %s ch%u\n", GetName(), fTdcId.c_str(), fChId);
          ResetHits();
-         
+
          hFast = MakeH1("Fast","Width of fast channel", 1000, 0, 100, "ns");
          hSlow = MakeH1("Slow","Width of slow channel", 1000, 0, 200, "ns");
          hCorr = MakeH2("Corr","Correlation between fast and slow", 100, 0., 100., 100, 0., 200., "fast, ns;slow, ns");
       }
-      
-      
+
+
       virtual void CreateBranch(TTree* t)
       {
          t->Branch(GetName(), fHits, "hits[4]/D");
       }
-      
+
       void ResetHits() 
       {
          for (unsigned n=0;n<4;n++) fHits[n] = 0;
       }
-      
+
       bool IsComplete() 
       {
          for (unsigned n=0;n<4;n++) 
             if (fHits[n] == 0) return false;
          return true;
       }
-      
+
       double GetHit(unsigned n) const { return fHits[n]; } 
-      
+
       double GetFast() const { return fHits[1] - fHits[0]; }
       double GetSlow() const { return fHits[3] - fHits[2]; }
-      
+
       virtual bool Process(base::Event* ev) 
       {
          ResetHits();
-         
+
          hadaq::TdcSubEvent* sub = 
                dynamic_cast<hadaq::TdcSubEvent*> (ev->GetSubEvent(fTdcId));
          

@@ -130,6 +130,12 @@ namespace hadaq {
          /** Create up-to 4 TDCs processors with specified IDs */
          void CreateTDC(unsigned id1, unsigned id2 = 0, unsigned id3 = 0, unsigned id4 = 0);
 
+         /** Mark automatic calibrations for all TDCs */
+         void SetAutoCalibrations(long cnt = 100000);
+
+         /** Specify to produce and write calibrations at the end of data processing */
+         void SetWriteCalibrations(const char* fileprefix);
+
          /** Load TDC calibrations, as argument file prefix (without TDC id) should be specified */
          void LoadCalibrations(const char* fileprefix);
 

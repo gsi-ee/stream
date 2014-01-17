@@ -30,7 +30,13 @@ void first()
    trb3->CreateTDC(0x8a00, 0x8a01, 0x8a02, 0x8a03);
 
    // Load calibrations for ALL TDCs
-   trb3->LoadCalibrations("tdc3_");
+   trb3->LoadCalibrations("/data.local1/padiwa/new_");
+
+   // calculate and write calibrations at the end of the run
+   //trb3->SetWriteCalibrations("/data.local1/padiwa/new_");
+
+   // enable automatic calibrations of the channels
+   //trb3->SetAutoCalibrations(100000);
 
    // method set window for all TDCs
    trb3->SetTriggerWindow(-4e-7, -0.2e-7);

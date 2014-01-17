@@ -13,15 +13,11 @@ class TFirstStepProcessor : public TGo4EventProcessor,
       long fNumInpBufs;
       long fNumOutEvents;
 
-      static TString fDfltSetupScript;
-
    public:
 
       TFirstStepProcessor();
       TFirstStepProcessor(const char* name);
       virtual ~TFirstStepProcessor();
-
-      static void SetDfltScript(const char* name) { fDfltSetupScript = name; }
 
       /* Can be overwritten by subclass, but is not recommended! use ProcessEvent or ProcessSubevent instead*/
       virtual Bool_t BuildEvent(TGo4EventElement*);

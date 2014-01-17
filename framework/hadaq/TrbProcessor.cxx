@@ -95,6 +95,25 @@ void hadaq::TrbProcessor::CreateTDC(unsigned id1, unsigned id2, unsigned id3, un
    }
 }
 
+void hadaq::TrbProcessor::SetAutoCalibrations(long cnt)
+{
+   for (SubProcMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++)
+      iter->second->SetAutoCalibration(cnt);
+}
+
+void hadaq::TrbProcessor::SetWriteCalibrations(const char* fileprefix)
+{
+   char fname[1024];
+
+   for (SubProcMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
+
+      snprintf(fname, sizeof(fname), "%s%04x.cal", fileprefix, iter->second->GetID());
+
+      iter->second->SetWriteCalibration(fname);
+   }
+}
+
+
 void hadaq::TrbProcessor::LoadCalibrations(const char* fileprefix)
 {
    char fname[1024];

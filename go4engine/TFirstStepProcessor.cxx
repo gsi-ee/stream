@@ -11,22 +11,19 @@
 #include "TGo4WinCond.h"
 #include "TGo4MbsEvent.h"
 #include "TGo4MbsSubEvent.h"
+#include "TGo4Analysis.h"
 
 #include "TStreamEvent.h"
 
 #include "TGo4EventErrorException.h"
-//#include "TGo4EventTimeoutException.h"
-//#include "TGo4EventEndException.h"
-
-
-TString TFirstStepProcessor::fDfltSetupScript = "first.C";
 
 
 TFirstStepProcessor::TFirstStepProcessor():
    TGo4EventProcessor(),
    base::ProcMgr()
 {
-} // streamer dummy
+   // streamer dummy constructor
+}
 
 
 TFirstStepProcessor::TFirstStepProcessor(const char* name) :
@@ -62,10 +59,15 @@ TFirstStepProcessor::TFirstStepProcessor(const char* name) :
    fNumOutEvents = 0;
 
    base::ProcMgr::UserPreLoop();
+
+   // register tree in Go4 browser
+   if (fTree!=0) TGo4Analysis::Instance()->AddTree(fTree);
 }
 
 TFirstStepProcessor::~TFirstStepProcessor()
 {
+   if (fTree!=0) TGo4Analysis::Instance()->RemoveTree(fTree);
+
    base::ProcMgr::UserPostLoop();
 
    TGo4Log::Info("Input %ld  Output %ld  Total processed size = %ld", fNumInpBufs, fNumOutEvents, fTotalDataSize);
