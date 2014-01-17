@@ -46,7 +46,7 @@ namespace base {
 
          void CreateBasicHistograms();
 
-         void FillMsgPerBrdHist(unsigned cnt) { FillH1(fMsgPerBrd, GetBoardId(), cnt); }
+         void FillMsgPerBrdHist(unsigned cnt) { FillH1(fMsgPerBrd, GetID(), cnt); }
 
          bool CheckPrint(double msgtm, double safetymargin = 1e-6);
 

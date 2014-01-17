@@ -18,7 +18,7 @@ namespace base {
          enum { DummyBrdId = 0xffffffff };
 
          std::string   fName;                     //!< processor name, used for event naming
-         unsigned      fBoardId;                  //!< identifier, used mostly for debugging
+         unsigned      fID;                  //!< identifier, used mostly for debugging
          ProcMgr*      fMgr;                      //!< direct pointer on manager
          std::string   fPrefix;                   //!< prefix, used for histogram names
          std::string   fSubPrefixD;               //!< sub-prefix for histogram directory
@@ -29,7 +29,7 @@ namespace base {
          /** Make constructor protected - no way to create base class instance */
          Processor(const char* name = "", unsigned brdid = DummyBrdId);
 
-         void SetBoardId(unsigned id) { fBoardId = id; }
+         void SetBoardId(unsigned id) { fID = id; }
 
          /** Set subprefix for histograms and conditions */
          void SetSubPrefix(const char* subname = "", int indx = -1, const char* subname2 = "", int indx2 = -1);
@@ -78,7 +78,7 @@ namespace base {
          ProcMgr* mgr() const { return fMgr; }
 
          const char* GetName() const { return fName.c_str(); }
-         unsigned GetBoardId() const { return fBoardId; }
+         unsigned GetID() const { return fID; }
 
          void SetHistFilling(int lvl = 99) { fHistFilling = lvl; }
          bool IsHistFilling() const { return fHistFilling > 0; }

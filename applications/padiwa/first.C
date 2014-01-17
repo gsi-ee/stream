@@ -156,14 +156,14 @@ void my_hook()
 
    printf("Do extra work NUM %u\n", trb3->NumSubProc());
 
-   for (unsigned ntdc=0;ntdc<trb3->NumSubProc();ntdc++) {
+   for (unsigned ntdc=0;ntdc<4;ntdc++) {
 
-      hadaq::TdcProcessor* tdc = trb3->GetSubProc(ntdc);
+      hadaq::TdcProcessor* tdc = trb3->GetTDC(0x0200 | ntdc);
       if (tdc==0) continue;
 
       TH1* hist = (TH1*) tdc->GetChannelRefHist(1);
 
-      printf("  TDC%u mean:%5.2f rms:%5.2f\n", tdc->GetBoardId(), hist->GetMean(), hist->GetRMS());
+      printf("  TDC%u mean:%5.2f rms:%5.2f\n", tdc->GetID(), hist->GetMean(), hist->GetRMS());
 
       tdc->ClearChannelRefHist(1);
    }

@@ -21,7 +21,7 @@ get4::Get4Rec::Get4Rec() :
 }
 
 get4::Processor::Processor(unsigned rocid, unsigned get4mask, base::OpticSplitter* spl) :
-   base::SysCoreProc("ROC", rocid, spl),
+   base::SysCoreProc("ROC%u", rocid, spl),
    fIter1(),
    fIter2()
 {
@@ -90,7 +90,7 @@ get4::Processor::Processor(unsigned rocid, unsigned get4mask, base::OpticSplitte
 
    fIgnore250Mhz = false;
 
-   printf("Create GET4 processor for board %u\n", GetBoardId());
+   printf("Create GET4 processor for board %u\n", GetID());
 
 }
 
@@ -150,8 +150,8 @@ bool get4::Processor::FirstBufferScan(const base::Buffer& buf)
 
       unsigned rocid = msg.getRocNumber();
 
-      if (rocid != GetBoardId()) {
-         printf("Message from wrong ROCID %u, expected %u\n", rocid, GetBoardId());
+      if (rocid != GetID()) {
+         printf("Message from wrong ROCID %u, expected %u\n", rocid, GetID());
          continue;
       }
 
@@ -416,7 +416,7 @@ bool get4::Processor::SecondBufferScan(const base::Buffer& buf)
 
       unsigned rocid = msg.getRocNumber();
 
-      if (rocid != GetBoardId()) continue;
+      if (rocid != GetID()) continue;
 
 //      printf("Scan message %u type %u\n", cnt, msg.getMessageType());
 

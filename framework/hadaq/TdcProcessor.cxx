@@ -16,7 +16,7 @@ unsigned hadaq::TdcProcessor::fMaxBrdId = 8;
 #define RAWPRINT( args ...) if(IsPrintRawData()) printf( args )
 
 hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels, unsigned edge_mask) :
-   base::StreamProc("TDC", tdcid, false),
+   base::StreamProc("TDC_%04x", tdcid, false),
    fTrb(trb),
    fIter1(),
    fIter2(),
@@ -166,13 +166,13 @@ void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned re
 {
    if ((ch>=NumChannels()) || (HistFillLevel()<4)) return;
    fCh[ch].refch = refch;
-   fCh[ch].reftdc = (reftdc >= 0xffff) ? GetBoardId() : reftdc;
+   fCh[ch].reftdc = (reftdc >= 0xffff) ? GetID() : reftdc;
 
    CreateChannelHistograms(ch);
-   if (fCh[ch].reftdc == GetBoardId()) CreateChannelHistograms(refch);
+   if (fCh[ch].reftdc == GetID()) CreateChannelHistograms(refch);
 
    char sbuf[1024], saxis[1024], refname[1024];
-   if (fCh[ch].reftdc == GetBoardId()) {
+   if (fCh[ch].reftdc == GetID()) {
       sprintf(refname, "Ch%u", fCh[ch].refch);
    } else {
       sprintf(refname, "Ch%u TDC%u", fCh[ch].refch, fCh[ch].reftdc);
@@ -219,16 +219,16 @@ bool hadaq::TdcProcessor::SetDoubleRefChannel(unsigned ch1, unsigned ch2,
 
    unsigned reftdc = 0xffff;
    if (ch2 > 1000) { reftdc = (ch2-1000) / 1000; ch2 = ch2 % 1000; }
-   if (reftdc >= 0xffff) reftdc = GetBoardId();
+   if (reftdc >= 0xffff) reftdc = GetID();
 
    unsigned ch = ch1, refch = ch2;
 
-   if (reftdc == GetBoardId()) {
+   if (reftdc == GetID()) {
       if ((ch2>=NumChannels()) || (fCh[ch2].refch>=NumChannels()))  return false;
       if (ch1<ch2) { ch = ch2; refch = ch1; }
    } else {
-      if (reftdc > GetBoardId())
-         printf("WARNING - double ref channel from TDC with higher ID %u > %u\n", reftdc, GetBoardId());
+      if (reftdc > GetID())
+         printf("WARNING - double ref channel from TDC with higher ID %u > %u\n", reftdc, GetID());
    }
 
    fCh[ch].doublerefch = refch;
@@ -241,7 +241,7 @@ bool hadaq::TdcProcessor::SetDoubleRefChannel(unsigned ch1, unsigned ch2,
 
    if (DoRisingEdge()) {
       if (fCh[ch].fRisingDoubleRef == 0) {
-         if (reftdc == GetBoardId()) {
+         if (reftdc == GetID()) {
             sprintf(sbuf, "double correlation to Ch%u", refch);
             sprintf(saxis, "ch%u-ch%u ns;ch%u-ch%u ns", ch, fCh[ch].refch, refch, fCh[refch].refch);
          } else {
@@ -264,7 +264,7 @@ bool hadaq::TdcProcessor::EnableRefCondPrint(unsigned ch, double left, double ri
       fprintf(stderr,"Reference channel not specified, conditional print cannot work\n");
       return false;
    }
-   if (fCh[ch].reftdc != GetBoardId()) {
+   if (fCh[ch].reftdc != GetID()) {
       fprintf(stderr,"Only when reference channel on same TDC specified, conditional print can be enabled\n");
       return false;
    }
@@ -305,10 +305,10 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
 
       unsigned ref = fCh[ch].refch;
       unsigned reftdc = fCh[ch].reftdc;
-      if (reftdc>=0xffff) reftdc = GetBoardId();
+      if (reftdc>=0xffff) reftdc = GetID();
 
       TdcProcessor* refproc = 0;
-      if (reftdc == GetBoardId()) refproc = this; else
+      if (reftdc == GetID()) refproc = this; else
       if (subprocmap!=0) {
          SubProcMap::iterator iter = subprocmap->find(reftdc);
          if (iter != subprocmap->end()) refproc = iter->second;
@@ -317,7 +317,7 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
       FillH1(fCh[ch].fRisingMult, fCh[ch].rising_cnt); fCh[ch].rising_cnt = 0;
       FillH1(fCh[ch].fFallingMult, fCh[ch].falling_cnt); fCh[ch].falling_cnt = 0;
 
-      // RAWPRINT("TDC%u Ch:%u Try to use as ref TDC%u %u proc:%p\n", GetBoardId(), ch, reftdc, ref, refproc);
+      // RAWPRINT("TDC%u Ch:%u Try to use as ref TDC%u %u proc:%p\n", GetID(), ch, reftdc, ref, refproc);
 
       if ((refproc!=0) && (ref>0) && (ref<refproc->NumChannels()) && ((ref!=ch) || (refproc!=this))) {
          if (DoRisingEdge() && (fCh[ch].rising_hit_tm != 0) && (refproc->fCh[ref].rising_hit_tm != 0)) {
@@ -341,7 +341,7 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
             FillH2(fCh[ch].fRisingRef2D, diff-1., refproc->fCh[ref].rising_fine);
             FillH2(fCh[ch].fRisingRef2D, diff-2., fCh[ch].rising_coarse/4);
             RAWPRINT("Difference rising %u:%u\t %u:%u\t %12.3f\t %12.3f\t %7.3f  coarse %03x - %03x = %4d  fine %03x %03x \n",
-                  GetBoardId(), ch, reftdc, ref,
+                  GetID(), ch, reftdc, ref,
                   tm*1e9,  tm_ref*1e9, diff,
                   fCh[ch].rising_coarse, refproc->fCh[ref].rising_coarse, (int) (fCh[ch].rising_coarse - refproc->fCh[ref].rising_coarse),
                   fCh[ch].rising_fine, refproc->fCh[ref].rising_fine);
@@ -371,7 +371,7 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
 
             FillH1(fCh[ch].fFallingCoarseRef, 0. + fCh[ch].falling_coarse - refproc->fCh[ref].falling_coarse);
             RAWPRINT("Difference falling %u:%u %u:%u  %12.3f  %12.3f  %7.3f  coarse %03x - %03x = %4d  fine %03x %03x \n",
-                     GetBoardId(), ch, reftdc, ref,
+                     GetID(), ch, reftdc, ref,
                      tm*1e9, tm_ref*1e9, diff,
                      fCh[ch].falling_coarse, fCh[ref].falling_coarse, (int) (fCh[ch].falling_coarse - refproc->fCh[ref].falling_coarse),
                      fCh[ch].falling_fine, refproc->fCh[ref].falling_fine);
@@ -382,9 +382,9 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
       if ((fCh[ch].doublerefch < NumChannels()) && (fCh[ch].fRisingDoubleRef!=0)) {
          ref = fCh[ch].doublerefch;
          reftdc = fCh[ch].doublereftdc;
-         if (reftdc>=0xffff) reftdc = GetBoardId();
+         if (reftdc>=0xffff) reftdc = GetID();
          refproc = 0;
-         if (reftdc == GetBoardId()) refproc = this; else
+         if (reftdc == GetID()) refproc = this; else
          if (subprocmap!=0) {
              SubProcMap::iterator iter = subprocmap->find(reftdc);
              if (iter != subprocmap->end()) refproc = iter->second;
@@ -443,7 +443,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       epoch_shift = buf().user_tag;
    }
 
-//   printf("TDC%u %s scan tag = %u len %u\n", GetBoardId(), first_scan ? "FIRST" : "SECOND", buf().user_tag, buf.datalen()/4 -1);
+//   printf("TDC%u %s scan tag = %u len %u\n", GetID(), first_scan ? "FIRST" : "SECOND", buf().user_tag, buf.datalen()/4 -1);
 
    TdcIterator& iter = first_scan ? fIter1 : fIter2;
 
@@ -453,7 +453,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
    double localtm(0.), minimtm(0), ch0time(0);
 
-//   printf("TDC%u scan first %d buflen %u rec %p\n", GetBoardId(), first_scan, buf.datalen()/4 -1, &(buf()));
+//   printf("TDC%u scan first %d buflen %u rec %p\n", GetID(), first_scan, buf.datalen()/4 -1, &(buf()));
 
    if (first_scan) BeforeFill();
 
@@ -578,19 +578,19 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                   rec.rising_coarse = coarse;
                   rec.rising_fine = fine;
 
-                  if ((rec.rising_cond_prnt>0) && (rec.reftdc == GetBoardId()) &&
+                  if ((rec.rising_cond_prnt>0) && (rec.reftdc == GetID()) &&
                       (rec.refch < NumChannels()) && (fCh[rec.refch].rising_hit_tm!=0)) {
                      double diff = (localtm - fCh[rec.refch].rising_hit_tm) * 1e9;
                      if (TestC1(rec.fRisingRefCond, diff) == 0) {
                         rec.rising_cond_prnt--;
                         rawprint = true;
-                        // printf ("TDC%u ch%u detect rising diff %8.3f ns\n", GetBoardId(), chid, diff);
+                        // printf ("TDC%u ch%u detect rising diff %8.3f ns\n", GetID(), chid, diff);
                      }
                   }
                }
 
                // special case - when ref channel defined as 0, fill all hits
-               if ((chid!=0) && (rec.refch==0) && (rec.reftdc == GetBoardId()) && (fCh[0].rising_hit_tm!=0)) {
+               if ((chid!=0) && (rec.refch==0) && (rec.reftdc == GetID()) && (fCh[0].rising_hit_tm!=0)) {
                   FillH1(rec.fRisingRef, (localtm - fCh[0].rising_hit_tm)*1e9);
                }
 
@@ -606,19 +606,19 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                   rec.falling_coarse = coarse;
                   rec.falling_fine = fine;
 
-                  if ((rec.falling_cond_prnt>0) && (rec.reftdc == GetBoardId()) &&
+                  if ((rec.falling_cond_prnt>0) && (rec.reftdc == GetID()) &&
                       (rec.refch < NumChannels()) && (fCh[rec.refch].falling_hit_tm!=0)) {
                      double diff = (localtm - fCh[rec.refch].falling_hit_tm) * 1e9;
                      if (TestC1(rec.fFallingRefCond, diff) == 0) {
                         rec.falling_cond_prnt--;
                         rawprint = true;
-                        // printf ("TDC%u ch%u detect falling diff %8.3f ns\n", GetBoardId(), chid, diff);
+                        // printf ("TDC%u ch%u detect falling diff %8.3f ns\n", GetID(), chid, diff);
                      }
                   }
 
                }
 
-               if ((chid!=0) && (rec.refch==0) && (rec.reftdc == GetBoardId()) && (fCh[0].falling_hit_tm!=0)) {
+               if ((chid!=0) && (rec.refch==0) && (rec.reftdc == GetID()) && (fCh[0].falling_hit_tm!=0)) {
                   FillH1(rec.fFallingRef, (localtm - fCh[0].falling_hit_tm)*1e9);
                }
             }
@@ -634,7 +634,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
             base::GlobalTime_t globaltm = LocalToGlobalTime(localtm, &help_index);
 
-            // printf("TDC%u Test TDC message local:%11.9f global:%11.9f\n", GetBoardId(), localtm, globaltm);
+            // printf("TDC%u Test TDC message local:%11.9f global:%11.9f\n", GetID(), localtm, globaltm);
 
             // we test hist, but do not allow to close events
             unsigned indx = TestHitTime(globaltm, true, false);
@@ -709,13 +709,13 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
 //      printf("Proc:%p first scan iserr:%d  minm: %12.9f\n", this, iserr, minimtm*1e-9);
 
-      FillH1(fMsgPerBrd, GetBoardId(), cnt);
+      FillH1(fMsgPerBrd, GetID(), cnt);
 
       // fill number of "good" hits
-      FillH1(fHitsPerBrd, GetBoardId(), hitcnt);
+      FillH1(fHitsPerBrd, GetID(), hitcnt);
 
       if (iserr)
-         FillH1(fErrPerBrd, GetBoardId());
+         FillH1(fErrPerBrd, GetID());
    } else {
 
       // use first channel only for flushing
@@ -726,15 +726,15 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    if (first_scan && !fCrossProcess) AfterFill();
 
    if (rawprint && first_scan) {
-      printf("RAW data of TDC%u\n", GetBoardId());
+      printf("RAW data of TDC%u\n", GetID());
       TdcIterator iter;
       iter.assign((uint32_t*) buf.ptr(4), buf.datalen()/4 -1, false);
       while (iter.next()) iter.printmsg();
    }
 
-   // printf("TDC%u %s scan tag = %u err = %d\n", GetBoardId(), first_scan ? "FIRST" : "SECOND", buf().user_tag, iserr);
+   // printf("TDC%u %s scan tag = %u err = %d\n", GetID(), first_scan ? "FIRST" : "SECOND", buf().user_tag, iserr);
 
-//   printf("TDC%u res %d first %d buflen %u rec %p\n", GetBoardId(), !iserr, first_scan, buf.datalen()/4 -1, &(buf()));
+//   printf("TDC%u res %d first %d buflen %u rec %p\n", GetID(), !iserr, first_scan, buf.datalen()/4 -1, &(buf()));
 
    return !iserr;
 }
@@ -759,9 +759,9 @@ void hadaq::TdcProcessor::CalibrateChannel(unsigned nch, long* statistic, float*
 
    if (sum<1000) {
       if (sum>0)
-         printf("TDC:%u Ch:%u Too few counts %5.0f for calibration of fine counter, use linear\n", GetBoardId(), nch, sum);
+         printf("TDC:%u Ch:%u Too few counts %5.0f for calibration of fine counter, use linear\n", GetID(), nch, sum);
    } else {
-      printf("TDC:%u Ch:%u Cnts: %7.0f produce calibration\n", GetBoardId(), nch, sum);
+      printf("TDC:%u Ch:%u Cnts: %7.0f produce calibration\n", GetID(), nch, sum);
    }
 
    for (unsigned n=0;n<FineCounterBins;n++) {
@@ -783,7 +783,7 @@ void hadaq::TdcProcessor::CopyCalibration(float* calibr, base::H1handle hcalibr)
 
 void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat)
 {
-   printf("TDC%d Produce channels calibrations\n", GetBoardId());
+   printf("TDC%d Produce channels calibrations\n", GetID());
 
    for (unsigned ch=0;ch<NumChannels();ch++) {
       if (fCh[ch].docalibr) {

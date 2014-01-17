@@ -21,7 +21,7 @@ class PadiwaProc : public base::EventProc {
       
    public:
       PadiwaProc(unsigned padiwaid, const char* _tdcid, unsigned _chid) : 
-         base::EventProc("Padiwa", padiwaid),
+         base::EventProc("Padiwa%u", padiwaid),
          fTdcId(_tdcid),
          fChId(_chid)
          
@@ -137,10 +137,10 @@ void second()
 {
    base::ProcMgr::instance()->CreateStore("file.root");
    
-   PadiwaProc* proc1 = new PadiwaProc(0, "TDC0", 48);
+   PadiwaProc* proc1 = new PadiwaProc(0, "TDC_8a00", 48);
    proc1->SetStoreEnabled();
    
-   PadiwaProc* proc2 = new PadiwaProc(1, "TDC3", 0);
+   PadiwaProc* proc2 = new PadiwaProc(1, "TDC_8a03", 0);
    proc2->SetStoreEnabled();
    
    new TestProc(proc1, proc2);

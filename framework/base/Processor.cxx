@@ -8,7 +8,7 @@
 
 base::Processor::Processor(const char* name, unsigned brdid) :
    fName(name),
-   fBoardId(0),
+   fID(0),
    fMgr(0),
    fPrefix(),
    fSubPrefixD(),
@@ -16,11 +16,11 @@ base::Processor::Processor(const char* name, unsigned brdid) :
    fHistFilling(99),
    fStoreEnabled(false)
 {
-   if (brdid < DummyBrdId) {
+   if (brdid != DummyBrdId) {
       char sbuf[100];
-      snprintf(sbuf, sizeof(sbuf), "%u", brdid);
-      fName.append(sbuf);
-      fBoardId = brdid;
+      snprintf(sbuf, sizeof(sbuf), name, brdid);
+      fName = sbuf;
+      fID = brdid;
    }
 
    fPrefix = fName;

@@ -14,7 +14,7 @@ double nx::Processor::fNXDisorderTm = 17e-6;
 bool nx::Processor::fLastEpochCorr = false;
 
 nx::Processor::Processor(unsigned rocid, unsigned nxmask, base::OpticSplitter* spl) :
-   base::SysCoreProc("ROC", rocid),
+   base::SysCoreProc("ROC%u", rocid),
    fIter1(),
    fIter2()
 {
@@ -99,12 +99,12 @@ bool nx::Processor::LoadTextBaseline(const std::string& fname)
    std::vector<unsigned> cnt(NX.size(), 0);
 
    while(fscanf( pedFile, "%u%u%u%f%f", &roc, &nx, &ch, &ped, &width ) == 5) {
-      if (roc!= GetBoardId()) continue;
+      if (roc!= GetID()) continue;
       if ((nx>=NX.size()) || !NX[nx].used || ch>=NumChannels) continue;
       NX[nx].base_line[ch] = ped;
       cnt[nx]++;
       if (cnt[nx] == NumChannels) {
-         printf("Fill base line for NX %u from ROC%u\n", nx, GetBoardId());
+         printf("Fill base line for NX %u from ROC%u\n", nx, GetID());
          NX[nx].isbaseline = true;
       }
    }
@@ -144,7 +144,7 @@ bool nx::Processor::FirstBufferScan(const base::Buffer& buf)
 
    bool first = true;
 
-//   printf("======== MESSAGES for board %u ==========\n", GetBoardId());
+//   printf("======== MESSAGES for board %u ==========\n", GetID());
 
 
 //   static int doprint = 0;
@@ -159,8 +159,8 @@ bool nx::Processor::FirstBufferScan(const base::Buffer& buf)
 
       unsigned rocid = msg.getRocNumber();
 
-      if (rocid != GetBoardId()) {
-         printf("Message from wrong ROCID %u, expected %u\n", rocid, GetBoardId());
+      if (rocid != GetID()) {
+         printf("Message from wrong ROCID %u, expected %u\n", rocid, GetID());
          continue;
       }
 
@@ -336,7 +336,7 @@ bool nx::Processor::SecondBufferScan(const base::Buffer& buf)
 
       unsigned rocid = msg.getRocNumber();
 
-      if (rocid != GetBoardId()) continue;
+      if (rocid != GetID()) continue;
 
 //      printf("Scan message %u type %u\n", cnt, msg.getMessageType());
 

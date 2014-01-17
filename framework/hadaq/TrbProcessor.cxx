@@ -11,11 +11,10 @@
 #define RAWPRINT( args ...) if(IsPrintRawData()) printf( args )
 
 hadaq::TrbProcessor::TrbProcessor(unsigned brdid) :
-   base::StreamProc("TRB", brdid, false),
+   base::StreamProc("TRB%u", brdid, false),
    fMap()
 {
    mgr()->RegisterProc(this, base::proc_TRBEvent, brdid);
-
 
    printf("Create TrbProcessor %s\n", GetName());
 
@@ -71,6 +70,42 @@ bool hadaq::TrbProcessor::CheckPrintError()
    return true;
 }
 
+void hadaq::TrbProcessor::CreateTDC(unsigned id1, unsigned id2, unsigned id3, unsigned id4)
+{
+   // overwrite default value in the beginning
+   if ((id1!=0) && (fHadaqTDCId == 0xC000)) fHadaqTDCId = (id1 & 0xff00);
+
+   for (unsigned cnt=0;cnt<4;cnt++) {
+      unsigned tdcid = id1;
+      switch (cnt) {
+         case 1: tdcid = id2; break;
+         case 2: tdcid = id3; break;
+         case 3: tdcid = id4; break;
+         default: tdcid = id1; break;
+      }
+      if (tdcid==0) continue;
+
+      if (fHadaqTDCId == 0) fHadaqTDCId = (tdcid & 0xff00);
+
+      if ((tdcid & 0xff00) != fHadaqTDCId) {
+         printf("TDC id 0x%04x do not match with expected mask 0x%04x\n", tdcid, fHadaqTDCId);
+      } else {
+         new hadaq::TdcProcessor(this, tdcid, 65, 0x1);
+      }
+   }
+}
+
+void hadaq::TrbProcessor::LoadCalibrations(const char* fileprefix)
+{
+   char fname[1024];
+
+   for (SubProcMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
+
+      snprintf(fname, sizeof(fname), "%s%04x.cal", fileprefix, iter->second->GetID());
+
+      iter->second->LoadCalibration(fname);
+   }
+}
 
 void hadaq::TrbProcessor::AddSub(TdcProcessor* tdc, unsigned id)
 {
@@ -217,11 +252,11 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaq::RawSubevent* sub, unsigned trb3eve
 
       //! ================= FPGA TDC header ========================
       if ((data & 0xFF00) == fHadaqTDCId) {
-         unsigned tdcid = data & 0xFF;
+         unsigned tdcid = data & 0xFFFF;
 
-         FillH1(fTdcDistr, tdcid);
+         FillH1(fTdcDistr, tdcid & 0xff);
 
-         RAWPRINT ("   FPGA-TDC header: 0x%08x, brd=%u, size=%u\n", (unsigned) data, tdcid, datalen);
+         RAWPRINT ("   FPGA-TDC header: 0x%08x, tdcid=0x%04x, size=%u\n", (unsigned) data, tdcid, datalen);
 
          if (IsPrintRawData()) {
             TdcIterator iter;
@@ -229,11 +264,9 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaq::RawSubevent* sub, unsigned trb3eve
             while (iter.next()) iter.printmsg();
          }
 
-         SubProcMap::iterator iter = fMap.find(tdcid);
+         TdcProcessor* subproc = GetTDC(tdcid);
 
-         if (iter != fMap.end()) {
-            TdcProcessor* subproc = iter->second;
-
+         if (subproc != 0) {
             base::Buffer buf;
             buf.makenew((datalen+1)*4);
 
@@ -247,7 +280,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaq::RawSubevent* sub, unsigned trb3eve
             subproc->AddNextBuffer(buf);
             subproc->SetNewDataFlag(true);
          } else {
-            RAWPRINT("Did not find processor for TDC %u - skip data %u\n", tdcid, datalen);
+            RAWPRINT("Did not find processor for TDC 0x%04x - skip data %u\n", tdcid, datalen);
          }
 
          ix+=datalen;
@@ -332,3 +365,5 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaq::RawSubevent* sub, unsigned trb3eve
       }
    }
 }
+
+
