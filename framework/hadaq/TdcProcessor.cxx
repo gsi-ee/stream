@@ -592,6 +592,13 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                // special case - when ref channel defined as 0, fill all hits
                if ((chid!=0) && (rec.refch==0) && (rec.reftdc == GetID()) && (fCh[0].rising_hit_tm!=0)) {
                   FillH1(rec.fRisingRef, (localtm - fCh[0].rising_hit_tm)*1e9);
+
+                  RAWPRINT("Difference rising %u:%u\t %u:%u\t %12.3f\t %12.3f\t %7.3f  coarse %03x - %03x = %4d  fine %03x %03x \n",
+                        GetID(), chid, rec.reftdc, rec.refch,
+                        localtm*1e9,  fCh[0].rising_hit_tm*1e9, (localtm - fCh[0].rising_hit_tm)*1e9,
+                        coarse, fCh[0].rising_coarse, (int) (coarse - fCh[0].rising_coarse),
+                        fine, fCh[0].rising_fine);
+
                }
 
             } else {
