@@ -9,9 +9,9 @@
 class PadiwaProc : public base::EventProc {
    protected:
       
-      std::string fTdcId;    //!< tdc id with padiwa asic 
+      std::string fTdcId;    //!< tdc id with padiwa asic like "TDC_8a00"
       unsigned    fChId;     //!< first channel
-      double      fHits[4];  //!< record time 
+      double      fHits[4];  //!< time of 4 TDC channels, stored in the tree (when enabled)
       
       base::H1handle  hFast;  //!< histogram of fast channel
       base::H1handle  hSlow;  //!< histogram of slow channel
@@ -94,7 +94,7 @@ class TestProc : public base::EventProc {
       PadiwaProc* fProc1;     //!< first processor
       PadiwaProc* fProc2;     //!< second processor
       base::H2handle  hCorr;  //!< correlation between padiwas
-      double fX, fY;          //!< calcualted coordinates 
+      double fX, fY;          //!< calculated coordinates, stored in the tree (when tree enabled)
       
    public:
       TestProc(PadiwaProc* proc1, PadiwaProc* proc2) : 
@@ -133,7 +133,8 @@ class TestProc : public base::EventProc {
 
 void second() 
 {
-   base::ProcMgr::instance()->CreateStore("file.root");
+   // uncomment line to create tree for the events storage
+   // base::ProcMgr::instance()->CreateStore("file.root");
    
    PadiwaProc* proc1 = new PadiwaProc(0, "TDC_8a00", 48);
    proc1->SetStoreEnabled();
