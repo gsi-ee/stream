@@ -573,6 +573,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                FillH1(rec.fRisingFine, fine);
                FillH1(rec.fRisingCoarse, coarse);
 
+               bool print_cond = false;
+
                if ((rec.rising_hit_tm == 0.) || fUseLastHit) {
                   rec.rising_hit_tm = localtm;
                   rec.rising_coarse = coarse;
@@ -583,22 +585,24 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                      double diff = (localtm - fCh[rec.refch].rising_hit_tm) * 1e9;
                      if (TestC1(rec.fRisingRefCond, diff) == 0) {
                         rec.rising_cond_prnt--;
-                        rawprint = true;
+                        print_cond = true;
                         // printf ("TDC%u ch%u detect rising diff %8.3f ns\n", GetID(), chid, diff);
                      }
                   }
                }
 
+               if (print_cond) rawprint = true;
+
                // special case - when ref channel defined as 0, fill all hits
                if ((chid!=0) && (rec.refch==0) && (rec.reftdc == GetID()) && (fCh[0].rising_hit_tm!=0)) {
                   FillH1(rec.fRisingRef, (localtm - fCh[0].rising_hit_tm)*1e9);
 
-                  RAWPRINT("Difference rising %u:%u\t %u:%u\t %12.3f\t %12.3f\t %7.3f  coarse %03x - %03x = %4d  fine %03x %03x \n",
-                        GetID(), chid, rec.reftdc, rec.refch,
-                        localtm*1e9,  fCh[0].rising_hit_tm*1e9, (localtm - fCh[0].rising_hit_tm)*1e9,
-                        coarse, fCh[0].rising_coarse, (int) (coarse - fCh[0].rising_coarse),
-                        fine, fCh[0].rising_fine);
-
+                  if (IsPrintRawData() || print_cond)
+                  printf("Difference rising %u:%u\t %u:%u\t %12.3f\t %12.3f\t %7.3f  coarse %03x - %03x = %4d  fine %03x %03x \n",
+                          GetID(), chid, rec.reftdc, rec.refch,
+                          localtm*1e9,  fCh[0].rising_hit_tm*1e9, (localtm - fCh[0].rising_hit_tm)*1e9,
+                          coarse, fCh[0].rising_coarse, (int) (coarse - fCh[0].rising_coarse),
+                          fine, fCh[0].rising_fine);
                }
 
             } else {
