@@ -57,6 +57,9 @@ namespace base {
             fMap[name] = ev;
          }
 
+         /** Return number of subevents */
+         unsigned NumSubEvents() const { return fMap.size(); }
+
          /** Return subevent by name */
          base::SubEvent* GetSubEvent(const std::string& name) const
          {

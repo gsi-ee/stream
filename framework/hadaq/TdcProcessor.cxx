@@ -443,8 +443,6 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       epoch_shift = buf().user_tag;
    }
 
-//   printf("TDC%u %s scan tag = %u len %u\n", GetID(), first_scan ? "FIRST" : "SECOND", buf().user_tag, buf.datalen()/4 -1);
-
    TdcIterator& iter = first_scan ? fIter1 : fIter2;
 
    iter.assign((uint32_t*) buf.ptr(4), buf.datalen()/4 -1, false);
@@ -452,8 +450,6 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    unsigned help_index(0);
 
    double localtm(0.), minimtm(0), ch0time(0);
-
-//   printf("TDC%u scan first %d buflen %u rec %p\n", GetID(), first_scan, buf.datalen()/4 -1, &(buf()));
 
    if (first_scan) BeforeFill();
 
@@ -586,7 +582,6 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                      if (TestC1(rec.fRisingRefCond, diff) == 0) {
                         rec.rising_cond_prnt--;
                         print_cond = true;
-                        // printf ("TDC%u ch%u detect rising diff %8.3f ns\n", GetID(), chid, diff);
                      }
                   }
                }
@@ -737,15 +732,11 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    if (first_scan && !fCrossProcess) AfterFill();
 
    if (rawprint && first_scan) {
-      printf("RAW data of TDC%u\n", GetID());
+      printf("RAW data of %s\n", GetName());
       TdcIterator iter;
       iter.assign((uint32_t*) buf.ptr(4), buf.datalen()/4 -1, false);
       while (iter.next()) iter.printmsg();
    }
-
-   // printf("TDC%u %s scan tag = %u err = %d\n", GetID(), first_scan ? "FIRST" : "SECOND", buf().user_tag, iserr);
-
-//   printf("TDC%u res %d first %d buflen %u rec %p\n", GetID(), !iserr, first_scan, buf.datalen()/4 -1, &(buf()));
 
    return !iserr;
 }
@@ -770,9 +761,9 @@ void hadaq::TdcProcessor::CalibrateChannel(unsigned nch, long* statistic, float*
 
    if (sum<1000) {
       if (sum>0)
-         printf("TDC:%u Ch:%u Too few counts %5.0f for calibration of fine counter, use linear\n", GetID(), nch, sum);
+         printf("%s Ch:%u Too few counts %5.0f for calibration of fine counter, use linear\n", GetName(), nch, sum);
    } else {
-      printf("TDC:%u Ch:%u Cnts: %7.0f produce calibration\n", GetID(), nch, sum);
+      printf("%s Ch:%u Cnts: %7.0f produce calibration\n", GetName(), nch, sum);
    }
 
    for (unsigned n=0;n<FineCounterBins;n++) {
@@ -794,7 +785,7 @@ void hadaq::TdcProcessor::CopyCalibration(float* calibr, base::H1handle hcalibr)
 
 void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat)
 {
-   printf("TDC%d Produce channels calibrations\n", GetID());
+   printf("%s produce channels calibrations\n", GetName());
 
    for (unsigned ch=0;ch<NumChannels();ch++) {
       if (fCh[ch].docalibr) {
@@ -828,7 +819,7 @@ void hadaq::TdcProcessor::StoreCalibration(const std::string& fname)
 
    FILE* f = fopen(fname.c_str(),"w");
    if (f==0) {
-      printf("Cannot open file %s for writing calibration\n", fname.c_str());
+      printf("%s Cannot open file %s for writing calibration\n", GetName(), fname.c_str());
       return;
    }
 
@@ -843,7 +834,7 @@ void hadaq::TdcProcessor::StoreCalibration(const std::string& fname)
 
    fclose(f);
 
-   printf("Storing calibration in %s\n", fname.c_str());
+   printf("%s storing calibration in %s\n", GetName(), fname.c_str());
 }
 
 bool hadaq::TdcProcessor::LoadCalibration(const std::string& fname)
@@ -861,7 +852,7 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fname)
    fread(&num, sizeof(num), 1, f);
 
    if (num!=NumChannels()) {
-      printf("Mismatch of channels number in calibration file %u and in processor %u\n", (unsigned) num, NumChannels());
+      printf("%s mismatch of channels number in calibration file %u and in processor %u\n", GetName(), (unsigned) num, NumChannels());
    } else {
       for (unsigned ch=0;ch<NumChannels();ch++) {
          fread(fCh[ch].rising_calibr, sizeof(fCh[ch].rising_calibr), 1, f);
@@ -871,7 +862,7 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fname)
 
    fclose(f);
 
-   printf("Reading calibration from %s done\n", fname.c_str());
+   printf("%s reading calibration from %s done\n", GetName(), fname.c_str());
    return true;
 }
 
