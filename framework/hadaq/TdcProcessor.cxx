@@ -776,6 +776,8 @@ void hadaq::TdcProcessor::CalibrateChannel(unsigned nch, long* statistic, float*
 
 void hadaq::TdcProcessor::CopyCalibration(float* calibr, base::H1handle hcalibr)
 {
+   if (hcalibr==0) return;
+
    ClearH1(hcalibr);
 
    for (unsigned n=0;n<FineCounterBins;n++)
@@ -857,6 +859,12 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fname)
       for (unsigned ch=0;ch<NumChannels();ch++) {
          fread(fCh[ch].rising_calibr, sizeof(fCh[ch].rising_calibr), 1, f);
          fread(fCh[ch].falling_calibr, sizeof(fCh[ch].falling_calibr), 1, f);
+
+         CreateChannelHistograms(ch);
+
+         CopyCalibration(fCh[ch].rising_calibr, fCh[ch].fRisingCalibr);
+
+         CopyCalibration(fCh[ch].falling_calibr, fCh[ch].fFallingCalibr);
       }
    }
 
@@ -866,4 +874,18 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fname)
    return true;
 }
 
+void hadaq::TdcProcessor::IncCalibration(unsigned ch, bool rising, unsigned fine, unsigned value)
+{
+   if ((ch>=NumChannels()) || (fine>=FineCounterBins)) return;
+
+   if (rising && DoRisingEdge()) {
+      fCh[ch].rising_stat[fine] += value;
+      fCh[ch].all_rising_stat += value;
+   }
+
+   if (!rising && DoFallingEdge()) {
+      fCh[ch].falling_stat[fine] += value;
+      fCh[ch].all_falling_stat += value;
+   }
+}
 

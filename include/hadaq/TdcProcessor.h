@@ -189,8 +189,6 @@ namespace hadaq {
 
          void CalibrateChannel(unsigned nch, long* statistic, float* calibr);
          void CopyCalibration(float* calibr, base::H1handle hcalibr);
-         void ProduceCalibration(bool clear_stat);
-         void StoreCalibration(const std::string& fname);
 
          bool CheckPrintError();
 
@@ -317,6 +315,15 @@ namespace hadaq {
          {
             return DoBufferScan(buf, false);
          }
+
+         /** For expert use - artificially set calibration statistic */
+         void IncCalibration(unsigned ch, bool rising, unsigned fine, unsigned value);
+
+         /** For expert use - artificially produce calibration */
+         void ProduceCalibration(bool clear_stat = true);
+
+         /** For expert use - store calibration in the file */
+         void StoreCalibration(const std::string& fname);
    };
 
 }

@@ -69,7 +69,7 @@ void base::Processor::SetSubPrefix(const char* name, int indx, const char* subna
 
 base::H1handle base::Processor::MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle)
 {
-   if (!IsHistFilling()) return 0;
+   if ((mgr()==0) || !IsHistFilling()) return 0;
 
    std::string hname = fPrefix + "/";
    if (!fSubPrefixD.empty()) hname += fSubPrefixD;
@@ -88,7 +88,7 @@ base::H1handle base::Processor::MakeH1(const char* name, const char* title, int 
 
 base::H2handle base::Processor::MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options)
 {
-   if (!IsHistFilling()) return 0;
+   if ((mgr()==0) ||!IsHistFilling()) return 0;
 
    std::string hname = fPrefix + "/";
    if (!fSubPrefixD.empty()) hname += fSubPrefixD;
@@ -107,6 +107,8 @@ base::H2handle base::Processor::MakeH2(const char* name, const char* title, int 
 
 base::C1handle base::Processor::MakeC1(const char* name, double left, double right, H1handle h1)
 {
+   if (mgr()==0) return 0;
+
    std::string cname = fPrefix + "/";
    if (!fSubPrefixD.empty()) cname += fSubPrefixD;
    cname += fPrefix + "_";
@@ -119,10 +121,10 @@ base::C1handle base::Processor::MakeC1(const char* name, double left, double rig
 
 void base::Processor::ChangeC1(C1handle c1, double left, double right)
 {
-   mgr()->ChangeC1(c1, left, right);
+   if (mgr()) mgr()->ChangeC1(c1, left, right);
 }
 
 double base::Processor::GetC1Limit(C1handle c1, bool isleft)
 {
-   return mgr()->GetC1Limit(c1, isleft);
+   return mgr() ? mgr()->GetC1Limit(c1, isleft) : 0.;
 }
