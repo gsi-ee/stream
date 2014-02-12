@@ -14,17 +14,13 @@ void first()
    // set number of errors to be printed, default 1000
    trb3->SetPrintErrors(100);
 
-   // this is array with available TDCs ids
-   // It is required that high 8 bits are the same.
-   // These bits are used to separate TDC data from other data kinds
-
-   // Following levels of histograms filling are working
+   // Following levels of histograms filling are supported
    //  0 - none
    //  1 - only basic statistic from TRB
    //  2 - generic statistic over TDC channels
    //  3 - basic per-channel histograms with IDs
    //  4 - per-channel histograms with references
-   trb3->SetHistFilling(2); // only basic histograms, all TDC channels are disabled
+   trb3->SetHistFilling(2); // only basic histograms, no per-channel histograms
 
    // Create TDC processors with specified ids
    trb3->CreateTDC(0x8a00, 0x8a01, 0x8a02, 0x8a03);
