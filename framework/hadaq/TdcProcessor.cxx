@@ -516,10 +516,14 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          }
 
          if (fine == 0x3FF) {
-            // special case - missing hit, just ignore such value
-            if (CheckPrintError())
-               printf("%5s Missing hit in channel %u fine counter is %x\n", GetName(), chid, fine);
-            FillH1(fUndHits, chid);
+            if (first_scan) {
+               // special case - missing hit, just ignore such value
+               if (CheckPrintError())
+                  printf("%5s Missing hit in channel %u fine counter is %x\n", GetName(), chid, fine);
+
+               FillH1(fChannels, chid);
+               FillH1(fUndHits, chid);
+            }
             continue;
          }
 
