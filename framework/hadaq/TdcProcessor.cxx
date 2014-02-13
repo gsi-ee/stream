@@ -864,11 +864,11 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fname)
          fread(fCh[ch].rising_calibr, sizeof(fCh[ch].rising_calibr), 1, f);
          fread(fCh[ch].falling_calibr, sizeof(fCh[ch].falling_calibr), 1, f);
 
-         CreateChannelHistograms(ch);
+         if (fCh[ch].fRisingCalibr)
+            CopyCalibration(fCh[ch].rising_calibr, fCh[ch].fRisingCalibr);
 
-         CopyCalibration(fCh[ch].rising_calibr, fCh[ch].fRisingCalibr);
-
-         CopyCalibration(fCh[ch].falling_calibr, fCh[ch].fFallingCalibr);
+         if (fCh[ch].fFallingCalibr)
+            CopyCalibration(fCh[ch].falling_calibr, fCh[ch].fFallingCalibr);
       }
    }
 
