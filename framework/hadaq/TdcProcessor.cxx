@@ -11,7 +11,7 @@
 #include "hadaq/TdcSubEvent.h"
 
 
-unsigned hadaq::TdcProcessor::fMaxBrdId = 8;
+unsigned hadaq::TdcProcessor::fMaxBrdId = 16;
 
 #define RAWPRINT( args ...) if(IsPrintRawData()) printf( args )
 
@@ -325,8 +325,8 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
             double tm = fCh[ch].rising_hit_tm;
             double tm_ref = refproc->fCh[ref].rising_hit_tm;
             if ((refproc!=this) && (ch>0) && (ref>0)) {
-               tm -= fCh[0].rising_hit_tm;
-               tm_ref -= refproc->fCh[0].rising_hit_tm;
+	      tm -= fCh[0].rising_hit_tm;
+              tm_ref -= refproc->fCh[0].rising_hit_tm;
             }
 
             fCh[ch].rising_ref_tm = tm - tm_ref;
