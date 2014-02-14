@@ -67,6 +67,7 @@
 #pragma link C++ class hadaq::TdcSubEvent+;
 #pragma link C++ class hadaq::TdcIterator+;
 #pragma link C++ class hadaq::TdcProcessor+;
+#pragma link C++ class hadaq::HldProcessor+;
 
 // MBS data processing
 #pragma link C++ namespace mbs;

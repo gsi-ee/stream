@@ -1,0 +1,56 @@
+#ifndef HADAQ_HLDPROCESSOR_H
+#define HADAQ_HLDPROCESSOR_H
+
+#include "base/StreamProc.h"
+
+#include "hadaq/defines.h"
+
+#include "hadaq/TrbProcessor.h"
+
+namespace hadaq {
+
+
+   /** This is generic processor for HLD data
+    * Its only task - redistribute data over TRB processors  */
+
+   typedef std::map<unsigned,TrbProcessor*> TrbProcMap;
+
+
+   class HldProcessor : public base::StreamProc {
+
+      friend class TrbProcessor;
+
+      protected:
+
+         TrbProcMap fMap;            ///< map of trb processors
+
+         bool fPrintRawData;         ///< true when raw data should be printed
+
+         base::H1handle fEvSize;     ///< HADAQ event size
+         base::H1handle fSubevSize;  ///< HADAQ subevent size
+
+         /** Returns true when processor used to select trigger signal
+          * TRB3 not yet able to perform trigger selection */
+         virtual bool doTriggerSelection() const { return false; }
+
+         /** Way to register trb processor */
+         void AddTrb(TrbProcessor* trb, unsigned id);
+
+
+      public:
+
+         HldProcessor();
+         virtual ~HldProcessor();
+
+         /** Set trigger window not only for itself, bit for all subprocessors */
+         virtual void SetTriggerWindow(double left, double right);
+
+         /** Scan all messages, find reference signals */
+         virtual bool FirstBufferScan(const base::Buffer& buf);
+
+         void SetPrintRawData(bool on = true);
+         bool IsPrintRawData() const { return fPrintRawData; }
+   };
+}
+
+#endif

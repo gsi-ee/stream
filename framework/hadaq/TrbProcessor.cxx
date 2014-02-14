@@ -7,14 +7,18 @@
 
 #include "hadaq/TrbIterator.h"
 #include "hadaq/TdcProcessor.h"
+#include "hadaq/HldProcessor.h"
 
 #define RAWPRINT( args ...) if(IsPrintRawData()) printf( args )
 
-hadaq::TrbProcessor::TrbProcessor(unsigned brdid) :
-   base::StreamProc("TRB%u", brdid, false),
+hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc) :
+   base::StreamProc("TRB_%04x", brdid, false),
    fMap()
 {
-   mgr()->RegisterProc(this, base::proc_TRBEvent, brdid);
+   if (hldproc==0)
+      mgr()->RegisterProc(this, base::proc_TRBEvent, brdid);
+   else
+      hldproc->AddTrb(this, brdid);
 
    printf("Create TrbProcessor %s\n", GetName());
 
@@ -206,18 +210,23 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
          subcnt++;
       }
 
-      // we scan in all TDC processors newly add buffers
-      // this is required to
-      if (IsCrossProcess()) {
-         for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
-            iter->second->ScanNewBuffers();
-
-         for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
-            iter->second->AfterFill(&fMap);
-      }
+      AfterEventScan();
    }
 
    return true;
+}
+
+void hadaq::TrbProcessor::AfterEventScan()
+{
+   // we scan in all TDC processors newly add buffers
+   // this is required to
+   if (IsCrossProcess()) {
+      for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
+         iter->second->ScanNewBuffers();
+
+      for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
+         iter->second->AfterFill(&fMap);
+   }
 }
 
 void hadaq::TrbProcessor::ScanSubEvent(hadaq::RawSubevent* sub, unsigned trb3eventid)

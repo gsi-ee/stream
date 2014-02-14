@@ -9,6 +9,7 @@
 
 namespace hadaq {
 
+   class HldProcessor;
 
    /** This is generic processor for data, coming from TRB board
     * Normally one requires specific sub-processor for frontend like TDC or any other
@@ -18,6 +19,7 @@ namespace hadaq {
    class TrbProcessor : public base::StreamProc {
 
       friend class TdcProcessor;
+      friend class HldProcessor;
 
       protected:
 
@@ -64,9 +66,11 @@ namespace hadaq {
          /** Scan FPGA-TDC data, distribute over sub-processors */
          void ScanSubEvent(hadaq::RawSubevent* sub, unsigned trb3eventid);
 
+         void AfterEventScan();
+
       public:
 
-         TrbProcessor(unsigned brdid);
+         TrbProcessor(unsigned brdid, HldProcessor* hld = 0);
          virtual ~TrbProcessor();
 
          void SetHadaqCTSId(unsigned id) { fHadaqCTSId = id; }
