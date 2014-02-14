@@ -41,7 +41,7 @@ namespace base {
          std::vector<EventProc*>  fEvProc;          //! all event processors
          GlobalMarksQueue         fTriggers;        //!< list of current triggers
          unsigned                 fTimeMasterIndex; //!< processor index, which time is used for all other subsystems
-         AnalysisKind             fAnalysisKind;    //!< ignore all events, only single scan, not ouput events
+         AnalysisKind             fAnalysisKind;    //!< ignore all events, only single scan, not output events
          TFile                   *fFile;            //!< file with the tree, if 0 - tree is external
          TTree                   *fTree;            //!< data store
 

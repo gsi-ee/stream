@@ -482,7 +482,11 @@ bool base::StreamProc::DistributeTriggers(const base::GlobalMarksQueue& queue)
 
       fGlobalMarks.push(queue.item(indx));
 
-      fGlobalMarks.back().SetInterval(GetC1Limit(fTriggerWindow, true), GetC1Limit(fTriggerWindow, false));
+      // when trigger window not specified and trigger analysis is configured, than accept all hits
+      if (IsTriggeredAnalysis() && (fTriggerWindow==0))
+         fGlobalMarks.back().SetInterval(-1e50, 1e50);
+      else
+         fGlobalMarks.back().SetInterval(GetC1Limit(fTriggerWindow, true), GetC1Limit(fTriggerWindow, false));
 
 //      if (fGlobalMarks.back().normal())
 //         printf("%s trigger %12.9f %12.9f\n", GetName(), fGlobalMarks.back().lefttm, fGlobalTrig.back().righttm);
@@ -706,7 +710,9 @@ bool base::StreamProc::ScanDataForNewTriggers()
    if (upper_buf_limit==0) {
 //      printf("Nothing to do when try to scan for new trigger number %u buflimit %u queue %u \n", fGlobalTrig.size(), upper_buf_limit, fQueue.size());
 
-      return true;
+      // Do not return here - we need to set more flags at the end
+
+      // return true;
    }
 
    // till now it is very generic code how events limits and buffer limits are defined
@@ -735,11 +741,15 @@ bool base::StreamProc::ScanDataForNewTriggers()
 
    SkipBuffers(upper_buf_limit);
 
-
    // we mark first (and the only) event as ready
-   if (IsTriggeredAnalysis()) fGlobalTrigScanIndex = 1;
+   if (IsTriggeredAnalysis()) {
+      fGlobalTrigScanIndex = 1;
+      // printf("%s mark fGlobalTrigScanIndex = 1\n", GetName());
+   }
 
-//   printf("After skip buffers queue size %u\n", fQueue.size());
+
+
+   // printf("After skip buffers queue size %u\n", fQueue.size());
 
    return true;
 }

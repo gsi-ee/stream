@@ -646,7 +646,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
             // printf("TDC%u Test TDC message local:%11.9f global:%11.9f\n", GetID(), localtm, globaltm);
 
-            // we test hist, but do not allow to close events
+            // we test hits, but do not allow to close events
             unsigned indx = TestHitTime(globaltm, true, false);
 
             if (indx < fGlobalMarks.size()) {

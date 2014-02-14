@@ -526,6 +526,8 @@ bool base::ProcMgr::ProduceNextEvent(base::Event* &evt)
 
 bool base::ProcMgr::ProcessEvent(base::Event* evt)
 {
+   // printf("base::ProcMgr::ProcessEvent %p\n", evt);
+
    if (evt==0) return false;
 
    // call event processors one after another until event is discarded

@@ -215,7 +215,6 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
          for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
             iter->second->AfterFill(&fMap);
       }
-
    }
 
    return true;

@@ -53,11 +53,16 @@ void hadaq::RawSubevent::Dump(bool print_raw_data)
 
    bool newline = true;
 
-   for (unsigned ix=0; ix < ((GetSize() - sizeof(RawSubevent)) / Alignment()); ix++)
-   {
-      if (ix % 8 == 0) printf("    "); newline = false;
+   unsigned size = ((GetSize() - sizeof(RawSubevent)) / Alignment());
+   unsigned width = 2;
+   if (size>=100) width = 3;
+   if (size>=1000) width = 4;
 
-      printf("  [%2u] %08x\t", ix, (unsigned) Data(ix));
+   for (unsigned ix=0; ix < size; ix++)
+   {
+      if (ix % 8 == 0) printf("  "); newline = false;
+
+      printf("  [%*u] %08x", width, ix, (unsigned) Data(ix));
 
       if (((ix + 1) % 8) == 0)  { printf("\n"); newline = true; }
    }
