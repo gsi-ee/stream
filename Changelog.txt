@@ -3,6 +3,8 @@
 2. Introduce hadaq::HldProcessor, which responsible to process generic HLD data.
    One can add several TRB processors to it and it delivers correct 
 3. Provide applications/giessen example of usage of HldProcessor.     
+4. Implement storage of TDC data in the tree. 
+   For each TDC vector of extended messages are created.
 
 27.01.2014
 1. Update correspondent histograms when loading calibration from file

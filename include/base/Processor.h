@@ -84,7 +84,7 @@ namespace base {
          bool IsHistFilling() const { return fHistFilling > 0; }
          int  HistFillLevel() const { return fHistFilling; }
 
-         void SetStoreEnabled(bool on = true) { fStoreEnabled = on; }
+         virtual void SetStoreEnabled(bool on = true) { fStoreEnabled = on; }
          bool IsStoreEnabled() const { return fStoreEnabled; }
 
          virtual void UserPreLoop() {}

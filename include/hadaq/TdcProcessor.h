@@ -8,6 +8,7 @@
 #include "hadaq/defines.h"
 #include "hadaq/TdcMessage.h"
 #include "hadaq/TdcIterator.h"
+#include "hadaq/TdcSubEvent.h"
 
 namespace hadaq {
 
@@ -141,6 +142,9 @@ namespace hadaq {
 
          std::vector<ChannelRec>  fCh; //! histogram for individual channels
 
+         std::vector<hadaq::TdcMessageExt>  fStoreVect; //! vector to store messages in the tree
+         std::vector<hadaq::TdcMessageExt> *pStoreVect; //! pointer on store vector
+
          bool        fNewDataFlag;    //! flag used by TRB processor to indicate if new data was added
          unsigned    fEdgeMask;       //! fill histograms 1 - rising, 2 - falling, 3 - both
          long        fAutoCalibration;//! indicates minimal number of counts in each channel required to produce calibration
@@ -194,7 +198,7 @@ namespace hadaq {
 
          bool CreateChannelHistograms(unsigned ch);
 
-         virtual void CreateBranch(TTree*) {}
+         virtual void CreateBranch(TTree*);
 
       public:
 
@@ -324,6 +328,8 @@ namespace hadaq {
 
          /** For expert use - store calibration in the file */
          void StoreCalibration(const std::string& fname);
+
+         virtual void Store(base::Event*);
    };
 
 }

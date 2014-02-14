@@ -52,4 +52,11 @@ void first()
 
    // method set window for all TRBs/TDCs
    // hld->SetTriggerWindow(-4e-7, -0.2e-7);
+
+   // uncomment these line to enable store of all TDC data in the tree
+   // hld->SetStoreEnabled(true);
+
+   // create store - typically done in second.C, should be called only once
+   // base::ProcMgr::instance()->CreateStore("file.root");
+
 }

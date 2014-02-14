@@ -10,6 +10,10 @@
 #include "hadaq/TrbProcessor.h"
 #include "hadaq/TdcSubEvent.h"
 
+#ifdef WITH_ROOT
+#include "TTree.h"
+#endif
+
 
 unsigned hadaq::TdcProcessor::fMaxBrdId = 16;
 
@@ -20,6 +24,8 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fTrb(trb),
    fIter1(),
    fIter2(),
+   fStoreVect(),
+   pStoreVect(0),
    fEdgeMask(edge_mask),
    fAutoCalibration(0),
    fPrintRawData(false),
@@ -891,5 +897,30 @@ void hadaq::TdcProcessor::IncCalibration(unsigned ch, bool rising, unsigned fine
       fCh[ch].falling_stat[fine] += value;
       fCh[ch].all_falling_stat += value;
    }
+}
+
+
+void hadaq::TdcProcessor::CreateBranch(TTree* t)
+{
+//   printf("%s CreateBranch\n", GetName());
+
+#ifdef WITH_ROOT
+   pStoreVect = &fStoreVect;
+   t->Branch(GetName(), "std::vector<hadaq::TdcMessageExt>", &pStoreVect);
+#endif
+}
+
+void hadaq::TdcProcessor::Store(base::Event* ev)
+{
+   fStoreVect.clear();
+
+   hadaq::TdcSubEvent* sub =
+         dynamic_cast<hadaq::TdcSubEvent*> (ev->GetSubEvent(GetName()));
+
+   // when subevent exists, use directly pointer on messages vector
+   if (sub!=0)
+      pStoreVect = sub->vect_ptr();
+   else
+      pStoreVect = &fStoreVect;
 }
 

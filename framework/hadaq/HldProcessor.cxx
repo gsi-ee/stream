@@ -47,6 +47,15 @@ void hadaq::HldProcessor::SetTriggerWindow(double left, double right)
       iter->second->SetTriggerWindow(left, right);
 }
 
+void hadaq::HldProcessor::SetStoreEnabled(bool on)
+{
+   base::StreamProc::SetStoreEnabled(on);
+
+   for (TrbProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
+      iter->second->SetStoreEnabled(on);
+}
+
+
 void hadaq::HldProcessor::SetPrintRawData(bool on)
 {
    fPrintRawData = on;

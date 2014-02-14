@@ -224,9 +224,15 @@ namespace base {
           * Here selection of data for region-of-interest should be performed */
          virtual bool SecondBufferScan(const base::Buffer& buf) { return false; }
 
+         /** Generic method to store processor data,
+          * In case of ROOT one should copy event data in temporary structures,
+          * which are mapped to the branch */
+         virtual void Store(Event*) {}
 
          static void SetMarksQueueCapacity(unsigned sz) { fMarksQueueCapacity = sz; }
          static void SetBufsQueueCapacity(unsigned sz) { fBufsQueueCapacity = sz; }
+
+
 
    };
 

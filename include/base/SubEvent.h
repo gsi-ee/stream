@@ -97,6 +97,9 @@ namespace base {
          /** Returns message with specified index */
          MsgClass& msg(unsigned indx) { return fExtMessages[indx]; }
 
+         /** Returns pointer on vector with messages, used in the store */
+         std::vector<MsgClass>* vect_ptr() { return &fExtMessages; }
+
          /** Returns subevent multiplicity  */
          virtual unsigned Multiplicity() const { return Size(); }
 

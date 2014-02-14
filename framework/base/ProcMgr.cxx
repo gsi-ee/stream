@@ -534,6 +534,10 @@ bool base::ProcMgr::ProcessEvent(base::Event* evt)
    for (unsigned n=0;n<fEvProc.size();n++)
       if (!fEvProc[n]->Process(evt)) return false;
 
+   for (unsigned n=0;n<fProc.size();n++)
+      if (fProc[n]->IsStoreEnabled())
+         fProc[n]->Store(evt);
+
 #ifdef WITH_ROOT
    if (fTree) fTree->Fill();
 #endif

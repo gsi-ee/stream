@@ -45,6 +45,9 @@ namespace hadaq {
          /** Set trigger window not only for itself, bit for all subprocessors */
          virtual void SetTriggerWindow(double left, double right);
 
+         /** Enable/disable store for HLD and all TRB processors */
+         virtual void SetStoreEnabled(bool on = true);
+
          /** Scan all messages, find reference signals */
          virtual bool FirstBufferScan(const base::Buffer& buf);
 

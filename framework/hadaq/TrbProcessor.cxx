@@ -135,6 +135,14 @@ void hadaq::TrbProcessor::AddSub(TdcProcessor* tdc, unsigned id)
    fMap[id] = tdc;
 }
 
+void hadaq::TrbProcessor::SetStoreEnabled(bool on)
+{
+   base::StreamProc::SetStoreEnabled(on);
+
+   for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
+      iter->second->SetStoreEnabled(on);
+}
+
 
 void hadaq::TrbProcessor::SetTriggerWindow(double left, double right)
 {
