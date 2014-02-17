@@ -6,20 +6,22 @@
 #include "base/Event.h"
 #include "hadaq/TdcSubEvent.h"
 
-class TdcDataProc : public base::EventProc {
+class RawPandaDircProc : public base::EventProc {
    protected:
       
-      std::string fTdcId;    //!< tdc id with padiwa asic like "TDC_8a00"
-      double      fNumHits;  //!< number of hits, can be stored in the tree
+      std::string fTdcId;    //!< tdc id where channels will be selected "TDC_8a00"
+      unsigned    fFirstId;  //!< first channel
+
+      double      fHits[16]; //!< 16 channel, last hit in every channel
       
       base::H1handle  hNumHits; //!< histogram with hits number
       
    public:
-      TdcDataProc(unsigned procid, const char* _tdcid) :
-         base::EventProc("Proc_%04x", procid),
+      RawPandaDircProc(const char* procname, const char* _tdcid, unsigned _firstid = 1) :
+         base::EventProc(procname),
          fTdcId(_tdcid),
-         fNumHits(0)
-
+         fFirstId(_firstid),
+         hNumHits(0)
       {
          printf("Create %s for %s\n", GetName(), fTdcId.c_str());
 
@@ -32,21 +34,21 @@ class TdcDataProc : public base::EventProc {
 
       virtual void CreateBranch(TTree* t)
       {
-         t->Branch(GetName(), &fNumHits, "numhits/D");
+         t->Branch(GetName(), fHits, "hits[16]/D");
       }
 
       virtual bool Process(base::Event* ev) 
       {
-         fNumHits = 0;
+         for (unsigned n=0;n<16;n++) fHits[n] = 0.;
 
          hadaq::TdcSubEvent* sub = 
                dynamic_cast<hadaq::TdcSubEvent*> (ev->GetSubEvent(fTdcId));
 
-         printf("%s process sub %p %s\n", GetName(), sub, fTdcId.c_str());
+         // printf("%s process sub %p %s\n", GetName(), sub, fTdcId.c_str());
 
          if (sub==0) return false;
          
-         fNumHits = sub->Size();
+         double num = 0;
 
          for (unsigned cnt=0;cnt<sub->Size();cnt++) {
             const hadaq::TdcMessageExt& ext = sub->msg(cnt);
@@ -54,11 +56,20 @@ class TdcDataProc : public base::EventProc {
             unsigned chid = ext.msg().getHitChannel();
             double tm = ext.GetGlobalTime() /* - ev->GetTriggerTime() */;
 
-            // exclude all channels which has nothing to do with Padiwa
-            printf("   HIT ch %u time %12.9f\n", chid, tm);
+            if ((chid>=fFirstId) && (chid<fFirstId+16)) {
+
+               // account only new channels
+               if (fHits[chid - fFirstId] == 0.) num += 1.;
+
+               fHits[chid - fFirstId] = tm;
+
+               // exclude all channels which has nothing to do with Padiwa
+               // printf("   HIT ch %u time %12.9f\n", chid, tm);
+            }
+
          }
          
-         FillH1(hNumHits, fNumHits);
+         FillH1(hNumHits, num);
          
          return true;
       }
@@ -70,7 +81,13 @@ void second()
    // uncomment line to create tree for the events storage
    base::ProcMgr::instance()->CreateStore("file.root");
    
-   TdcDataProc* proc1 = new TdcDataProc(0xc10, "TDC_0c10");
+   new RawPandaDircProc("DIRC1", "TDC_0c10", 1);
+
+   new RawPandaDircProc("DIRC2", "TDC_0c10", 17);
+
+   new RawPandaDircProc("DIRC3", "TDC_0c10", 33);
+
+   new RawPandaDircProc("DIRC4", "TDC_0c10", 39);
    
-   TdcDataProc* proc2 = new TdcDataProc(0xc30, "TDC_0c30");
+   new RawPandaDircProc("DIRC5", "TDC_0c30", 1);
 }
