@@ -26,26 +26,29 @@ void first()
    //trb3->SetAutoCalibrations(100000);
 
 
-
    hadaq::TrbProcessor* trb3 = new hadaq::TrbProcessor(0x8000, hld);
    trb3->SetHistFilling(4);
    trb3->CreateTDC(0x0c00, 0x0c01, 0x0c03);
-   // trb3->LoadCalibrations("/data.local1/padiwa/new_");
+   // trb3->SetWriteCalibrations("calibr_");
+   // trb3->LoadCalibrations("calibr_");
 
    trb3 = new hadaq::TrbProcessor(0x8002, hld);
    trb3->SetHistFilling(4);
    trb3->CreateTDC(0x0c10, 0x0c11, 0x0c12, 0x0c13);
-   // trb3->LoadCalibrations("/data.local1/padiwa/new_");
+   // trb3->SetWriteCalibrations("calibr_");
+   // trb3->LoadCalibrations("calibr_");
 
    trb3 = new hadaq::TrbProcessor(0x8003, hld);
    trb3->SetHistFilling(4);
    trb3->CreateTDC(0x0c20, 0x0c21, 0x0c22, 0x0c23);
-   // trb3->LoadCalibrations("/data.local1/padiwa/new_");
+   // trb3->SetWriteCalibrations("calibr_");
+   // trb3->LoadCalibrations("calibr_");
 
    trb3 = new hadaq::TrbProcessor(0x8004, hld);
    trb3->SetHistFilling(4);
    trb3->CreateTDC(0x0c30, 0x0c31, 0x0c32, 0x0c33 ) ;
-   // trb3->LoadCalibrations("/data.local1/padiwa/new_");
+   // trb3->SetWriteCalibrations("calibr_");
+   // trb3->LoadCalibrations("calibr_");
 
    // indicate if raw data should be printed
    hld->SetPrintRawData(false);
