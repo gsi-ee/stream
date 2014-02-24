@@ -125,13 +125,14 @@ namespace hadaq {
          };
 
          TrbProcessor* fTrb;         //! pointer on TRB processor
+         unsigned fSeqeunceId;       //! sequence number of processor in TRB
 
          TdcIterator fIter1;         //! iterator for the first scan
          TdcIterator fIter2;         //! iterator for the second scan
 
-         base::H1handle fMsgPerBrd;  //! messages per board - from TRB
-         base::H1handle fErrPerBrd;  //! errors per board - from TRB
-         base::H1handle fHitsPerBrd; //! data hits per board - from TRB
+         base::H1handle* fMsgPerBrd;  //! messages per board - from TRB
+         base::H1handle* fErrPerBrd;  //! errors per board - from TRB
+         base::H1handle* fHitsPerBrd; //! data hits per board - from TRB
 
          base::H1handle fChannels;   //! histogram with messages per channel
          base::H1handle fErrors;     //! histogram with errors per channel
@@ -169,7 +170,6 @@ namespace hadaq {
           * TDC not yet able to perform trigger selection */
          virtual bool doTriggerSelection() const { return false; }
 
-         static unsigned fMaxBrdId;     //! maximum board id
          static unsigned fFineMinValue; //! minimum value for fine counter, used for simple linear approximation
          static unsigned fFineMaxValue; //! maximum value for fine counter, used for simple linear approximation
 
@@ -205,7 +205,7 @@ namespace hadaq {
          TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels = MaxNumTdcChannels, unsigned edge_mask = 1);
          virtual ~TdcProcessor();
 
-         static void SetMaxBoardId(unsigned max) { fMaxBrdId = max; }
+         static void SetMaxBoardId(unsigned) { }
 
          inline unsigned NumChannels() const { return fCh.size(); }
          inline bool DoRisingEdge() const { return fEdgeMask & rising_edge; }

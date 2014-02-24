@@ -15,13 +15,12 @@
 #endif
 
 
-unsigned hadaq::TdcProcessor::fMaxBrdId = 16;
-
 #define RAWPRINT( args ...) if(IsPrintRawData()) printf( args )
 
 hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels, unsigned edge_mask) :
    base::StreamProc("TDC_%04x", tdcid, false),
    fTrb(trb),
+   fSeqeunceId(0),
    fIter1(),
    fIter2(),
    fStoreVect(),
@@ -49,9 +48,9 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
       SetHistFilling(trb->HistFillLevel());
    }
 
-   fMsgPerBrd = trb ? trb->fMsgPerBrd : 0;
-   fErrPerBrd = trb ? trb->fErrPerBrd : 0;
-   fHitsPerBrd = trb ? trb->fHitsPerBrd : 0;
+   fMsgPerBrd = trb ? &trb->fMsgPerBrd : 0;
+   fErrPerBrd = trb ? &trb->fErrPerBrd : 0;
+   fHitsPerBrd = trb ? &trb->fHitsPerBrd : 0;
 
    fChannels = 0;
    fErrors = 0;
@@ -136,13 +135,14 @@ void hadaq::TdcProcessor::DisableCalibrationFor(unsigned firstch, unsigned lastc
 
 void hadaq::TdcProcessor::UserPreLoop()
 {
-//   printf("************************* hadaq::TdcProcessor preloop *******************\n");
-//   for (unsigned ch=0;ch<NumChannels();ch++) {
+   unsigned cnt(0);
 
-//      CopyCalibration(fCh[ch].rising_calibr, fCh[ch].fRisingCalibr);
+   if (fTrb != 0)
+      for (SubProcMap::const_iterator iter = fTrb->fMap.begin(); iter!=fTrb->fMap.end(); iter++) {
+         if (iter->second == this) { fSeqeunceId = cnt; break; }
+         cnt++;
+      }
 
-//      CopyCalibration(fCh[ch].falling_calibr, fCh[ch].fFallingCalibr);
-//   }
 }
 
 void hadaq::TdcProcessor::UserPostLoop()
@@ -439,7 +439,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
    unsigned cnt(0), hitcnt(0);
 
-   bool iserr(false), isfirstepoch(false), rawprint(false);
+   bool iserr(false), isfirstepoch(false), rawprint(false), missinghit(false);
 
    uint32_t first_epoch(0);
 
@@ -527,6 +527,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                if (CheckPrintError())
                   printf("%5s Missing hit in channel %u fine counter is %x\n", GetName(), chid, fine);
 
+               missinghit = true;
                FillH1(fChannels, chid);
                FillH1(fUndHits, chid);
             }
@@ -725,13 +726,13 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
 //      printf("Proc:%p first scan iserr:%d  minm: %12.9f\n", this, iserr, minimtm*1e-9);
 
-      FillH1(fMsgPerBrd, GetID(), cnt);
+      FillH1(fMsgPerBrd ? *fMsgPerBrd : 0, fSeqeunceId, cnt);
 
       // fill number of "good" hits
-      FillH1(fHitsPerBrd, GetID(), hitcnt);
+      FillH1(fHitsPerBrd ? *fHitsPerBrd : 0, fSeqeunceId, hitcnt);
 
-      if (iserr)
-         FillH1(fErrPerBrd, GetID());
+      if (iserr || missinghit)
+         FillH1(fErrPerBrd ? *fErrPerBrd : 0, fSeqeunceId);
    } else {
 
       // use first channel only for flushing

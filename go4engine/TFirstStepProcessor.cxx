@@ -176,7 +176,7 @@ base::H1handle TFirstStepProcessor::MakeH1(const char* name, const char* title, 
 
    TObjArray* arr = newxtitle.Length() > 0 ? newxtitle.Tokenize(";") : 0;
 
-   for (int n=0;  n<= (arr ? arr->GetLast() : -1);n++) {
+   for (int n=0; n <= (arr ? arr->GetLast() : -1); n++) {
       TString part = arr->At(n)->GetName();
       if (part.Index("xbin:")==0) { xbins = part; xbins.Remove(0, 5); } else
       if (part.Index("kind:")==0) { kind = part[5]; } else

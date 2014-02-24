@@ -22,9 +22,9 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc) :
 
    printf("Create TrbProcessor %s\n", GetName());
 
-   fMsgPerBrd = MakeH1("MsgPerTDC", "Number of messages per TDC", TdcProcessor::fMaxBrdId, 0, TdcProcessor::fMaxBrdId, "tdc");
-   fErrPerBrd = MakeH1("ErrPerTDC", "Number of errors per TDC", TdcProcessor::fMaxBrdId, 0, TdcProcessor::fMaxBrdId, "tdc");
-   fHitsPerBrd = MakeH1("HitsPerTDC", "Number of data hits per TDC", TdcProcessor::fMaxBrdId, 0, TdcProcessor::fMaxBrdId, "tdc");
+   fMsgPerBrd = 0;
+   fErrPerBrd = 0;
+   fHitsPerBrd = 0;
 
    fEvSize = MakeH1("EvSize", "Event size", 500, 0, 5000, "bytes");
    fSubevSize = MakeH1("SubevSize", "Subevent size", 500, 0, 5000, "bytes");
@@ -61,6 +61,28 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc) :
 hadaq::TrbProcessor::~TrbProcessor()
 {
 }
+
+void hadaq::TrbProcessor::UserPreLoop()
+{
+   unsigned numtdc = fMap.size();
+   if (numtdc<4) numtdc = 4;
+   std::string lbl = "tdc;xbin:";
+   unsigned cnt = 0;
+   for (SubProcMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
+      if (++cnt>0) lbl.append(",");
+      char sbuf[50];
+      sprintf(sbuf, "%04X", iter->second->GetID());
+      lbl.append(sbuf);
+   }
+
+   while (cnt++<numtdc)
+      lbl.append(",----");
+
+   fMsgPerBrd = MakeH1("MsgPerTDC", "Number of messages per TDC", numtdc, 0, numtdc, lbl.c_str());
+   fErrPerBrd = MakeH1("ErrPerTDC", "Number of errors per TDC", numtdc, 0, numtdc, lbl.c_str());
+   fHitsPerBrd = MakeH1("HitsPerTDC", "Number of data hits per TDC", numtdc, 0, numtdc, lbl.c_str());
+}
+
 
 bool hadaq::TrbProcessor::CheckPrintError()
 {

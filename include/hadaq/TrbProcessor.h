@@ -77,6 +77,8 @@ namespace hadaq {
          void SetHadaqHUBId(unsigned id) { fHadaqHUBId = id; }
          void SetHadaqTDCId(unsigned id) { fHadaqTDCId = id; }
 
+         virtual void UserPreLoop();
+
          /** Set trigger window not only for itself, bit for all subprocessors */
          virtual void SetTriggerWindow(double left, double right);
 
