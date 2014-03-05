@@ -1,3 +1,4 @@
+
 void first()
 {
 
@@ -5,7 +6,7 @@ void first()
 
    hadaq::TdcMessage::SetFineLimits(31, 421);
 
-   hadaq::TrbProcessor* trb3 = new hadaq::TrbProcessor(0);
+   hadaq::TrbProcessor* trb3 = new hadaq::TrbProcessor();
 
    // CTS subevent header id, all 16 bit
    // trb3->SetHadaqCTSId(0x8000);
@@ -34,7 +35,7 @@ void first()
 
    for (int cnt=0;cnt<4;cnt++) {
 
-      int tdcid = tdcmap[cnt] & 0x00FF;
+      int tdcid = tdcmap[cnt];
 
       // verify prefix
       if ((tdcmap[0] & 0xFF00) != (tdcmap[cnt] & 0xFF00)) {
@@ -83,7 +84,7 @@ void first()
       // 2) generate calibration on base of provided data and than use it later statically for analysis
 
       // disable calibration for channel #0
-      tdc->DisableCalibrationFor(0);
+      // tdc->DisableCalibrationFor(0);
 
       // load static calibration at the beginning of the run
       // tdc->LoadCalibration(Form("test_%04x.cal", tdcmap[cnt]));
@@ -104,23 +105,26 @@ void first()
       int numx = 1;
       int numy = 1;
       while ((numx * numy) < tdc->NumChannels()) {
-         if (numx==numy) numx++; else numy++;
+         if (numx==numy) numy++; else numx++;
       }
 
       TGo4Picture** pic = new TGo4Picture*[tdc->GetNumHist()];
       int* piccnt = new int[tdc->GetNumHist()];
       for (int k=0;k<tdc->GetNumHist();k++) {
-         pic[k] = new TGo4Picture(Form("TDC%d_%s",tdcid, tdc->GetHistName(k)), Form("All %s", tdc->GetHistName(k)));
+         pic[k] = new TGo4Picture(Form("%s_%s", tdc->GetName(), tdc->GetHistName(k)), Form("All %s", tdc->GetHistName(k)));
          pic[k]->SetDivision(numy,numx);
          piccnt[k] = 0;
       }
-      for (int n=0;n<tdc->NumChannels();n++) {
-         int x = n % numx;
-         int y = n / numx;
+      for (int nch=0;nch<tdc->NumChannels();nch++) {
+         int x(0), y(0);
+         if (nch==0) { x = numx-1; y = numy-1; }
+                else { x = (nch - 1) % numx; y = (nch-1) / numx; }
          for (int k=0;k<tdc->GetNumHist();k++) {
-            TObject* obj = (TObject*) tdc->GetHist(n, k);
-            if (obj) piccnt[k]++;
-            pic[k]->Pic(y,x)->AddObject(obj);
+            TObject* obj = (TObject*) tdc->GetHist(nch, k);
+            if (obj) {
+               piccnt[k]++;
+               pic[k]->Pic(y,x)->AddObject(obj);
+            }
          }
       }
       for (int k=0;k<tdc->GetNumHist();k++) {
@@ -132,6 +136,7 @@ void first()
 
 #endif
 
+
    }
 
 
@@ -139,6 +144,8 @@ void first()
    // One could specify period in seconds or function will be called for every event processed
 
    // new THookProc("my_hook();", 2.5);
+
+
 
 }
 
@@ -150,8 +157,11 @@ void first()
 
 void my_hook()
 {
-   hadaq::TrbProcessor* trb3 = base::ProcMgr::instance()->FindProc("TRB0");
-   if (trb3==0) return;
+   hadaq::TrbProcessor* trb3 = base::ProcMgr::instance()->FindProc("TRBc000");
+   if (trb3==0) {
+      printf("TRB processor not found\n");
+      return;
+   }
 
    printf("Do extra work NUM %u\n", trb3->NumSubProc());
 

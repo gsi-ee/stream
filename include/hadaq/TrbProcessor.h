@@ -70,7 +70,7 @@ namespace hadaq {
 
       public:
 
-         TrbProcessor(unsigned brdid, HldProcessor* hld = 0);
+         TrbProcessor(unsigned brdid = 0, HldProcessor* hld = 0);
          virtual ~TrbProcessor();
 
          void SetHadaqCTSId(unsigned id) { fHadaqCTSId = id; }

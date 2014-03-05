@@ -20,7 +20,7 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc) :
    else
       hldproc->AddTrb(this, brdid);
 
-   printf("Create TrbProcessor %s\n", GetName());
+   // printf("Create TrbProcessor %s\n", GetName());
 
    fMsgPerBrd = 0;
    fErrPerBrd = 0;

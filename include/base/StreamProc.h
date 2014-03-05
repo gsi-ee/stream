@@ -218,11 +218,11 @@ namespace base {
           *   - raw histogram filling;
           *   - search for special time markers;
           *   - multiplicity histogramming (if necessary) */
-         virtual bool FirstBufferScan(const base::Buffer& buf) { return false; }
+         virtual bool FirstBufferScan(const base::Buffer&) { return false; }
 
          /** Second generic scan of buffer
           * Here selection of data for region-of-interest should be performed */
-         virtual bool SecondBufferScan(const base::Buffer& buf) { return false; }
+         virtual bool SecondBufferScan(const base::Buffer&) { return false; }
 
          /** Generic method to store processor data,
           * In case of ROOT one should copy event data in temporary structures,
