@@ -331,8 +331,8 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
             double tm = fCh[ch].rising_hit_tm;
             double tm_ref = refproc->fCh[ref].rising_hit_tm;
             if ((refproc!=this) && (ch>0) && (ref>0)) {
-	      tm -= fCh[0].rising_hit_tm;
-              tm_ref -= refproc->fCh[0].rising_hit_tm;
+               tm -= fCh[0].rising_hit_tm;
+               tm_ref -= refproc->fCh[0].rising_hit_tm;
             }
 
             fCh[ch].rising_ref_tm = tm - tm_ref;
@@ -346,7 +346,7 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
             FillH2(fCh[ch].fRisingRef2D, diff, fCh[ch].rising_fine);
             FillH2(fCh[ch].fRisingRef2D, diff-1., refproc->fCh[ref].rising_fine);
             FillH2(fCh[ch].fRisingRef2D, diff-2., fCh[ch].rising_coarse/4);
-            RAWPRINT("Difference rising %u:%u\t %u:%u\t %12.3f\t %12.3f\t %7.3f  coarse %03x - %03x = %4d  fine %03x %03x \n",
+            RAWPRINT("Difference rising %04x:%02u\t %04x:%02u\t %12.3f\t %12.3f\t %7.3f  coarse %03x - %03x = %4d  fine %03x %03x \n",
                   GetID(), ch, reftdc, ref,
                   tm*1e9,  tm_ref*1e9, diff,
                   fCh[ch].rising_coarse, refproc->fCh[ref].rising_coarse, (int) (fCh[ch].rising_coarse - refproc->fCh[ref].rising_coarse),
@@ -604,7 +604,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                   FillH1(rec.fRisingRef, (localtm - fCh[0].rising_hit_tm)*1e9);
 
                   if (IsPrintRawData() || print_cond)
-                  printf("Difference rising %u:%u\t %u:%u\t %12.3f\t %12.3f\t %7.3f  coarse %03x - %03x = %4d  fine %03x %03x \n",
+                  printf("Difference rising %04x:%02u\t %04x:%02u\t %12.3f\t %12.3f\t %7.3f  coarse %03x - %03x = %4d  fine %03x %03x \n",
                           GetID(), chid, rec.reftdc, rec.refch,
                           localtm*1e9,  fCh[0].rising_hit_tm*1e9, (localtm - fCh[0].rising_hit_tm)*1e9,
                           coarse, fCh[0].rising_coarse, (int) (coarse - fCh[0].rising_coarse),
