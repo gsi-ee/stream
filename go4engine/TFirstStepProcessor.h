@@ -35,6 +35,9 @@ class TFirstStepProcessor : public TGo4EventProcessor,
       virtual int TestC1(base::C1handle c1, double value, double* dist = 0);
       virtual double GetC1Limit(base::C1handle c1, bool isleft = true);
 
+      virtual void UserPreLoop();
+      virtual void UserPostLoop();
+
 
    private:
 

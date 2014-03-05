@@ -57,21 +57,29 @@ TFirstStepProcessor::TFirstStepProcessor(const char* name) :
    fTotalDataSize = 0;
    fNumInpBufs = 0;
    fNumOutEvents = 0;
+}
 
+TFirstStepProcessor::~TFirstStepProcessor()
+{
+   TGo4Log::Info("Input %ld  Output %ld  Total processed size = %ld", fNumInpBufs, fNumOutEvents, fTotalDataSize);
+}
+
+
+void TFirstStepProcessor::UserPreLoop()
+{
    base::ProcMgr::UserPreLoop();
 
    // register tree in Go4 browser
    if (fTree!=0) TGo4Analysis::Instance()->AddTree(fTree);
 }
 
-TFirstStepProcessor::~TFirstStepProcessor()
+void TFirstStepProcessor::UserPostLoop()
 {
    if (fTree!=0) TGo4Analysis::Instance()->RemoveTree(fTree);
 
    base::ProcMgr::UserPostLoop();
-
-   TGo4Log::Info("Input %ld  Output %ld  Total processed size = %ld", fNumInpBufs, fNumOutEvents, fTotalDataSize);
 }
+
 
 Bool_t TFirstStepProcessor::BuildEvent(TGo4EventElement* outevnt)
 {
