@@ -1,3 +1,8 @@
+10.03.2014
+1. When TDC created with CTS id, it will be used to process data from CTS header.
+   Andreas should test and provide code for corect location of such TDC data. 
+
+
 24.02.2014
 1. Use TDC id as the axis label of statistic histograms 
 

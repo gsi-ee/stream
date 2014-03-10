@@ -126,18 +126,21 @@ namespace hadaq {
          }
 
          /** Returns TDC processor according to it ID */
-         TdcProcessor* GetTDC(unsigned tdcid) const
+         TdcProcessor* GetTDC(unsigned tdcid, bool fullid = false) const
          {
             SubProcMap::const_iterator iter = fMap.find(tdcid);
 
             // for old analysis, where IDs are only last 8 bit
-            if (iter == fMap.end()) iter = fMap.find(tdcid & 0xff);
+            if ((iter == fMap.end()) && !fullid) iter = fMap.find(tdcid & 0xff);
 
             return (iter == fMap.end()) ? 0 : iter->second;
          }
 
          /** Create up-to 4 TDCs processors with specified IDs */
          void CreateTDC(unsigned id1, unsigned id2 = 0, unsigned id3 = 0, unsigned id4 = 0);
+
+         /** Create TDC processor, which extracts TDC information from CTS header */
+         void CreateCTS_TDC() { CreateTDC(fHadaqCTSId); }
 
          /** Mark automatic calibrations for all TDCs */
          void SetAutoCalibrations(long cnt = 100000);

@@ -99,7 +99,7 @@ bool hadaq::TrbProcessor::CheckPrintError()
 void hadaq::TrbProcessor::CreateTDC(unsigned id1, unsigned id2, unsigned id3, unsigned id4)
 {
    // overwrite default value in the beginning
-   if ((id1!=0) && (fHadaqTDCId == 0xC000)) fHadaqTDCId = (id1 & 0xff00);
+   if ((id1!=0) && (fHadaqTDCId == 0xC000) && (id1!=fHadaqCTSId)) fHadaqTDCId = (id1 & 0xff00);
 
    for (unsigned cnt=0;cnt<4;cnt++) {
       unsigned tdcid = id1;
@@ -111,15 +111,23 @@ void hadaq::TrbProcessor::CreateTDC(unsigned id1, unsigned id2, unsigned id3, un
       }
       if (tdcid==0) continue;
 
-      if (fHadaqTDCId == 0) fHadaqTDCId = (tdcid & 0xff00);
-
-      if ((tdcid & 0xff00) != fHadaqTDCId) {
-         printf("TDC id 0x%04x do not match with expected mask 0x%04x\n", tdcid, fHadaqTDCId);
-      } else {
-         new hadaq::TdcProcessor(this, tdcid, 65, 0x1);
+      if (GetTDC(tdcid, true)!=0) {
+         printf("TDC id 0x%04x already exists\n", tdcid);
+         continue;
       }
+
+      if (tdcid!=fHadaqCTSId) {
+         if (fHadaqTDCId == 0) fHadaqTDCId = (tdcid & 0xff00);
+         if ((tdcid & 0xff00) != fHadaqTDCId) {
+            printf("TDC id 0x%04x do not match with expected mask 0x%04x\n", tdcid, fHadaqTDCId);
+            continue;
+         }
+      }
+
+      new hadaq::TdcProcessor(this, tdcid, 65, 0x1);
    }
 }
+
 
 void hadaq::TrbProcessor::SetAutoCalibrations(long cnt)
 {
@@ -353,9 +361,41 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaq::RawSubevent* sub, unsigned trb3eve
 
          data = sub->Data(ix++); datalen--;
          unsigned trigtype = (data & 0xFFFF);
-         unsigned trignum = (data >> 16) & 0xFFFF;
-         RAWPRINT("     CTS trigtype: 0x%04x, trignum=0x%04x\n", trigtype, trignum);
 
+         unsigned nInputs = (data >> 16) & 0xf;
+         unsigned nTrigChannels = (data >> 20) & 0xf;
+         unsigned bIncludeLastIdle = (data >> 25) & 0x1;
+         unsigned bIncludeCounters = (data >> 26) & 0x1;
+         unsigned bIncludeTimestamp = (data >> 27) & 0x1;
+         unsigned nExtTrigFlag = (data >> 28) & 0x3;
+
+         unsigned nCTSwords = nInputs*2 + nTrigChannels*2 +
+                              bIncludeLastIdle*2 + bIncludeCounters*3 + bIncludeTimestamp*1;
+
+         RAWPRINT("     CTS trigtype: 0x%04x, datalen=%u nCTSwords %u\n", trigtype, datalen, nCTSwords);
+
+         // This is special TDC processor for data from CTS header
+         TdcProcessor* subproc = GetTDC(fHadaqCTSId, true);
+         unsigned tdc_index = ix;  // position where subevents starts
+         unsigned tdc_datalen = 0;
+
+         if ((subproc!=0) && (tdc_datalen>0)) {
+            // if TDC processor found and length is specified, process such data as normal TDC data
+            base::Buffer buf;
+            buf.makenew((tdc_datalen+1)*4);
+
+            memset(buf.ptr(), 0xff, 4); // fill dummy sync id in the begin
+            sub->CopyDataTo(buf.ptr(4), tdc_index, tdc_datalen);
+
+            buf().kind = 0;
+            buf().boardid = fHadaqCTSId;
+            buf().format = 0;
+
+            subproc->AddNextBuffer(buf);
+            subproc->SetNewDataFlag(true);
+         }
+
+         // this is old code, may be fixed
          while (datalen-- > 0) {
             //! Look only for the CTS data
             data = sub->Data(ix++);
@@ -363,6 +403,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaq::RawSubevent* sub, unsigned trb3eve
 
             if ((datalen==0) && (fSyncTrigMask!=0) && ((trigtype & fSyncTrigMask) == fSyncTrigValue)) {
                //! Last CTS word - SYNC number
+               // FIXME: one should use CTS header information to identify sync number
                syncNumber = (data & 0xFFFFFF);
                findSync = true;
                RAWPRINT("     Find SYNC %u\n", (unsigned) syncNumber);
