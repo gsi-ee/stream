@@ -372,12 +372,49 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaq::RawSubevent* sub, unsigned trb3eve
          unsigned nCTSwords = nInputs*2 + nTrigChannels*2 +
                               bIncludeLastIdle*2 + bIncludeCounters*3 + bIncludeTimestamp*1;
 
-         RAWPRINT("     CTS trigtype: 0x%04x, datalen=%u nCTSwords %u\n", trigtype, datalen, nCTSwords);
+         RAWPRINT("     CTS trigtype: 0x%04x, datalen=%u nCTSwords=%u\n", trigtype, datalen, nCTSwords);
 
+         // we skip all the information from the CTS right now,
+         // we don't need it
+         ix += nCTSwords;
+         datalen -= nCTSwords;
+         // ix should now point to the first ETM word
+
+         
+         // handle the ETM module and extract syncNumber
+         if(nExtTrigFlag==0x1) {
+	         // ETM sends one word, is probably MBS Vulom Recv
+	         // this is not really tested
+	         data = sub->Data(ix++); datalen--;
+	         syncNumber = (data & 0xFFFFFF);
+	         findSync = true;
+	         // TODO: evaluate the upper 8 bits in data for status/error 
+         }
+         else if(nExtTrigFlag==0x2) {
+	         // ETM sends four words, is probably a Mainz A2 recv
+	         data = sub->Data(ix++); datalen--;
+	         findSync = true;
+	         syncNumber = data; // full 32bits is trigger number
+	         // TODO: evaluate word 2 for status/error, skip it for now
+	         // word 3+4 are 0xdeadbeef i.e. not used at the moment, so skip it
+	         ix += 3;
+	         datalen -= 3;
+         }
+         else {
+	         RAWPRINT("Error: Unknown ETM in CTS header found: %x\n", nExtTrigFlag);
+	         // TODO: try to do some proper error recovery here...
+         }
+
+         if(findSync)
+	         RAWPRINT("     Find SYNC %u\n", (unsigned) syncNumber);
+         
+         // now ix should point to the first TDC word if datalen>0
+         // if not, there is no TDC present
+         
          // This is special TDC processor for data from CTS header
          TdcProcessor* subproc = GetTDC(fHadaqCTSId, true);
          unsigned tdc_index = ix;  // position where subevents starts
-         unsigned tdc_datalen = 0;
+         unsigned tdc_datalen = datalen;
 
          if ((subproc!=0) && (tdc_datalen>0)) {
             // if TDC processor found and length is specified, process such data as normal TDC data
@@ -395,21 +432,9 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaq::RawSubevent* sub, unsigned trb3eve
             subproc->SetNewDataFlag(true);
          }
 
-         // this is old code, may be fixed
-         while (datalen-- > 0) {
-            //! Look only for the CTS data
-            data = sub->Data(ix++);
-            RAWPRINT("     CTS word: 0x%08x\n", (unsigned) data);
-
-            if ((datalen==0) && (fSyncTrigMask!=0) && ((trigtype & fSyncTrigMask) == fSyncTrigValue)) {
-               //! Last CTS word - SYNC number
-               // FIXME: one should use CTS header information to identify sync number
-               syncNumber = (data & 0xFFFFFF);
-               findSync = true;
-               RAWPRINT("     Find SYNC %u\n", (unsigned) syncNumber);
-            }
-         }
-
+         // don't forget to skip the words for the TDC (if any)
+         ix += datalen; 
+         
          continue;
       }
 
@@ -425,7 +450,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaq::RawSubevent* sub, unsigned trb3eve
             //uint32_t fSubeventStatus = data;
             //if (fSubeventStatus != 0x00000001) { bad events}
          }
-
+         
          continue;
       }
 
