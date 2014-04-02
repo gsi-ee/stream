@@ -9,6 +9,7 @@
 
 class TGo4UserSourceParameter;
 class TGo4MbsEvent;
+class TList;
 
 class TUserSource : public TGo4EventSource {
 
@@ -19,11 +20,18 @@ class TUserSource : public TGo4EventSource {
       /** Optional port number  */
       Int_t fiPort;
 
+      TList* fNames; // list of all files names
+
       /** file that contains the data in ascii format. */
       hadaq::HldFile fxFile;
 
       /** working buffer */
       Char_t* fxBuffer;
+
+      Bool_t OpenNextFile();
+
+      /** Open the file or connection. */
+      Int_t Open();
 
    public:
 
@@ -36,12 +44,6 @@ class TUserSource : public TGo4EventSource {
       TUserSource(TGo4UserSourceParameter* par);
 
       virtual ~TUserSource();
-
-      /** Open the file or connection. */
-      virtual Int_t Open();
-
-      /** Close the file or connection. */
-      virtual Int_t Close();
 
       /** This method checks if event class is suited for the source */
       virtual Bool_t CheckEventClass(TClass* cl);
