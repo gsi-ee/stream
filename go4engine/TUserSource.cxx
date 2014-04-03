@@ -89,16 +89,21 @@ Bool_t TUserSource::BuildEvent(TGo4EventElement* dest)
 
    uint32_t bufsize = Trb_BUFSIZE;
 
-   Bool_t canread = kTRUE;
+   Bool_t trynext(kFALSE);
+   if (!fxFile.isOpened() || fxFile.eof()) trynext = kTRUE; else
+   if (!fxFile.ReadBuffer(fxBuffer, &bufsize, true)) trynext = kTRUE;
 
-   if (!fxFile.isOpened() || fxFile.eof()) canread = OpenNextFile();
-
-   if (!canread || !fxFile.ReadBuffer(fxBuffer, &bufsize, true)) {
-      SetCreateStatus(1);
-      SetErrMess("End of HLD input");
-      SetEventStatus(1);
-      throw TGo4EventEndException(this);
-      return kFALSE;
+   if (trynext) {
+      bufsize = Trb_BUFSIZE;
+      Bool_t isok = OpenNextFile();
+      if (isok) isok = fxFile.ReadBuffer(fxBuffer, &bufsize, true);
+      if (!isok) {
+         SetCreateStatus(1);
+         SetErrMess("End of HLD input");
+         SetEventStatus(1);
+         throw TGo4EventEndException(this);
+         return kFALSE;
+      }
    }
 
    TGo4SubEventHeader10 fxSubevHead;
@@ -128,6 +133,8 @@ Int_t TUserSource::Open()
    }
 
    fxBuffer = new Char_t[Trb_BUFSIZE];
+   
+   TGo4Log::Info("HLD user source contains %d files", fNames->GetSize());
 
 //   if (!OpenNextFile()) return -1;
 
