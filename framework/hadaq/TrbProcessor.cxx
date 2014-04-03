@@ -135,6 +135,13 @@ void hadaq::TrbProcessor::SetAutoCalibrations(long cnt)
       iter->second->SetAutoCalibration(cnt);
 }
 
+void hadaq::TrbProcessor::DisableCalibrationFor(unsigned firstch, unsigned lastch)
+{
+   for (SubProcMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++)
+      iter->second->DisableCalibrationFor(firstch, lastch);
+}
+
+
 void hadaq::TrbProcessor::SetWriteCalibrations(const char* fileprefix)
 {
    char fname[1024];

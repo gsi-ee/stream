@@ -249,6 +249,7 @@ namespace hadaq {
           * tdc->CreateHistograms( channels ); */
          void CreateHistograms(int *arr = 0);
 
+         /** Disable calibration for specified channels */
          void DisableCalibrationFor(unsigned firstch, unsigned lastch = 0);
 
          /** Set reference signal for the TDC channel ch
