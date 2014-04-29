@@ -24,8 +24,11 @@ namespace hadaq {
 
          TrbProcMap fMap;            ///< map of trb processors
 
+         unsigned  fEventTypeSelect; ///< selection for event type (lower 4 bits in event id)
+
          bool fPrintRawData;         ///< true when raw data should be printed
 
+         base::H1handle fEvType;     ///< HADAQ event type
          base::H1handle fEvSize;     ///< HADAQ event size
          base::H1handle fSubevSize;  ///< HADAQ subevent size
 
@@ -41,6 +44,9 @@ namespace hadaq {
 
          HldProcessor();
          virtual ~HldProcessor();
+
+         /** Set event type, only used in the analysis */
+         void SetEventTypeSelect(unsigned evid) { fEventTypeSelect = evid; }
 
          /** Set trigger window not only for itself, bit for all subprocessors */
          virtual void SetTriggerWindow(double left, double right);

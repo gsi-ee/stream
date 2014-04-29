@@ -13,10 +13,12 @@
 hadaq::HldProcessor::HldProcessor() :
    base::StreamProc("HLD", 0, false),
    fMap(),
+   fEventTypeSelect(0xfffff),
    fPrintRawData(false)
 {
    mgr()->RegisterProc(this, base::proc_TRBEvent, 0);
 
+   fEvType = MakeH1("EvType", "Event type", 16, 0, 16, "id");
    fEvSize = MakeH1("EvSize", "Event size", 500, 0, 5000, "bytes");
    fSubevSize = MakeH1("SubevSize", "Subevent size", 500, 0, 5000, "bytes");
 
@@ -77,6 +79,10 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
    hadaq::RawEvent* ev = 0;
 
    while ((ev = iter.nextEvent()) != 0) {
+
+      FillH1(fEvType, ev->GetId() & 0xf);
+
+      if ((fEventTypeSelect <= 0xf) && ((ev->GetId() & 0xf) != fEventTypeSelect)) continue;
 
       if (IsPrintRawData()) ev->Dump();
 

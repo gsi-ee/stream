@@ -1,3 +1,7 @@
+29.04.2014
+1. Via hadaq::HldProcessor::SetEventTypeSelect() allow to specify the only 
+   event type id, used in the analysis.
+
 2.04.2014
 1. Allow to specify wildcard in HLD file names when starting go4. Like:
       go4analysis -user '/path/file*.hld'
