@@ -233,6 +233,10 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
    hadaq::RawEvent* ev = 0;
 
    while ((ev = iter.nextEvent()) != 0) {
+   
+      if (ev->GetSize() > buf().datalen+4) {
+         printf("Corrupted event size %u!\n", ev->GetSize()); return true;
+      }
 
       if (IsPrintRawData()) ev->Dump();
 
@@ -242,6 +246,10 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
       unsigned subcnt(0);
 
       while ((sub = iter.nextSubevent()) != 0) {
+
+         if (sub->GetSize() > buf().datalen+4) {
+            printf("Corrupted subevent size %u!\n", sub->GetSize()); return true;
+         }
 
          if (IsPrintRawData()) sub->Dump(true);
 
@@ -287,6 +295,8 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaq::RawSubevent* sub, unsigned trb3eve
    unsigned ix = 0;           // cursor
 
    unsigned trbSubEvSize = sub->GetSize() / 4 - 4;
+   
+   if (trbSubEvSize>100000) printf("LARGE subevent %u\n", trbSubEvSize);
 
    unsigned syncNumber(0);
    bool findSync(false);
