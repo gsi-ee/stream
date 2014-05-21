@@ -73,16 +73,23 @@ void base::ProcMgr::FillH1(H1handle h1, double x, double weight)
    // put dummy virtual function here to avoid ACLiC warnings
 }
 
-double base::ProcMgr::GetH1Content(H1handle h1, int nbin)
+double base::ProcMgr::GetH1Content(H1handle, int)
 {
    // put dummy virtual function here to avoid ACLiC warnings
    return 0;
 }
 
-void base::ProcMgr::ClearH1(base::H1handle h1)
+void base::ProcMgr::ClearH1(base::H1handle)
 {
    // put dummy virtual function here to avoid ACLiC warnings
 }
+
+
+void base::ProcMgr::ClearH2(base::H2handle)
+{
+   // put dummy virtual function here to avoid ACLiC warnings
+}
+
 
 base::H2handle base::ProcMgr::MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options)
 {

@@ -58,6 +58,11 @@ namespace base {
             if (IsHistFilling() && (h2!=0)) mgr()->FillH2(h2, x, y, weight);
          }
 
+         inline void ClearH2(base::H2handle h2)
+         {
+            if (IsHistFilling()) mgr()->ClearH2(h2);
+         }
+
          C1handle MakeC1(const char* name, double left, double right, H1handle h1 = 0);
 
          void ChangeC1(C1handle c1, double left, double right);

@@ -58,6 +58,8 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fMsgsKind = 0;
    fAllFine = 0;
    fAllCoarse = 0;
+   fRisingCalibr = 0;
+   fFallingCalibr = 0;
 
    if (HistFillLevel() > 1) {
       fChannels = MakeH1("Channels", "TDC channels", numchannels, 0, numchannels, "ch");
@@ -66,8 +68,14 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
 
       fMsgsKind = MakeH1("MsgKind", "kind of messages", 8, 0, 8, "xbin:Reserved,Header,Debug,Epoch,Hit,-,-,-;kind");
 
-      fAllFine = MakeH1("FineTm", "fine counter value", 1024, 0, 1024, "fine");
-      fAllCoarse = MakeH1("CoarseTm", "coarse counter value", 2048, 0, 2048, "coarse");
+      fAllFine = MakeH2("FineTm", "fine counter value", numchannels, 0, numchannels, FineCounterBins, 0, FineCounterBins, "ch;fine");
+      fAllCoarse = MakeH2("CoarseTm", "coarse counter value", numchannels, 0, numchannels, 2048, 0, 2048, "ch;coarse");
+
+      if (DoRisingEdge())
+         fRisingCalibr  = MakeH2("RisingCalibr",  "rising edge calibration", numchannels, 0, numchannels, FineCounterBins, 0, FineCounterBins, "ch;fine");
+
+      if (DoFallingEdge())
+         fFallingCalibr = MakeH2("FallingCalibr", "falling edge calibration", numchannels, 0, numchannels, FineCounterBins, 0, FineCounterBins, "ch;fine");
    }
 
    for (unsigned ch=0;ch<numchannels;ch++) {
@@ -106,7 +114,7 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
       fCh[ch].fRisingMult = MakeH1("RisingMult", "Rising event multiplicity", 128, 0, 128, "nhits");
       fCh[ch].fRisingCalibr = MakeH1("RisingCalibr", "Rising calibration function", FineCounterBins, 0, FineCounterBins, "fine");
       // copy calibration only when histogram created
-      CopyCalibration(fCh[ch].rising_calibr, fCh[ch].fRisingCalibr);
+      CopyCalibration(fCh[ch].rising_calibr, fCh[ch].fRisingCalibr, ch, fRisingCalibr);
    }
 
    if (DoFallingEdge()) {
@@ -115,7 +123,7 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
       fCh[ch].fFallingMult = MakeH1("FallingMult", "Falling event multiplicity", 128, 0, 128, "nhits");
       fCh[ch].fFallingCalibr = MakeH1("FallingCalibr", "Falling calibration function", FineCounterBins, 0, FineCounterBins, "fine");
       // copy calibration only when histogram created
-      CopyCalibration(fCh[ch].falling_calibr, fCh[ch].fFallingCalibr);
+      CopyCalibration(fCh[ch].falling_calibr, fCh[ch].fFallingCalibr, ch, fFallingCalibr);
    }
 
    SetSubPrefix();
@@ -569,8 +577,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             CreateChannelHistograms(chid);
 
             FillH1(fChannels, chid);
-            FillH1(fAllFine, fine);
-            FillH1(fAllCoarse, coarse);
+            FillH2(fAllFine, chid, fine);
+            FillH2(fAllCoarse, chid, coarse);
 
             if (isrising) {
                rec.rising_stat[fine]++;
@@ -785,20 +793,22 @@ void hadaq::TdcProcessor::CalibrateChannel(unsigned nch, long* statistic, float*
    }
 }
 
-void hadaq::TdcProcessor::CopyCalibration(float* calibr, base::H1handle hcalibr)
+void hadaq::TdcProcessor::CopyCalibration(float* calibr, base::H1handle hcalibr, unsigned ch, base::H2handle h2calibr)
 {
-   if (hcalibr==0) return;
-
    ClearH1(hcalibr);
 
-   for (unsigned n=0;n<FineCounterBins;n++)
+   for (unsigned n=0;n<FineCounterBins;n++) {
       FillH1(hcalibr, n, calibr[n]*1e12);
-
+      FillH2(h2calibr, ch, n, calibr[n]*1e12);
+   }
 }
 
 void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat)
 {
    printf("%s produce channels calibrations\n", GetName());
+
+   ClearH2(fRisingCalibr);
+   ClearH2(fFallingCalibr);
 
    for (unsigned ch=0;ch<NumChannels();ch++) {
       if (fCh[ch].docalibr) {
@@ -819,10 +829,10 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat)
          }
       }
       if (DoRisingEdge())
-         CopyCalibration(fCh[ch].rising_calibr, fCh[ch].fRisingCalibr);
+         CopyCalibration(fCh[ch].rising_calibr, fCh[ch].fRisingCalibr, ch, fRisingCalibr);
 
       if (DoFallingEdge())
-         CopyCalibration(fCh[ch].falling_calibr, fCh[ch].fFallingCalibr);
+         CopyCalibration(fCh[ch].falling_calibr, fCh[ch].fFallingCalibr, ch, fFallingCalibr);
    }
 }
 
@@ -864,6 +874,9 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fname)
 
    fread(&num, sizeof(num), 1, f);
 
+   ClearH2(fRisingCalibr);
+   ClearH2(fFallingCalibr);
+
    if (num!=NumChannels()) {
       printf("%s mismatch of channels number in calibration file %u and in processor %u\n", GetName(), (unsigned) num, NumChannels());
    } else {
@@ -871,11 +884,9 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fname)
          fread(fCh[ch].rising_calibr, sizeof(fCh[ch].rising_calibr), 1, f);
          fread(fCh[ch].falling_calibr, sizeof(fCh[ch].falling_calibr), 1, f);
 
-         if (fCh[ch].fRisingCalibr)
-            CopyCalibration(fCh[ch].rising_calibr, fCh[ch].fRisingCalibr);
+         CopyCalibration(fCh[ch].rising_calibr, fCh[ch].fRisingCalibr, ch, fRisingCalibr);
 
-         if (fCh[ch].fFallingCalibr)
-            CopyCalibration(fCh[ch].falling_calibr, fCh[ch].fFallingCalibr);
+         CopyCalibration(fCh[ch].falling_calibr, fCh[ch].fFallingCalibr, ch, fFallingCalibr);
       }
    }
 

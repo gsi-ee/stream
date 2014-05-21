@@ -296,6 +296,14 @@ void TFirstStepProcessor::FillH2(base::H1handle h2, double x, double y, double w
       histo2->Fill(x, y);
 }
 
+void TFirstStepProcessor::ClearH2(base::H2handle h2)
+{
+   if (h2==0) return;
+
+   TH2* histo2 = (TH2*) h2;
+   histo2->Reset();
+}
+
 
 base::C1handle TFirstStepProcessor::MakeC1(const char* name, double left, double right, base::H1handle h1)
 {

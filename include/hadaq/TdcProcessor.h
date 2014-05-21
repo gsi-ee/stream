@@ -138,8 +138,10 @@ namespace hadaq {
          base::H1handle fErrors;     //! histogram with errors per channel
          base::H1handle fUndHits;    //! histogram with undetected hits per channel
          base::H1handle fMsgsKind;   //! messages kinds
-         base::H1handle fAllFine;    //! histogram of all fine counters
-         base::H1handle fAllCoarse;  //! histogram of all coarse counters
+         base::H2handle fAllFine;    //! histogram of all fine counters
+         base::H2handle fAllCoarse;  //! histogram of all coarse counters
+         base::H2handle fRisingCalibr;//! histogram with all rising calibrations
+         base::H2handle fFallingCalibr; //! histogram all rising calibrations
 
          std::vector<ChannelRec>  fCh; //! histogram for individual channels
 
@@ -192,7 +194,7 @@ namespace hadaq {
          void AfterFill(SubProcMap* subproc = 0);
 
          void CalibrateChannel(unsigned nch, long* statistic, float* calibr);
-         void CopyCalibration(float* calibr, base::H1handle hcalibr);
+         void CopyCalibration(float* calibr, base::H1handle hcalibr, unsigned ch = 0, base::H2handle h2calibr = 0);
 
          bool CheckPrintError();
 
