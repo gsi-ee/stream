@@ -1,3 +1,7 @@
+9.07.2014
+1. Add get4::MbsProcessor for debugging of Get4 with MBS readout.
+   Also simple example is provided. 
+
 21.05.2014
 1. Add 2-D histogram in hadaq::TdcProcessor for fine counter, coarse counter and 
    calibrations.

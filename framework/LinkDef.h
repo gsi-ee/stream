@@ -51,6 +51,7 @@
 #pragma link C++ class get4::SubEvent+;
 #pragma link C++ class get4::MessageExt+;
 #pragma link C++ class std::vector<get4::MessageExt>+;
+#pragma link C++ class get4::MbsProcessor+;
 
 // HADAQ processing
 #pragma link C++ namespace hadaq;
