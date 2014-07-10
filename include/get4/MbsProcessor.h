@@ -5,7 +5,8 @@
 
 namespace get4 {
 
-   enum { NumGet4Channels = 4 };
+   enum { NumGet4Channels = 4,
+          BinWidthPs = 50 };
 
    struct Get4MbsRec {
       bool used;

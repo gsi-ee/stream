@@ -50,7 +50,7 @@ get4::MbsProcessor::MbsProcessor(unsigned get4mask) :
 
          GET4[get4].fFalFineTm[n] = MakeH1("FallingFine", "falling fine time", 128, 0, 128, "bin");
 
-         GET4[get4].fTotTm[n] = MakeH1("ToT", "time-over-threshold", 1024, 0, 1024, "bin");
+         GET4[get4].fTotTm[n] = MakeH1("ToT", "time-over-threshold", 1000, 0, 50000, "ps");
       }
    }
 
@@ -88,7 +88,7 @@ bool get4::MbsProcessor::AddRef(unsigned g2, unsigned ch2, bool r2,
 
    sprintf(htitle,"G%u Ch%u %s - G%u Ch%u %s", g2, ch2, (r2 ? "R" : "F"), g1, ch1, (r1 ? "R" : "F"));
 
-   rec.fHist = MakeH1(hname, htitle, nbins, min, max, "bins");
+   rec.fHist = MakeH1(hname, htitle, nbins, min, max, "ps");
 
    return true;
 }
@@ -179,7 +179,7 @@ bool get4::MbsProcessor::FirstBufferScan(const base::Buffer& buf)
                if (rec.firstf[chid]==0) rec.firstf[chid] = fulltm;
 
                if (rec.lastr[chid]!=0)
-                  FillH1(rec.fTotTm[chid], rec.lastf[chid] - rec.lastr[chid]);
+                  FillH1(rec.fTotTm[chid], 1.*BinWidthPs* (rec.lastf[chid] - rec.lastr[chid]));
 
                // printf("ch%u f:%8lu r:%8lu diff:%8f\n", chid, rec.lastf[chid], rec.lastr[chid], 0. + rec.lastf[chid] - rec.lastr[chid]);
             }
@@ -198,7 +198,7 @@ bool get4::MbsProcessor::FirstBufferScan(const base::Buffer& buf)
 
       // printf("tm2 %u tm1 %u diff %f\n", GET4[rec.g2].gettm(rec.ch2, rec.r2), GET4[rec.g1].gettm(rec.ch1, rec.r1), 0.+ GET4[rec.g2].gettm(rec.ch2, rec.r2) - GET4[rec.g1].gettm(rec.ch1, rec.r1));
 
-      FillH1(rec.fHist, 0. + GET4[rec.g2].gettm(rec.ch2, rec.r2) - GET4[rec.g1].gettm(rec.ch1, rec.r1));
+      FillH1(rec.fHist, BinWidthPs*(0. + GET4[rec.g2].gettm(rec.ch2, rec.r2) - GET4[rec.g1].gettm(rec.ch1, rec.r1)));
    }
 
    return true;

@@ -7,7 +7,7 @@ void first() {
    get4::MbsProcessor* proc = new get4::MbsProcessor();
 
    //          (get4, ch, isrising) - (get4, ch, isrising),  nbins, min, max
-   proc->AddRef(0, 0, true, 0, 2, true, 100, -20., 80.);
+   proc->AddRef(0, 0, true, 0, 2, true, 100, -1000., 9000.);
 }
 
 
