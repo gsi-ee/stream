@@ -88,7 +88,7 @@ bool get4::MbsProcessor::AddRef(unsigned g2, unsigned ch2, bool r2,
 
    sprintf(htitle,"G%u Ch%u %s - G%u Ch%u %s", g2, ch2, (r2 ? "R" : "F"), g1, ch1, (r1 ? "R" : "F"));
 
-   rec.fHist = MakeH1(hname, htitle, nbins, min, max);
+   rec.fHist = MakeH1(hname, htitle, nbins, min, max, "bins");
 
    return true;
 }
@@ -118,10 +118,10 @@ bool get4::MbsProcessor::FirstBufferScan(const base::Buffer& buf)
             get4id = 0xffff;
             continue;
          case 0xaaaa:
-            get4id = 0;
+            get4id = 0; epoch = 0;
             continue;
          case 0xbbbb:
-            get4id = 1;
+            get4id = 1; epoch = 0;
             continue;
          case 0xcccc:
             get4id = 0xffff;
@@ -165,6 +165,9 @@ bool get4::MbsProcessor::FirstBufferScan(const base::Buffer& buf)
 
             FillH1(rec.fChannels, chid*2+edge);
             FillH1(rising ? rec.fRisFineTm[chid] : rec.fFalFineTm[chid], fine);
+
+            // ignore hits without epoch
+            if (epoch==0) continue;
 
             uint64_t fulltm = (((uint64_t) epoch) << 19) | stamp;
 
