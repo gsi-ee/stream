@@ -73,6 +73,7 @@ get4::MbsProcessor::MbsProcessor(unsigned get4mask, bool is32bit, unsigned totmu
 get4::MbsProcessor::~MbsProcessor()
 {
    // printf("get4::MbsProcessor::~Processor\n");
+   UserPostLoop();
 }
 
 bool get4::MbsProcessor::AddRef(unsigned g2, unsigned ch2, bool r2,
@@ -446,7 +447,12 @@ void get4::MbsProcessor::UserPreLoop()
 
 void get4::MbsProcessor::UserPostLoop()
 {
-//   printf("************************* hadaq::TdcProcessor postloop *******************\n");
+  static int first = 1;
+  
+  if (first!=1) return;
+   first=0;
+  
+   printf("************************* hadaq::TdcProcessor postloop *******************\n");
 
    if (fWriteCalibr.length()>0) {
       ProduceCalibration(100000);
