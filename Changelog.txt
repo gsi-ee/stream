@@ -1,3 +1,6 @@
+11.07.2014
+1. Add supoport of 32bit mode in get4::MbsProcessor. 
+
 9.07.2014
 1. Add get4::MbsProcessor for debugging of Get4 with MBS readout.
    Also simple example is provided. 

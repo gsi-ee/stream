@@ -7,8 +7,10 @@
 #include "base/ProcMgr.h"
 
 
-get4::MbsProcessor::MbsProcessor(unsigned get4mask) :
-   base::StreamProc("Get4Mbs", 0, false)
+get4::MbsProcessor::MbsProcessor(unsigned get4mask, bool is32bit, unsigned totmult) :
+   base::StreamProc("Get4Mbs", 0, false),
+   fIs32mode(is32bit),
+   fTotMult(totmult)
 {
    SetRawScanOnly();
 
@@ -36,7 +38,11 @@ get4::MbsProcessor::MbsProcessor(unsigned get4mask) :
 
       SetSubPrefix("G", get4);
 
-      GET4[get4].fChannels = MakeH1("Channels", "GET4 channels", 8, 0, 8, "xbin:0ris,0fal,1ris,1fal,2ris,2fal,3ris,3fal;kind");
+      if (fIs32mode)
+         GET4[get4].fChannels = MakeH1("Channels", "GET4 channels", 4, 0, 4, "channel");
+      else
+         GET4[get4].fChannels = MakeH1("Channels", "GET4 channels", 8, 0, 8, "xbin:0ris,0fal,1ris,1fal,2ris,2fal,3ris,3fal;kind");
+
       GET4[get4].fErrors = MakeH1("Errors", "GET4 errors", 24, 0, 24, "errid");
 
       for(unsigned n=0;n<NumGet4Channels;n++) {
@@ -50,7 +56,7 @@ get4::MbsProcessor::MbsProcessor(unsigned get4mask) :
 
          GET4[get4].fFalFineTm[n] = MakeH1("FallingFine", "falling fine time", 128, 0, 128, "bin");
 
-         GET4[get4].fTotTm[n] = MakeH1("ToT", "time-over-threshold", 1000, 0, 50000, "ps");
+         GET4[get4].fTotTm[n] = MakeH1("ToT", "time-over-threshold", 1000, 0, 1000*BinWidthPs*fTotMult, "ps");
       }
    }
 
@@ -140,20 +146,38 @@ bool get4::MbsProcessor::FirstBufferScan(const base::Buffer& buf)
 
       // printf("analyze message 0x%08x\n", msg);
 
-      switch (msg >> 22) {
-         case 0x0: { // epoch
-            epoch = (msg >> 1) & 0xffffff;
+
+      unsigned msgid = fIs32mode ? ((msg >> 30) & 0x3) | 0x10 : (msg >> 22) & 0x3;
+
+      switch (msgid) {
+         case 0x0: { // epoch 24 bit
+            epoch = (msg >> 1) & 0x1fffff;  // 21 bit
             //printf("epoch: %u\n", epoch);
             break;
          }
-         case 0x2: { // error
+         case 0x10: { // epoch 32 bit
+            epoch = (msg >> 1) & 0xffffff;  // 24 bit
+            //printf("epoch: %u\n", epoch);
+            break;
+         }
+         case 0x11: {  // slow control 32 bit mode
+
+            //unsigned chid  = (msg >> 27) & 0x3;
+            //unsigned edge  = (msg >> 26) & 0x1; // 0 - rising, 1 - falling
+            //unsigned typ   = (msg >> 24) & 0x3;
+            //unsigned data  = msg  & 0xffffff;
+
+            break;
+         }
+         case 0x02:   // error 24 bit
+         case 0x12: { // error 32 bit
             FillH1(fErrPerGet4, get4id);
             unsigned errid = msg & 0x7f;
             if (errid>19) errid = 23;
             FillH1(rec.fErrors, errid);
             break;
          }
-         case 0x3: { // hit
+         case 0x03: { // hit  24 bit
             unsigned chid = (msg >> 20) & 0x3;
             unsigned edge = (msg >> 19) & 0x1; // 0 - rising, 1 - falling
             unsigned fine = msg & 0x7f;
@@ -186,8 +210,37 @@ bool get4::MbsProcessor::FirstBufferScan(const base::Buffer& buf)
 
             break;
          }
+         case 0x13: { // hit  32 bit
+            unsigned chid = (msg >> 27) & 0x3;
+            // unsigned dll = (msg >> 29) & 0x1; // is dll locked
+            unsigned fine = (msg >> 8) & 0x7f;
+            unsigned stamp = (msg >> 8) & 0x7ffff;
+            unsigned tot = msg & 0xff;
+
+            //printf("ch: %u %s stamp %5u\n", chid, (rising ? "R" : "F"), stamp);
+
+            FillH1(rec.fChannels, chid);
+            FillH1(rec.fRisFineTm[chid], fine);
+            FillH1(rec.fFalFineTm[chid], (fine + tot*fTotMult) % 0x80);
+
+            // ignore hits without epoch
+            if (epoch==0) continue;
+
+            uint64_t fulltm = (((uint64_t) epoch) << 19) | stamp;
+
+            rec.lastr[chid] = fulltm;
+            if (rec.firstr[chid]==0) rec.firstr[chid] = fulltm;
+
+            rec.lastf[chid] = fulltm + tot*fTotMult;
+            if (rec.firstf[chid]==0) rec.firstf[chid] = fulltm + tot*fTotMult;
+
+            FillH1(rec.fTotTm[chid], 1.*BinWidthPs*tot*fTotMult);
+
+            break;
+         }
+
          default:
-            printf("get wrong get4 message type %u - abort\n", (unsigned) msg >> 22);
+            printf("get wrong get4 message type 0x%02x - abort\n", msgid);
             return false;
       }
 

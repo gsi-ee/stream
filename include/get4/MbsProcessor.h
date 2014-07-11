@@ -69,6 +69,9 @@ namespace get4 {
 
       protected:
 
+         bool     fIs32mode;   // is 32 bit mode
+         unsigned fTotMult;    // multiplier of tot in 32 bit mode
+
          base::H1handle fMsgPerGet4;   //! histogram with messages per get4
          base::H1handle fErrPerGet4;   //! histogram with errors per get4
 
@@ -83,11 +86,12 @@ namespace get4 {
 
          std::vector<get4::Get4MbsRef> fRef;    //! arrays with reference between channels
 
+
          bool get4_in_use(unsigned id) { return id < GET4.size() ? GET4[id].used : false; }
 
       public:
 
-         MbsProcessor(unsigned get4mask = 0x3);
+         MbsProcessor(unsigned get4mask = 0x3, bool is32bit = false, unsigned totmult = 1);
          virtual ~MbsProcessor();
 
          bool AddRef(unsigned g2, unsigned ch2, bool r2,
