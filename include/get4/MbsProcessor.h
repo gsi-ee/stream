@@ -6,7 +6,57 @@
 namespace get4 {
 
    enum { NumGet4Channels = 4,
-          BinWidthPs = 50 };
+          BinWidthPs = 50,
+          FineCounterBins = 0x80 };
+
+   struct Get4MbsChRec {
+      base::H1handle fRisFineTm;   ///< histograms of rising stamp for each channel
+      base::H1handle fRisCal;      ///< calibration of rising edge
+      base::H1handle fFalFineTm;   ///< histograms of falling stamp for each channel
+      base::H1handle fFalCal;      ///< calibration of falling edge
+      base::H1handle fTotTm;       ///< histograms of time-over threshold for each channel
+
+      double firstr;
+      double firstf;
+      double lastr;
+      double lastf;
+
+      long rising_stat[FineCounterBins];
+      double rising_calibr[FineCounterBins];
+      long falling_stat[FineCounterBins];
+      double falling_calibr[FineCounterBins];
+
+      void clearTimes()
+      {
+         firstr = 0.;
+         firstf = 0.;
+         lastr = 0.;
+         lastf = 0.;
+      }
+
+      double gettm(bool r, bool first = true)
+      {
+         return r ? (first ? firstr : lastr) : (first ? firstf : lastf);
+      }
+
+
+      void init()
+      {
+         fRisFineTm = 0; fRisCal = 0;
+         fFalFineTm = 0; fFalCal = 0;
+         fTotTm = 0;
+         clearTimes();
+
+         for (unsigned i=0;i<FineCounterBins;i++) {
+            rising_calibr[i] = 1.*BinWidthPs*i;
+            falling_calibr[i] = 1.*BinWidthPs*i;
+            rising_stat[i] = 0;
+            falling_stat[i] = 0;
+         }
+      }
+
+   };
+
 
    struct Get4MbsRec {
       bool used;
@@ -14,44 +64,19 @@ namespace get4 {
       base::H1handle fChannels;  //! histogram with channels
       base::H1handle fErrors;  //! errors kinds
 
-      //base::H1handle fRisCoarseTm[NumGet4Channels]; ///< histograms of rising stamp for each channel
-      //base::H1handle fFalCoarseTm[NumGet4Channels]; ///< histograms of falling stamp for each channel
-      base::H1handle fRisFineTm[NumGet4Channels];   ///< histograms of rising stamp for each channel
-      base::H1handle fFalFineTm[NumGet4Channels];   ///< histograms of falling stamp for each channel
-      base::H1handle fTotTm[NumGet4Channels];       ///< histograms of time-over threshold for each channel
-
-      uint64_t firstr[NumGet4Channels];
-      uint64_t firstf[NumGet4Channels];
-      uint64_t lastr[NumGet4Channels];
-      uint64_t lastf[NumGet4Channels];
+      Get4MbsChRec CH[NumGet4Channels]; //! channels-relevant data
 
       Get4MbsRec() :
          used(false),
          fChannels(0),
          fErrors(0)
       {
-         for(unsigned n=0;n<NumGet4Channels;n++) {
-           // fRisCoarseTm[n] = 0;
-           // fFalCoarseTm[n] = 0;
-           fRisFineTm[n] = 0;
-           fFalFineTm[n] = 0;
-           fTotTm[n] = 0;
-         }
+         for(unsigned n=0;n<NumGet4Channels;n++) CH[n].init();
       }
 
-      void clear()
+      void clearTimes()
       {
-         for(unsigned n=0;n<NumGet4Channels;n++) {
-            firstr[n] = 0;
-            firstf[n] = 0;
-            lastr[n] = 0;
-            lastf[n] = 0;
-         }
-      }
-
-      uint64_t gettm(unsigned ch, bool r, bool first = true)
-      {
-         return r ? (first ? firstr[ch] : lastr[ch]) : (first ? firstf[ch] : lastf[ch]);
+         for(unsigned n=0;n<NumGet4Channels;n++) CH[n].clearTimes();
       }
    };
 
@@ -69,8 +94,11 @@ namespace get4 {
 
       protected:
 
-         bool     fIs32mode;   // is 32 bit mode
-         unsigned fTotMult;    // multiplier of tot in 32 bit mode
+         bool         fIs32mode;     // is 32 bit mode
+         unsigned     fTotMult;      // multiplier of tot in 32 bit mode
+         std::string  fWriteCalibr;   //! file name to write calibrations at the end
+         bool         fUseCalibr;     //! if true, calibration will be used
+         long         fAutoCalibr;    //! if positive, will try to calibrate get4 channels
 
          base::H1handle fMsgPerGet4;   //! histogram with messages per get4
          base::H1handle fErrPerGet4;   //! histogram with errors per get4
@@ -89,6 +117,15 @@ namespace get4 {
 
          bool get4_in_use(unsigned id) { return id < GET4.size() ? GET4[id].used : false; }
 
+         bool CalibrateChannel(unsigned get4id, unsigned nch, long* statistic, double* calibr, long stat_limit);
+
+         void ProduceCalibration(long stat_limit);
+
+         void CopyCalibration(double* calibr, base::H1handle hcalibr);
+
+         void StoreCalibration(const std::string& fname);
+
+
       public:
 
          MbsProcessor(unsigned get4mask = 0x3, bool is32bit = false, unsigned totmult = 1);
@@ -98,8 +135,18 @@ namespace get4 {
                      unsigned g1, unsigned ch1, bool r1,
                      int nbins, double min, double max);
 
+         /** Call to load calibrations from the file */
+         bool LoadCalibration(const std::string& fname);
+
+         void SetAutoCalibr(long stat_limit = 1000000);
+
+         void SetWriteCalibr(const std::string& fname) { fWriteCalibr = fname; }
+
          /** Scan all messages, find reference signals */
          virtual bool FirstBufferScan(const base::Buffer& buf);
+
+         virtual void UserPreLoop();
+         virtual void UserPostLoop();
    };
 }
 

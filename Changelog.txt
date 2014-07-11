@@ -1,5 +1,6 @@
 11.07.2014
-1. Add supoport of 32bit mode in get4::MbsProcessor. 
+1. Add supoport of 32bit mode in get4::MbsProcessor.
+2. Implement calibration for GET4. Calibration provides 3-4 ps better resolution.   
 
 9.07.2014
 1. Add get4::MbsProcessor for debugging of Get4 with MBS readout.

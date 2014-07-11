@@ -10,7 +10,10 @@
 get4::MbsProcessor::MbsProcessor(unsigned get4mask, bool is32bit, unsigned totmult) :
    base::StreamProc("Get4Mbs", 0, false),
    fIs32mode(is32bit),
-   fTotMult(totmult)
+   fTotMult(totmult),
+   fWriteCalibr(),
+   fUseCalibr(false),
+   fAutoCalibr(0)
 {
    SetRawScanOnly();
 
@@ -50,13 +53,15 @@ get4::MbsProcessor::MbsProcessor(unsigned get4mask, bool is32bit, unsigned totmu
 
          // GET4[get4].fRisCoarseTm[n] = MakeH1("RisingCoarse", "rising edge coarse time", 4096, 0, 4096., "bin");
 
-         GET4[get4].fRisFineTm[n] = MakeH1("RisingFine", "rising edge fine time", 128, 0, 128, "bin");
+         GET4[get4].CH[n].fRisFineTm = MakeH1("RisingFine", "rising edge fine time", FineCounterBins, 0, FineCounterBins, "bin");
+         GET4[get4].CH[n].fRisCal = MakeH1("RisingCal", "rising edge calibration", FineCounterBins, 0, FineCounterBins, "bin;ps");
 
-         // GET4[get4].fFalCoarseTm[n] = MakeH1("FallingCoarse", "falling edge coarse time", 4096, 0, 4096., "bin");
+         // GET4[get4].CH[n].fFalCoarseTm = MakeH1("FallingCoarse", "falling edge coarse time", 4096, 0, 4096., "bin");
 
-         GET4[get4].fFalFineTm[n] = MakeH1("FallingFine", "falling fine time", 128, 0, 128, "bin");
+         GET4[get4].CH[n].fFalFineTm = MakeH1("FallingFine", "falling fine time", FineCounterBins, 0, FineCounterBins, "bin");
+         GET4[get4].CH[n].fFalCal = MakeH1("FallingCal", "falling edge calibration", FineCounterBins, 0, FineCounterBins, "bin;ps");
 
-         GET4[get4].fTotTm[n] = MakeH1("ToT", "time-over-threshold", 1000, 0, 1000*BinWidthPs*fTotMult, "ps");
+         GET4[get4].CH[n].fTotTm = MakeH1("ToT", "time-over-threshold", 1000, 0, 1000*BinWidthPs*fTotMult, "ps");
       }
    }
 
@@ -113,7 +118,7 @@ bool get4::MbsProcessor::FirstBufferScan(const base::Buffer& buf)
    // printf("analyze buffer %u\n", arrlen);
 
    for (unsigned n=0;n<GET4.size();n++)
-      GET4[n].clear();
+      GET4[n].clearTimes();
 
    for (unsigned cnt=0; cnt < arrlen; cnt++) {
 
@@ -185,25 +190,38 @@ bool get4::MbsProcessor::FirstBufferScan(const base::Buffer& buf)
 
             bool rising = (edge==0);
 
+            Get4MbsChRec& chrec = rec.CH[chid];
+
             //printf("ch: %u %s stamp %5u\n", chid, (rising ? "R" : "F"), stamp);
 
             FillH1(rec.fChannels, chid*2+edge);
-            FillH1(rising ? rec.fRisFineTm[chid] : rec.fFalFineTm[chid], fine);
+            FillH1(rising ? chrec.fRisFineTm : chrec.fFalFineTm, fine);
+
+            if (rising) chrec.rising_stat[fine]++;
+                   else chrec.falling_stat[fine]++;
 
             // ignore hits without epoch
             if (epoch==0) continue;
 
-            uint64_t fulltm = (((uint64_t) epoch) << 19) | stamp;
+            uint64_t fullstamp = (((uint64_t) epoch) << 19) | stamp;
+
+            double fulltm = 1.*BinWidthPs*fullstamp;
+
+            if (fUseCalibr) {
+               fulltm = 1.*BinWidthPs*(fullstamp & 0xffffffffffff80LU);
+               if (rising) fulltm += chrec.rising_calibr[fine];
+                      else fulltm += chrec.falling_calibr[fine];
+            }
 
             if (rising) {
-               rec.lastr[chid] = fulltm;
-               if (rec.firstr[chid]==0) rec.firstr[chid] = fulltm;
+               chrec.lastr = fulltm;
+               if (chrec.firstr==0) chrec.firstr = fulltm;
             } else {
-               rec.lastf[chid] = fulltm;
-               if (rec.firstf[chid]==0) rec.firstf[chid] = fulltm;
+               chrec.lastf = fulltm;
+               if (chrec.firstf==0) chrec.firstf = fulltm;
 
-               if (rec.lastr[chid]!=0)
-                  FillH1(rec.fTotTm[chid], 1.*BinWidthPs* (rec.lastf[chid] - rec.lastr[chid]));
+               if (chrec.lastr!=0)
+                  FillH1(chrec.fTotTm, chrec.lastf - chrec.lastr);
 
                // printf("ch%u f:%8lu r:%8lu diff:%8f\n", chid, rec.lastf[chid], rec.lastr[chid], 0. + rec.lastf[chid] - rec.lastr[chid]);
             }
@@ -220,21 +238,34 @@ bool get4::MbsProcessor::FirstBufferScan(const base::Buffer& buf)
             //printf("ch: %u %s stamp %5u\n", chid, (rising ? "R" : "F"), stamp);
 
             FillH1(rec.fChannels, chid);
-            FillH1(rec.fRisFineTm[chid], fine);
-            FillH1(rec.fFalFineTm[chid], (fine + tot*fTotMult) % 0x80);
+
+            Get4MbsChRec& chrec = rec.CH[chid];
+
+            FillH1(chrec.fRisFineTm, fine);
+            FillH1(chrec.fFalFineTm, (fine + tot*fTotMult) % FineCounterBins);
+
+            chrec.rising_stat[fine]++;
+            chrec.falling_stat[(fine + tot*fTotMult) % FineCounterBins]++;
 
             // ignore hits without epoch
             if (epoch==0) continue;
 
             uint64_t fulltm = (((uint64_t) epoch) << 19) | stamp;
 
-            rec.lastr[chid] = fulltm;
-            if (rec.firstr[chid]==0) rec.firstr[chid] = fulltm;
+            chrec.lastr = 1.*BinWidthPs*fulltm;
 
-            rec.lastf[chid] = fulltm + tot*fTotMult;
-            if (rec.firstf[chid]==0) rec.firstf[chid] = fulltm + tot*fTotMult;
+            //static int mmm = 0;
+            //if (++mmm<1000) printf("fine %3u  add %7.1f\n", fine, chrec.rising_calibr[fine]);
 
-            FillH1(rec.fTotTm[chid], 1.*BinWidthPs*tot*fTotMult);
+            if (fUseCalibr)
+               chrec.lastr = 1.*BinWidthPs*(fulltm & 0xffffffffffff80LU) + chrec.rising_calibr[fine];
+
+            chrec.lastf = chrec.lastr + 1.*BinWidthPs*tot*fTotMult;
+
+            if (chrec.firstr==0) chrec.firstr = chrec.lastr;
+            if (chrec.firstf==0) chrec.firstf = chrec.lastf;
+
+            FillH1(chrec.fTotTm, chrec.lastf - chrec.lastr);
 
             break;
          }
@@ -243,7 +274,6 @@ bool get4::MbsProcessor::FirstBufferScan(const base::Buffer& buf)
             printf("get wrong get4 message type 0x%02x - abort\n", msgid);
             return false;
       }
-
    }
 
    for (unsigned n=0;n<fRef.size();n++) {
@@ -251,9 +281,183 @@ bool get4::MbsProcessor::FirstBufferScan(const base::Buffer& buf)
 
       // printf("tm2 %u tm1 %u diff %f\n", GET4[rec.g2].gettm(rec.ch2, rec.r2), GET4[rec.g1].gettm(rec.ch1, rec.r1), 0.+ GET4[rec.g2].gettm(rec.ch2, rec.r2) - GET4[rec.g1].gettm(rec.ch1, rec.r1));
 
-      FillH1(rec.fHist, BinWidthPs*(0. + GET4[rec.g2].gettm(rec.ch2, rec.r2) - GET4[rec.g1].gettm(rec.ch1, rec.r1)));
+      FillH1(rec.fHist, GET4[rec.g2].CH[rec.ch2].gettm(rec.r2) - GET4[rec.g1].CH[rec.ch1].gettm(rec.r1));
    }
+
+   if (fAutoCalibr>1000) ProduceCalibration(fAutoCalibr);
 
    return true;
 }
 
+bool get4::MbsProcessor::CalibrateChannel(unsigned get4id, unsigned nch, long* statistic, double* calibr, long stat_limit)
+{
+   double integral[FineCounterBins];
+   double sum(0.);
+   for (int n=0;n<FineCounterBins;n++) {
+      sum += statistic[n];
+      integral[n] = sum;
+   }
+
+   if (sum<stat_limit) {
+      if ((sum>0) && (fAutoCalibr<=0))
+         printf("get4:%2u ch:%u too few counts %5.0f for calibration of fine counter\n", get4id, nch, sum);
+      return false;
+   }
+
+
+   for (unsigned n=0;n<FineCounterBins;n++) {
+
+      calibr[n] = (integral[n]-statistic[n]/2.) / sum * BinWidthPs * FineCounterBins;
+
+      // printf("  bin:%3u val:%7.2f\n", n, calibr[n]);
+   }
+
+   printf("get4:%2u ch:%u Cnts: %7.0f produce calibration\n", get4id, nch, sum);
+   // automatically clear statistic
+   for (unsigned n=0;n<FineCounterBins;n++) statistic[n] = 0;
+   return true;
+ }
+
+
+void get4::MbsProcessor::ProduceCalibration(long stat_limit)
+{
+   // printf("%s produce channels calibrations\n", GetName());
+
+   for (unsigned get4id=0;get4id<GET4.size();get4id++)
+      for (unsigned ch=0;ch<NumGet4Channels;ch++) {
+
+         if (!GET4[get4id].used) continue;
+         Get4MbsChRec& rec = GET4[get4id].CH[ch];
+
+         if (CalibrateChannel(get4id, ch, rec.rising_stat, rec.rising_calibr, stat_limit))
+            CopyCalibration(rec.rising_calibr, rec.fRisCal);
+
+         if (CalibrateChannel(get4id, ch, rec.falling_stat, rec.falling_calibr, stat_limit))
+            CopyCalibration(rec.falling_calibr, rec.fFalCal);
+      }
+
+}
+
+void get4::MbsProcessor::CopyCalibration(double* calibr, base::H1handle hcalibr)
+{
+   ClearH1(hcalibr);
+
+   for (unsigned n=0;n<FineCounterBins;n++) {
+      FillH1(hcalibr, n, calibr[n]);
+   }
+}
+
+
+void get4::MbsProcessor::StoreCalibration(const std::string& fname)
+{
+   if (fname.empty()) return;
+
+   FILE* f = fopen(fname.c_str(),"w");
+   if (f==0) {
+      printf("%s Cannot open file %s for writing calibration\n", GetName(), fname.c_str());
+      return;
+   }
+
+   uint64_t num = GET4.size();
+
+   fwrite(&num, sizeof(num), 1, f);
+
+   for (unsigned get4id=0;get4id<GET4.size();get4id++)
+      for (unsigned ch=0;ch<NumGet4Channels;ch++) {
+
+         Get4MbsChRec& rec = GET4[get4id].CH[ch];
+
+         fwrite(rec.rising_calibr, sizeof(rec.rising_calibr), 1, f);
+         fwrite(rec.falling_calibr, sizeof(rec.falling_calibr), 1, f);
+
+      }
+
+   fclose(f);
+
+   printf("%s storing calibration in %s\n", GetName(), fname.c_str());
+}
+
+bool get4::MbsProcessor::LoadCalibration(const std::string& fname)
+{
+   if (fname.empty()) return false;
+
+   FILE* f = fopen(fname.c_str(),"r");
+   if (f==0) {
+      printf("Cannot open file %s for reading calibration\n", fname.c_str());
+      return false;
+   }
+
+   uint64_t num(0);
+
+   fread(&num, sizeof(num), 1, f);
+
+   if (num != GET4.size()) {
+      printf("%s mismatch of GET4 number in calibration file %u and in processor %u\n", GetName(), (unsigned) num, (unsigned) GET4.size());
+   } else {
+      for (unsigned get4id=0;get4id<GET4.size();get4id++)
+         for (unsigned ch=0;ch<NumGet4Channels;ch++) {
+
+            Get4MbsChRec& rec = GET4[get4id].CH[ch];
+            fread(rec.rising_calibr, sizeof(rec.rising_calibr), 1, f);
+            fread(rec.falling_calibr, sizeof(rec.falling_calibr), 1, f);
+
+            CopyCalibration(rec.rising_calibr, rec.fRisCal);
+            CopyCalibration(rec.falling_calibr, rec.fFalCal);
+         }
+   }
+
+   fclose(f);
+
+   printf("%s reading calibration from %s done\n", GetName(), fname.c_str());
+
+   fUseCalibr = true;
+
+   return true;
+}
+
+
+void get4::MbsProcessor::SetAutoCalibr(long stat_limit)
+{
+   fAutoCalibr = stat_limit;
+   fUseCalibr = true;
+
+   // initialize with linear calibration, immediately allow to use calibration
+
+   for (unsigned get4id=0;get4id<GET4.size();get4id++)
+      for (unsigned ch=0;ch<NumGet4Channels;ch++) {
+         Get4MbsChRec& rec = GET4[get4id].CH[ch];
+         for (unsigned bin=0;bin<FineCounterBins;bin++) {
+            rec.rising_calibr[bin] = 1.*BinWidthPs * bin;
+            rec.falling_calibr[bin] = 1.*BinWidthPs * bin;
+         }
+         CopyCalibration(rec.rising_calibr, rec.fRisCal);
+         CopyCalibration(rec.falling_calibr, rec.fFalCal);
+      }
+}
+
+
+void get4::MbsProcessor::UserPreLoop()
+{
+   // LoadCalibration("test.cal");
+}
+
+
+#include "TH1.h"
+
+void get4::MbsProcessor::UserPostLoop()
+{
+//   printf("************************* hadaq::TdcProcessor postloop *******************\n");
+
+   if (fWriteCalibr.length()>0) {
+      ProduceCalibration(100000);
+      StoreCalibration(fWriteCalibr);
+   }
+
+   for (unsigned n=0;n<fRef.size();n++) {
+      TH1* hist = (TH1*) fRef[n].fHist;
+
+      if (hist==0) continue;
+
+      printf("%s RMS = %5.1f\n", hist->GetName(), hist->GetRMS());
+   }
+}
