@@ -209,7 +209,7 @@ bool get4::MbsProcessor::FirstBufferScan(const base::Buffer& buf)
             double fulltm = 1.*BinWidthPs*fullstamp;
 
             if (fUseCalibr) {
-               fulltm = 1.*BinWidthPs*(fullstamp & 0xffffffffffff80LU);
+               fulltm = 1.*BinWidthPs*(fullstamp & 0xffffffffffff80LLU);
                if (rising) fulltm += chrec.rising_calibr[fine];
                       else fulltm += chrec.falling_calibr[fine];
             }
@@ -259,7 +259,7 @@ bool get4::MbsProcessor::FirstBufferScan(const base::Buffer& buf)
             //if (++mmm<1000) printf("fine %3u  add %7.1f\n", fine, chrec.rising_calibr[fine]);
 
             if (fUseCalibr)
-               chrec.lastr = 1.*BinWidthPs*(fulltm & 0xffffffffffff80LU) + chrec.rising_calibr[fine];
+               chrec.lastr = 1.*BinWidthPs*(fulltm & 0xffffffffffff80LLU) + chrec.rising_calibr[fine];
 
             chrec.lastf = chrec.lastr + 1.*BinWidthPs*tot*fTotMult;
 
