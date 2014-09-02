@@ -159,6 +159,8 @@ namespace hadaq {
 
          unsigned  fCompensateEpochCounter;  //! counter to compensate epoch reset
 
+         bool      fCh0Enabled;           //! when true, channel 0 stored in output event
+
          /** Returns true when processor used to select trigger signal
           * TDC not yet able to perform trigger selection */
          virtual bool doTriggerSelection() const { return false; }
@@ -300,6 +302,9 @@ namespace hadaq {
 
          void ClearChannelRefHist(unsigned ch, bool rising = true)
             { ClearH1(GetChannelRefHist(ch, rising)); }
+
+         /** Enable/disable store of channel 0 in output event */
+         void SetCh0Enabled(bool on = true) { fCh0Enabled = on; }
 
          /** Scan all messages, find reference signals
           * if returned false, buffer has error and must be discarded */

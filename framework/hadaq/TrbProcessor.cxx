@@ -180,6 +180,11 @@ void hadaq::TrbProcessor::SetStoreEnabled(bool on)
       iter->second->SetStoreEnabled(on);
 }
 
+void hadaq::TrbProcessor::SetCh0Enabled(bool on)
+{
+   for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
+      iter->second->SetCh0Enabled(on);
+}
 
 void hadaq::TrbProcessor::SetTriggerWindow(double left, double right)
 {

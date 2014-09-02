@@ -33,7 +33,8 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fUseLastHit(false),
    fUseNativeTrigger(false),
    fCompensateEpochReset(false),
-   fCompensateEpochCounter(0)
+   fCompensateEpochCounter(0),
+   fCh0Enabled(false)
 {
 
    if (trb) {
@@ -607,7 +608,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          } else
 
          // for second scan we check if hit can be assigned to the events
-         if ((chid>0) && !iserr) {
+         if (((chid>0) || fCh0Enabled) && !iserr) {
 
             base::GlobalTime_t globaltm = LocalToGlobalTime(localtm, &help_index);
 
@@ -618,7 +619,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
             if (indx < fGlobalMarks.size()) {
                // printf("!!!!!!!!!!!!!!!!!!!!!! ADD %s message ch %u diff %12.9f !!!!!!!!!!!!!!!!\n", GetName(), chid, globaltm - fGlobalMarks.item(indx).globaltm);
-               AddMessage(indx, (hadaq::TdcSubEvent*) fGlobalMarks.item(indx).subev, hadaq::TdcMessageExt(msg, globaltm));
+               AddMessage(indx, (hadaq::TdcSubEvent*) fGlobalMarks.item(indx).subev, hadaq::TdcMessageExt(msg, chid>0 ? globaltm : ch0time));
             }
          }
 

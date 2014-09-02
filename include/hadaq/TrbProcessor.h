@@ -97,6 +97,9 @@ namespace hadaq {
          void SetCrossProcess(bool on = true) { fCrossProcess = on; }
          bool IsCrossProcess() const { return fCrossProcess; }
 
+         /** Enable/disable ch0 store in output event for all TDC processors */
+         void SetCh0Enabled(bool on = true);
+
          /** Set sync mask and value which, should be obtained from
           * trigger type to detect CBM sync message in CTS sub-event
           * Code is following:
