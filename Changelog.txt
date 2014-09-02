@@ -1,5 +1,10 @@
+2.09.2014
+1. Process hits not as rising and falling edges but as leading and trailing.
+   Means leading should be always there, trailing is optional. When trailing is
+   enabled (so-call edges mask bigger than 1), time-over-threshold value is calculated. 
+
 11.07.2014
-1. Add supoport of 32bit mode in get4::MbsProcessor.
+1. Add support of 32bit mode in get4::MbsProcessor.
 2. Implement calibration for GET4. Calibration provides 3-4 ps better resolution.   
 
 9.07.2014

@@ -122,6 +122,7 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
       fCh[ch].fFallingCoarse = MakeH1("FallingCoarse", "Falling coarse counter", 2048, 0, 2048, "coarse");
       fCh[ch].fFallingMult = MakeH1("FallingMult", "Falling event multiplicity", 128, 0, 128, "nhits");
       fCh[ch].fFallingCalibr = MakeH1("FallingCalibr", "Falling calibration function", FineCounterBins, 0, FineCounterBins, "fine");
+      fCh[ch].fTot = MakeH1("Tot", "Time over threshold", 4000, 0, 1000., "ns");
       // copy calibration only when histogram created
       CopyCalibration(fCh[ch].falling_calibr, fCh[ch].fFallingCalibr, ch, fFallingCalibr);
    }
@@ -213,10 +214,6 @@ void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned re
       }
 
       if (DoFallingEdge()) {
-         if (fCh[ch].fFallingRef == 0) {
-            sprintf(sbuf, "difference to %s", refname);
-            fCh[ch].fFallingRef = MakeH1("FallingRef", sbuf, npoints, left, right, "ns");
-         }
          if (fCh[ch].fFallingCoarseRef == 0)
             fCh[ch].fFallingCoarseRef = MakeH1("FallingCoarseRef", "Difference to falling coarse counter in ref channel", 4096, -2048, 2048, "coarse");
       }
@@ -288,15 +285,8 @@ bool hadaq::TdcProcessor::EnableRefCondPrint(unsigned ch, double left, double ri
 
    SetSubPrefix("Ch", ch);
 
-   if (DoRisingEdge()) {
-      fCh[ch].fRisingRefCond = MakeC1("RisingRefPrint", left, right, fCh[ch].fRisingRef);
-      fCh[ch].rising_cond_prnt = numprint > 0 ? numprint : 100000000;
-   }
-
-   if (DoFallingEdge()) {
-      fCh[ch].fFallingRefCond = MakeC1("FallingRefPrint", left, right, fCh[ch].fFallingRef);
-      fCh[ch].falling_cond_prnt = numprint > 0 ? numprint : 100000000;
-   }
+   fCh[ch].fRisingRefCond = MakeC1("RisingRefPrint", left, right, fCh[ch].fRisingRef);
+   fCh[ch].rising_cond_prnt = numprint > 0 ? numprint : 100000000;
 
    return true;
 }
@@ -306,8 +296,8 @@ void hadaq::TdcProcessor::BeforeFill()
 {
    for (unsigned ch=0;ch<NumChannels();ch++) {
       fCh[ch].rising_hit_tm = 0;
+      fCh[ch].rising_last_tm = 0;
       fCh[ch].rising_ref_tm = 0.;
-      fCh[ch].falling_hit_tm = 0;
    }
 }
 
@@ -366,29 +356,6 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
             //    (fCh[fCh[ch].doublerefch].rising_ref_tm != 0)) {
             //   FillH1(fCh[ch].fRisingDoubleRef, diff, fCh[fCh[ch].doublerefch].rising_ref_tm*1e9);
             // }
-         }
-
-         if (DoFallingEdge() && (fCh[ch].falling_hit_tm != 0) && (refproc->fCh[ref].falling_hit_tm != 0)) {
-
-            double tm = fCh[ch].falling_hit_tm;
-            double tm_ref = refproc->fCh[ref].falling_hit_tm;
-
-            if ((refproc!=this) && (ch>0) && (ref>0)) {
-               tm -= fCh[0].falling_hit_tm;
-               tm_ref -= refproc->fCh[0].falling_hit_tm;
-            }
-
-            double diff = (tm - tm_ref)*1e9;
-
-            // when refch is 0 on same board, histogram already filled
-            if ((ref!=0) || (refproc!=this)) FillH1(fCh[ch].fFallingRef, diff);
-
-            FillH1(fCh[ch].fFallingCoarseRef, 0. + fCh[ch].falling_coarse - refproc->fCh[ref].falling_coarse);
-            RAWPRINT("Difference falling %u:%u %u:%u  %12.3f  %12.3f  %7.3f  coarse %03x - %03x = %4d  fine %03x %03x \n",
-                     GetID(), ch, reftdc, ref,
-                     tm*1e9, tm_ref*1e9, diff,
-                     fCh[ch].falling_coarse, fCh[ref].falling_coarse, (int) (fCh[ch].falling_coarse - refproc->fCh[ref].falling_coarse),
-                     fCh[ch].falling_fine, refproc->fCh[ref].falling_fine);
          }
       }
 
@@ -590,6 +557,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
                bool print_cond = false;
 
+               rec.rising_last_tm = localtm;
+
                if ((rec.rising_hit_tm == 0.) || fUseLastHit) {
                   rec.rising_hit_tm = localtm;
                   rec.rising_coarse = coarse;
@@ -626,26 +595,9 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
                FillH1(rec.fFallingFine, fine);
                FillH1(rec.fFallingCoarse, coarse);
-               if ((rec.falling_hit_tm == 0.) || fUseLastHit) {
-                  rec.falling_hit_tm = localtm;
-                  rec.falling_coarse = coarse;
-                  rec.falling_fine = fine;
 
-                  if ((rec.falling_cond_prnt>0) && (rec.reftdc == GetID()) &&
-                      (rec.refch < NumChannels()) && (fCh[rec.refch].falling_hit_tm!=0)) {
-                     double diff = (localtm - fCh[rec.refch].falling_hit_tm) * 1e9;
-                     if (TestC1(rec.fFallingRefCond, diff) == 0) {
-                        rec.falling_cond_prnt--;
-                        rawprint = true;
-                        // printf ("TDC%u ch%u detect falling diff %8.3f ns\n", GetID(), chid, diff);
-                     }
-                  }
-
-               }
-
-               if ((chid!=0) && (rec.refch==0) && (rec.reftdc == GetID()) && (fCh[0].falling_hit_tm!=0)) {
-                  FillH1(rec.fFallingRef, (localtm - fCh[0].falling_hit_tm)*1e9);
-               }
+               if (rec.rising_last_tm!=0)
+                  FillH1(rec.fTot, (localtm - rec.rising_last_tm)*1e9);
             }
 
             if (!iserr) {

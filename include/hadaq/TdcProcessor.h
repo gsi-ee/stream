@@ -57,19 +57,16 @@ namespace hadaq {
             base::H1handle fFallingFine;   //! histogram of all fine counters
             base::H1handle fFallingCoarse; //! histogram of all coarse counters
             base::H1handle fFallingMult;   //! number of hits per event
-            base::H1handle fFallingRef;    //! histogram of all coarse counters
-            base::C1handle fFallingRefCond; //! condition to print raw events
+            base::H1handle fTot;           //! histogram of time-over-threshold measurement
             base::H1handle fFallingCoarseRef; //! histogram
             base::H1handle fFallingCalibr; //! histogram of channel calibration function
             int rising_cnt;                //! number of rising hits in last event
             int falling_cnt;               //! number of falling hits in last event
-            double rising_hit_tm;
+            double rising_hit_tm;          //! leading edge time, used in correlation analysis. can be first or last time
+            double rising_last_tm;         //! last leading edge time
             double rising_ref_tm;
-            double falling_hit_tm;
             unsigned rising_coarse;
-            unsigned falling_coarse;
             unsigned rising_fine;
-            unsigned falling_fine;
             long all_rising_stat;
             long all_falling_stat;
             long rising_stat[FineCounterBins];
@@ -77,7 +74,6 @@ namespace hadaq {
             long falling_stat[FineCounterBins];
             float falling_calibr[FineCounterBins];
             int rising_cond_prnt;
-            int falling_cond_prnt;
 
             ChannelRec() :
                refch(0xffffff),
@@ -97,23 +93,18 @@ namespace hadaq {
                fFallingFine(0),
                fFallingCoarse(0),
                fFallingMult(0),
-               fFallingRef(0),
-               fFallingRefCond(0),
+               fTot(0),
                fFallingCoarseRef(0),
                fFallingCalibr(0),
                rising_cnt(0),
                falling_cnt(0),
                rising_hit_tm(0.),
                rising_ref_tm(0.),
-               falling_hit_tm(0.),
                rising_coarse(0),
-               falling_coarse(0),
                rising_fine(0),
-               falling_fine(0),
                all_rising_stat(0),
                all_falling_stat(0),
-               rising_cond_prnt(-1),
-               falling_cond_prnt(-1)
+               rising_cond_prnt(-1)
             {
                for (unsigned n=0;n<FineCounterBins;n++) {
                   rising_stat[n] = 0;
@@ -149,7 +140,7 @@ namespace hadaq {
          std::vector<hadaq::TdcMessageExt> *pStoreVect; //! pointer on store vector
 
          bool        fNewDataFlag;    //! flag used by TRB processor to indicate if new data was added
-         unsigned    fEdgeMask;       //! fill histograms 1 - rising, 2 - falling, 3 - both
+         unsigned    fEdgeMask;       //! which channels to analyze, analyzes trailing edges when more than 1
          long        fAutoCalibration;//! indicates minimal number of counts in each channel required to produce calibration
 
          std::string fWriteCalibr;    //! file which should be written at the end of data processing
@@ -210,8 +201,8 @@ namespace hadaq {
          static void SetMaxBoardId(unsigned) { }
 
          inline unsigned NumChannels() const { return fCh.size(); }
-         inline bool DoRisingEdge() const { return fEdgeMask & rising_edge; }
-         inline bool DoFallingEdge() const { return fEdgeMask & falling_edge; }
+         inline bool DoRisingEdge() const { return true; }
+         inline bool DoFallingEdge() const { return fEdgeMask > 1; }
 
          int GetNumHist() const { return 6; }
 
@@ -222,7 +213,7 @@ namespace hadaq {
                case 2: return "RisingRef";
                case 3: return "FallingFine";
                case 4: return "FallingCoarse";
-               case 5: return "FallingRef";
+               case 5: return "Tot";
                case 6: return "RisingMult";
                case 7: return "FallingMult";
             }
@@ -237,7 +228,7 @@ namespace hadaq {
                case 2: return fCh[ch].fRisingRef;
                case 3: return fCh[ch].fFallingFine;
                case 4: return fCh[ch].fFallingCoarse;
-               case 5: return fCh[ch].fFallingRef;
+               case 5: return fCh[ch].fTot;
                case 6: return fCh[ch].fRisingMult;
                case 7: return fCh[ch].fFallingMult;
             }
@@ -304,8 +295,8 @@ namespace hadaq {
 
          virtual void UserPostLoop();
 
-         base::H1handle GetChannelRefHist(unsigned ch, bool rising = true)
-            { return ch < fCh.size() ? (rising ? fCh[ch].fRisingRef : fCh[ch].fFallingRef) : 0; }
+         base::H1handle GetChannelRefHist(unsigned ch, bool)
+            { return ch < fCh.size() ? fCh[ch].fRisingRef : 0; }
 
          void ClearChannelRefHist(unsigned ch, bool rising = true)
             { ClearH1(GetChannelRefHist(ch, rising)); }
