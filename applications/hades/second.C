@@ -12,19 +12,29 @@ class RawHadesProc : public base::EventProc {
       std::string fTdcId[2];    //!< tdc1 id where channels will be selected "TDC_8a00"
       double lasttm[2];
       
-      base::H1handle  hDiff; //!< histogram with hits number
+      base::H1handle  hDiff;  //!< histogram with time diff between two events
+      base::H1handle  hRatio; //!< histogram with time ratio
+      base::H2handle  hDet[2]; //!< time distribution
+      base::H1handle  hDetInt[2]; //!< time distribution
       
    public:
       RawHadesProc(const char* procname, const char* tdc1, const char* tdc2) :
          base::EventProc(procname),
-         hDiff(0)
+         hDiff(0),
+         hRatio(0)
       {
          printf("Create %s for %s %s\n", GetName(), tdc1, tdc2);
 
          fTdcId[0] = tdc1; lasttm[0] = 0;
          fTdcId[1] = tdc2; lasttm[1] = 0;
 
-         hDiff = MakeH1("Ch0Diff","Channel 0 difference", 400, -20., 20., "ns");
+         hDiff = MakeH1("EvntDiff","Difference between two events", 400, -20., 20., "ns");
+         hRatio = MakeH1("EvntRatio","Ratio between two events", 1000, 0.9999, 1.0001, "rel");
+
+         for (int n=0;n<2;n++) {
+            hDet[n] = MakeH2(Form("Det%d", n),"Detector time to trigger", 100, -1000., 0., 32, 1, 33, "ns;ch");
+            hDetInt[n] = MakeH1(Form("DetInt%d", n),"Detector time to trigger", 1000, -1000., 0., "ns");
+         }
       }
 
 
@@ -52,19 +62,21 @@ class RawHadesProc : public base::EventProc {
                unsigned chid = ext.msg().getHitChannel();
                double tm = ext.GetGlobalTime() /* - ev->GetTriggerTime() */;
 
-               if (chid!=0) continue;
-
-               // printf("%d ch0 time %11.9f\n", n, tm);
-
-               currtm[n] = tm;
-               break;
+               if (chid==0) {
+                  currtm[n] = tm;
+               } else {
+                  FillH2(hDet[n], tm*1e9, chid);
+                  FillH1(hDetInt[n], tm*1e9);
+               }
             }
          }
 
          
          if ((lasttm[0]!=0) && (lasttm[1]!=0) && (currtm[0]!=0) && (currtm[1]!=0)) {
             double diff = (currtm[0] - lasttm[0]) - (currtm[1] - lasttm[1]);
+            double ratio = (currtm[0] - lasttm[0]) / (currtm[1] - lasttm[1]);
             FillH1(hDiff, diff*1e9);
+            FillH1(hRatio, ratio);
             // printf("diff %5.3f\n", diff*1e9);
          }
 

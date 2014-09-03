@@ -4,7 +4,6 @@
    enabled (so-call edges mask bigger than 1), time-over-threshold value is calculated.
 2. Provide possibility to store channel 0 value in output event. Show in example
    for hades processing how it can be used.
-        
 
 11.07.2014
 1. Add support of 32bit mode in get4::MbsProcessor.
