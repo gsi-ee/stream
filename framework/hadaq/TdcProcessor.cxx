@@ -191,7 +191,7 @@ void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned re
    if (fCh[ch].reftdc == GetID()) {
       sprintf(refname, "Ch%u", fCh[ch].refch);
    } else {
-      sprintf(refname, "Ch%u TDC%u", fCh[ch].refch, fCh[ch].reftdc);
+      sprintf(refname, "TDC 0x%04x Ch%u", fCh[ch].reftdc, fCh[ch].refch);
    }
 
    if ((left < right) && (npoints>1)) {
@@ -257,8 +257,8 @@ bool hadaq::TdcProcessor::SetDoubleRefChannel(unsigned ch1, unsigned ch2,
             sprintf(sbuf, "double correlation to Ch%u", refch);
             sprintf(saxis, "ch%u-ch%u ns;ch%u-ch%u ns", ch, fCh[ch].refch, refch, fCh[refch].refch);
          } else {
-            sprintf(sbuf, "double correlation to TDC%u Ch%u", reftdc, refch);
-            sprintf(saxis, "ch%u-ch%u ns;tdc%u refch%u ns", ch, fCh[ch].refch, reftdc, refch);
+            sprintf(sbuf, "double correlation to TDC 0x%04x Ch%u", reftdc, refch);
+            sprintf(saxis, "ch%u-ch%u ns;tdc 0x%04x refch%u ns", ch, fCh[ch].refch, reftdc, refch);
          }
 
          fCh[ch].fRisingDoubleRef = MakeH2("RisingDoubleRef", sbuf, npx, xmin, xmax, npy, ymin, ymax, saxis);
@@ -314,7 +314,9 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
 
       TdcProcessor* refproc = 0;
       if (reftdc == GetID()) refproc = this; else
-      if (subprocmap!=0) {
+      if (fTrb!=0) refproc = fTrb->FindTDC(reftdc);
+
+      if ((refproc==0) && (subprocmap!=0)) {
          SubProcMap::iterator iter = subprocmap->find(reftdc);
          if (iter != subprocmap->end()) refproc = iter->second;
       }
@@ -367,7 +369,9 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
          if (reftdc>=0xffff) reftdc = GetID();
          refproc = 0;
          if (reftdc == GetID()) refproc = this; else
-         if (subprocmap!=0) {
+         if (fTrb!=0) refproc = fTrb->FindTDC(reftdc);
+
+         if ((refproc==0) && (subprocmap!=0)) {
              SubProcMap::iterator iter = subprocmap->find(reftdc);
              if (iter != subprocmap->end()) refproc = iter->second;
          }

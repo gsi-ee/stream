@@ -23,6 +23,8 @@ namespace hadaq {
 
       protected:
 
+         HldProcessor* fHldProc;     ///< pointer on HLD processor
+
          SubProcMap fMap;            ///< map of sub-processors
 
          unsigned fHadaqCTSId;       ///< identifier of CTS header in HADAQ event
@@ -52,7 +54,9 @@ namespace hadaq {
 
          bool fUseTriggerAsSync;     ///< when true, trigger number used as sync message between TRBs
 
-         bool fCompensateEpochReset;  ///< when true, artificially create contigious epoch value
+         bool fCompensateEpochReset;  ///< when true, artificially create contiguous epoch value
+
+         static int gNumChannels;     ///< default number of channels
 
          /** Returns true when processor used to select trigger signal
           * TRB3 not yet able to perform trigger selection */
@@ -138,6 +142,11 @@ namespace hadaq {
 
             return (iter == fMap.end()) ? 0 : iter->second;
          }
+
+         /** Search TDC in current TRB or in the top HLD */
+         TdcProcessor* FindTDC(unsigned tdcid) const;
+
+         static void SetDefaultNumChannels(unsigned n=65);
 
          /** Create up-to 4 TDCs processors with specified IDs */
          void CreateTDC(unsigned id1, unsigned id2 = 0, unsigned id3 = 0, unsigned id4 = 0);

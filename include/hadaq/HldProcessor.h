@@ -45,6 +45,9 @@ namespace hadaq {
          HldProcessor();
          virtual ~HldProcessor();
 
+         /** Search for specified TDC in all subprocessors */
+         TdcProcessor* FindTDC(unsigned tdcid) const;
+
          /** Set event type, only used in the analysis */
          void SetEventTypeSelect(unsigned evid) { fEventTypeSelect = evid; }
 
@@ -59,6 +62,8 @@ namespace hadaq {
 
          void SetPrintRawData(bool on = true);
          bool IsPrintRawData() const { return fPrintRawData; }
+
+
    };
 }
 

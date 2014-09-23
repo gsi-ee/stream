@@ -11,8 +11,17 @@
 
 #define RAWPRINT( args ...) if(IsPrintRawData()) printf( args )
 
+int hadaq::TrbProcessor::gNumChannels = 65;
+
+void hadaq::TrbProcessor::SetDefaultNumChannels(unsigned n)
+{
+   gNumChannels = n;
+}
+
+
 hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc) :
    base::StreamProc("TRB_%04x", brdid, false),
+   fHldProc(hldproc),
    fMap()
 {
    if (hldproc==0)
@@ -60,6 +69,12 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc) :
 
 hadaq::TrbProcessor::~TrbProcessor()
 {
+}
+
+hadaq::TdcProcessor* hadaq::TrbProcessor::FindTDC(unsigned tdcid) const
+{
+   if (fHldProc!=0) return fHldProc->FindTDC(tdcid);
+   return GetTDC(tdcid, true);
 }
 
 void hadaq::TrbProcessor::UserPreLoop()
@@ -124,7 +139,7 @@ void hadaq::TrbProcessor::CreateTDC(unsigned id1, unsigned id2, unsigned id3, un
          }
       }
 
-      new hadaq::TdcProcessor(this, tdcid, 65, 0x1);
+      new hadaq::TdcProcessor(this, tdcid, gNumChannels, 0x1);
    }
 }
 

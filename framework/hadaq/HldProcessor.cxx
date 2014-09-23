@@ -40,6 +40,14 @@ void hadaq::HldProcessor::AddTrb(TrbProcessor* trb, unsigned id)
    fMap[id] = trb;
 }
 
+hadaq::TdcProcessor* hadaq::HldProcessor::FindTDC(unsigned tdcid) const
+{
+   for (TrbProcMap::const_iterator iter = fMap.begin(); iter != fMap.end(); iter++) {
+      hadaq::TdcProcessor* res = iter->second->GetTDC(tdcid, true);
+      if (res!=0) return res;
+   }
+   return 0;
+}
 
 void hadaq::HldProcessor::SetTriggerWindow(double left, double right)
 {
