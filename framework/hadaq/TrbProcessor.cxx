@@ -11,11 +11,13 @@
 
 #define RAWPRINT( args ...) if(IsPrintRawData()) printf( args )
 
-int hadaq::TrbProcessor::gNumChannels = 65;
+unsigned hadaq::TrbProcessor::gNumChannels = 65;
+unsigned hadaq::TrbProcessor::gEdgesMask = 0x1;
 
-void hadaq::TrbProcessor::SetDefaultNumChannels(unsigned n)
+void hadaq::TrbProcessor::SetDefaults(unsigned numch, unsigned edges)
 {
-   gNumChannels = n;
+   gNumChannels = numch;
+   gEdgesMask = edges;
 }
 
 
@@ -139,7 +141,7 @@ void hadaq::TrbProcessor::CreateTDC(unsigned id1, unsigned id2, unsigned id3, un
          }
       }
 
-      new hadaq::TdcProcessor(this, tdcid, gNumChannels, 0x1);
+      new hadaq::TdcProcessor(this, tdcid, gNumChannels, gEdgesMask);
    }
 }
 

@@ -56,7 +56,8 @@ namespace hadaq {
 
          bool fCompensateEpochReset;  ///< when true, artificially create contiguous epoch value
 
-         static int gNumChannels;     ///< default number of channels
+         static unsigned gNumChannels;     ///< default number of channels
+         static unsigned gEdgesMask;      ///< default edges mask
 
          /** Returns true when processor used to select trigger signal
           * TRB3 not yet able to perform trigger selection */
@@ -146,7 +147,7 @@ namespace hadaq {
          /** Search TDC in current TRB or in the top HLD */
          TdcProcessor* FindTDC(unsigned tdcid) const;
 
-         static void SetDefaultNumChannels(unsigned n=65);
+         static void SetDefaults(unsigned numch=65, unsigned edges=0x1);
 
          /** Create up-to 4 TDCs processors with specified IDs */
          void CreateTDC(unsigned id1, unsigned id2 = 0, unsigned id3 = 0, unsigned id4 = 0);
