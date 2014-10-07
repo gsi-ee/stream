@@ -182,7 +182,13 @@ void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned re
 {
    if ((ch>=NumChannels()) || (HistFillLevel()<4)) return;
    fCh[ch].refch = refch;
-   fCh[ch].reftdc = (reftdc >= 0xffff) ? GetID() : reftdc;
+
+   if (((reftdc == 0xffff) || (reftdc>0xfffff)) && ((reftdc & 0xf0000) != 0x70000)) {
+      fCh[ch].reftdc = GetID();
+   } else {
+      fCh[ch].reftdc = reftdc & 0xffff;
+      fCh[ch].refabs = ((reftdc & 0xf0000) == 0x70000);
+   }
 
    CreateChannelHistograms(ch);
    if (fCh[ch].reftdc == GetID()) CreateChannelHistograms(refch);
@@ -331,7 +337,7 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
 
             double tm = fCh[ch].rising_hit_tm;
             double tm_ref = refproc->fCh[ref].rising_hit_tm;
-            if ((refproc!=this) && (ch>0) && (ref>0)) {
+            if ((refproc!=this) && (ch>0) && (ref>0) && !fCh[ch].refabs) {
                tm -= fCh[0].rising_hit_tm;
                tm_ref -= refproc->fCh[0].rising_hit_tm;
             }

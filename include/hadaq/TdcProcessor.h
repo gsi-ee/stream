@@ -42,6 +42,7 @@ namespace hadaq {
          struct ChannelRec {
             unsigned refch;                //! reference channel for specified
             unsigned reftdc;               //! tdc of reference channel
+            bool refabs;                   //! if true, absolute difference (without channel 0) will be used
             unsigned doublerefch;          //! double reference channel
             unsigned doublereftdc;         //! tdc of double reference channel
             bool docalibr;                 //! if false, simple calibration will be used
@@ -53,7 +54,7 @@ namespace hadaq {
             base::H1handle fRisingCoarseRef; //! histogram
             base::H1handle fRisingCalibr;  //! histogram of channel calibration function
             base::H2handle fRisingRef2D;   //! histogram
-            base::H2handle fRisingDoubleRef; //! correlation with dif time from other chanel
+            base::H2handle fRisingDoubleRef; //! correlation with dif time from other channel
             base::H1handle fFallingFine;   //! histogram of all fine counters
             base::H1handle fFallingCoarse; //! histogram of all coarse counters
             base::H1handle fFallingMult;   //! number of hits per event
@@ -78,6 +79,7 @@ namespace hadaq {
             ChannelRec() :
                refch(0xffffff),
                reftdc(0xffffffff),
+               refabs(false),
                doublerefch(0xffffff),
                doublereftdc(0xffffff),
                docalibr(true),
@@ -250,7 +252,8 @@ namespace hadaq {
          /** Set reference signal for the TDC channel ch
           * \param refch   specifies number of reference channel
           * \param reftdc  specifies tdc id, used for ref channel.
-          * Default (0xffffffff) same TDC will be used
+          * Default (0xffff) same TDC will be used
+          * If redtdc contains 0x70000 (like 0x7c010), than direct difference without channel 0 will be calculated
           * To be able use other TDCs, one should enable TTrbProcessor::SetCrossProcess(true);
           * If left-right range are specified, ref histograms are created.
           * If twodim==true, 2-D histogram which will accumulate correlation between
