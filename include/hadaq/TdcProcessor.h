@@ -300,7 +300,7 @@ namespace hadaq {
 
          virtual void UserPostLoop();
 
-         base::H1handle GetChannelRefHist(unsigned ch, bool)
+         base::H1handle GetChannelRefHist(unsigned ch, bool = true)
             { return ch < fCh.size() ? fCh[ch].fRisingRef : 0; }
 
          void ClearChannelRefHist(unsigned ch, bool rising = true)
