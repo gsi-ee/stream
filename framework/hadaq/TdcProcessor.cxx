@@ -54,6 +54,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fHitsPerBrd = trb ? &trb->fHitsPerBrd : 0;
 
    fChannels = 0;
+   fHits = 0;
    fErrors = 0;
    fUndHits = 0;
    fMsgsKind = 0;
@@ -63,7 +64,9 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fFallingCalibr = 0;
 
    if (HistFillLevel() > 1) {
-      fChannels = MakeH1("Channels", "TDC channels", numchannels, 0, numchannels, "ch");
+      fChannels = MakeH1("Channels", "Messages per TDC channels", numchannels, 0, numchannels, "ch");
+      if (DoFallingEdge() && DoRisingEdge())
+         fHits = MakeH1("Edges", "Edges counts TDC channels (rising/falling)", numchannels*2, 0, numchannels, "ch");
       fErrors = MakeH1("Errors", "Errors in TDC channels", numchannels, 0, numchannels, "ch");
       fUndHits = MakeH1("UndetectedHits", "Undetected hits in TDC channels", numchannels, 0, numchannels, "ch");
 
@@ -555,6 +558,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             CreateChannelHistograms(chid);
 
             FillH1(fChannels, chid);
+            FillH1(fHits, chid*2 + (isrising ? 0 : 0.5));
             FillH2(fAllFine, chid, fine);
             FillH2(fAllCoarse, chid, coarse);
 

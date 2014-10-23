@@ -1,7 +1,9 @@
+23.10.2014
+1. Add statistic over rising/falling edges per TDC (when falling edges are enabled)
+
 7.10.2014
 1. If redtdc contains 0x70000 (like 0x7c010), than direct difference 
    without channel 0 will be calculated.
-
 
 23.09.2014
 1. Add possibility to calculate time reference between different TRBs,

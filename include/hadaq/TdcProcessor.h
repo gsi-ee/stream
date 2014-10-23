@@ -128,6 +128,7 @@ namespace hadaq {
          base::H1handle* fHitsPerBrd; //! data hits per board - from TRB
 
          base::H1handle fChannels;   //! histogram with messages per channel
+         base::H1handle fHits;       //! histogram with hits per channel
          base::H1handle fErrors;     //! histogram with errors per channel
          base::H1handle fUndHits;    //! histogram with undetected hits per channel
          base::H1handle fMsgsKind;   //! messages kinds
