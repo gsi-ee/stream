@@ -126,7 +126,7 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
       fCh[ch].fFallingCoarse = MakeH1("FallingCoarse", "Falling coarse counter", 2048, 0, 2048, "coarse");
       fCh[ch].fFallingMult = MakeH1("FallingMult", "Falling event multiplicity", 128, 0, 128, "nhits");
       fCh[ch].fFallingCalibr = MakeH1("FallingCalibr", "Falling calibration function", FineCounterBins, 0, FineCounterBins, "fine");
-      fCh[ch].fTot = MakeH1("Tot", "Time over threshold", 4000, 0, 1000., "ns");
+      fCh[ch].fTot = MakeH1("Tot", "Time over threshold", 100000, 0, 100., "ns");
       // copy calibration only when histogram created
       CopyCalibration(fCh[ch].falling_calibr, fCh[ch].fFallingCalibr, ch, fFallingCalibr);
    }
@@ -558,7 +558,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             CreateChannelHistograms(chid);
 
             FillH1(fChannels, chid);
-            FillH1(fHits, chid*2 + (isrising ? 0 : 0.5));
+            FillH1(fHits, chid + (isrising ? 0.25 : 0.75));
             FillH2(fAllFine, chid, fine);
             FillH2(fAllCoarse, chid, coarse);
 
