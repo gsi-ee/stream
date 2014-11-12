@@ -5,7 +5,7 @@
 
 #include "hadaq/HldFile.h"
 
-#include <fstream>
+#include <stdio.h>
 
 class TGo4UserSourceParameter;
 class TGo4MbsEvent;
@@ -20,13 +20,24 @@ class TUserSource : public TGo4EventSource {
       /** Optional port number  */
       Int_t fiPort;
 
-      TList* fNames; // list of all files names
+      /** list of all files names */
+      TList* fNames;
 
-      /** file that contains the data in ascii format. */
+      /** indicates if HLD file will be read */
+      Bool_t fIsHLD;
+
+      /** current HLD file */
       hadaq::HldFile fxFile;
 
       /** working buffer */
       Char_t* fxBuffer;
+
+      /** current DAT file */
+      FILE* fxDatFile;
+
+      /** event counter */
+      Int_t fEventCounter;
+
 
       Bool_t OpenNextFile();
 
@@ -55,6 +66,9 @@ class TUserSource : public TGo4EventSource {
        * to fill several TTrbEvent classes. To get a new
        * event call NextEvent() before this method.*/
       virtual Bool_t BuildEvent(TGo4EventElement* dest);
+
+      virtual Bool_t BuildDatEvent(TGo4MbsEvent* dest);
+
 
       const char* GetArgs() const { return fxArgs.Data(); }
       void SetArgs(const char* arg) { fxArgs=arg; }
