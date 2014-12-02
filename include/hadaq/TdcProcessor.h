@@ -1,22 +1,13 @@
 #ifndef HADAQ_TDCPROCESSOR_H
 #define HADAQ_TDCPROCESSOR_H
 
-#include "base/StreamProc.h"
+#include "hadaq/SubProcessor.h"
 
-#include <map>
-
-#include "hadaq/defines.h"
 #include "hadaq/TdcMessage.h"
 #include "hadaq/TdcIterator.h"
 #include "hadaq/TdcSubEvent.h"
 
 namespace hadaq {
-
-   class TrbProcessor;
-   class TdcProcessor;
-
-   typedef std::map<unsigned,TdcProcessor*> SubProcMap;
-
 
    enum { FineCounterBins = 600 };
 
@@ -31,7 +22,7 @@ namespace hadaq {
     *  4 - per-channel histograms with references
     **/
 
-   class TdcProcessor : public base::StreamProc {
+   class TdcProcessor : public SubProcessor {
 
       friend class TrbProcessor;
 
@@ -117,15 +108,8 @@ namespace hadaq {
             }
          };
 
-         TrbProcessor* fTrb;         //! pointer on TRB processor
-         unsigned fSeqeunceId;       //! sequence number of processor in TRB
-
          TdcIterator fIter1;         //! iterator for the first scan
          TdcIterator fIter2;         //! iterator for the second scan
-
-         base::H1handle* fMsgPerBrd;  //! messages per board - from TRB
-         base::H1handle* fErrPerBrd;  //! errors per board - from TRB
-         base::H1handle* fHitsPerBrd; //! data hits per board - from TRB
 
          base::H1handle fChannels;   //! histogram with messages per channel
          base::H1handle fHits;       //! histogram with hits per channel
@@ -142,17 +126,13 @@ namespace hadaq {
          std::vector<hadaq::TdcMessageExt>  fStoreVect; //! vector to store messages in the tree
          std::vector<hadaq::TdcMessageExt> *pStoreVect; //! pointer on store vector
 
-         bool        fNewDataFlag;    //! flag used by TRB processor to indicate if new data was added
          unsigned    fEdgeMask;       //! which channels to analyze, analyzes trailing edges when more than 1
          long        fAutoCalibration;//! indicates minimal number of counts in each channel required to produce calibration
 
          std::string fWriteCalibr;    //! file which should be written at the end of data processing
 
-         bool      fPrintRawData;     //! if true, raw data will be printed
 
          bool      fEveryEpoch;       //! if true, each hit must be supplied with epoch
-
-         bool      fCrossProcess;     //! if true, AfterFill will be called by Trb processor
 
          bool      fUseLastHit;       //! if true, last hit will be used in reference calculations
 
@@ -171,12 +151,9 @@ namespace hadaq {
          static unsigned fFineMinValue; //! minimum value for fine counter, used for simple linear approximation
          static unsigned fFineMaxValue; //! maximum value for fine counter, used for simple linear approximation
 
-         void SetNewDataFlag(bool on) { fNewDataFlag = on; }
-         bool IsNewDataFlag() const { return fNewDataFlag; }
-
          /** Method will be called by TRB processor if SYNC message was found
           * One should change 4 first bytes in the last buffer in the queue */
-         void AppendTrbSync(uint32_t syncid);
+         virtual void AppendTrbSync(uint32_t syncid);
 
          /** This is maximum disorder time for TDC messages
           * TODO: derive this value from sub-items */
@@ -186,8 +163,8 @@ namespace hadaq {
          bool DoBufferScan(const base::Buffer& buf, bool isfirst);
 
          /** These methods used to fill different raw histograms during first scan */
-         void BeforeFill();
-         void AfterFill(SubProcMap* subproc = 0);
+         virtual void BeforeFill();
+         virtual void AfterFill(SubProcMap* = 0);
 
          void CalibrateChannel(unsigned nch, long* statistic, float* calibr);
          void CopyCalibration(float* calibr, base::H1handle hcalibr, unsigned ch = 0, base::H2handle h2calibr = 0);
@@ -209,7 +186,7 @@ namespace hadaq {
          inline bool DoRisingEdge() const { return true; }
          inline bool DoFallingEdge() const { return fEdgeMask > 1; }
 
-         int GetNumHist() const { return 6; }
+         int GetNumHist() const { return 8; }
 
          const char* GetHistName(int k) const {
             switch(k) {
@@ -287,17 +264,12 @@ namespace hadaq {
 
          void SetWriteCalibration(const std::string& fname) { fWriteCalibr = fname; }
 
-         void SetPrintRawData(bool on = true) { fPrintRawData = on; }
-         bool IsPrintRawData() const { return fPrintRawData; }
-
          /** When enabled, last hit time in the channel used for reference time calculations
           * By default, first hit time is used
           * Special case is reference to channel 0 - here all hits will be used */
          void SetUseLastHit(bool on = true) { fUseLastHit = on; }
 
          bool IsUseLastHist() const { return fUseLastHit; }
-
-         virtual void UserPreLoop();
 
          virtual void UserPostLoop();
 

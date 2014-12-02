@@ -18,18 +18,14 @@
 #define RAWPRINT( args ...) if(IsPrintRawData()) printf( args )
 
 hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels, unsigned edge_mask) :
-   base::StreamProc("TDC_%04x", tdcid, false),
-   fTrb(trb),
-   fSeqeunceId(0),
+   SubProcessor(trb, "TDC_%04x", tdcid),
    fIter1(),
    fIter2(),
    fStoreVect(),
    pStoreVect(0),
    fEdgeMask(edge_mask),
    fAutoCalibration(0),
-   fPrintRawData(false),
    fEveryEpoch(false),
-   fCrossProcess(false),
    fUseLastHit(false),
    fUseNativeTrigger(false),
    fCompensateEpochReset(false),
@@ -38,20 +34,11 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
 {
 
    if (trb) {
-      trb->AddSub(this, tdcid);
       // when normal trigger is used as sync points, than use trigger time on right side to calculate global time
       if (trb->IsUseTriggerAsSync()) SetSynchronisationKind(sync_Right);
       if ((trb->NumSubProc()==1) && trb->IsUseTriggerAsSync()) fUseNativeTrigger = true;
-      fPrintRawData = trb->IsPrintRawData();
-      fCrossProcess = trb->IsCrossProcess();
       fCompensateEpochReset = trb->fCompensateEpochReset;
-
-      SetHistFilling(trb->HistFillLevel());
    }
-
-   fMsgPerBrd = trb ? &trb->fMsgPerBrd : 0;
-   fErrPerBrd = trb ? &trb->fErrPerBrd : 0;
-   fHitsPerBrd = trb ? &trb->fHitsPerBrd : 0;
 
    fChannels = 0;
    fHits = 0;
@@ -88,8 +75,6 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
 
    // always create histograms for channel 0
    CreateChannelHistograms(0);
-
-   fNewDataFlag = false;
 
    fWriteCalibr.clear();
 }
@@ -145,18 +130,6 @@ void hadaq::TdcProcessor::DisableCalibrationFor(unsigned firstch, unsigned lastc
       fCh[n].docalibr = false;
 }
 
-
-void hadaq::TdcProcessor::UserPreLoop()
-{
-   unsigned cnt(0);
-
-   if (fTrb != 0)
-      for (SubProcMap::const_iterator iter = fTrb->fMap.begin(); iter!=fTrb->fMap.end(); iter++) {
-         if (iter->second == this) { fSeqeunceId = cnt; break; }
-         cnt++;
-      }
-
-}
 
 void hadaq::TdcProcessor::UserPostLoop()
 {
@@ -327,7 +300,7 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
 
       if ((refproc==0) && (subprocmap!=0)) {
          SubProcMap::iterator iter = subprocmap->find(reftdc);
-         if (iter != subprocmap->end()) refproc = iter->second;
+         if (iter != subprocmap->end()) refproc = dynamic_cast<TdcProcessor*> (iter->second);
       }
 
       FillH1(fCh[ch].fRisingMult, fCh[ch].rising_cnt); fCh[ch].rising_cnt = 0;
@@ -382,7 +355,7 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
 
          if ((refproc==0) && (subprocmap!=0)) {
              SubProcMap::iterator iter = subprocmap->find(reftdc);
-             if (iter != subprocmap->end()) refproc = iter->second;
+             if (iter != subprocmap->end()) refproc = dynamic_cast<TdcProcessor*> (iter->second);
          }
 
          if ((refproc!=0) && (ref<refproc->NumChannels()) && ((ref!=ch) || (refproc!=this))) {

@@ -7,9 +7,12 @@
 
 #include "hadaq/TdcProcessor.h"
 
+#include "hadaq/SubProcessor.h"
+
 namespace hadaq {
 
    class HldProcessor;
+
 
    /** This is generic processor for data, coming from TRB board
     * Normally one requires specific sub-processor for frontend like TDC or any other
@@ -19,6 +22,7 @@ namespace hadaq {
    class TrbProcessor : public base::StreamProc {
 
       friend class TdcProcessor;
+      friend class SubProcessor;
       friend class HldProcessor;
 
       protected:
@@ -66,7 +70,7 @@ namespace hadaq {
          void AccountTriggerId(unsigned id);
 
          /** Way to register sub-processor, like for TDC */
-         void AddSub(TdcProcessor* tdc, unsigned id);
+         void AddSub(SubProcessor* tdc, unsigned id);
 
          /** Scan FPGA-TDC data, distribute over sub-processors */
          void ScanSubEvent(hadaq::RawSubevent* sub, unsigned trb3eventid);
@@ -124,7 +128,7 @@ namespace hadaq {
          void SetCompensateEpochReset(bool on = true) { fCompensateEpochReset = on; }
 
          unsigned NumSubProc() const { return fMap.size(); }
-         TdcProcessor* GetSubProc(unsigned n) const
+         SubProcessor* GetSubProc(unsigned n) const
          {
             for (SubProcMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
                if (n==0) return iter->second;
@@ -141,7 +145,8 @@ namespace hadaq {
             // for old analysis, where IDs are only last 8 bit
             if ((iter == fMap.end()) && !fullid) iter = fMap.find(tdcid & 0xff);
 
-            return (iter == fMap.end()) ? 0 : iter->second;
+            if (iter == fMap.end()) return 0;
+            return dynamic_cast<TdcProcessor*> (iter->second);
          }
 
          /** Search TDC in current TRB or in the top HLD */

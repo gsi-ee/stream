@@ -148,14 +148,18 @@ void hadaq::TrbProcessor::CreateTDC(unsigned id1, unsigned id2, unsigned id3, un
 
 void hadaq::TrbProcessor::SetAutoCalibrations(long cnt)
 {
-   for (SubProcMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++)
-      iter->second->SetAutoCalibration(cnt);
+   for (SubProcMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
+      TdcProcessor* tdc = dynamic_cast<TdcProcessor*> (iter->second);
+      if (tdc) tdc->SetAutoCalibration(cnt);
+   }
 }
 
 void hadaq::TrbProcessor::DisableCalibrationFor(unsigned firstch, unsigned lastch)
 {
-   for (SubProcMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++)
-      iter->second->DisableCalibrationFor(firstch, lastch);
+   for (SubProcMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
+      TdcProcessor* tdc = dynamic_cast<TdcProcessor*> (iter->second);
+      if (tdc) tdc->DisableCalibrationFor(firstch, lastch);
+   }
 }
 
 
@@ -165,9 +169,12 @@ void hadaq::TrbProcessor::SetWriteCalibrations(const char* fileprefix)
 
    for (SubProcMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
 
-      snprintf(fname, sizeof(fname), "%s%04x.cal", fileprefix, iter->second->GetID());
+      TdcProcessor* tdc = dynamic_cast<TdcProcessor*> (iter->second);
+      if (tdc==0) continue;
 
-      iter->second->SetWriteCalibration(fname);
+      snprintf(fname, sizeof(fname), "%s%04x.cal", fileprefix, tdc->GetID());
+
+      tdc->SetWriteCalibration(fname);
    }
 }
 
@@ -177,14 +184,16 @@ void hadaq::TrbProcessor::LoadCalibrations(const char* fileprefix)
    char fname[1024];
 
    for (SubProcMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
+      TdcProcessor* tdc = dynamic_cast<TdcProcessor*> (iter->second);
+      if (tdc==0) continue;
 
-      snprintf(fname, sizeof(fname), "%s%04x.cal", fileprefix, iter->second->GetID());
+      snprintf(fname, sizeof(fname), "%s%04x.cal", fileprefix, tdc->GetID());
 
-      iter->second->LoadCalibration(fname);
+      tdc->LoadCalibration(fname);
    }
 }
 
-void hadaq::TrbProcessor::AddSub(TdcProcessor* tdc, unsigned id)
+void hadaq::TrbProcessor::AddSub(SubProcessor* tdc, unsigned id)
 {
    fMap[id] = tdc;
 }
@@ -199,8 +208,10 @@ void hadaq::TrbProcessor::SetStoreEnabled(bool on)
 
 void hadaq::TrbProcessor::SetCh0Enabled(bool on)
 {
-   for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
-      iter->second->SetCh0Enabled(on);
+   for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++) {
+      TdcProcessor* tdc = dynamic_cast<TdcProcessor*> (iter->second);
+      if (tdc) tdc->SetCh0Enabled(on);
+   }
 }
 
 void hadaq::TrbProcessor::SetTriggerWindow(double left, double right)
@@ -208,8 +219,8 @@ void hadaq::TrbProcessor::SetTriggerWindow(double left, double right)
    base::StreamProc::SetTriggerWindow(left, right);
 
    for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++) {
-      iter->second->CreateTriggerHist(16, 3000, -2e-6, 2e-6);
       iter->second->SetTriggerWindow(left, right);
+      iter->second->CreateTriggerHist(16, 3000, -2e-6, 2e-6);
    }
 }
 
@@ -255,7 +266,7 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
    hadaq::RawEvent* ev = 0;
 
    while ((ev = iter.nextEvent()) != 0) {
-   
+
       if (ev->GetSize() > buf().datalen+4) {
          printf("Corrupted event size %u!\n", ev->GetSize()); return true;
       }
@@ -317,7 +328,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaq::RawSubevent* sub, unsigned trb3eve
    unsigned ix = 0;           // cursor
 
    unsigned trbSubEvSize = sub->GetSize() / 4 - 4;
-   
+
    if (trbSubEvSize>100000) printf("LARGE subevent %u\n", trbSubEvSize);
 
    unsigned syncNumber(0);
@@ -419,7 +430,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaq::RawSubevent* sub, unsigned trb3eve
          datalen -= nCTSwords;
          // ix should now point to the first ETM word
 
-         
+
          // handle the ETM module and extract syncNumber
          if(nExtTrigFlag==0x1) {
 	         // ETM sends one word, is probably MBS Vulom Recv
@@ -427,7 +438,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaq::RawSubevent* sub, unsigned trb3eve
 	         data = sub->Data(ix++); datalen--;
 	         syncNumber = (data & 0xFFFFFF);
 	         findSync = true;
-	         // TODO: evaluate the upper 8 bits in data for status/error 
+	         // TODO: evaluate the upper 8 bits in data for status/error
          }
          else if(nExtTrigFlag==0x2) {
 	         // ETM sends four words, is probably a Mainz A2 recv
@@ -446,10 +457,10 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaq::RawSubevent* sub, unsigned trb3eve
 
          if(findSync)
 	         RAWPRINT("     Find SYNC %u\n", (unsigned) syncNumber);
-         
+
          // now ix should point to the first TDC word if datalen>0
          // if not, there is no TDC present
-         
+
          // This is special TDC processor for data from CTS header
          TdcProcessor* subproc = GetTDC(fHadaqCTSId, true);
          unsigned tdc_index = ix;  // position where subevents starts
@@ -472,8 +483,8 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaq::RawSubevent* sub, unsigned trb3eve
          }
 
          // don't forget to skip the words for the TDC (if any)
-         ix += datalen; 
-         
+         ix += datalen;
+
          continue;
       }
 
@@ -489,7 +500,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaq::RawSubevent* sub, unsigned trb3eve
             //uint32_t fSubeventStatus = data;
             //if (fSubeventStatus != 0x00000001) { bad events}
          }
-         
+
          continue;
       }
 

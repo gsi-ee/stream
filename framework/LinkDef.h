@@ -60,14 +60,16 @@
 #pragma link C++ class hadaq::RawEvent+;
 #pragma link C++ class hadaq::RawSubevent+;
 #pragma link C++ class hadaq::HldFile+;
-#pragma link C++ class hadaq::TrbProcessor+;
 #pragma link C++ class hadaq::TrbIterator+;
 #pragma link C++ class hadaq::TdcMessage+;
 #pragma link C++ class hadaq::TdcMessageExt+;
 #pragma link C++ class std::vector<hadaq::TdcMessageExt>+;
 #pragma link C++ class hadaq::TdcSubEvent+;
 #pragma link C++ class hadaq::TdcIterator+;
+#pragma link C++ class hadaq::SubProcessor+;
+#pragma link C++ class hadaq::AdcProcessor+;
 #pragma link C++ class hadaq::TdcProcessor+;
+#pragma link C++ class hadaq::TrbProcessor+;
 #pragma link C++ class hadaq::HldProcessor+;
 
 // MBS data processing
