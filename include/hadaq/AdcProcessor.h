@@ -3,6 +3,9 @@
 
 #include "hadaq/SubProcessor.h"
 
+#include "hadaq/AdcMessage.h"
+#include "hadaq/AdcSubEvent.h"
+
 namespace hadaq {
 
    class TrbProcessor;
@@ -34,10 +37,10 @@ namespace hadaq {
          base::H1handle fChannels;   //! histogram with messages per channel
          std::vector<ChannelRec>  fCh; //! histogram for individual channels
 
-         //std::vector<hadaq::TdcMessageExt>  fStoreVect; //! vector to store messages in the tree
-         //std::vector<hadaq::TdcMessageExt> *pStoreVect; //! pointer on store vector
+         std::vector<hadaq::AdcMessage>   fStoreVect; //! dummy empty vector
+         std::vector<hadaq::AdcMessage>  *pStoreVect; //! pointer on store vector
 
-         // virtual void CreateBranch(TTree*);
+         virtual void CreateBranch(TTree*);
 
       public:
 
@@ -48,18 +51,12 @@ namespace hadaq {
 
          /** Scan all messages, find reference signals
           * if returned false, buffer has error and must be discarded */
-         virtual bool FirstBufferScan(const base::Buffer& buf)
-         {
-            return true;
-         }
+         virtual bool FirstBufferScan(const base::Buffer& buf);
 
          /** Scan buffer for selecting messages inside trigger window */
-         virtual bool SecondBufferScan(const base::Buffer& buf)
-         {
-            return true;
-         }
+         virtual bool SecondBufferScan(const base::Buffer& buf);
 
-         // virtual void Store(base::Event*);
+         virtual void Store(base::Event*);
    };
 
 }

@@ -45,8 +45,9 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc) :
    fTdcDistr = MakeH1("TdcDistr", "Data distribution over TDCs", 64, 0, 64, "tdc");
 
    fHadaqCTSId = 0x8000;
-   fHadaqHUBId = 0x9000;
-   fHadaqTDCId = 0xC000;
+   fHadaqHUBId = 0x9000;  // high 8 bit important,
+   fHadaqTDCId = 0xC000;  // high 8 bits are important
+   fHadaqSUBId = 0x0000;  // if 0, all other kinds will be processed
 
    fLastTriggerId = 0;
    fLostTriggerCnt = 0;
@@ -364,45 +365,6 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaq::RawSubevent* sub, unsigned trb3eve
          continue;
       }
 
-
-      //! ================= FPGA TDC header ========================
-      if ((data & 0xFF00) == fHadaqTDCId) {
-         unsigned tdcid = data & 0xFFFF;
-
-         FillH1(fTdcDistr, tdcid & 0xff);
-
-         RAWPRINT ("   FPGA-TDC header: 0x%08x, tdcid=0x%04x, size=%u\n", (unsigned) data, tdcid, datalen);
-
-         if (IsPrintRawData()) {
-            TdcIterator iter;
-            iter.assign(sub, ix, datalen);
-            while (iter.next()) iter.printmsg();
-         }
-
-         TdcProcessor* subproc = GetTDC(tdcid);
-
-         if (subproc != 0) {
-            base::Buffer buf;
-            buf.makenew((datalen+1)*4);
-
-            memset(buf.ptr(), 0xff, 4); // fill dummy sync id in the begin
-            sub->CopyDataTo(buf.ptr(4), ix, datalen);
-
-            buf().kind = 0;
-            buf().boardid = tdcid;
-            buf().format = 0;
-
-            subproc->AddNextBuffer(buf);
-            subproc->SetNewDataFlag(true);
-         } else {
-            RAWPRINT("Did not find processor for TDC 0x%04x - skip data %u\n", tdcid, datalen);
-         }
-
-         ix+=datalen;
-
-         continue; // go to next block
-      }  // end of if TDC header
-
       //! ==================== CTS header and inside ================
       if ((data & 0xFFFF) == fHadaqCTSId) {
          RAWPRINT("   CTS header: 0x%x, size=%d\n", (unsigned) data, datalen);
@@ -488,6 +450,45 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaq::RawSubevent* sub, unsigned trb3eve
          continue;
       }
 
+      //! ================= FPGA TDC header ========================
+      if ((data & 0xFF00) == fHadaqTDCId) {
+         unsigned tdcid = data & 0xFFFF;
+
+         FillH1(fTdcDistr, tdcid & 0xff);
+
+         RAWPRINT ("   FPGA-TDC header: 0x%08x, tdcid=0x%04x, size=%u\n", (unsigned) data, tdcid, datalen);
+
+         if (IsPrintRawData()) {
+            TdcIterator iter;
+            iter.assign(sub, ix, datalen);
+            while (iter.next()) iter.printmsg();
+         }
+
+         TdcProcessor* subproc = GetTDC(tdcid);
+
+         if (subproc != 0) {
+            base::Buffer buf;
+            buf.makenew((datalen+1)*4);
+
+            memset(buf.ptr(), 0xff, 4); // fill dummy sync id in the begin
+            sub->CopyDataTo(buf.ptr(4), ix, datalen);
+
+            buf().kind = 0;
+            buf().boardid = tdcid;
+            buf().format = 0;
+
+            subproc->AddNextBuffer(buf);
+            subproc->SetNewDataFlag(true);
+         } else {
+            RAWPRINT("Did not find processor for TDC 0x%04x - skip data %u\n", tdcid, datalen);
+         }
+
+         ix+=datalen;
+
+         continue; // go to next block
+      }  // end of if TDC header
+
+
       //! ==================  Dummy header and inside ==========================
       if ((data & 0xFFFF) == 0x5555) {
          RAWPRINT("   Dummy header: 0x%x, size=%d\n", (unsigned) data, datalen);
@@ -503,6 +504,38 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaq::RawSubevent* sub, unsigned trb3eve
 
          continue;
       }
+
+      //! ================= any other header ========================
+      if (((data & 0xFF00) == fHadaqSUBId) || (fHadaqSUBId==0)) {
+         unsigned subid = data & 0xFFFF;
+
+         RAWPRINT ("   SUB header: 0x%08x, id=0x%04x, size=%u\n", (unsigned) data, subid, datalen);
+
+         SubProcMap::const_iterator iter = fMap.find(subid);
+
+         SubProcessor* subproc = iter != fMap.end() ? iter->second : 0;
+
+         if (subproc != 0) {
+            base::Buffer buf;
+            buf.makenew(datalen*4);
+
+            sub->CopyDataTo(buf.ptr(0), ix, datalen);
+
+            buf().kind = 0;
+            buf().boardid = subid;
+            buf().format = 0;
+
+            subproc->AddNextBuffer(buf);
+            subproc->SetNewDataFlag(true);
+         } else {
+            RAWPRINT("Did not find processor for SUB 0x%04x - skip data %u\n", subid, datalen);
+         }
+
+         ix+=datalen;
+
+         continue; // go to next block
+      }  // end of if SUB header
+
 
 
 //      if ((data & 0xFFFF) == 0x8001) {

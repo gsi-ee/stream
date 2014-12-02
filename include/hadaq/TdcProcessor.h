@@ -123,7 +123,7 @@ namespace hadaq {
 
          std::vector<ChannelRec>  fCh; //! histogram for individual channels
 
-         std::vector<hadaq::TdcMessageExt>  fStoreVect; //! vector to store messages in the tree
+         std::vector<hadaq::TdcMessageExt>  fStoreVect; //! dummy empty vector
          std::vector<hadaq::TdcMessageExt> *pStoreVect; //! pointer on store vector
 
          unsigned    fEdgeMask;       //! which channels to analyze, analyzes trailing edges when more than 1

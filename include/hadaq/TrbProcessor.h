@@ -34,6 +34,7 @@ namespace hadaq {
          unsigned fHadaqCTSId;       ///< identifier of CTS header in HADAQ event
          unsigned fHadaqHUBId;       ///< identifier of HUB header in HADQ event
          unsigned fHadaqTDCId;       ///< identifier of TDC header in HADQ event
+         unsigned fHadaqSUBId;       ///< identifier of SUB header in HADAQ event
 
          unsigned fLastTriggerId;    ///< last seen trigger id
          unsigned fLostTriggerCnt;   ///< lost trigger counts
@@ -85,6 +86,7 @@ namespace hadaq {
          void SetHadaqCTSId(unsigned id) { fHadaqCTSId = id; }
          void SetHadaqHUBId(unsigned id) { fHadaqHUBId = id; }
          void SetHadaqTDCId(unsigned id) { fHadaqTDCId = id; }
+         void SetHadaqSUBId(unsigned id) { fHadaqSUBId = id; }
 
          virtual void UserPreLoop();
 

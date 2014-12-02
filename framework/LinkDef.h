@@ -66,6 +66,9 @@
 #pragma link C++ class std::vector<hadaq::TdcMessageExt>+;
 #pragma link C++ class hadaq::TdcSubEvent+;
 #pragma link C++ class hadaq::TdcIterator+;
+#pragma link C++ class hadaq::AdcMessage+;
+#pragma link C++ class std::vector<hadaq::AdcMessage>+;
+#pragma link C++ class hadaq::AdcSubEvent+;
 #pragma link C++ class hadaq::SubProcessor+;
 #pragma link C++ class hadaq::AdcProcessor+;
 #pragma link C++ class hadaq::TdcProcessor+;
