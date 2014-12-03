@@ -8,4 +8,9 @@
 *.o
 /lib/
 /streamlogin
+
+# generated stuff
 G__*
+*.root
+*.hld
+
