@@ -35,8 +35,8 @@ namespace hadaq {
          uint32_t getAdcCh() const { return (fData >> 16) & 0xf; }
          // logical ADC channel, 0..47
          uint32_t getCh() const { return 4*getAdcId()+getAdcCh(); }
-
-         // and so on
+         // the value of the ADC channel
+         uint32_t getValue() const { return fData & 0xffff; }
    };
 
 }

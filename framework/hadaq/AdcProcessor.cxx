@@ -26,7 +26,11 @@ hadaq::AdcProcessor::AdcProcessor(TrbProcessor* trb, unsigned subid, unsigned nu
    }
 
    for (unsigned ch=0;ch<numchannels;ch++) {
-      fCh.push_back(ChannelRec());
+      ChannelRec rec;
+      SetSubPrefix("Ch", ch);
+      rec.fValues = MakeH1("Values","Distribution of values (unsigned)", 1<<10, 0, 1<<10);
+      SetSubPrefix();
+      fCh.push_back(rec);
    }
 }
 
@@ -51,8 +55,12 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
 
       FillH1(fKinds, msg.getKind());
 
+      uint32_t ch = msg.getCh();
       switch (msg.getKind()) {
-         case 0: FillH1(fChannels, msg.getCh()); break;
+         case 0:
+            FillH1(fChannels, ch);
+            FillH1(fCh[ch].fValues, msg.getValue());
+            break;
          case 1: break;
          default: break;
       }
