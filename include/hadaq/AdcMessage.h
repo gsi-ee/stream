@@ -7,7 +7,7 @@
 
 namespace hadaq {
 
-   /** AdcMessage is wrapper for data, produced by FPGA-TDC
+   /** AdcMessage is wrapper for data, produced by FPGA
     * struct is used to avoid any potential overhead */
 
    struct AdcMessage {

@@ -28,7 +28,8 @@ hadaq::AdcProcessor::AdcProcessor(TrbProcessor* trb, unsigned subid, unsigned nu
    for (unsigned ch=0;ch<numchannels;ch++) {
       ChannelRec rec;
       SetSubPrefix("Ch", ch);
-      rec.fValues = MakeH1("Values","Distribution of values (unsigned)", 1<<10, 0, 1<<10);
+      rec.fValues = MakeH1("Values","Distribution of values (unsigned)", 1<<10, 0, 1<<10, "value");
+      rec.fWaveform = MakeH2("Waveform", "Integrated Waveform", 512, 0, 512, 1<<10, 0, 1<<10, "sample;value");
       SetSubPrefix();
       fCh.push_back(rec);
    }
@@ -50,20 +51,35 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
    // BeforeFill(); // optional
 
    // use iterator only if context is important
+   uint32_t nSample = 0; // number of msg from the same ADC channel, aka Sample
+   uint32_t lastCh = 0;
    for (unsigned n=0;n<len;n++) {
       AdcMessage msg(arr[n]);
 
-      FillH1(fKinds, msg.getKind());
+      uint32_t kind = msg.getKind();
+      FillH1(fKinds, kind);
 
-      uint32_t ch = msg.getCh();
-      switch (msg.getKind()) {
-         case 0:
-            FillH1(fChannels, ch);
-            FillH1(fCh[ch].fValues, msg.getValue());
-            break;
-         case 1: break;
-         default: break;
+      // kind==0 is verbose data word
+      if(kind == 0) {
+         uint32_t ch = msg.getCh();
+         uint32_t value = msg.getValue();
+
+         FillH1(fChannels, ch);
+         FillH1(fCh[ch].fValues, value);
+
+         // check if msg still belongs to same ADC channel
+         // catch first msg as special case
+         if(n==0 || ch != lastCh) {
+            lastCh = ch;
+            nSample = 0;
+         }
+         else {
+            n++;
+         }
+
+         FillH2(fCh[ch].fWaveform, nSample, value);
       }
+      // other kinds unsupported for now
    }
 
    // if (!fCrossProcess) AfterFill(); // optional
@@ -122,4 +138,3 @@ void hadaq::AdcProcessor::Store(base::Event* ev)
    else
       pStoreVect = &fStoreVect;
 }
-

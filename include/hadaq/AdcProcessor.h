@@ -22,17 +22,15 @@ namespace hadaq {
       protected:
 
          struct ChannelRec {
-            unsigned adcvalue;             //! last value in adc channel
             base::H1handle fValues;        //! histogram of values distribution in channel
+            base::H2handle fWaveform;      //! histogram of integrated waveform of channel
 
             ChannelRec() :
-               adcvalue(0),
-               fValues(0)
+               fValues(0),
+               fWaveform(0)
             {}
          };
 
-         // TdcIterator fIter1;         //! iterator for the first scan
-         // TdcIterator fIter2;         //! iterator for the second scan
 
          base::H1handle fKinds;      //! kinds of messages
          base::H1handle fChannels;   //! histogram with messages per channel
