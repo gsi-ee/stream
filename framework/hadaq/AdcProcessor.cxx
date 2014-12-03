@@ -74,7 +74,7 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
             nSample = 0;
          }
          else {
-            n++;
+            nSample++;
          }
 
          FillH2(fCh[ch].fWaveform, nSample, value);
