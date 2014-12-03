@@ -22,7 +22,7 @@ hadaq::AdcProcessor::AdcProcessor(TrbProcessor* trb, unsigned subid, unsigned nu
 
    if (HistFillLevel() > 1) {
       fKinds = MakeH1("Kinds", "Messages kinds", 16, 0, 16, "kinds");
-      fChannels = MakeH1("Channels", "Messages per ADC channels", numchannels, 0, numchannels, "ch");
+      fChannels = MakeH1("Channels", "Messages per channels", numchannels, 0, numchannels, "ch");
    }
 
    for (unsigned ch=0;ch<numchannels;ch++) {
@@ -52,7 +52,7 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
       FillH1(fKinds, msg.getKind());
 
       switch (msg.getKind()) {
-         case 0: FillH1(fChannels, msg.getAdcCh()); break;
+         case 0: FillH1(fChannels, msg.getCh()); break;
          case 1: break;
          default: break;
       }

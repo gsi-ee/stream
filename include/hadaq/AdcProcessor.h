@@ -45,7 +45,7 @@ namespace hadaq {
 
       public:
 
-         AdcProcessor(TrbProcessor* trb, unsigned subid, unsigned numchannels = 4);
+         AdcProcessor(TrbProcessor* trb, unsigned subid, unsigned numchannels = 48);
          virtual ~AdcProcessor();
 
          inline unsigned NumChannels() const { return fCh.size(); }
