@@ -21,6 +21,7 @@ hadaq::AdcProcessor::AdcProcessor(TrbProcessor* trb, unsigned subid, unsigned nu
    fChannels = 0;
 
    if (HistFillLevel() > 1) {
+      fKinds = MakeH1("Kinds", "Messages kinds", 16, 0, 16, "kinds");
       fChannels = MakeH1("Channels", "Messages per ADC channels", numchannels, 0, numchannels, "ch");
    }
 
@@ -40,15 +41,18 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
    unsigned len = buf.datalen()/4;
    uint32_t* arr = (uint32_t*) buf.ptr();
 
-   // BeforeFill(); // optional
+   // printf("First scan len %u\n", len);
 
+   // BeforeFill(); // optional
 
    // use iterator only if context is important
    for (unsigned n=0;n<len;n++) {
       AdcMessage msg(arr[n]);
 
+      FillH1(fKinds, msg.getKind());
+
       switch (msg.getKind()) {
-         case 0: break;
+         case 0: FillH1(fChannels, msg.getAdcCh()); break;
          case 1: break;
          default: break;
       }
@@ -66,6 +70,8 @@ bool hadaq::AdcProcessor::SecondBufferScan(const base::Buffer& buf)
    unsigned len = buf.datalen()/4;
    uint32_t* arr = (uint32_t*) buf.ptr();
 
+   // printf("Second scan len %u\n", len);
+
    // use iterator only if context is important
    for (unsigned n=0;n<len;n++) {
       AdcMessage msg(arr[n]);
@@ -81,7 +87,6 @@ bool hadaq::AdcProcessor::SecondBufferScan(const base::Buffer& buf)
       if (indx < fGlobalMarks.size()) {
          AddMessage(indx, (hadaq::AdcSubEvent*) fGlobalMarks.item(indx).subev, msg);
       }
-
    }
 
    return true;

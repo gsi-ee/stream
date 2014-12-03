@@ -29,6 +29,9 @@ namespace hadaq {
          bool operator<(const AdcMessage &rhs) const
             { return (fData < rhs.fData); }
 
+         uint32_t getAdcId() const { return (fData >> 20) & 0xf; }
+         uint32_t getAdcCh() const { return (fData >> 16) & 0xf; }
+
 
          // and so on
    };

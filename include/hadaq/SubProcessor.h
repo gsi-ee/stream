@@ -53,7 +53,7 @@ namespace hadaq {
 
       public:
 
-         virtual ~SubProcessor();
+         virtual ~SubProcessor() {}
 
          virtual void UserPreLoop();
 

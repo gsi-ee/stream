@@ -34,6 +34,7 @@ namespace hadaq {
          // TdcIterator fIter1;         //! iterator for the first scan
          // TdcIterator fIter2;         //! iterator for the second scan
 
+         base::H1handle fKinds;      //! kinds of messages
          base::H1handle fChannels;   //! histogram with messages per channel
          std::vector<ChannelRec>  fCh; //! histogram for individual channels
 
