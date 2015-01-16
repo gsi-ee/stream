@@ -20,7 +20,7 @@
 
 TFirstStepProcessor::TFirstStepProcessor():
    TGo4EventProcessor(),
-   base::ProcMgr()
+   TRootProcMgr()
 {
    // streamer dummy constructor
 }
@@ -28,7 +28,7 @@ TFirstStepProcessor::TFirstStepProcessor():
 
 TFirstStepProcessor::TFirstStepProcessor(const char* name) :
    TGo4EventProcessor(name),
-   base::ProcMgr()
+   TRootProcMgr()
 {
    TGo4Log::Info("Create TFirstStepProcessor %s", name);
 
@@ -67,7 +67,7 @@ TFirstStepProcessor::~TFirstStepProcessor()
 
 void TFirstStepProcessor::UserPreLoop()
 {
-   base::ProcMgr::UserPreLoop();
+   TRootProcMgr::UserPreLoop();
 
    // register tree in Go4 browser
    if (fTree!=0) TGo4Analysis::Instance()->AddTree(fTree);
@@ -77,7 +77,7 @@ void TFirstStepProcessor::UserPostLoop()
 {
    if (fTree!=0) TGo4Analysis::Instance()->RemoveTree(fTree);
 
-   base::ProcMgr::UserPostLoop();
+   TRootProcMgr::UserPostLoop();
 }
 
 
@@ -115,44 +115,44 @@ Bool_t TFirstStepProcessor::BuildEvent(TGo4EventElement* outevnt)
 
 //         TGo4Log::Info("  find subevent kind %2u brd %2u fmt %u len %d", buf().kind, buf().boardid, buf().format, buf().datalen);
 
-         base::ProcMgr::ProvideRawData(buf);
+         TRootProcMgr::ProvideRawData(buf);
       }
 
       //TGo4Log::Info("Start scanning");
 
       // scan new data
-      base::ProcMgr::ScanNewData();
+      TRootProcMgr::ScanNewData();
 
       if (IsRawAnalysis()) {
 
-         base::ProcMgr::SkipAllData();
+         TRootProcMgr::SkipAllData();
 
       } else {
 
          //TGo4Log::Info("Analyze data");
 
          // analyze new sync markers
-         if (base::ProcMgr::AnalyzeSyncMarkers()) {
+         if (TRootProcMgr::AnalyzeSyncMarkers()) {
 
             // get and redistribute new triggers
-            base::ProcMgr::CollectNewTriggers();
+            TRootProcMgr::CollectNewTriggers();
 
             // scan for new triggers
-            base::ProcMgr::ScanDataForNewTriggers();
+            TRootProcMgr::ScanDataForNewTriggers();
          }
       }
    } else {
     //  TGo4Log::Info("Keep event %d", mbsev->GetIntLen()*4);
    }
 
-   if (base::ProcMgr::ProduceNextEvent(event)) {
+   if (TRootProcMgr::ProduceNextEvent(event)) {
 
       // TGo4Log::Info("Produce event");
 
-      Bool_t store = base::ProcMgr::ProcessEvent(event);
+      Bool_t store = TRootProcMgr::ProcessEvent(event);
 
       // only for stream analysis we need possibility to produce as much events as possible
-      if (base::ProcMgr::IsStreamAnalysis())
+      if (TRootProcMgr::IsStreamAnalysis())
          SetKeepInputEvent(kTRUE);
 
       outevnt->SetValid(store);

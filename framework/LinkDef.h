@@ -82,6 +82,6 @@
 
 // ROOT classes
 #pragma link C++ class THookProc+;
-
+#pragma link C++ class TRootProcMgr+;
 
 #endif

@@ -317,8 +317,6 @@ namespace hadaq {
          }
 
          void Dump();
-
-         static uint32_t CreateRunId();
    };
 
 /*

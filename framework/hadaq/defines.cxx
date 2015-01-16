@@ -30,13 +30,6 @@ void hadaq::RawEvent::InitHeader(uint32_t id)
    SetTime(clock);
 }
 
-uint32_t hadaq::RawEvent::CreateRunId()
-{
-   struct timeval tv;
-   gettimeofday(&tv, NULL);
-   return tv.tv_sec - hadaq::HADAQ_TIMEOFFSET;
-}
-
 // ===========================================================
 
 void hadaq::RawSubevent::Dump(bool print_raw_data)

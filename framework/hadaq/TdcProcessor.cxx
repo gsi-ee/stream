@@ -10,10 +10,6 @@
 #include "hadaq/TrbProcessor.h"
 #include "hadaq/TdcSubEvent.h"
 
-#ifdef WITH_ROOT
-#include "TTree.h"
-#endif
-
 
 #define RAWPRINT( args ...) if(IsPrintRawData()) printf( args )
 
@@ -854,12 +850,8 @@ void hadaq::TdcProcessor::IncCalibration(unsigned ch, bool rising, unsigned fine
 
 void hadaq::TdcProcessor::CreateBranch(TTree* t)
 {
-//   printf("%s CreateBranch\n", GetName());
-
-#ifdef WITH_ROOT
    pStoreVect = &fStoreVect;
-   t->Branch(GetName(), "std::vector<hadaq::TdcMessageExt>", &pStoreVect);
-#endif
+   mgr()->CreateBranch(t, GetName(), "std::vector<hadaq::TdcMessageExt>", (void**) &pStoreVect);
 }
 
 void hadaq::TdcProcessor::Store(base::Event* ev)

@@ -9,10 +9,6 @@
 
 #include "hadaq/TrbProcessor.h"
 
-#ifdef WITH_ROOT
-#include "TTree.h"
-#endif
-
 hadaq::AdcProcessor::AdcProcessor(TrbProcessor* trb, unsigned subid, unsigned numchannels) :
    SubProcessor(trb, "ADC_%04x", subid),
    fStoreVect(),
@@ -119,10 +115,8 @@ bool hadaq::AdcProcessor::SecondBufferScan(const base::Buffer& buf)
 
 void hadaq::AdcProcessor::CreateBranch(TTree* t)
 {
-#ifdef WITH_ROOT
    pStoreVect = &fStoreVect;
-   t->Branch(GetName(), "std::vector<hadaq::AdcMessage>", &pStoreVect);
-#endif
+   mgr()->CreateBranch(t, GetName(), "std::vector<hadaq::AdcMessage>", (void**) &pStoreVect);
 }
 
 void hadaq::AdcProcessor::Store(base::Event* ev)

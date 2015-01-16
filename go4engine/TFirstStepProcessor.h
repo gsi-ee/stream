@@ -2,10 +2,10 @@
 #define TFIRSTSTEPPROCESSOR_H
 
 #include "TGo4EventProcessor.h"
-#include "base/ProcMgr.h"
+#include "root/TRootProcMgr.h"
 
 class TFirstStepProcessor : public TGo4EventProcessor,
-                            public base::ProcMgr {
+                            public TRootProcMgr {
 
    protected:
 

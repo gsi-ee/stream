@@ -6,11 +6,6 @@
 #include "base/StreamProc.h"
 #include "base/EventProc.h"
 
-#ifdef WITH_ROOT
-#include "TTree.h"
-#include "TFile.h"
-#endif
-
 base::ProcMgr* base::ProcMgr::fInstance = 0;
 
 base::ProcMgr::ProcMgr() :
@@ -20,7 +15,6 @@ base::ProcMgr::ProcMgr() :
    fTriggers(10000),                // FIXME: size should be configurable
    fTimeMasterIndex(DummyIndex),
    fAnalysisKind(kind_Stream),
-   fFile(0),
    fTree(0)
 {
    if (fInstance==0) fInstance = this;
@@ -28,8 +22,6 @@ base::ProcMgr::ProcMgr() :
 
 base::ProcMgr::~ProcMgr()
 {
-   CloseStore();
-
    DeleteAllProcessors();
    // printf("Delete processors done\n");
 
@@ -545,40 +537,5 @@ bool base::ProcMgr::ProcessEvent(base::Event* evt)
       if (fProc[n]->IsStoreEnabled())
          fProc[n]->Store(evt);
 
-#ifdef WITH_ROOT
-   if (fTree) fTree->Fill();
-#endif
-
    return true;
 }
-
-bool base::ProcMgr::CreateStore(const char* fname)
-{
-#ifdef WITH_ROOT
-   if (fTree) return true;
-   fFile = TFile::Open(fname, "RECREATE","Store for stream events");
-   if (fFile==0) return false;
-   fTree = new TTree("T", "Tree with stream data");
-   return true;
-#else
-   return false;
-#endif
-}
-
-bool base::ProcMgr::CloseStore()
-{
-#ifdef WITH_ROOT
-   if (fTree && fFile) {
-      fFile->cd();
-      fTree->Write();
-      delete fTree;
-      fTree = 0;
-      delete fFile;
-      fFile = 0;
-   }
-   return true;
-#else
-   return false;
-#endif
-}
-

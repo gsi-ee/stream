@@ -443,15 +443,13 @@ void get4::MbsProcessor::UserPreLoop()
 }
 
 
-#include "TH1.h"
-
 void get4::MbsProcessor::UserPostLoop()
 {
-  static int first = 1;
-  
-  if (first!=1) return;
+   static int first = 1;
+
+   if (first!=1) return;
    first=0;
-  
+
    printf("************************* hadaq::TdcProcessor postloop *******************\n");
 
    if (fWriteCalibr.length()>0) {
@@ -459,11 +457,9 @@ void get4::MbsProcessor::UserPostLoop()
       StoreCalibration(fWriteCalibr);
    }
 
-   for (unsigned n=0;n<fRef.size();n++) {
-      TH1* hist = (TH1*) fRef[n].fHist;
-
-      if (hist==0) continue;
-
-      printf("%s RMS = %5.1f\n", hist->GetName(), hist->GetRMS());
-   }
+   //for (unsigned n=0;n<fRef.size();n++) {
+   //   TH1* hist = (TH1*) fRef[n].fHist;
+   //   if (hist==0) continue;
+   //   printf("%s RMS = %5.1f\n", hist->GetName(), hist->GetRMS());
+   //}
 }

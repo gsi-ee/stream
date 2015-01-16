@@ -1,10 +1,14 @@
+16.01.2015
+1. Fully remove ROOT dependency from libStream itself. All ROOT-specific
+   functionality moved into TRootProcMgr, which is compiled together with
+   dictionary into libStreamDict library.
+
 2.12.2014
 1. Introduce hadaq::SubProcessor which combines common functionality
    of different front-ends, which can be used with Trb
 2. Use it as base class for existing TdcProcessor and new AdcProcessor   
 3. Introduce dummy code for processing ADC data,
    need to be intensively tested 
-    
 
 12.11.2014
 1. Implement user source for dat files, produced by GET4 simulation.
