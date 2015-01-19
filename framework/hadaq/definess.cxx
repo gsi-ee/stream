@@ -1,21 +1,21 @@
-#include "hadaq/defines.h"
+#include "hadaq/definess.h"
 
 #include <stdio.h>
 #include <sys/time.h>
 #include <time.h>
 
 
-void hadaq::RawEvent::Dump()
+void hadaqs::RawEvent::Dump()
 {
    printf("*** Event #0x%06x fullid=0x%04x size %u *** \n",
          (unsigned) GetSeqNr(), (unsigned) GetId(), (unsigned) GetSize());
 }
 
-void hadaq::RawEvent::InitHeader(uint32_t id)
+void hadaqs::RawEvent::InitHeader(uint32_t id)
 {
    tuDecoding = EvtDecoding_64bitAligned;
    SetId(id);
-   SetSize(sizeof(hadaq::RawEvent));
+   SetSize(sizeof(hadaqs::RawEvent));
    // timestamp at creation of structure:
    time_t tempo = time(NULL);
    struct tm* gmTime = gmtime(&tempo);
@@ -32,7 +32,7 @@ void hadaq::RawEvent::InitHeader(uint32_t id)
 
 // ===========================================================
 
-void hadaq::RawSubevent::Dump(bool print_raw_data)
+void hadaqs::RawSubevent::Dump(bool print_raw_data)
 {
    printf("   *** Subevent size %u decoding 0x%06x id 0x%04x trig 0x%08x %s align %u *** \n",
              (unsigned) GetSize(),

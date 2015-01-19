@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <math.h>
 
 #include "base/defines.h"
 #include "base/ProcMgr.h"
@@ -21,6 +22,9 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    pStoreVect(0),
    fEdgeMask(edge_mask),
    fAutoCalibration(0),
+   fWriteCalibr(),
+   fWriteEveryTime(false),
+   fCorrectionMode(0),
    fEveryEpoch(false),
    fUseLastHit(false),
    fUseNativeTrigger(false),
@@ -73,6 +77,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    CreateChannelHistograms(0);
 
    fWriteCalibr.clear();
+   fWriteEveryTime = false;
 }
 
 
@@ -376,9 +381,64 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
          }
       }
 
-      if (docalibration && isany)
+      if (docalibration && isany) {
          ProduceCalibration(true);
+         if (!fWriteCalibr.empty() && fWriteEveryTime)
+            StoreCalibration(fWriteCalibr);
+      }
    }
+}
+
+bool hadaq::TdcProcessor::CalibrateData(hadaqs::RawSubevent* sub, unsigned indx, unsigned datalen)
+{
+   fIter1.assign(sub, indx, datalen);
+
+   hadaq::TdcMessage& msg = fIter1.msg();
+
+   while (fIter1.next()) {
+      FillH1(fMsgsKind, msg.getKind() >> 29);
+      if (!msg.isHitMsg()) continue;
+
+      unsigned chid = msg.getHitChannel();
+      unsigned fine = msg.getHitTmFine();
+      unsigned coarse = msg.getHitTmCoarse();
+      bool isrising = msg.isHitRisingEdge();
+
+      if ((chid >= NumChannels()) || (fine >= FineCounterBins)) {
+         fIter1.setFineTime(0x3ff);
+         continue;
+      }
+
+      ChannelRec& rec = fCh[chid];
+
+      double corr = isrising ? -rec.rising_calibr[fine] : -rec.falling_calibr[fine];
+
+      // value from 0 to 1000 is 5 ps unit, should be ADD to the current coarse time value
+      fIter1.setFineTime((uint32_t)round((5e-9 + corr)/5e-12));
+
+      FillH1(fChannels, chid);
+      FillH1(fHits, chid + (isrising ? 0.25 : 0.75));
+      FillH2(fAllFine, chid, fine);
+      FillH2(fAllCoarse, chid, coarse);
+
+      if (isrising) {
+         rec.rising_stat[fine]++;
+         rec.all_rising_stat++;
+         rec.rising_cnt++;
+
+         FillH1(rec.fRisingFine, fine);
+         FillH1(rec.fRisingCoarse, coarse);
+      } else {
+         rec.falling_stat[fine]++;
+         rec.all_falling_stat++;
+         rec.falling_cnt++;
+
+         FillH1(rec.fFallingFine, fine);
+         FillH1(rec.fFallingCoarse, coarse);
+      }
+   }
+
+   return true;
 }
 
 
@@ -409,7 +469,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
    TdcIterator& iter = first_scan ? fIter1 : fIter2;
 
-   iter.assign((uint32_t*) buf.ptr(4), buf.datalen()/4 -1, false);
+   iter.assign((uint32_t*) buf.ptr(4), buf.datalen()/4-1, false);
 
    unsigned help_index(0);
 
@@ -466,6 +526,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             if (CheckPrintError())
                printf("%5s Missing epoch for hit from channel %u\n", GetName(), chid);
             iserr = true;
+            if (fCorrectionMode==1) iter.setFineTime(0x3ff);
             continue;
          }
 
@@ -475,6 +536,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          if (chid >= NumChannels()) {
             if (CheckPrintError())
                printf("%5s Channel number problem %u\n", GetName(), chid);
+            if (fCorrectionMode==1) iter.setFineTime(0x3ff);
             iserr = true;
             continue;
          }
@@ -492,20 +554,26 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             continue;
          }
 
-         if (fine >= FineCounterBins) {
-            FillH1(fErrors, chid);
-            if (CheckPrintError())
-               printf("%5s Fine counter %u out of allowed range 0..%u in channel %u\n", GetName(), fine, FineCounterBins, chid);
-            iserr = true;
-            continue;
-         }
-
          ChannelRec& rec = fCh[chid];
 
-         if (isrising)
-            localtm -= rec.rising_calibr[fine];
-         else
-            localtm -= rec.falling_calibr[fine];
+         double corr = 0.;
+
+         if ((msg.getKind() == tdckind_Hit1) || (fCorrectionMode==2)) {
+            corr = fine * 5e-12;
+         } else {
+            if (fine >= FineCounterBins) {
+               FillH1(fErrors, chid);
+               if (CheckPrintError())
+                  printf("%5s Fine counter %u out of allowed range 0..%u in channel %u\n", GetName(), fine, FineCounterBins, chid);
+               iserr = true;
+               if (fCorrectionMode==1) iter.setFineTime(0x3ff);
+               continue;
+            }
+
+            corr = isrising ? -rec.rising_calibr[fine] : -rec.falling_calibr[fine];
+         }
+
+         localtm += corr;
 
          if ((chid==0) && (ch0time==0)) ch0time = localtm;
 

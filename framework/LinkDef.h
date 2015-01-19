@@ -54,11 +54,12 @@
 #pragma link C++ class get4::MbsProcessor+;
 
 // HADAQ processing
+#pragma link C++ namespace hadaqs;
+#pragma link C++ class hadaqs::HadTu+;
+#pragma link C++ class hadaqs::HadTuId+;
+#pragma link C++ class hadaqs::RawEvent+;
+#pragma link C++ class hadaqs::RawSubevent+;
 #pragma link C++ namespace hadaq;
-#pragma link C++ class hadaq::HadTu+;
-#pragma link C++ class hadaq::HadTuId+;
-#pragma link C++ class hadaq::RawEvent+;
-#pragma link C++ class hadaq::RawSubevent+;
 #pragma link C++ class hadaq::HldFile+;
 #pragma link C++ class hadaq::TrbIterator+;
 #pragma link C++ class hadaq::TdcMessage+;

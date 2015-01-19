@@ -130,7 +130,12 @@ namespace hadaq {
          long        fAutoCalibration;//! indicates minimal number of counts in each channel required to produce calibration
 
          std::string fWriteCalibr;    //! file which should be written at the end of data processing
+         bool fWriteEveryTime;        //! write calibration every time automatic calibration performed
 
+         /** 0 - off,
+             1 - replace fine counter with calibrated value, 5 ps bining from 0 till 1000, 0x3ff error
+             2 - extract as linear value from 0..1000 */
+         int         fCorrectionMode;
 
          bool      fEveryEpoch;       //! if true, each hit must be supplied with epoch
 
@@ -258,11 +263,16 @@ namespace hadaq {
          void SetEveryEpoch(bool on) { fEveryEpoch = on; }
          bool IsEveryEpoch() const { return fEveryEpoch; }
 
+         void SetCorrectionMode(int mode) { fCorrectionMode = mode; }
+
          void SetAutoCalibration(long cnt = 100000) { fAutoCalibration = cnt; }
 
          bool LoadCalibration(const std::string& fname);
 
-         void SetWriteCalibration(const std::string& fname) { fWriteCalibr = fname; }
+         /** When specified, calibration will be written to the file
+          * If every_time == true, when every time when automatic calibration performed, otherwise only at the end */
+         void SetWriteCalibration(const std::string& fname, bool every_time = false)
+            { fWriteCalibr = fname; fWriteEveryTime = every_time; }
 
          /** When enabled, last hit time in the channel used for reference time calculations
           * By default, first hit time is used
@@ -305,6 +315,8 @@ namespace hadaq {
          void StoreCalibration(const std::string& fname);
 
          virtual void Store(base::Event*);
+
+         bool CalibrateData(hadaqs::RawSubevent* sub, unsigned indx, unsigned datalen);
    };
 
 }

@@ -19,7 +19,7 @@
 #endif
 
 #ifndef HADAQ_defines
-#include "hadaq/defines.h"
+#include "hadaq/definess.h"
 #endif
 
 namespace hadaq {

@@ -1,5 +1,5 @@
-#ifndef HADAQ_defines_H
-#define HADAQ_defines_H
+#ifndef HADAQ_DEFINESS_H
+#define HADAQ_DEFINESS_H
 
 #include <stdint.h>
 
@@ -92,7 +92,8 @@
 
 #pragma pack(push, 1)
 
-namespace hadaq {
+// use another namespace to avoid duplication with DABC/HYDRA
+namespace hadaqs {
 
    enum {
       HADAQ_TIMEOFFSET       = 1200000000 /* needed to reconstruct time from runId */
@@ -383,14 +384,14 @@ namespace hadaq {
          /** Return pointer on data by index - user should care itself about swapping */
          uint32_t* GetDataPtr(unsigned indx) const
          {
-            return (uint32_t*) (this) + sizeof(RawSubevent)/sizeof(uint32_t) + indx;
+            return (uint32_t*) (this) + sizeof(hadaqs::RawSubevent)/sizeof(uint32_t) + indx;
          }
 
 
          /* returns number of payload data words, not maximum index!*/
          unsigned GetNrOfDataWords() const
          {
-            unsigned datasize = GetSize() - sizeof(hadaq::RawSubevent);
+            unsigned datasize = GetSize() - sizeof(hadaqs::RawSubevent);
             switch (Alignment()) {
                case 4:  return datasize / sizeof(uint32_t);
                case 2:  return datasize / sizeof(uint16_t);
@@ -402,7 +403,7 @@ namespace hadaq {
          /** swap-save access to any data. stolen from hadtu.h */
          uint32_t Data(unsigned idx) const
          {
-            const void* my = (char*) (this) + sizeof(RawSubevent);
+            const void* my = (char*) (this) + sizeof(hadaqs::RawSubevent);
 
             switch (Alignment()) {
                case 4:
@@ -435,7 +436,7 @@ namespace hadaq {
          }
 
          /** Return pointer where raw data should starts */
-         void* RawData() const { return (char*) (this) + sizeof(hadaq::RawSubevent); }
+         void* RawData() const { return (char*) (this) + sizeof(hadaqs::RawSubevent); }
 
 
          void Dump(bool print_raw_data = false);

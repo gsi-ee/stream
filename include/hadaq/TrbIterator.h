@@ -1,7 +1,7 @@
 #ifndef HADAQ_TRBITERATOR_H
 #define HADAQ_TRBITERATOR_H
 
-#include "hadaq/defines.h"
+#include "hadaq/definess.h"
 
 namespace hadaq {
 
@@ -21,13 +21,13 @@ namespace hadaq {
          TrbIterator(void* data, unsigned datalen);
          ~TrbIterator() {}
 
-         RawEvent* nextEvent();
+         hadaqs::RawEvent* nextEvent();
 
-         RawEvent* currEvent() const { return (RawEvent*) fEvCursor; }
+         hadaqs::RawEvent* currEvent() const { return (hadaqs::RawEvent*) fEvCursor; }
 
-         RawSubevent* nextSubevent();
+         hadaqs::RawSubevent* nextSubevent();
 
-         RawSubevent* currSubevent() const { return (RawSubevent*) fSubCursor; }
+         hadaqs::RawSubevent* currSubevent() const { return (hadaqs::RawSubevent*) fSubCursor; }
 
    };
 

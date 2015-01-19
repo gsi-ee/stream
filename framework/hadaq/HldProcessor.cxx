@@ -84,7 +84,7 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
 
    hadaq::TrbIterator iter(buf().buf, buf().datalen);
 
-   hadaq::RawEvent* ev = 0;
+   hadaqs::RawEvent* ev = 0;
 
    while ((ev = iter.nextEvent()) != 0) {
 
@@ -96,7 +96,7 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
 
       FillH1(fEvSize, ev->GetSize());
 
-      hadaq::RawSubevent* sub = 0;
+      hadaqs::RawSubevent* sub = 0;
 
       while ((sub = iter.nextSubevent()) != 0) {
 

@@ -49,8 +49,8 @@ bool hadaq::HldFile::OpenWrite(const char* fname, uint32_t runid)
 
    // put here a dummy event into file:
 
-   hadaq::RawEvent evnt;
-   evnt.Init(0, runid, EvtId_runStart);
+   hadaqs::RawEvent evnt;
+   evnt.Init(0, runid, hadaqs::EvtId_runStart);
    if(!WriteBuffer(&evnt, sizeof(evnt))) {
       CloseBasicFile();
       return false;
@@ -82,8 +82,8 @@ bool hadaq::HldFile::OpenRead(const char* fname)
 
 //   DOUT0("Open HLD file %s for reading", fname);
 
-   hadaq::RawEvent evnt;
-   uint32_t size = sizeof(hadaq::RawEvent);
+   hadaqs::RawEvent evnt;
+   uint32_t size = sizeof(hadaqs::RawEvent);
 
    // printf("starts reading into buf %u isreading %u \n", (unsigned) size, (unsigned)isReading());
 
@@ -93,7 +93,7 @@ bool hadaq::HldFile::OpenRead(const char* fname)
       return false;
    }
 
-   if ((size!=sizeof(hadaq::RawEvent)) || (evnt.GetId() != EvtId_runStart)) {
+   if ((size!=sizeof(hadaqs::RawEvent)) || (evnt.GetId() != hadaqs::EvtId_runStart)) {
       fprintf(stderr,"Did not found start event at the file beginning\n");
       CloseBasicFile();
       return false;
@@ -111,8 +111,8 @@ void hadaq::HldFile::Close()
 {
   if (isWriting()) {
       // need to add empty terminating event:
-      hadaq::RawEvent evnt;
-      evnt.Init(0, fRunNumber, EvtId_runStop);
+      hadaqs::RawEvent evnt;
+      evnt.Init(0, fRunNumber, hadaqs::EvtId_runStop);
       WriteBuffer(&evnt, sizeof(evnt));
    }
 
@@ -139,21 +139,21 @@ bool hadaq::HldFile::WriteBuffer(void* buf, uint32_t bufsize)
 
 bool hadaq::HldFile::ReadBuffer(void* ptr, uint32_t* sz, bool onlyevent)
 {
-   if (!isReading() || (ptr==0) || (sz==0) || (*sz < sizeof(hadaq::HadTu))) return false;
+   if (!isReading() || (ptr==0) || (sz==0) || (*sz < sizeof(hadaqs::HadTu))) return false;
 
    uint64_t maxsz = *sz; *sz = 0;
 
-   size_t readsz = io->fread(ptr, 1, (onlyevent ? sizeof(hadaq::HadTu) : maxsz), fd);
+   size_t readsz = io->fread(ptr, 1, (onlyevent ? sizeof(hadaqs::HadTu) : maxsz), fd);
 
    //printf("Read HLD portion of data %u max %u\n", (unsigned) readsz, (unsigned) maxsz);
 
-   if (readsz < sizeof(hadaq::HadTu)) {
+   if (readsz < sizeof(hadaqs::HadTu)) {
       if (!io->feof(fd)) fprintf(stderr, "Fail to read next portion while no EOF detected\n");
       fEOF = true;
       return false;
    }
 
-   hadaq::HadTu* hdr = (hadaq::HadTu*) ptr;
+   hadaqs::HadTu* hdr = (hadaqs::HadTu*) ptr;
 
 
    if (onlyevent) {
@@ -165,18 +165,18 @@ bool hadaq::HldFile::ReadBuffer(void* ptr, uint32_t* sz, bool onlyevent)
 
       // printf("Expect next event of size %u\n", (unsigned) hdr->GetPaddedSize());
 
-      readsz = io->fread((char*) ptr + sizeof(hadaq::HadTu), 1, hdr->GetPaddedSize() - sizeof(hadaq::HadTu), fd);
+      readsz = io->fread((char*) ptr + sizeof(hadaqs::HadTu), 1, hdr->GetPaddedSize() - sizeof(hadaqs::HadTu), fd);
 
-      // printf("Read size %u expects %u \n", (unsigned) readsz, (unsigned) (hdr->GetPaddedSize() - sizeof(hadaq::HadTu)));
+      // printf("Read size %u expects %u \n", (unsigned) readsz, (unsigned) (hdr->GetPaddedSize() - sizeof(hadaqs::HadTu)));
 
       // not possible to read event completely
-      if ( readsz != (hdr->GetPaddedSize() - sizeof(hadaq::HadTu))) {
+      if ( readsz != (hdr->GetPaddedSize() - sizeof(hadaqs::HadTu))) {
          fprintf(stderr, "Reading problem\n");
          fEOF = true;
          return false;
       }
 
-      if ((hdr->GetPaddedSize() == sizeof(hadaq::RawEvent)) && (((hadaq::RawEvent*)hdr)->GetId() == EvtId_runStop)) {
+      if ((hdr->GetPaddedSize() == sizeof(hadaqs::RawEvent)) && (((hadaqs::RawEvent*)hdr)->GetId() == hadaqs::EvtId_runStop)) {
          // we are not deliver such stop event to the top
 
          // printf("Find stop event at the file end\n");
@@ -196,11 +196,11 @@ bool hadaq::HldFile::ReadBuffer(void* ptr, uint32_t* sz, bool onlyevent)
       // or we want to provide only event
 
       size_t restsize = readsz - checkedsz;
-      if (restsize >= sizeof(hadaq::HadTu)) restsize = hdr->GetPaddedSize();
+      if (restsize >= sizeof(hadaqs::HadTu)) restsize = hdr->GetPaddedSize();
 
 //      printf("tu padded size = %u\n", (unsigned) restsize);
 
-      if ((restsize == sizeof(hadaq::RawEvent)) && (((hadaq::RawEvent*)hdr)->GetId() == EvtId_runStop)) {
+      if ((restsize == sizeof(hadaqs::RawEvent)) && (((hadaqs::RawEvent*)hdr)->GetId() == hadaqs::EvtId_runStop)) {
          // we are not deliver such stop event to the top
 
          // printf("Find stop event at the file end\n");
@@ -220,7 +220,7 @@ bool hadaq::HldFile::ReadBuffer(void* ptr, uint32_t* sz, bool onlyevent)
          break;
       }
       checkedsz += hdr->GetPaddedSize();
-      hdr = (hadaq::HadTu*) ((char*) hdr + hdr->GetPaddedSize());
+      hdr = (hadaqs::HadTu*) ((char*) hdr + hdr->GetPaddedSize());
    }
 
    // detect end of file by such method

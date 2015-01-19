@@ -3,7 +3,7 @@
 
 #include "base/StreamProc.h"
 
-#include "hadaq/defines.h"
+#include "hadaq/definess.h"
 
 #include <map>
 

@@ -3,7 +3,7 @@
 
 #include "base/StreamProc.h"
 
-#include "hadaq/defines.h"
+#include "hadaq/definess.h"
 
 #include "hadaq/TdcProcessor.h"
 
@@ -74,7 +74,7 @@ namespace hadaq {
          void AddSub(SubProcessor* tdc, unsigned id);
 
          /** Scan FPGA-TDC data, distribute over sub-processors */
-         void ScanSubEvent(hadaq::RawSubevent* sub, unsigned trb3eventid);
+         void ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3eventid);
 
          void AfterEventScan();
 
@@ -162,6 +162,9 @@ namespace hadaq {
          /** Create TDC processor, which extracts TDC information from CTS header */
          void CreateCTS_TDC() { CreateTDC(fHadaqCTSId); }
 
+         /** Set data correction for TDC */
+         void SetTDCCorrectionMode(int mode);
+
          /** Disable calibration of specified channels in all TDCs */
          void DisableCalibrationFor(unsigned firstch, unsigned lastch = 0);
 
@@ -169,10 +172,13 @@ namespace hadaq {
          void SetAutoCalibrations(long cnt = 100000);
 
          /** Specify to produce and write calibrations at the end of data processing */
-         void SetWriteCalibrations(const char* fileprefix);
+         void SetWriteCalibrations(const char* fileprefix, bool every_time = false);
 
          /** Load TDC calibrations, as argument file prefix (without TDC id) should be specified */
          void LoadCalibrations(const char* fileprefix);
+
+         /** Calibrate hits in subevent */
+         void CalibrateSubEvent(hadaqs::RawSubevent* sub);
 
    };
 }

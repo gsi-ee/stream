@@ -146,6 +146,14 @@ void hadaq::TrbProcessor::CreateTDC(unsigned id1, unsigned id2, unsigned id3, un
    }
 }
 
+void hadaq::TrbProcessor::SetTDCCorrectionMode(int mode)
+{
+   for (SubProcMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
+      TdcProcessor* tdc = dynamic_cast<TdcProcessor*> (iter->second);
+      if (tdc) tdc->SetCorrectionMode(mode);
+   }
+}
+
 
 void hadaq::TrbProcessor::SetAutoCalibrations(long cnt)
 {
@@ -154,6 +162,7 @@ void hadaq::TrbProcessor::SetAutoCalibrations(long cnt)
       if (tdc) tdc->SetAutoCalibration(cnt);
    }
 }
+
 
 void hadaq::TrbProcessor::DisableCalibrationFor(unsigned firstch, unsigned lastch)
 {
@@ -164,7 +173,7 @@ void hadaq::TrbProcessor::DisableCalibrationFor(unsigned firstch, unsigned lastc
 }
 
 
-void hadaq::TrbProcessor::SetWriteCalibrations(const char* fileprefix)
+void hadaq::TrbProcessor::SetWriteCalibrations(const char* fileprefix, bool every_time)
 {
    char fname[1024];
 
@@ -175,7 +184,7 @@ void hadaq::TrbProcessor::SetWriteCalibrations(const char* fileprefix)
 
       snprintf(fname, sizeof(fname), "%s%04x.cal", fileprefix, tdc->GetID());
 
-      tdc->SetWriteCalibration(fname);
+      tdc->SetWriteCalibration(fname, every_time);
    }
 }
 
@@ -264,7 +273,7 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
 
    hadaq::TrbIterator iter(buf().buf, buf().datalen);
 
-   hadaq::RawEvent* ev = 0;
+   hadaqs::RawEvent* ev = 0;
 
    while ((ev = iter.nextEvent()) != 0) {
 
@@ -276,7 +285,7 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
 
       FillH1(fEvSize, ev->GetSize());
 
-      hadaq::RawSubevent* sub = 0;
+      hadaqs::RawSubevent* sub = 0;
       unsigned subcnt(0);
 
       while ((sub = iter.nextSubevent()) != 0) {
@@ -316,12 +325,52 @@ void hadaq::TrbProcessor::AfterEventScan()
    }
 }
 
-void hadaq::TrbProcessor::ScanSubEvent(hadaq::RawSubevent* sub, unsigned trb3eventid)
+void hadaq::TrbProcessor::CalibrateSubEvent(hadaqs::RawSubevent* sub)
+{
+   unsigned ix = 0;           // cursor
+
+   unsigned trbSubEvSize = sub->GetSize() / 4 - 4;
+
+   while (ix < trbSubEvSize) {
+      //! Extract data portion from the whole packet (in a loop)
+      uint32_t data = sub->Data(ix++);
+
+      unsigned datalen = (data >> 16) & 0xFFFF;
+
+      if ((data & 0xFF00) == fHadaqHUBId) {
+         // ix+=datalen;  // WORKAROUND !!!
+
+         // TODO: formally we should analyze HUB subevent as real subevent but
+         // we just skip header and continue to analyze data
+         continue;
+      }
+
+      //! ================= FPGA TDC header ========================
+      if ((data & 0xFF00) == fHadaqTDCId) {
+         unsigned tdcid = data & 0xFFFF;
+
+         FillH1(fTdcDistr, tdcid & 0xff);
+
+         TdcProcessor* subproc = GetTDC(tdcid);
+         if (subproc != 0)
+            subproc->CalibrateData(sub, ix, datalen);
+
+         ix+=datalen;
+         continue; // go to next block
+      }  // end of if TDC header
+
+
+      // all other blocks are ignored
+      ix+=datalen;
+   }
+}
+
+
+void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3eventid)
 {
    // this is first scan of subevent from TRB3 data
    // our task is statistic over all messages we will found
    // also for trigger-type 1 we should add SYNC message to each processor
-
 
    for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
       iter->second->SetNewDataFlag(false);
@@ -560,11 +609,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaq::RawSubevent* sub, unsigned trb3eve
       syncNumber = trb3eventid;
    }
 
-
    if (findSync) {
-
-//      printf("Append new SYNC %u\n", syncNumber);
-
       for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++) {
          if (iter->second->IsNewDataFlag())
             iter->second->AppendTrbSync(syncNumber);

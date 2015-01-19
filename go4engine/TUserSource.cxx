@@ -16,7 +16,7 @@
 
 #include "base/defines.h"
 
-#include "hadaq/defines.h"
+#include "hadaq/definess.h"
 
 #define Trb_BUFSIZE 0x80000
 
@@ -177,7 +177,7 @@ Bool_t TUserSource::BuildEvent(TGo4EventElement* dest)
 
    evnt->AddSubEvent(fxSubevHead.fiFullid, (Short_t*) fxBuffer, bufsize/sizeof(Short_t) + 2, kTRUE);
 
-   evnt->SetCount(((hadaq::RawEvent*) fxBuffer)->GetSeqNr());
+   evnt->SetCount(((hadaqs::RawEvent*) fxBuffer)->GetSeqNr());
 
    // set total MBS event length, which must include MBS header itself
    evnt->SetDlen(bufsize/sizeof(Short_t) + 2 + 6);
