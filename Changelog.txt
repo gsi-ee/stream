@@ -1,6 +1,7 @@
 19.01.2015
 1. Provide extra method to calibrate data in TDC subevents
 2. Rename hadaq/defines.h to hadaq/definess.h to avoid duplication with DABC  
+3. Provide possibility for auto-calibration for DABC-kind of work 
 
 16.01.2015
 1. Fully remove ROOT dependency from libStream itself. All ROOT-specific

@@ -325,47 +325,6 @@ void hadaq::TrbProcessor::AfterEventScan()
    }
 }
 
-void hadaq::TrbProcessor::CalibrateSubEvent(hadaqs::RawSubevent* sub)
-{
-   unsigned ix = 0;           // cursor
-
-   unsigned trbSubEvSize = sub->GetSize() / 4 - 4;
-
-   while (ix < trbSubEvSize) {
-      //! Extract data portion from the whole packet (in a loop)
-      uint32_t data = sub->Data(ix++);
-
-      unsigned datalen = (data >> 16) & 0xFFFF;
-
-      if ((data & 0xFF00) == fHadaqHUBId) {
-         // ix+=datalen;  // WORKAROUND !!!
-
-         // TODO: formally we should analyze HUB subevent as real subevent but
-         // we just skip header and continue to analyze data
-         continue;
-      }
-
-      //! ================= FPGA TDC header ========================
-      if ((data & 0xFF00) == fHadaqTDCId) {
-         unsigned tdcid = data & 0xFFFF;
-
-         FillH1(fTdcDistr, tdcid & 0xff);
-
-         TdcProcessor* subproc = GetTDC(tdcid);
-         if (subproc != 0)
-            subproc->CalibrateData(sub, ix, datalen);
-
-         ix+=datalen;
-         continue; // go to next block
-      }  // end of if TDC header
-
-
-      // all other blocks are ignored
-      ix+=datalen;
-   }
-}
-
-
 void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3eventid)
 {
    // this is first scan of subevent from TRB3 data
@@ -615,6 +574,70 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
             iter->second->AppendTrbSync(syncNumber);
       }
    }
+}
+
+
+void hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub)
+{
+   unsigned ix = 0;           // cursor
+
+   unsigned trbSubEvSize = sub->GetSize() / 4 - 4;
+
+   while (ix < trbSubEvSize) {
+      //! Extract data portion from the whole packet (in a loop)
+      uint32_t data = sub->Data(ix++);
+
+      unsigned datalen = (data >> 16) & 0xFFFF;
+
+      if ((data & 0xFF00) == fHadaqHUBId) {
+         // ix+=datalen;  // WORKAROUND !!!
+
+         // TODO: formally we should analyze HUB subevent as real subevent but
+         // we just skip header and continue to analyze data
+         continue;
+      }
+
+      //! ================= FPGA TDC header ========================
+      if ((data & 0xFF00) == fHadaqTDCId) {
+         unsigned tdcid = data & 0xFFFF;
+
+         FillH1(fTdcDistr, tdcid & 0xff);
+
+         TdcProcessor* subproc = GetTDC(tdcid);
+         if (subproc != 0)
+            subproc->TransformTdcData(sub, ix, datalen);
+
+         ix+=datalen;
+         continue; // go to next block
+      }  // end of if TDC header
+
+
+      // all other blocks are ignored
+      ix+=datalen;
+   }
+}
+
+bool hadaq::TrbProcessor::CheckAutoCalibration()
+{
+   // check and perform auto calibration for all TDCs
+   // return true only when calibration can be done
+
+   for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++) {
+      TdcProcessor* tdc = dynamic_cast<TdcProcessor*> (iter->second);
+      if (tdc && !tdc->TestCanCalibrate()) return false;
+   }
+
+   for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++) {
+      TdcProcessor* tdc = dynamic_cast<TdcProcessor*> (iter->second);
+      if (tdc && !tdc->TestCanCalibrate()) return false;
+   }
+
+   for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++) {
+      TdcProcessor* tdc = dynamic_cast<TdcProcessor*> (iter->second);
+      if (tdc) tdc->PerformAutoCalibrate();
+   }
+
+   return true;
 }
 
 

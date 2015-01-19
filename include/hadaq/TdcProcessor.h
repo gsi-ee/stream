@@ -316,7 +316,14 @@ namespace hadaq {
 
          virtual void Store(base::Event*);
 
-         bool CalibrateData(hadaqs::RawSubevent* sub, unsigned indx, unsigned datalen);
+         bool TransformTdcData(hadaqs::RawSubevent* sub, unsigned indx, unsigned datalen);
+
+         /** Check if automatic calibration can be performed - enough statistic is accumulated */
+         bool TestCanCalibrate();
+
+         /** Perform automatic calibration of channels */
+         bool PerformAutoCalibrate();
+
    };
 
 }

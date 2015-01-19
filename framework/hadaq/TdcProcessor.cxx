@@ -366,30 +366,42 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
       }
    }
 
-   if (fAutoCalibration>0) {
-      bool docalibration(true), isany(false);
-      for (unsigned ch=0;ch<NumChannels();ch++) {
-         if (fCh[ch].docalibr) {
-            if (DoRisingEdge() && (fCh[ch].all_rising_stat > 0)) {
-               isany = true;
-               if (fCh[ch].all_rising_stat<fAutoCalibration) docalibration = false;
-            }
-            if (DoFallingEdge() && (fCh[ch].all_falling_stat > 0)) {
-               isany = true;
-               if (fCh[ch].all_falling_stat<fAutoCalibration) docalibration = false;
-            }
-         }
-      }
-
-      if (docalibration && isany) {
-         ProduceCalibration(true);
-         if (!fWriteCalibr.empty() && fWriteEveryTime)
-            StoreCalibration(fWriteCalibr);
-      }
-   }
+   if (TestCanCalibrate())
+      PerformAutoCalibrate();
 }
 
-bool hadaq::TdcProcessor::CalibrateData(hadaqs::RawSubevent* sub, unsigned indx, unsigned datalen)
+bool hadaq::TdcProcessor::TestCanCalibrate()
+{
+   if (fAutoCalibration<=0) return false;
+
+   bool isany = false;
+
+   for (unsigned ch=0;ch<NumChannels();ch++) {
+      if (fCh[ch].docalibr) {
+         if (DoRisingEdge() && (fCh[ch].all_rising_stat > 0)) {
+            isany = true;
+            if (fCh[ch].all_rising_stat<fAutoCalibration) return false;
+         }
+         if (DoFallingEdge() && (fCh[ch].all_falling_stat > 0)) {
+            isany = true;
+            if (fCh[ch].all_falling_stat<fAutoCalibration) return false;
+         }
+      }
+   }
+
+   return isany;
+}
+
+bool hadaq::TdcProcessor::PerformAutoCalibrate()
+{
+   ProduceCalibration(true);
+   if (!fWriteCalibr.empty() && fWriteEveryTime)
+      StoreCalibration(fWriteCalibr);
+   return true;
+}
+
+
+bool hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigned indx, unsigned datalen)
 {
    fIter1.assign(sub, indx, datalen);
 

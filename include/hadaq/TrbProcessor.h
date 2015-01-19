@@ -178,7 +178,10 @@ namespace hadaq {
          void LoadCalibrations(const char* fileprefix);
 
          /** Calibrate hits in subevent */
-         void CalibrateSubEvent(hadaqs::RawSubevent* sub);
+         void TransformSubEvent(hadaqs::RawSubevent* sub);
+
+         /** Checks if all TDC can perform auto calibration and do it */
+         bool CheckAutoCalibration();
 
    };
 }
