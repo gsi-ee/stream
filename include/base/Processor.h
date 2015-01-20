@@ -38,7 +38,7 @@ namespace base {
 
          inline void FillH1(H1handle h1, double x, double weight = 1.)
          {
-            if (IsHistFilling() && (h1!=0)) mgr()->FillH1(h1, x, weight);
+            if ((h1!=0) && IsHistFilling()) mgr()->FillH1(h1, x, weight);
          }
 
          inline double GetH1Content(H1handle h1, int nbin)
@@ -55,7 +55,7 @@ namespace base {
 
          inline void FillH2(H1handle h2, double x, double y, double weight = 1.)
          {
-            if (IsHistFilling() && (h2!=0)) mgr()->FillH2(h2, x, y, weight);
+            if ((h2!=0) && IsHistFilling()) mgr()->FillH2(h2, x, y, weight);
          }
 
          inline void ClearH2(base::H2handle h2)

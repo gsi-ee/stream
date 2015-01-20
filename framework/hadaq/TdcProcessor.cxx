@@ -433,6 +433,8 @@ bool hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigned in
       FillH2(fAllFine, chid, fine);
       FillH2(fAllCoarse, chid, coarse);
 
+      if (HistFillLevel()>2) CreateChannelHistograms(chid);
+
       if (isrising) {
          rec.rising_stat[fine]++;
          rec.all_rising_stat++;
