@@ -15,7 +15,7 @@
 #define RAWPRINT( args ...) if(IsPrintRawData()) printf( args )
 
 hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels, unsigned edge_mask) :
-   SubProcessor(trb, "TDC_%04x", tdcid),
+   SubProcessor(trb, "TDC_%04X", tdcid),
    fIter1(),
    fIter2(),
    fStoreVect(),

@@ -175,7 +175,7 @@ namespace hadaq {
          void SetWriteCalibrations(const char* fileprefix, bool every_time = false);
 
          /** Load TDC calibrations, as argument file prefix (without TDC id) should be specified */
-         void LoadCalibrations(const char* fileprefix);
+         bool LoadCalibrations(const char* fileprefix);
 
          /** Calibrate hits in subevent */
          void TransformSubEvent(hadaqs::RawSubevent* sub);

@@ -22,12 +22,12 @@ void hadaq::TrbProcessor::SetDefaults(unsigned numch, unsigned edges)
 
 
 hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc) :
-   base::StreamProc("TRB_%04x", brdid, false),
+   base::StreamProc("TRB_%04X", brdid, false),
    fHldProc(hldproc),
    fMap()
 {
    if (hldproc==0)
-      mgr()->RegisterProc(this, base::proc_TRBEvent, brdid);
+      mgr()->RegisterProc(this, base::proc_TRBEvent, brdid & 0xFF);
    else
       hldproc->AddTrb(this, brdid);
 
@@ -39,9 +39,7 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc) :
 
    fEvSize = MakeH1("EvSize", "Event size", 500, 0, 5000, "bytes");
    fSubevSize = MakeH1("SubevSize", "Subevent size", 500, 0, 5000, "bytes");
-
    fLostRate = MakeH1("LostRate", "Relative number of lost packets", 1000, 0, 1., "data lost");
-
    fTdcDistr = MakeH1("TdcDistr", "Data distribution over TDCs", 64, 0, 64, "tdc");
 
    fHadaqCTSId = 0x8000;
@@ -189,9 +187,11 @@ void hadaq::TrbProcessor::SetWriteCalibrations(const char* fileprefix, bool ever
 }
 
 
-void hadaq::TrbProcessor::LoadCalibrations(const char* fileprefix)
+bool hadaq::TrbProcessor::LoadCalibrations(const char* fileprefix)
 {
    char fname[1024];
+
+   bool res = true;
 
    for (SubProcMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
       TdcProcessor* tdc = dynamic_cast<TdcProcessor*> (iter->second);
@@ -199,8 +199,10 @@ void hadaq::TrbProcessor::LoadCalibrations(const char* fileprefix)
 
       snprintf(fname, sizeof(fname), "%s%04x.cal", fileprefix, tdc->GetID());
 
-      tdc->LoadCalibration(fname);
+      if (!tdc->LoadCalibration(fname)) res = false;
    }
+
+   return res;
 }
 
 void hadaq::TrbProcessor::AddSub(SubProcessor* tdc, unsigned id)
