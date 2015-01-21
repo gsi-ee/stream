@@ -33,6 +33,11 @@ base::ProcMgr* base::ProcMgr::instance()
    return fInstance;
 }
 
+void base::ProcMgr::ClearInstancePointer()
+{
+   fInstance = 0;
+}
+
 base::StreamProc* base::ProcMgr::FindProc(const char* name) const
 {
    for (unsigned n=0;n<fProc.size();n++) {

@@ -59,6 +59,8 @@ namespace base {
 
          static ProcMgr* instance();
 
+         static void ClearInstancePointer();
+
          static ProcMgr* AddProc(StreamProc* proc);
 
          static ProcMgr* AddProc(EventProc* proc);
