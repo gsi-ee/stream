@@ -366,30 +366,33 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
       }
    }
 
-   if (TestCanCalibrate())
+   if (TestCanCalibrate()>=1.)
       PerformAutoCalibrate();
 }
 
-bool hadaq::TdcProcessor::TestCanCalibrate()
+double hadaq::TdcProcessor::TestCanCalibrate()
 {
-   if (fAutoCalibration<=0) return false;
+   if (fAutoCalibration<=0) return 0.;
 
    bool isany = false;
+   double min = 1000.;
 
    for (unsigned ch=0;ch<NumChannels();ch++) {
       if (fCh[ch].docalibr) {
          if (DoRisingEdge() && (fCh[ch].all_rising_stat > 0)) {
             isany = true;
-            if (fCh[ch].all_rising_stat<fAutoCalibration) return false;
+            double val = 1.*fCh[ch].all_rising_stat/fAutoCalibration;
+            if (val<min) min = val;
          }
          if (DoFallingEdge() && (fCh[ch].all_falling_stat > 0)) {
             isany = true;
-            if (fCh[ch].all_falling_stat<fAutoCalibration) return false;
+            double val = 1.*fCh[ch].all_falling_stat/fAutoCalibration;
+            if (val<min) min = val;
          }
       }
    }
 
-   return isany;
+   return isany ? min : 0.;
 }
 
 bool hadaq::TdcProcessor::PerformAutoCalibrate()

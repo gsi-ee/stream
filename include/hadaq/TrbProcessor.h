@@ -180,8 +180,9 @@ namespace hadaq {
          /** Calibrate hits in subevent */
          void TransformSubEvent(hadaqs::RawSubevent* sub);
 
-         /** Checks if all TDC can perform auto calibration and do it */
-         bool CheckAutoCalibration();
+         /** Checks if all TDC can perform auto calibration and do it,
+          * return progress from 0 to 1 */
+         double CheckAutoCalibration();
 
    };
 }

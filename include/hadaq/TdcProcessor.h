@@ -319,7 +319,7 @@ namespace hadaq {
          bool TransformTdcData(hadaqs::RawSubevent* sub, unsigned indx, unsigned datalen);
 
          /** Check if automatic calibration can be performed - enough statistic is accumulated */
-         bool TestCanCalibrate();
+         double TestCanCalibrate();
 
          /** Perform automatic calibration of channels */
          bool PerformAutoCalibrate();

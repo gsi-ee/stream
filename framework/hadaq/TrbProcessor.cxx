@@ -619,27 +619,28 @@ void hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub)
    }
 }
 
-bool hadaq::TrbProcessor::CheckAutoCalibration()
+double hadaq::TrbProcessor::CheckAutoCalibration()
 {
    // check and perform auto calibration for all TDCs
    // return true only when calibration can be done
 
-   for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++) {
-      TdcProcessor* tdc = dynamic_cast<TdcProcessor*> (iter->second);
-      if (tdc && !tdc->TestCanCalibrate()) return false;
-   }
+   double progress = 1000.;
 
    for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++) {
       TdcProcessor* tdc = dynamic_cast<TdcProcessor*> (iter->second);
-      if (tdc && !tdc->TestCanCalibrate()) return false;
+      if (tdc) {
+         double val = tdc->TestCanCalibrate();
+         if (val<progress) progress = val;
+      }
    }
 
-   for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++) {
-      TdcProcessor* tdc = dynamic_cast<TdcProcessor*> (iter->second);
-      if (tdc) tdc->PerformAutoCalibrate();
-   }
+   if (progress >= 1.)
+      for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++) {
+         TdcProcessor* tdc = dynamic_cast<TdcProcessor*> (iter->second);
+         if (tdc) tdc->PerformAutoCalibrate();
+      }
 
-   return true;
+   return progress;
 }
 
 
