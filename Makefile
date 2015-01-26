@@ -49,7 +49,7 @@ clean:
 ifdef IS_GO4
 	cd go4engine; $(MAKE) clean STREAMSYS=..
 else
-   @rm -f go4engine/G__*.* go4engine/*.o go4engine/*.d 
+	@rm -f go4engine/G__*.* go4engine/*.o go4engine/*.d 
 endif
 	cd framework; $(MAKE) clean STREAMSYS=..
 	@rm -rf $(LIBDIR) $(LOGINFILE)
