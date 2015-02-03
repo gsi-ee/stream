@@ -410,9 +410,13 @@ bool hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigned in
 
    hadaq::TdcMessage& msg = fIter1.msg();
 
+   int cnt(0), hitcnt(0), errcnt(0);
+
    while (fIter1.next()) {
+      cnt++;
       FillH1(fMsgsKind, msg.getKind() >> 29);
       if (!msg.isHitMsg()) continue;
+      hitcnt++;
 
       unsigned chid = msg.getHitChannel();
       unsigned fine = msg.getHitTmFine();
@@ -421,6 +425,7 @@ bool hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigned in
 
       if ((chid >= NumChannels()) || (fine >= FineCounterBins)) {
          fIter1.setFineTime(0x3ff);
+         errcnt++;
          continue;
       }
 
@@ -454,6 +459,13 @@ bool hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigned in
          FillH1(rec.fFallingCoarse, coarse);
       }
    }
+
+   FillH1(fMsgPerBrd ? *fMsgPerBrd : 0, fSeqeunceId, cnt);
+   // fill number of "good" hits
+   FillH1(fHitsPerBrd ? *fHitsPerBrd : 0, fSeqeunceId, hitcnt);
+
+   if (errcnt>0) FillH1(fErrPerBrd ? *fErrPerBrd : 0, fSeqeunceId);
+
 
    return true;
 }

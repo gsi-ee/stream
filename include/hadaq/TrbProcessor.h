@@ -33,8 +33,6 @@ namespace hadaq {
 
          unsigned fHadaqCTSId;       ///< identifier of CTS header in HADAQ event
          unsigned fHadaqHUBId;       ///< identifier of HUB header in HADQ event
-         unsigned fHadaqTDCId;       ///< identifier of TDC header in HADQ event
-         unsigned fHadaqSUBId;       ///< identifier of SUB header in HADAQ event
 
          unsigned fLastTriggerId;    ///< last seen trigger id
          unsigned fLostTriggerCnt;   ///< lost trigger counts
@@ -43,8 +41,6 @@ namespace hadaq {
          base::H1handle fEvSize;     ///< HADAQ event size
          base::H1handle fSubevSize;  ///< HADAQ subevent size
          base::H1handle fLostRate;   ///< lost rate
-
-         base::H1handle fTdcDistr;   ///< distribution of data over TDCs
 
          base::H1handle fMsgPerBrd;  //! messages per board - from TRB
          base::H1handle fErrPerBrd;  //! errors per board - from TRB
@@ -85,8 +81,8 @@ namespace hadaq {
 
          void SetHadaqCTSId(unsigned id) { fHadaqCTSId = id; }
          void SetHadaqHUBId(unsigned id) { fHadaqHUBId = id; }
-         void SetHadaqTDCId(unsigned id) { fHadaqTDCId = id; }
-         void SetHadaqSUBId(unsigned id) { fHadaqSUBId = id; }
+         void SetHadaqTDCId(unsigned) {} // keep for backward compatibility, can be ignored
+         void SetHadaqSUBId(unsigned) {} // keep for backward compatibility, can be ignored
 
          virtual void UserPreLoop();
 

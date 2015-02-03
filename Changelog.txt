@@ -1,8 +1,12 @@
+3.02.2015
+1. From now one should always use full TDC ids like 0xc001.
+   This allow to have different IDs in same TRB 
+
+
 22.01.2015
 1. In hadaq::TrbProcessor::CheckAutoCalibration calculate progress information 
    about accumulated statistic for automatic TDC calibration. 
    When value >=1, calibration will be automatically performed. 
-     
 
 19.01.2015
 1. Provide extra method to calibrate data in TDC subevents

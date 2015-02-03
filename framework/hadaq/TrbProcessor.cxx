@@ -40,12 +40,9 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc) :
    fEvSize = MakeH1("EvSize", "Event size", 500, 0, 5000, "bytes");
    fSubevSize = MakeH1("SubevSize", "Subevent size", 500, 0, 5000, "bytes");
    fLostRate = MakeH1("LostRate", "Relative number of lost packets", 1000, 0, 1., "data lost");
-   fTdcDistr = MakeH1("TdcDistr", "Data distribution over TDCs", 64, 0, 64, "tdc");
 
    fHadaqCTSId = 0x8000;
    fHadaqHUBId = 0x9000;  // high 8 bit important,
-   fHadaqTDCId = 0xC000;  // high 8 bits are important
-   fHadaqSUBId = 0x0000;  // if 0, all other kinds will be processed
 
    fLastTriggerId = 0;
    fLostTriggerCnt = 0;
@@ -115,7 +112,6 @@ bool hadaq::TrbProcessor::CheckPrintError()
 void hadaq::TrbProcessor::CreateTDC(unsigned id1, unsigned id2, unsigned id3, unsigned id4)
 {
    // overwrite default value in the beginning
-   if ((id1!=0) && (fHadaqTDCId == 0xC000) && (id1!=fHadaqCTSId)) fHadaqTDCId = (id1 & 0xff00);
 
    for (unsigned cnt=0;cnt<4;cnt++) {
       unsigned tdcid = id1;
@@ -132,12 +128,14 @@ void hadaq::TrbProcessor::CreateTDC(unsigned id1, unsigned id2, unsigned id3, un
          continue;
       }
 
-      if (tdcid!=fHadaqCTSId) {
-         if (fHadaqTDCId == 0) fHadaqTDCId = (tdcid & 0xff00);
-         if ((tdcid & 0xff00) != fHadaqTDCId) {
-            printf("TDC id 0x%04x do not match with expected mask 0x%04x\n", tdcid, fHadaqTDCId);
-            continue;
-         }
+      if (tdcid==fHadaqCTSId) {
+         printf("TDC id 0x%04x is used as CTS id\n", tdcid);
+         continue;
+      }
+
+      if (tdcid==fHadaqHUBId) {
+         printf("TDC id 0x%04x is used as HUB id\n", tdcid);
+         continue;
       }
 
       new hadaq::TdcProcessor(this, tdcid, gNumChannels, gEdgesMask);
@@ -460,11 +458,10 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
          continue;
       }
 
+      TdcProcessor* tdcproc = GetTDC(data & 0xFFFF);
       //! ================= FPGA TDC header ========================
-      if ((data & 0xFF00) == fHadaqTDCId) {
+      if (tdcproc != 0) {
          unsigned tdcid = data & 0xFFFF;
-
-         FillH1(fTdcDistr, tdcid & 0xff);
 
          RAWPRINT ("   FPGA-TDC header: 0x%08x, tdcid=0x%04x, size=%u\n", (unsigned) data, tdcid, datalen);
 
@@ -474,24 +471,18 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
             while (iter.next()) iter.printmsg();
          }
 
-         TdcProcessor* subproc = GetTDC(tdcid);
+         base::Buffer buf;
+         buf.makenew((datalen+1)*4);
 
-         if (subproc != 0) {
-            base::Buffer buf;
-            buf.makenew((datalen+1)*4);
+         memset(buf.ptr(), 0xff, 4); // fill dummy sync id in the begin
+         sub->CopyDataTo(buf.ptr(4), ix, datalen);
 
-            memset(buf.ptr(), 0xff, 4); // fill dummy sync id in the begin
-            sub->CopyDataTo(buf.ptr(4), ix, datalen);
+         buf().kind = 0;
+         buf().boardid = tdcid;
+         buf().format = 0;
 
-            buf().kind = 0;
-            buf().boardid = tdcid;
-            buf().format = 0;
-
-            subproc->AddNextBuffer(buf);
-            subproc->SetNewDataFlag(true);
-         } else {
-            RAWPRINT("Did not find processor for TDC 0x%04x - skip data %u\n", tdcid, datalen);
-         }
+         tdcproc->AddNextBuffer(buf);
+         tdcproc->SetNewDataFlag(true);
 
          ix+=datalen;
 
@@ -515,31 +506,26 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
          continue;
       }
 
+      SubProcMap::const_iterator iter = fMap.find(data & 0xFFFF);
+      SubProcessor* subproc = iter != fMap.end() ? iter->second : 0;
+
       //! ================= any other header ========================
-      if (((data & 0xFF00) == fHadaqSUBId) || (fHadaqSUBId==0)) {
+      if (subproc!=0) {
          unsigned subid = data & 0xFFFF;
 
          RAWPRINT ("   SUB header: 0x%08x, id=0x%04x, size=%u\n", (unsigned) data, subid, datalen);
 
-         SubProcMap::const_iterator iter = fMap.find(subid);
+         base::Buffer buf;
+         buf.makenew(datalen*4);
 
-         SubProcessor* subproc = iter != fMap.end() ? iter->second : 0;
+         sub->CopyDataTo(buf.ptr(0), ix, datalen);
 
-         if (subproc != 0) {
-            base::Buffer buf;
-            buf.makenew(datalen*4);
+         buf().kind = 0;
+         buf().boardid = subid;
+         buf().format = 0;
 
-            sub->CopyDataTo(buf.ptr(0), ix, datalen);
-
-            buf().kind = 0;
-            buf().boardid = subid;
-            buf().format = 0;
-
-            subproc->AddNextBuffer(buf);
-            subproc->SetNewDataFlag(true);
-         } else {
-            RAWPRINT("Did not find processor for SUB 0x%04x - skip data %u\n", subid, datalen);
-         }
+         subproc->AddNextBuffer(buf);
+         subproc->SetNewDataFlag(true);
 
          ix+=datalen;
 
@@ -561,7 +547,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
 //         continue;
 //      }
 //
-      RAWPRINT("Unknown header %x length %u in TDC subevent\n", data & 0xFFFF, datalen);
+      RAWPRINT("Unknown header 0x%04x length %u in TRB 0x%04x subevent\n", data & 0xFFFF, datalen, GetID());
       ix+=datalen;
    }
 
@@ -600,14 +586,9 @@ void hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub)
       }
 
       //! ================= FPGA TDC header ========================
-      if ((data & 0xFF00) == fHadaqTDCId) {
-         unsigned tdcid = data & 0xFFFF;
-
-         FillH1(fTdcDistr, tdcid & 0xff);
-
-         TdcProcessor* subproc = GetTDC(tdcid);
-         if (subproc != 0)
-            subproc->TransformTdcData(sub, ix, datalen);
+      TdcProcessor* subproc = GetTDC(data & 0xFFFF);
+      if (subproc != 0) {
+         subproc->TransformTdcData(sub, ix, datalen);
 
          ix+=datalen;
          continue; // go to next block
