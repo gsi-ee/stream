@@ -596,13 +596,13 @@ double hadaq::TrbProcessor::CheckAutoCalibration()
    // check and perform auto calibration for all TDCs
    // return true only when calibration can be done
 
-   double progress = 1000.;
+   double progress = 1.;
 
    for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++) {
-      if (iter->second->IsTDC()) {
-         double val = ((TdcProcessor*)iter->second)->TestCanCalibrate();
-         if (val<progress) progress = val;
-      }
+      if (!iter->second->IsTDC()) continue;
+      TdcProcessor* tdc = (TdcProcessor*) iter->second;
+      tdc->fCalibrProgress = tdc->TestCanCalibrate();
+      if (tdc->fCalibrProgress < progress) progress = tdc->fCalibrProgress;
    }
 
    if (progress >= 1.)

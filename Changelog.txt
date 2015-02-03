@@ -7,6 +7,7 @@
    allow to build full-range histogram for fine-counter histograms 
 4. Try to avoid dynamic_cast<TdcProcessor*> as much as possible,
    while it could be very time-expensive operation
+5. Provide calibration progress and status information individually for each TDC
 
 22.01.2015
 1. In hadaq::TrbProcessor::CheckAutoCalibration calculate progress information 

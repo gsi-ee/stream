@@ -126,6 +126,9 @@ namespace hadaq {
 
          std::vector<ChannelRec>  fCh; //! histogram for individual channels
 
+         double fCalibrProgress;      //! progress of auto calibration
+         std::string fCalibrStatus;   //! calibration status
+
          std::vector<hadaq::TdcMessageExt>  fStoreVect; //! dummy empty vector
          std::vector<hadaq::TdcMessageExt> *pStoreVect; //! pointer on store vector
 
@@ -190,6 +193,9 @@ namespace hadaq {
          inline unsigned NumChannels() const { return fCh.size(); }
          inline bool DoRisingEdge() const { return true; }
          inline bool DoFallingEdge() const { return fEdgeMask > 1; }
+
+         double GetCalibrProgress() const { return fCalibrProgress; }
+         std::string GetCalibrStatus() const { return fCalibrStatus; }
 
          int GetNumHist() const { return 8; }
 

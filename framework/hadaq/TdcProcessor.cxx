@@ -27,6 +27,8 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    SubProcessor(trb, "TDC_%04X", tdcid),
    fIter1(),
    fIter2(),
+   fCalibrProgress(0.),
+   fCalibrStatus("Init"),
    fStoreVect(),
    pStoreVect(0),
    fEdgeMask(edge_mask),
@@ -885,6 +887,8 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat)
       if (DoFallingEdge())
          CopyCalibration(fCh[ch].falling_calibr, fCh[ch].fFallingCalibr, ch, fFallingCalibr);
    }
+
+   fCalibrStatus = "Ready";
 }
 
 void hadaq::TdcProcessor::StoreCalibration(const std::string& fname)
@@ -944,6 +948,9 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fname)
    fclose(f);
 
    printf("%s reading calibration from %s done\n", GetName(), fname.c_str());
+
+   fCalibrStatus = std::string("File ") + fname;
+
    return true;
 }
 
