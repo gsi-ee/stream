@@ -14,14 +14,14 @@
 
 #define RAWPRINT( args ...) if(IsPrintRawData()) printf( args )
 
-
 unsigned hadaq::TdcProcessor::gNumFineBins = FineCounterBins;
+unsigned hadaq::TdcProcessor::gTotRange = 100;
 
-void hadaq::TdcProcessor::SetDefaults(unsigned numfinebins)
+void hadaq::TdcProcessor::SetDefaults(unsigned numfinebins, unsigned totrange)
 {
    gNumFineBins = numfinebins;
+   gTotRange = totrange;
 }
-
 
 hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels, unsigned edge_mask) :
    SubProcessor(trb, "TDC_%04X", tdcid),
@@ -40,6 +40,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fCompensateEpochCounter(0),
    fCh0Enabled(false)
 {
+   fIsTDC = true;
 
    if (trb) {
       // when normal trigger is used as sync points, than use trigger time on right side to calculate global time
@@ -120,7 +121,7 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
       fCh[ch].fFallingCoarse = MakeH1("FallingCoarse", "Falling coarse counter", 2048, 0, 2048, "coarse");
       fCh[ch].fFallingMult = MakeH1("FallingMult", "Falling event multiplicity", 128, 0, 128, "nhits");
       fCh[ch].fFallingCalibr = MakeH1("FallingCalibr", "Falling calibration function", FineCounterBins, 0, FineCounterBins, "fine");
-      fCh[ch].fTot = MakeH1("Tot", "Time over threshold", 100000, 0, 100., "ns");
+      fCh[ch].fTot = MakeH1("Tot", "Time over threshold", gTotRange*100, 0, gTotRange, "ns");
       // copy calibration only when histogram created
       CopyCalibration(fCh[ch].falling_calibr, fCh[ch].fFallingCalibr, ch, fFallingCalibr);
    }
@@ -310,7 +311,8 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
 
       if ((refproc==0) && (subprocmap!=0)) {
          SubProcMap::iterator iter = subprocmap->find(reftdc);
-         if (iter != subprocmap->end()) refproc = dynamic_cast<TdcProcessor*> (iter->second);
+         if ((iter != subprocmap->end()) && iter->second->IsTDC())
+            refproc = (TdcProcessor*) iter->second;
       }
 
       FillH1(fCh[ch].fRisingMult, fCh[ch].rising_cnt); fCh[ch].rising_cnt = 0;
@@ -364,8 +366,9 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
          if (fTrb!=0) refproc = fTrb->FindTDC(reftdc);
 
          if ((refproc==0) && (subprocmap!=0)) {
-             SubProcMap::iterator iter = subprocmap->find(reftdc);
-             if (iter != subprocmap->end()) refproc = dynamic_cast<TdcProcessor*> (iter->second);
+            SubProcMap::iterator iter = subprocmap->find(reftdc);
+            if ((iter != subprocmap->end()) && iter->second->IsTDC())
+               refproc = (TdcProcessor*) iter->second;
          }
 
          if ((refproc!=0) && (ref<refproc->NumChannels()) && ((ref!=ch) || (refproc!=this))) {

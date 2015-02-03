@@ -6,6 +6,7 @@ hadaq::SubProcessor::SubProcessor(TrbProcessor* trb, const char* nameprefix, uns
    base::StreamProc(nameprefix, subid, false),
    fTrb(trb),
    fSeqeunceId(0),
+   fIsTDC(false),
    fNewDataFlag(false)
 {
    if (trb) {

@@ -5,7 +5,8 @@
    leading edge was missed and several trailing edges comes one after another  
 3. Do not account modified hits in the calibration statistic,
    allow to build full-range histogram for fine-counter histograms 
-
+4. Try to avoid dynamic_cast<TdcProcessor*> as much as possible,
+   while it could be very time-expensive operation
 
 22.01.2015
 1. In hadaq::TrbProcessor::CheckAutoCalibration calculate progress information 

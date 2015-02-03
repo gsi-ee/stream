@@ -146,8 +146,8 @@ void hadaq::TrbProcessor::CreateTDC(unsigned id1, unsigned id2, unsigned id3, un
 void hadaq::TrbProcessor::SetAutoCalibrations(long cnt)
 {
    for (SubProcMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
-      TdcProcessor* tdc = dynamic_cast<TdcProcessor*> (iter->second);
-      if (tdc) tdc->SetAutoCalibration(cnt);
+      if (iter->second->IsTDC())
+        ((TdcProcessor*)iter->second)->SetAutoCalibration(cnt);
    }
 }
 
@@ -155,8 +155,8 @@ void hadaq::TrbProcessor::SetAutoCalibrations(long cnt)
 void hadaq::TrbProcessor::DisableCalibrationFor(unsigned firstch, unsigned lastch)
 {
    for (SubProcMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
-      TdcProcessor* tdc = dynamic_cast<TdcProcessor*> (iter->second);
-      if (tdc) tdc->DisableCalibrationFor(firstch, lastch);
+      if (iter->second->IsTDC())
+         ((TdcProcessor*)iter->second)->DisableCalibrationFor(firstch, lastch);
    }
 }
 
@@ -166,9 +166,8 @@ void hadaq::TrbProcessor::SetWriteCalibrations(const char* fileprefix, bool ever
    char fname[1024];
 
    for (SubProcMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
-
-      TdcProcessor* tdc = dynamic_cast<TdcProcessor*> (iter->second);
-      if (tdc==0) continue;
+      if (!iter->second->IsTDC()) continue;
+      TdcProcessor* tdc = (TdcProcessor*) iter->second;
 
       snprintf(fname, sizeof(fname), "%s%04x.cal", fileprefix, tdc->GetID());
 
@@ -184,8 +183,8 @@ bool hadaq::TrbProcessor::LoadCalibrations(const char* fileprefix)
    bool res = true;
 
    for (SubProcMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
-      TdcProcessor* tdc = dynamic_cast<TdcProcessor*> (iter->second);
-      if (tdc==0) continue;
+      if (!iter->second->IsTDC()) continue;
+      TdcProcessor* tdc = (TdcProcessor*) iter->second;
 
       snprintf(fname, sizeof(fname), "%s%04x.cal", fileprefix, tdc->GetID());
 
@@ -211,8 +210,8 @@ void hadaq::TrbProcessor::SetStoreEnabled(bool on)
 void hadaq::TrbProcessor::SetCh0Enabled(bool on)
 {
    for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++) {
-      TdcProcessor* tdc = dynamic_cast<TdcProcessor*> (iter->second);
-      if (tdc) tdc->SetCh0Enabled(on);
+      if (iter->second->IsTDC())
+         ((TdcProcessor*)iter->second)->SetCh0Enabled(on);
    }
 }
 
@@ -600,17 +599,16 @@ double hadaq::TrbProcessor::CheckAutoCalibration()
    double progress = 1000.;
 
    for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++) {
-      TdcProcessor* tdc = dynamic_cast<TdcProcessor*> (iter->second);
-      if (tdc) {
-         double val = tdc->TestCanCalibrate();
+      if (iter->second->IsTDC()) {
+         double val = ((TdcProcessor*)iter->second)->TestCanCalibrate();
          if (val<progress) progress = val;
       }
    }
 
    if (progress >= 1.)
       for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++) {
-         TdcProcessor* tdc = dynamic_cast<TdcProcessor*> (iter->second);
-         if (tdc) tdc->PerformAutoCalibrate();
+         if (iter->second->IsTDC())
+            ((TdcProcessor*) iter->second)->PerformAutoCalibrate();
       }
 
    return progress;

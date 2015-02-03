@@ -28,6 +28,7 @@ namespace hadaq {
 
          TrbProcessor* fTrb;         //! pointer on TRB processor
          unsigned fSeqeunceId;       //! sequence number of processor in TRB
+         bool fIsTDC;                //! indicate when it is TDC, to avoid dynamic_cast
 
          base::H1handle* fMsgPerBrd;  //! messages per board - from TRB
          base::H1handle* fErrPerBrd;  //! errors per board - from TRB
@@ -56,6 +57,8 @@ namespace hadaq {
          virtual ~SubProcessor() {}
 
          virtual void UserPreLoop();
+
+         inline bool IsTDC() const { return fIsTDC; }
 
          void SetPrintRawData(bool on = true) { fPrintRawData = on; }
          bool IsPrintRawData() const { return fPrintRawData; }

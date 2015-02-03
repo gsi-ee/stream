@@ -151,9 +151,8 @@ namespace hadaq {
           * TDC not yet able to perform trigger selection */
          virtual bool doTriggerSelection() const { return false; }
 
-         static unsigned fFineMinValue; //! minimum value for fine counter, used for simple linear approximation
-         static unsigned fFineMaxValue; //! maximum value for fine counter, used for simple linear approximation
          static unsigned gNumFineBins;  //! default value for number of bins in histograms for fine bins
+         static unsigned gTotRange;  //! default range for TOT histogram
 
          /** Method will be called by TRB processor if SYNC message was found
           * One should change 4 first bytes in the last buffer in the queue */
@@ -186,7 +185,7 @@ namespace hadaq {
 
          static void SetMaxBoardId(unsigned) { }
 
-         static void SetDefaults(unsigned numfinebins=600);
+         static void SetDefaults(unsigned numfinebins=600, unsigned totrange = 100);
 
          inline unsigned NumChannels() const { return fCh.size(); }
          inline bool DoRisingEdge() const { return true; }

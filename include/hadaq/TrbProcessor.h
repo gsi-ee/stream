@@ -122,7 +122,7 @@ namespace hadaq {
          void SetUseTriggerAsSync(bool on = true) { fUseTriggerAsSync = on; }
          bool IsUseTriggerAsSync() const { return fUseTriggerAsSync; }
 
-         /** When enabled, artificially create contigious epoch value */
+         /** When enabled, artificially create contiguous epoch value */
          void SetCompensateEpochReset(bool on = true) { fCompensateEpochReset = on; }
 
          unsigned NumSubProc() const { return fMap.size(); }
@@ -144,7 +144,7 @@ namespace hadaq {
             if ((iter == fMap.end()) && !fullid) iter = fMap.find(tdcid & 0xff);
 
             if (iter == fMap.end()) return 0;
-            return dynamic_cast<TdcProcessor*> (iter->second);
+            return iter->second->IsTDC() ? (TdcProcessor*) iter->second : 0;
          }
 
          /** Search TDC in current TRB or in the top HLD */
