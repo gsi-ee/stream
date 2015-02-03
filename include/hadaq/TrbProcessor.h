@@ -158,9 +158,6 @@ namespace hadaq {
          /** Create TDC processor, which extracts TDC information from CTS header */
          void CreateCTS_TDC() { CreateTDC(fHadaqCTSId); }
 
-         /** Set data correction for TDC */
-         void SetTDCCorrectionMode(int mode);
-
          /** Disable calibration of specified channels in all TDCs */
          void DisableCalibrationFor(unsigned firstch, unsigned lastch = 0);
 

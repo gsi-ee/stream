@@ -56,6 +56,7 @@ namespace hadaq {
             int falling_cnt;               //! number of falling hits in last event
             double rising_hit_tm;          //! leading edge time, used in correlation analysis. can be first or last time
             double rising_last_tm;         //! last leading edge time
+            bool rising_new_value;         //! used to calculate TOT and avoid errors after single leading and double trailing edge
             double rising_ref_tm;
             unsigned rising_coarse;
             unsigned rising_fine;
@@ -92,6 +93,8 @@ namespace hadaq {
                rising_cnt(0),
                falling_cnt(0),
                rising_hit_tm(0.),
+               rising_last_tm(0),
+               rising_new_value(false),
                rising_ref_tm(0.),
                rising_coarse(0),
                rising_fine(0),
@@ -131,11 +134,6 @@ namespace hadaq {
 
          std::string fWriteCalibr;    //! file which should be written at the end of data processing
          bool fWriteEveryTime;        //! write calibration every time automatic calibration performed
-
-         /** 0 - off,
-             1 - replace fine counter with calibrated value, 5 ps bining from 0 till 1000, 0x3ff error
-             2 - extract as linear value from 0..1000 */
-         int         fCorrectionMode;
 
          bool      fEveryEpoch;       //! if true, each hit must be supplied with epoch
 
@@ -262,8 +260,6 @@ namespace hadaq {
          /** If set, each hit must be supplied with epoch message */
          void SetEveryEpoch(bool on) { fEveryEpoch = on; }
          bool IsEveryEpoch() const { return fEveryEpoch; }
-
-         void SetCorrectionMode(int mode) { fCorrectionMode = mode; }
 
          void SetAutoCalibration(long cnt = 100000) { fAutoCalibration = cnt; }
 

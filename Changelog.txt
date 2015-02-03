@@ -1,6 +1,8 @@
 3.02.2015
 1. From now one should always use full TDC ids like 0xc001.
    This allow to have different IDs in same TRB 
+2. When calculating time-over-threshold, try to avoid fake TOT values if
+   leading edge was missed and several trailing edges comes one after another  
 
 
 22.01.2015

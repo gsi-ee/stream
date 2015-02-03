@@ -24,7 +24,6 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fAutoCalibration(0),
    fWriteCalibr(),
    fWriteEveryTime(false),
-   fCorrectionMode(0),
    fEveryEpoch(false),
    fUseLastHit(false),
    fUseNativeTrigger(false),
@@ -282,6 +281,7 @@ void hadaq::TdcProcessor::BeforeFill()
       fCh[ch].rising_hit_tm = 0;
       fCh[ch].rising_last_tm = 0;
       fCh[ch].rising_ref_tm = 0.;
+      fCh[ch].rising_new_value = false;
    }
 }
 
@@ -555,7 +555,6 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             if (CheckPrintError())
                printf("%5s Missing epoch for hit from channel %u\n", GetName(), chid);
             iserr = true;
-            if (fCorrectionMode==1) iter.setFineTime(0x3ff);
             continue;
          }
 
@@ -565,7 +564,6 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          if (chid >= NumChannels()) {
             if (CheckPrintError())
                printf("%5s Channel number problem %u\n", GetName(), chid);
-            if (fCorrectionMode==1) iter.setFineTime(0x3ff);
             iserr = true;
             continue;
          }
@@ -587,7 +585,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
          double corr = 0.;
 
-         if ((msg.getKind() == tdckind_Hit1) || (fCorrectionMode==2)) {
+         if (msg.getKind() == tdckind_Hit1) {
             corr = fine * 5e-12;
          } else {
             if (fine >= FineCounterBins) {
@@ -595,7 +593,6 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                if (CheckPrintError())
                   printf("%5s Fine counter %u out of allowed range 0..%u in channel %u\n", GetName(), fine, FineCounterBins, chid);
                iserr = true;
-               if (fCorrectionMode==1) iter.setFineTime(0x3ff);
                continue;
             }
 
@@ -639,6 +636,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                bool print_cond = false;
 
                rec.rising_last_tm = localtm;
+               rec.rising_new_value = true;
 
                if ((rec.rising_hit_tm == 0.) || fUseLastHit) {
                   rec.rising_hit_tm = localtm;
@@ -677,8 +675,10 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                FillH1(rec.fFallingFine, fine);
                FillH1(rec.fFallingCoarse, coarse);
 
-               if (rec.rising_last_tm!=0)
+               if (rec.rising_new_value && (rec.rising_last_tm!=0)) {
                   FillH1(rec.fTot, (localtm - rec.rising_last_tm)*1e9);
+                  rec.rising_new_value = false;
+               }
             }
 
             if (!iserr) {

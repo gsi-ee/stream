@@ -142,14 +142,6 @@ void hadaq::TrbProcessor::CreateTDC(unsigned id1, unsigned id2, unsigned id3, un
    }
 }
 
-void hadaq::TrbProcessor::SetTDCCorrectionMode(int mode)
-{
-   for (SubProcMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
-      TdcProcessor* tdc = dynamic_cast<TdcProcessor*> (iter->second);
-      if (tdc) tdc->SetCorrectionMode(mode);
-   }
-}
-
 
 void hadaq::TrbProcessor::SetAutoCalibrations(long cnt)
 {
