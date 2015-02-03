@@ -14,6 +14,15 @@
 
 #define RAWPRINT( args ...) if(IsPrintRawData()) printf( args )
 
+
+unsigned hadaq::TdcProcessor::gNumFineBins = FineCounterBins;
+
+void hadaq::TdcProcessor::SetDefaults(unsigned numfinebins)
+{
+   gNumFineBins = numfinebins;
+}
+
+
 hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels, unsigned edge_mask) :
    SubProcessor(trb, "TDC_%04X", tdcid),
    fIter1(),
@@ -58,7 +67,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
 
       fMsgsKind = MakeH1("MsgKind", "kind of messages", 8, 0, 8, "xbin:Reserved,Header,Debug,Epoch,Hit,-,-,-;kind");
 
-      fAllFine = MakeH2("FineTm", "fine counter value", numchannels, 0, numchannels, FineCounterBins, 0, FineCounterBins, "ch;fine");
+      fAllFine = MakeH2("FineTm", "fine counter value", numchannels, 0, numchannels, gNumFineBins, 0, gNumFineBins, "ch;fine");
       fAllCoarse = MakeH2("CoarseTm", "coarse counter value", numchannels, 0, numchannels, 2048, 0, 2048, "ch;coarse");
 
       if (DoRisingEdge())
@@ -98,7 +107,7 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
    SetSubPrefix("Ch", ch);
 
    if (DoRisingEdge()) {
-      fCh[ch].fRisingFine = MakeH1("RisingFine", "Rising fine counter", FineCounterBins, 0, FineCounterBins, "fine");
+      fCh[ch].fRisingFine = MakeH1("RisingFine", "Rising fine counter", gNumFineBins, 0, gNumFineBins, "fine");
       fCh[ch].fRisingCoarse = MakeH1("RisingCoarse", "Rising coarse counter", 2048, 0, 2048, "coarse");
       fCh[ch].fRisingMult = MakeH1("RisingMult", "Rising event multiplicity", 128, 0, 128, "nhits");
       fCh[ch].fRisingCalibr = MakeH1("RisingCalibr", "Rising calibration function", FineCounterBins, 0, FineCounterBins, "fine");
@@ -107,7 +116,7 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
    }
 
    if (DoFallingEdge()) {
-      fCh[ch].fFallingFine = MakeH1("FallingFine", "Falling fine counter", FineCounterBins, 0, FineCounterBins, "fine");
+      fCh[ch].fFallingFine = MakeH1("FallingFine", "Falling fine counter", gNumFineBins, 0, gNumFineBins, "fine");
       fCh[ch].fFallingCoarse = MakeH1("FallingCoarse", "Falling coarse counter", 2048, 0, 2048, "coarse");
       fCh[ch].fFallingMult = MakeH1("FallingMult", "Falling event multiplicity", 128, 0, 128, "nhits");
       fCh[ch].fFallingCalibr = MakeH1("FallingCalibr", "Falling calibration function", FineCounterBins, 0, FineCounterBins, "fine");
@@ -584,9 +593,11 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          ChannelRec& rec = fCh[chid];
 
          double corr = 0.;
+         bool raw_hit(true);
 
          if (msg.getKind() == tdckind_Hit1) {
             corr = fine * 5e-12;
+            raw_hit = false;
          } else {
             if (fine >= FineCounterBins) {
                FillH1(fErrors, chid);
@@ -626,10 +637,12 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             FillH2(fAllCoarse, chid, coarse);
 
             if (isrising) {
-               rec.rising_stat[fine]++;
-               rec.all_rising_stat++;
-               rec.rising_cnt++;
+               if (raw_hit) {
+                  rec.rising_stat[fine]++;
+                  rec.all_rising_stat++;
+               }
 
+               rec.rising_cnt++;
                FillH1(rec.fRisingFine, fine);
                FillH1(rec.fRisingCoarse, coarse);
 
@@ -668,8 +681,10 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                }
 
             } else {
-               rec.falling_stat[fine]++;
-               rec.all_falling_stat++;
+               if (raw_hit) {
+                  rec.falling_stat[fine]++;
+                  rec.all_falling_stat++;
+               }
                rec.falling_cnt++;
 
                FillH1(rec.fFallingFine, fine);

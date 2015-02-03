@@ -3,6 +3,8 @@
    This allow to have different IDs in same TRB 
 2. When calculating time-over-threshold, try to avoid fake TOT values if
    leading edge was missed and several trailing edges comes one after another  
+3. Do not account modified hits in the calibration statistic,
+   allow to build full-range histogram for fine-counter histograms 
 
 
 22.01.2015

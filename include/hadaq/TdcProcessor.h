@@ -153,6 +153,7 @@ namespace hadaq {
 
          static unsigned fFineMinValue; //! minimum value for fine counter, used for simple linear approximation
          static unsigned fFineMaxValue; //! maximum value for fine counter, used for simple linear approximation
+         static unsigned gNumFineBins;  //! default value for number of bins in histograms for fine bins
 
          /** Method will be called by TRB processor if SYNC message was found
           * One should change 4 first bytes in the last buffer in the queue */
@@ -184,6 +185,8 @@ namespace hadaq {
          virtual ~TdcProcessor();
 
          static void SetMaxBoardId(unsigned) { }
+
+         static void SetDefaults(unsigned numfinebins=600);
 
          inline unsigned NumChannels() const { return fCh.size(); }
          inline bool DoRisingEdge() const { return true; }
