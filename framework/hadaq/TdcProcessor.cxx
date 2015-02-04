@@ -428,7 +428,7 @@ bool hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigned in
 
    while (fIter1.next()) {
       cnt++;
-      FillH1(fMsgsKind, msg.getKind() >> 29);
+      if (fMsgsKind) FillH1(fMsgsKind, msg.getKind() >> 29);
       if (!msg.isHitMsg()) continue;
       hitcnt++;
 
@@ -448,38 +448,42 @@ bool hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigned in
       double corr = isrising ? rec.rising_calibr[fine] : rec.falling_calibr[fine];
 
       // value from 0 to 1000 is 5 ps unit, should be SUB from coarse time value
-      fIter1.setFineTime((uint32_t)round(corr/5e-12));
-
-      FillH1(fChannels, chid);
-      FillH1(fHits, chid + (isrising ? 0.25 : 0.75));
-      FillH2(fAllFine, chid, fine);
-      FillH2(fAllCoarse, chid, coarse);
-
-      if (HistFillLevel()>2) CreateChannelHistograms(chid);
+      uint32_t new_fine = (uint32_t) (corr/5e-12);
+      if (new_fine>=1000) new_fine = 1000;
+      fIter1.setFineTime(new_fine);
 
       if (isrising) {
          rec.rising_stat[fine]++;
          rec.all_rising_stat++;
          rec.rising_cnt++;
-
-         FillH1(rec.fRisingFine, fine);
-         FillH1(rec.fRisingCoarse, coarse);
       } else {
          rec.falling_stat[fine]++;
          rec.all_falling_stat++;
          rec.falling_cnt++;
+      }
 
+      if (HistFillLevel()<1) continue;
+
+      FillH1(fChannels, chid);
+      FillH1(fHits, chid + (isrising ? 0.25 : 0.75));
+      FillH2(fAllFine, chid, fine);
+      FillH2(fAllCoarse, chid, coarse);
+      if ((HistFillLevel()>2) && ((rec.fRisingFine==0) || (rec.fFallingFine==0)))
+         CreateChannelHistograms(chid);
+
+      if (isrising) {
+         FillH1(rec.fRisingFine, fine);
+         FillH1(rec.fRisingCoarse, coarse);
+      } else {
          FillH1(rec.fFallingFine, fine);
          FillH1(rec.fFallingCoarse, coarse);
       }
    }
 
-   FillH1(fMsgPerBrd ? *fMsgPerBrd : 0, fSeqeunceId, cnt);
+   if (fMsgPerBrd) FillH1(*fMsgPerBrd, fSeqeunceId, cnt);
    // fill number of "good" hits
-   FillH1(fHitsPerBrd ? *fHitsPerBrd : 0, fSeqeunceId, hitcnt);
-
-   if (errcnt>0) FillH1(fErrPerBrd ? *fErrPerBrd : 0, fSeqeunceId);
-
+   if (fHitsPerBrd) FillH1(*fHitsPerBrd, fSeqeunceId, hitcnt);
+   if (fErrPerBrd && (errcnt>0)) FillH1(*fErrPerBrd, fSeqeunceId);
 
    return true;
 }

@@ -577,7 +577,7 @@ void hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub)
       }
 
       //! ================= FPGA TDC header ========================
-      TdcProcessor* subproc = GetTDC(data & 0xFFFF);
+      TdcProcessor* subproc = GetTDC(data & 0xFFFF, true);
       if (subproc != 0) {
          subproc->TransformTdcData(sub, ix, datalen);
 
