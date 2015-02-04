@@ -884,14 +884,15 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat)
             fCh[ch].all_falling_stat = 0;
             for (unsigned n=0;n<FineCounterBins;n++) {
                fCh[ch].rising_stat[n] += fCh[ch].falling_stat[n];
-               fCh[ch].all_falling_stat = 0;
+               fCh[ch].falling_stat[n] = 0;
             }
+
          }
 
          if (DoRisingEdge() && (fCh[ch].all_rising_stat>0))
             CalibrateChannel(ch, fCh[ch].rising_stat, fCh[ch].rising_calibr);
 
-         if (DoFallingEdge() && (fCh[ch].all_falling_stat>0))
+         if (DoFallingEdge() && (fCh[ch].all_falling_stat>0) && (fEdgeMask == edge_BothIndepend))
             CalibrateChannel(ch, fCh[ch].falling_stat, fCh[ch].falling_calibr);
 
          if ((fEdgeMask == edge_CommonStatistic) || (fEdgeMask == edge_ForceRising))
