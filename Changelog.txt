@@ -3,7 +3,12 @@
    Return negative value when some TDCs not yet ready
 2. When calibrating TDC, write value which should be substructed from the coarse
    time stamp - like original fine counter 
-
+3. Implement different modes for calibration of falling edge. 
+   Mode can be specified by edge mask.
+      1 - use only rising edge
+      2 - edges considered fully independent
+      3 - falling edge uses calibration and statistic from rising edge
+      4 - common statistic for both edges is used
 
 3.02.2015
 1. From now one should always use full TDC ids like 0xc001.

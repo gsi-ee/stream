@@ -130,6 +130,13 @@ namespace hadaq {
          std::vector<hadaq::TdcMessageExt>  fStoreVect; //! dummy empty vector
          std::vector<hadaq::TdcMessageExt> *pStoreVect; //! pointer on store vector
 
+         enum { edge_None = 0, edge_Rising = 1, edge_BothIndepend = 2, edge_ForceRising  = 3, edge_CommonStatistic = 4 };
+
+         /** EdgeMask defines how TDC calibration for falling edge is performed
+          * 0,1 - use only rising edge, falling edge is ignore
+          * 2   - falling edge enabled and fully independent from rising edge
+          * 3   - falling edge enabled and uses calibration from rising edge
+          * 4   - falling edge enabled and common statistic is used for calibration */
          unsigned    fEdgeMask;       //! which channels to analyze, analyzes trailing edges when more than 1
          long        fAutoCalibration;//! indicates minimal number of counts in each channel required to produce calibration
 

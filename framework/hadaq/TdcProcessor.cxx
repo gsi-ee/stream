@@ -393,14 +393,22 @@ double hadaq::TdcProcessor::TestCanCalibrate()
 
    for (unsigned ch=0;ch<NumChannels();ch++) {
       if (fCh[ch].docalibr) {
-         if (DoRisingEdge() && (fCh[ch].all_rising_stat > 0)) {
+         long stat1(fCh[ch].all_rising_stat), stat2(0);
+
+         switch (fEdgeMask) {
+            case edge_BothIndepend: stat2 = fCh[ch].all_falling_stat; break;
+            case edge_ForceRising: break;
+            case edge_CommonStatistic: stat1 += fCh[ch].all_falling_stat; break;
+            default: break;
+         }
+         if (stat1>0) {
             isany = true;
-            double val = 1.*fCh[ch].all_rising_stat/fAutoCalibration;
+            double val = 1.*stat1/fAutoCalibration;
             if (val<min) min = val;
          }
-         if (DoFallingEdge() && (fCh[ch].all_falling_stat > 0)) {
+         if (stat2>0) {
             isany = true;
-            double val = 1.*fCh[ch].all_falling_stat/fAutoCalibration;
+            double val = 1.*stat2/fAutoCalibration;
             if (val<min) min = val;
          }
       }
@@ -869,20 +877,34 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat)
 
    for (unsigned ch=0;ch<NumChannels();ch++) {
       if (fCh[ch].docalibr) {
-         if (DoRisingEdge() && (fCh[ch].rising_stat>0)) {
-            CalibrateChannel(ch, fCh[ch].rising_stat, fCh[ch].rising_calibr);
-            if (clear_stat) {
-               for (unsigned n=0;n<FineCounterBins;n++) fCh[ch].rising_stat[n] = 0;
-               fCh[ch].all_rising_stat = 0;
-            }
-         }
-         if (DoFallingEdge() && (fCh[ch].falling_stat>0)) {
-            CalibrateChannel(ch, fCh[ch].falling_stat, fCh[ch].falling_calibr);
-            if (clear_stat) {
-               for (unsigned n=0;n<FineCounterBins;n++) fCh[ch].falling_stat[n] = 0;
+
+         // special case - use common statistic
+         if (fEdgeMask == edge_CommonStatistic) {
+            fCh[ch].all_rising_stat += fCh[ch].all_falling_stat;
+            fCh[ch].all_falling_stat = 0;
+            for (unsigned n=0;n<FineCounterBins;n++) {
+               fCh[ch].rising_stat[n] += fCh[ch].falling_stat[n];
                fCh[ch].all_falling_stat = 0;
             }
+         }
 
+         if (DoRisingEdge() && (fCh[ch].all_rising_stat>0))
+            CalibrateChannel(ch, fCh[ch].rising_stat, fCh[ch].rising_calibr);
+
+         if (DoFallingEdge() && (fCh[ch].all_falling_stat>0))
+            CalibrateChannel(ch, fCh[ch].falling_stat, fCh[ch].falling_calibr);
+
+         if ((fEdgeMask == edge_CommonStatistic) || (fEdgeMask == edge_ForceRising))
+            for (unsigned n=0;n<FineCounterBins;n++)
+               fCh[ch].falling_calibr[n] = fCh[ch].rising_calibr[n];
+
+         if (clear_stat) {
+            for (unsigned n=0;n<FineCounterBins;n++) {
+               fCh[ch].falling_stat[n] = 0;
+               fCh[ch].rising_stat[n] = 0;
+            }
+            fCh[ch].all_falling_stat = 0;
+            fCh[ch].all_rising_stat = 0;
          }
       }
       if (DoRisingEdge())
