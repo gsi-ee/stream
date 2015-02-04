@@ -46,6 +46,7 @@ namespace hadaq {
          uint32_t getKind() const { return fData & tdckind_Mask; }
 
          bool isHitMsg() const { return fData & tdckind_Hit; }
+         bool isHit1Msg() const { return getKind() == tdckind_Hit1; }
 
          bool isEpochMsg() const { return getKind() == tdckind_Epoch; }
          bool isDebugMsg() const { return getKind() == tdckind_Debug; }

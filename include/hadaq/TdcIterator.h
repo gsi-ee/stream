@@ -89,8 +89,12 @@ namespace hadaq {
          inline double getMsgTimeCoarse() const
          { return fConv.ToSeconds(getMsgStamp()); }
 
+         // return fine time value for current message
          inline double getMsgTimeFine() const
-         { return fMsg.isHitMsg() ? hadaq::TdcMessage::SimpleFineCalibr(fMsg.getHitTmFine()) : 0.; }
+         {
+           if (!fMsg.isHitMsg()) return 0.;
+           return fMsg.isHit1Msg() ? hadaq::TdcMessage::CoarseUnit()*fMsg.getHitTmFine()*0.001 : hadaq::TdcMessage::SimpleFineCalibr(fMsg.getHitTmFine());
+         }
 
          hadaq::TdcMessage& msg() { return fMsg; }
 

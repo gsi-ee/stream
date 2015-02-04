@@ -70,7 +70,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
 
       fMsgsKind = MakeH1("MsgKind", "kind of messages", 8, 0, 8, "xbin:Reserved,Header,Debug,Epoch,Hit,-,-,-;kind");
 
-      fAllFine = MakeH2("FineTm", "fine counter value", numchannels, 0, numchannels, gNumFineBins, 0, gNumFineBins, "ch;fine");
+      fAllFine = MakeH2("FineTm", "fine counter value", numchannels, 0, numchannels, (gNumFineBins==1000 ? 100 : gNumFineBins), 0, gNumFineBins, "ch;fine");
       fAllCoarse = MakeH2("CoarseTm", "coarse counter value", numchannels, 0, numchannels, 2048, 0, 2048, "ch;coarse");
 
       if (DoRisingEdge())
@@ -110,7 +110,7 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
    SetSubPrefix("Ch", ch);
 
    if (DoRisingEdge()) {
-      fCh[ch].fRisingFine = MakeH1("RisingFine", "Rising fine counter", gNumFineBins, 0, gNumFineBins, "fine");
+      fCh[ch].fRisingFine = MakeH1("RisingFine", "Rising fine counter", (gNumFineBins==1000 ? 100 : gNumFineBins), 0, gNumFineBins, "fine");
       fCh[ch].fRisingCoarse = MakeH1("RisingCoarse", "Rising coarse counter", 2048, 0, 2048, "coarse");
       fCh[ch].fRisingMult = MakeH1("RisingMult", "Rising event multiplicity", 128, 0, 128, "nhits");
       fCh[ch].fRisingCalibr = MakeH1("RisingCalibr", "Rising calibration function", FineCounterBins, 0, FineCounterBins, "fine");
@@ -119,7 +119,7 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
    }
 
    if (DoFallingEdge()) {
-      fCh[ch].fFallingFine = MakeH1("FallingFine", "Falling fine counter", gNumFineBins, 0, gNumFineBins, "fine");
+      fCh[ch].fFallingFine = MakeH1("FallingFine", "Falling fine counter", (gNumFineBins==1000 ? 100 : gNumFineBins), 0, gNumFineBins, "fine");
       fCh[ch].fFallingCoarse = MakeH1("FallingCoarse", "Falling coarse counter", 2048, 0, 2048, "coarse");
       fCh[ch].fFallingMult = MakeH1("FallingMult", "Falling event multiplicity", 128, 0, 128, "nhits");
       fCh[ch].fFallingCalibr = MakeH1("FallingCalibr", "Falling calibration function", FineCounterBins, 0, FineCounterBins, "fine");
@@ -445,10 +445,10 @@ bool hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigned in
 
       ChannelRec& rec = fCh[chid];
 
-      double corr = isrising ? -rec.rising_calibr[fine] : -rec.falling_calibr[fine];
+      double corr = isrising ? rec.rising_calibr[fine] : rec.falling_calibr[fine];
 
-      // value from 0 to 1000 is 5 ps unit, should be ADD to the current coarse time value
-      fIter1.setFineTime((uint32_t)round((5e-9 + corr)/5e-12));
+      // value from 0 to 1000 is 5 ps unit, should be SUB from coarse time value
+      fIter1.setFineTime((uint32_t)round(corr/5e-12));
 
       FillH1(fChannels, chid);
       FillH1(fHits, chid + (isrising ? 0.25 : 0.75));
@@ -612,10 +612,10 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                continue;
             }
 
-            corr = isrising ? -rec.rising_calibr[fine] : -rec.falling_calibr[fine];
+            corr = isrising ? rec.rising_calibr[fine] : rec.falling_calibr[fine];
          }
 
-         localtm += corr;
+         localtm -= corr;
 
          if ((chid==0) && (ch0time==0)) ch0time = localtm;
 

@@ -103,10 +103,8 @@ namespace hadaq {
                rising_cond_prnt(-1)
             {
                for (unsigned n=0;n<FineCounterBins;n++) {
-                  rising_stat[n] = 0;
-                  rising_calibr[n] = hadaq::TdcMessage::SimpleFineCalibr(n);
-                  falling_stat[n] = 0;
-                  falling_calibr[n] = hadaq::TdcMessage::SimpleFineCalibr(n);
+                  falling_stat[n] = rising_stat[n] = 0;
+                  falling_calibr[n] = rising_calibr[n] = hadaq::TdcMessage::SimpleFineCalibr(n);
                }
             }
          };
