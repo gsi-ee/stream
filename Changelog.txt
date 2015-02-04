@@ -1,3 +1,7 @@
+4.02.2015
+1. In hadaq::TrbProcessor::CheckAutoCalibration handle each TDC separately.
+   Return negative value when some TDCs not yet ready
+
 3.02.2015
 1. From now one should always use full TDC ids like 0xc001.
    This allow to have different IDs in same TRB 
