@@ -22,9 +22,11 @@ namespace hadaq {
       protected:
 
          struct ChannelRec {
-            base::H1handle fValues;        //! histogram of values distribution in channel
-            base::H2handle fWaveform;      //! histogram of integrated waveform of channel
-
+            base::H1handle fValues;          //! histogram of values distribution in channel
+            base::H2handle fWaveform;        //! histogram of integrated raw waveform of channel (debug)
+            base::H1handle fCFDIntegral;     //! histogram of integrals from CFD feature extraction
+            base::H1handle fCFDCoarseTiming; //! histogram of coarse timings from CFD feature extraction
+            base::H1handle fCFDFineTiming;   //! histogram of fine timings from CFD feature extraction
             ChannelRec() :
                fValues(0),
                fWaveform(0)
