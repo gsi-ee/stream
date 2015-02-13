@@ -506,6 +506,9 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
 
          RAWPRINT ("   SUB header: 0x%08x, id=0x%04x, size=%u\n", (unsigned) data, subid, datalen);
 
+         if(datalen==0)
+            continue;
+
          base::Buffer buf;
          buf.makenew(datalen*4);
 
