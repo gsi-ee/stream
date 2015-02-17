@@ -14,7 +14,8 @@ base::Processor::Processor(const char* name, unsigned brdid) :
    fSubPrefixD(),
    fSubPrefixN(),
    fHistFilling(99),
-   fStoreEnabled(false)
+   fStoreEnabled(false),
+   fIntHistFormat(false)
 {
    if (brdid != DummyBrdId) {
       char sbuf[100];
@@ -26,6 +27,8 @@ base::Processor::Processor(const char* name, unsigned brdid) :
    fPrefix = fName;
 
    fMgr = base::ProcMgr::instance();
+
+   if (fMgr) fIntHistFormat = fMgr->InternalHistFormat();
 }
 
 

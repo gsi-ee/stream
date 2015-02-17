@@ -22,6 +22,8 @@ class TFirstStepProcessor : public TGo4EventProcessor,
       /* Can be overwritten by subclass, but is not recommended! use ProcessEvent or ProcessSubevent instead*/
       virtual Bool_t BuildEvent(TGo4EventElement*);
 
+      virtual bool InternalHistFormat() const { return false; }
+
       virtual base::H1handle MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle = 0);
       virtual void FillH1(base::H1handle h1, double x, double weight = 1.);
       virtual double GetH1Content(base::H1handle h1, int nbin);

@@ -61,43 +61,88 @@ void base::ProcMgr::DeleteAllProcessors()
 
 base::H1handle base::ProcMgr::MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle)
 {
-   // put dummy virtual function here to avoid ACLiC warnings
-   return 0;
+   if (!InternalHistFormat()) return 0;
+
+   double* arr = new double[nbins+3];
+   arr[0] = nbins;
+   arr[1] = left;
+   arr[2] = right;
+   for (int n=0;n<nbins;n++) arr[n+3] = 0.;
+   return arr;
 }
 
 void base::ProcMgr::FillH1(H1handle h1, double x, double weight)
 {
-   // put dummy virtual function here to avoid ACLiC warnings
+   // put code here, but it should be called already performed in processor
+   if (!InternalHistFormat() || !h1) return;
+
+   double* arr = (double*) h1;
+   int nbin = (int) arr[0];
+   int bin = (int) (nbin * (x - arr[1]) / (arr[2] - arr[1]));
+   if ((bin>=0) && (bin<nbin)) arr[bin+3]+=weight;
 }
 
-double base::ProcMgr::GetH1Content(H1handle, int)
+double base::ProcMgr::GetH1Content(H1handle h1, int nbin)
 {
-   // put dummy virtual function here to avoid ACLiC warnings
-   return 0;
+   // put code here, but it should be called already performed in processor
+   if (!InternalHistFormat() || !h1) return 0.;
+
+   double* arr = (double*) h1;
+   return (nbin>=0) && (nbin<arr[0]) ? arr[nbin+3] : 0.;
 }
 
-void base::ProcMgr::ClearH1(base::H1handle)
+void base::ProcMgr::ClearH1(base::H1handle h1)
 {
-   // put dummy virtual function here to avoid ACLiC warnings
-}
+   // put code here, but it should be called already performed in processor
 
+   if (!InternalHistFormat() || !h1) return;
 
-void base::ProcMgr::ClearH2(base::H2handle)
-{
-   // put dummy virtual function here to avoid ACLiC warnings
+   double* arr = (double*) h1;
+   for (int n=0;n<arr[0];n++) arr[n+3] = 0.;
 }
 
 
 base::H2handle base::ProcMgr::MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options)
 {
-   // put dummy virtual function here to avoid ACLiC warnings
-   return 0;
+   if (!InternalHistFormat()) return 0;
+
+   double* bins = new double[nbins1*nbins2+6];
+   bins[0] = nbins1;
+   bins[1] = left1;
+   bins[2] = right1;
+   bins[3] = nbins2;
+   bins[4] = left2;
+   bins[5] = right2;
+   for (int n=0;n<nbins1*nbins2;n++) bins[n+6] = 0.;
+
+   return (base::H2handle) bins;
 }
 
 void base::ProcMgr::FillH2(H1handle h2, double x, double y, double weight)
 {
-   // put dummy virtual function here to avoid ACLiC warnings
+   if (!h2 || !InternalHistFormat()) return;
+   double* arr = (double*) h2;
+
+   int nbin1 = (int) arr[0];
+   int nbin2 = (int) arr[3];
+
+   int bin1 = (int) (nbin1 * (x - arr[1]) / (arr[2] - arr[1]));
+   int bin2 = (int) (nbin2 * (y - arr[4]) / (arr[5] - arr[4]));
+
+   if ((bin1>=0) && (bin1<nbin1) && (bin2>=0) && (bin2<nbin2))
+      arr[bin1 + bin2*nbin1 + 6]+=weight;
 }
+
+void base::ProcMgr::ClearH2(base::H2handle h2)
+{
+   if (!h2 || !InternalHistFormat()) return;
+   double* arr = (double*) h2;
+
+   int nbin1 = (int) arr[0];
+   int nbin2 = (int) arr[3];
+   for (int n=0;n<nbin1*nbin2;n++) arr[n+6] = 0.;
+}
+
 
 base::C1handle base::ProcMgr::MakeC1(const char* name, double left, double right, base::H1handle h1)
 {

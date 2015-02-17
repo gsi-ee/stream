@@ -1,3 +1,11 @@
+17.02.2015
+1. Introduce internal histogram format for the framework. It is just plain
+   double arrays. Same format is used when `stream` encapsulated into DABC.
+   Let fill histograms very fast.
+2. Provide fast methods for histogram filling without range checks and
+   with bin index.
+      
+
 4.02.2015
 1. In hadaq::TrbProcessor::CheckAutoCalibration handle each TDC separately.
    Return negative value when some TDCs not yet ready
