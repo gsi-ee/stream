@@ -472,26 +472,26 @@ bool hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigned in
 
       if (HistFillLevel()<1) continue;
 
-      FillH1(fChannels, chid);
-      FillH1(fHits, chid + (isrising ? 0.25 : 0.75));
-      FillH2(fAllFine, chid, fine);
-      FillH2(fAllCoarse, chid, coarse);
+      FastFillH1(fChannels, chid);
+      FastFillH1(fHits, chid*2 + (isrising ? 0 : 1));
+      FastFillH2(fAllFine, chid, fine);
+      FastFillH2(fAllCoarse, chid, coarse);
       if ((HistFillLevel()>2) && ((rec.fRisingFine==0) || (rec.fFallingFine==0)))
          CreateChannelHistograms(chid);
 
       if (isrising) {
-         FillH1(rec.fRisingFine, fine);
-         FillH1(rec.fRisingCoarse, coarse);
+         FastFillH1(rec.fRisingFine, fine);
+         FastFillH1(rec.fRisingCoarse, coarse);
       } else {
-         FillH1(rec.fFallingFine, fine);
-         FillH1(rec.fFallingCoarse, coarse);
+         FastFillH1(rec.fFallingFine, fine);
+         FastFillH1(rec.fFallingCoarse, coarse);
       }
    }
 
    if (fMsgPerBrd) FillH1(*fMsgPerBrd, fSeqeunceId, cnt);
    // fill number of "good" hits
    if (fHitsPerBrd) FillH1(*fHitsPerBrd, fSeqeunceId, hitcnt);
-   if (fErrPerBrd && (errcnt>0)) FillH1(*fErrPerBrd, fSeqeunceId);
+   if (fErrPerBrd && (errcnt>0)) FillH1(*fErrPerBrd, fSeqeunceId, errcnt);
 
    return true;
 }

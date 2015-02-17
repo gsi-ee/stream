@@ -4,6 +4,8 @@
    Let fill histograms very fast.
 2. Provide fast methods for histogram filling without range checks and
    with bin index.
+3. Use FastFillH1/H2 functions in hadaq::TdcProcessor::TransformTdcData,
+   speed up TDC calibration by factor 4 when all histograms are filled.    
       
 
 4.02.2015
