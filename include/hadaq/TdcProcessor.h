@@ -276,7 +276,7 @@ namespace hadaq {
 
          void SetAutoCalibration(long cnt = 100000) { fAutoCalibration = cnt; }
 
-         bool LoadCalibration(const std::string& fname);
+         bool LoadCalibration(const std::string& fname, double koef = 1.);
 
          /** When specified, calibration will be written to the file
           * If every_time == true, when every time when automatic calibration performed, otherwise only at the end */

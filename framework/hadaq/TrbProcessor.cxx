@@ -176,7 +176,7 @@ void hadaq::TrbProcessor::SetWriteCalibrations(const char* fileprefix, bool ever
 }
 
 
-bool hadaq::TrbProcessor::LoadCalibrations(const char* fileprefix)
+bool hadaq::TrbProcessor::LoadCalibrations(const char* fileprefix, double koef)
 {
    char fname[1024];
 
@@ -188,7 +188,7 @@ bool hadaq::TrbProcessor::LoadCalibrations(const char* fileprefix)
 
       snprintf(fname, sizeof(fname), "%s%04x.cal", fileprefix, tdc->GetID());
 
-      if (!tdc->LoadCalibration(fname)) res = false;
+      if (!tdc->LoadCalibration(fname, koef)) res = false;
    }
 
    return res;

@@ -1,3 +1,9 @@
+18.02.2015
+1. When loading TDC calibrations, one could specify scaling factor 
+   (should be grater than 1). This could allow to use calibration,
+   measured with lower temperature for higher temperature. 
+   Factor should be calculated with other tools  
+
 17.02.2015
 1. Introduce internal histogram format for the framework. It is just plain
    double arrays. Same format is used when `stream` encapsulated into DABC.
@@ -6,7 +12,6 @@
    with bin index.
 3. Use FastFillH1/H2 functions in hadaq::TdcProcessor::TransformTdcData,
    speed up TDC calibration by factor 4 when all histograms are filled.    
-      
 
 4.02.2015
 1. In hadaq::TrbProcessor::CheckAutoCalibration handle each TDC separately.

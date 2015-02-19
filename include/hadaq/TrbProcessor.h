@@ -167,8 +167,9 @@ namespace hadaq {
          /** Specify to produce and write calibrations at the end of data processing */
          void SetWriteCalibrations(const char* fileprefix, bool every_time = false);
 
-         /** Load TDC calibrations, as argument file prefix (without TDC id) should be specified */
-         bool LoadCalibrations(const char* fileprefix);
+         /** Load TDC calibrations, as argument file prefix (without TDC id) should be specified
+          * One also could specify coefficient to scale calibration (koef >= 1) */
+         bool LoadCalibrations(const char* fileprefix, double koef = 1.);
 
          /** Calibrate hits in subevent */
          void TransformSubEvent(hadaqs::RawSubevent* sub);

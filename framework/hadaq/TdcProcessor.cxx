@@ -886,7 +886,6 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat)
                fCh[ch].rising_stat[n] += fCh[ch].falling_stat[n];
                fCh[ch].falling_stat[n] = 0;
             }
-
          }
 
          if (DoRisingEdge() && (fCh[ch].all_rising_stat>0))
@@ -942,7 +941,7 @@ void hadaq::TdcProcessor::StoreCalibration(const std::string& fname)
    printf("%s storing calibration in %s\n", GetName(), fname.c_str());
 }
 
-bool hadaq::TdcProcessor::LoadCalibration(const std::string& fname)
+bool hadaq::TdcProcessor::LoadCalibration(const std::string& fname, double koef)
 {
    if (fname.empty()) return false;
 
@@ -965,6 +964,17 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fname)
       for (unsigned ch=0;ch<NumChannels();ch++) {
          fread(fCh[ch].rising_calibr, sizeof(fCh[ch].rising_calibr), 1, f);
          fread(fCh[ch].falling_calibr, sizeof(fCh[ch].falling_calibr), 1, f);
+
+         if (koef>1)
+            for (unsigned n=0;n<FineCounterBins;n++) {
+               fCh[ch].rising_calibr[n] *= koef;
+               fCh[ch].falling_calibr[n] *= koef;
+               if (fCh[ch].rising_calibr[n] > hadaq::TdcMessage::CoarseUnit())
+                  fCh[ch].rising_calibr[n] = hadaq::TdcMessage::CoarseUnit();
+
+               if (fCh[ch].falling_calibr[n] > hadaq::TdcMessage::CoarseUnit())
+                  fCh[ch].falling_calibr[n] = hadaq::TdcMessage::CoarseUnit();
+            }
 
          CopyCalibration(fCh[ch].rising_calibr, fCh[ch].fRisingCalibr, ch, fRisingCalibr);
 
