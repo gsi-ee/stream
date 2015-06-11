@@ -93,7 +93,14 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
          const short integral = arr[n+1] & 0xffff;
          const short valBeforeZeroX = (arr[n+2] >> 16) & 0xffff;
          const short valAfterZeroX = arr[n+2] & 0xffff;
-         FillStandardHistograms(ch, integral, samplesSinceTrigger, valBeforeZeroX, valAfterZeroX);
+         
+         const double fraction = (double)valBeforeZeroX/(valBeforeZeroX-valAfterZeroX);
+         const double coarseTiming = fSamplingPeriod*samplesSinceTrigger;
+         const double fineTiming_CFD = fSamplingPeriod*fraction + coarseTiming;
+         FillH1(fCh[ch].fIntegral, integral);
+         FillH1(fCh[ch].fCFDCoarseTiming, coarseTiming);
+         FillH1(fCh[ch].fCFDFineTiming, fineTiming_CFD);
+         fCh[ch].timing_CFD = fineTiming_CFD;
          
          // four samples of the "edge"
          std::vector<short> edges;
@@ -102,6 +109,7 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
          edges.push_back(arr[n+3] & 0xffff);
          edges.push_back((arr[n+3] >> 16) & 0xffff);
          
+        
          // "fit" the four points to straight line f(x) = a + bx
          double S   = 0;
          double Sx  = 0;
@@ -111,7 +119,7 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
          for(size_t i=0;i<edges.size();i++) {
             const double s = 1;
             const double s2 = s*s;
-            const double x  = i*fSamplingPeriod;
+            const double x  = i;
             const double y  = edges[i];
             S   += 1/s2;
             Sx  += x/s2;
@@ -122,12 +130,13 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
          const double D = S*Sxx-Sx*Sx;
          const double a = (Sxx*Sy - Sx*Sxy)/D;
          const double b = (S*Sxy-Sx*Sy)/D;
-         const double fineTiming = -a/b;
+         const double fraction_Edge = -a/b;
+         const double fineTiming_Edge = (samplesSinceTrigger + fraction_Edge)*fSamplingPeriod;
                  
          ChannelRec& r = fCh[ch];
          for(size_t i=0;i<edges.size();i++) 
             FillH2(r.fEdgeSamples, i, edges[i]);
-         r.timing_Edge = samplesSinceTrigger*fSamplingPeriod + fineTiming;
+         r.timing_Edge = fineTiming_Edge;
          
          
          // don't forget to move forward
@@ -219,22 +228,6 @@ void hadaq::AdcProcessor::CreateBranch(TTree* t)
 {
    pStoreVect = &fStoreVect;
    mgr()->CreateBranch(t, GetName(), "std::vector<hadaq::AdcMessage>", (void**) &pStoreVect);
-}
-
-void hadaq::AdcProcessor::FillStandardHistograms(
-      uint32_t ch,
-      const int integral,
-      const int samplesSinceTrigger,
-      const int valBeforeZeroX,
-      const int valAfterZeroX)
-{
-   const double fraction = (double)valBeforeZeroX/(valBeforeZeroX-valAfterZeroX);
-   const double coarseTiming = fSamplingPeriod*samplesSinceTrigger;
-   const double fineTiming = fSamplingPeriod*fraction + coarseTiming;
-   FillH1(fCh[ch].fIntegral, integral);
-   FillH1(fCh[ch].fCFDCoarseTiming, coarseTiming);
-   FillH1(fCh[ch].fCFDFineTiming, fineTiming);
-   fCh[ch].timing_CFD = fineTiming;
 }
 
 void hadaq::AdcProcessor::Store(base::Event* ev)

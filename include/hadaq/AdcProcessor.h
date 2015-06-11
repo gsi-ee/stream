@@ -54,13 +54,6 @@ namespace hadaq {
 
          virtual void CreateBranch(TTree*);
 
-         void FillStandardHistograms(uint32_t ch,
-                         const int integral,
-                         const int samplesSinceTrigger,
-                         const int valBeforeZeroX,
-                         const int valAfterZeroX
-                         );
-
       public:
 
          AdcProcessor(TrbProcessor* trb, unsigned subid, unsigned numchannels = 48, 
