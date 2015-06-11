@@ -68,22 +68,8 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
       uint32_t kind = msg.getKind();
       FillH1(fKinds, kind);
 
-      // kind==0xc is CFD data word header of modified PSA firmware
-      if(kind == 0xc ) {
-         uint32_t ch = msg.getCh(); // has same structure as verbose data word
-         if(ch>=fCh.size())
-            continue;
-         // there should be now 4 values after this header word
-         if(n+4>len)
-            continue;
-         const int32_t  integral = arr[++n];
-         const uint32_t samplesSinceTrigger = arr[++n];
-         const int32_t  valBeforeZeroX = arr[++n];
-         const int32_t  valAfterZeroX = arr[++n];
-         FillStandardHistograms(ch, integral, samplesSinceTrigger, valBeforeZeroX, valAfterZeroX);
-      }
       // kind==0xd is CFD data word header of CFD firmware
-      else if(kind == 0xd) {
+      if(kind == 0xd) {
          uint32_t ch = msg.getCh(); // has same structure as verbose data word
          if(ch>=fCh.size())
             continue;
