@@ -26,17 +26,23 @@ class AdcProcessor : public TdcProcessor {
 protected:
    
    struct ChannelRec {
+   public:
+      ChannelRec() :
+         fValues(0),
+         fWaveform(0),
+         fIntegral(0),
+         fSamples(0),
+         fDiffTiming(0),
+         fDiffCh(-1),
+         fTiming(std::numeric_limits<double>::quiet_NaN())
+      {}
       base::H1handle fValues;          //! histogram of values distribution in channel
       base::H2handle fWaveform;        //! histogram of integrated raw waveform of channel (debug)
       base::H1handle fIntegral;        //! histogram of integrals from CFD feature extraction
       base::H2handle fSamples;         //! histogram of fine timings from CFD feature extraction
       base::H1handle fDiffTiming;      //! histogram of CFD fine time difference to other specified channel
-      int diffCh;                      //! if not <0, specifies channel for fCFDDiffTiming
-      double timing;               //! the timing in ns, relative to trigger word. Set in FillHistograms()
-      ChannelRec() :
-         diffCh(-1),
-         timing(std::numeric_limits<double>::quiet_NaN())
-      {}
+      int fDiffCh;                     //! if not <0, specifies channel for fDiffTiming
+      double fTiming;                  //! the timing in ns, relative to trigger
    };
    
    const double fSamplingPeriod;
@@ -44,8 +50,8 @@ protected:
    static std::vector<double> storage;
    
    
-   base::H1handle fKinds;      //! kinds of messages
-   base::H1handle fChannels;   //! histogram with messages per channel
+   base::H1handle fKinds;        //! kinds of messages
+   base::H1handle fChannels;     //! histogram with messages per channel
    std::vector<ChannelRec>  fCh; //! histogram for individual channels
    
    std::vector<hadaq::AdcMessage>   fStoreVect; //! dummy empty vector
