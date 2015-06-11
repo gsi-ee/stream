@@ -36,7 +36,9 @@ namespace hadaq {
          // logical ADC channel, 0..47
          uint32_t getCh() const { return 4*getAdcId()+getAdcCh(); }
          // the value of the ADC channel
-         uint32_t getValue() const { return fData & 0xffff; }
+         // handle the sign bit correctly for debug signals from CFD firmware
+         // 10bit unsigned words should not be affected by this
+         short int getValue() const { return fData & 0xffff; }
    };
 
 }
