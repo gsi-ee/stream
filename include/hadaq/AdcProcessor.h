@@ -7,6 +7,7 @@
 #include "hadaq/AdcSubEvent.h"
 #include <limits>
 #include <iostream>
+#include <vector>
 
 namespace hadaq {
 
@@ -26,19 +27,23 @@ namespace hadaq {
          struct ChannelRec {
             base::H1handle fValues;          //! histogram of values distribution in channel
             base::H2handle fWaveform;        //! histogram of integrated raw waveform of channel (debug)
+            base::H1handle fSamplesSinceTrigger;            
             base::H1handle fIntegral;        //! histogram of integrals from CFD feature extraction
-            base::H1handle fCFDCoarseTiming; //! histogram of coarse timings from CFD feature extraction
-            base::H1handle fCFDFineTiming;   //! histogram of fine timings from CFD feature extraction
+            base::H2handle fCFDSamples;      //! histogram of fine timings from CFD feature extraction
             base::H1handle fCFDDiffTiming;   //! histogram of CFD fine time difference to other specified channel
             base::H2handle fEdgeSamples;     //! histogram of leading edge samples used for timing
             base::H1handle fEdgeDiffTiming;  //! histogram of edge fine time difference to other specified channel
+            base::H2handle fSamples1;
+            base::H2handle fSamples2;            
             int diffCh;                      //! if not <0, specifies channel for fCFDDiffTiming
             double timing_CFD;               //! the timing in ns, relative to trigger word. Set in FillHistograms()
-            double timing_Edge;              //! the timing in ns, relative to trigger word. Set in FillHistograms()            
+            double timing_Edge;              //! the timing in ns, relative to trigger word. Set in FillHistograms()
+            std::vector<short> samples;
             ChannelRec() :
                diffCh(-1),
                timing_CFD(std::numeric_limits<double>::quiet_NaN()),
-               timing_Edge(std::numeric_limits<double>::quiet_NaN())
+               timing_Edge(std::numeric_limits<double>::quiet_NaN()),
+               samples()
             {}
          };
 

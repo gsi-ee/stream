@@ -28,12 +28,14 @@ hadaq::AdcProcessor::AdcProcessor(TrbProcessor* trb, unsigned subid, unsigned nu
       SetSubPrefix("Ch", ch);
       rec.fValues = MakeH1("Values","Distribution of values (unsigned)", 1<<10, 0, 1<<10, "value");
       rec.fWaveform = MakeH2("Waveform", "Integrated Waveform", 512, 0, 512, 1<<11, -(1<<10), 1<<10, "sample;value");
+      rec.fSamplesSinceTrigger = MakeH1("SamplesSinceTrigger","Samples since trigger", 512, 0, 512, "#samples");
       rec.fIntegral = MakeH1("Integral","Summed integral",10000,0,10000,"integral");
-      rec.fCFDCoarseTiming = MakeH1("CFDCoarseTiming","CFD coarse timing",10000,0,10000,"t / ns");
-      rec.fCFDFineTiming = MakeH1("CFDFineTiming","CFD fine timing",10000,0,10000,"t / ns");
+      rec.fCFDSamples = MakeH2("CFDSamples","Samples of the zero crossing",2,0,2,1000,-500,500,"crossing;value");
       rec.fCFDDiffTiming = MakeH1("CFDDiffTiming","Timing difference",10000,-500,500,"t / ns");
       rec.fEdgeSamples = MakeH2("EdgeSamples","Samples of the leading edge",4,0,4,1000,-500,500,"egde;value");
       rec.fEdgeDiffTiming = MakeH1("EdgeDiffTiming","Timing difference",10000,-500,500,"t / ns");
+      rec.fSamples1 =  MakeH2("Samples1","Samples of zeroX and leading edge",6,0,6,1000,-500,500,"sample;value");
+      rec.fSamples2 =  MakeH2("Samples2","Samples of zeroX and leading edge",6,0,6,1000,-500,500,"sample;value");      
       SetSubPrefix();
       fCh.push_back(rec);
    }
@@ -81,6 +83,8 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
          if(lastTriggerEpoch<0)
             continue;
 
+         ChannelRec& r = fCh[ch]; // helpful shortcut
+        
          // extract the epoch counter
          // upper 8bits in this word,
          // lower 16bits in following word
@@ -88,27 +92,31 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
                (((arr[n] >> 8) & 0xff) << 16)
                + ((arr[n+1] >> 16) & 0xffff);
          const int samplesSinceTrigger = epochCounter - lastTriggerEpoch;
+         FillH1(r.fSamplesSinceTrigger, samplesSinceTrigger);
 
-         // integral and "standard" CFD timings
+         // integral 
          const short integral = arr[n+1] & 0xffff;
+         FillH1(r.fIntegral, integral);
+         
+         // CFD timing
          const short valBeforeZeroX = (arr[n+2] >> 16) & 0xffff;
          const short valAfterZeroX = arr[n+2] & 0xffff;
-         
-         const double fraction = (double)valBeforeZeroX/(valBeforeZeroX-valAfterZeroX);
-         const double coarseTiming = fSamplingPeriod*samplesSinceTrigger;
-         const double fineTiming_CFD = fSamplingPeriod*fraction + coarseTiming;
-         FillH1(fCh[ch].fIntegral, integral);
-         FillH1(fCh[ch].fCFDCoarseTiming, coarseTiming);
-         FillH1(fCh[ch].fCFDFineTiming, fineTiming_CFD);
-         fCh[ch].timing_CFD = fineTiming_CFD;
+         const double fraction_CFD = (double)valBeforeZeroX/(valBeforeZeroX-valAfterZeroX);
+         const double fineTiming_CFD = (samplesSinceTrigger + fraction_CFD)*fSamplingPeriod;
+         r.timing_CFD = fineTiming_CFD;
+         FillH2(r.fCFDSamples, 0, valBeforeZeroX);
+         FillH2(r.fCFDSamples, 1, valAfterZeroX);
+         r.samples.clear();
+         r.samples.push_back(valBeforeZeroX);
+         r.samples.push_back(valAfterZeroX);
          
          // four samples of the "edge"
          std::vector<short> edges;
          edges.push_back(arr[n+4] & 0xffff);
          edges.push_back((arr[n+4] >> 16) & 0xffff);
          edges.push_back(arr[n+3] & 0xffff);
-         edges.push_back((arr[n+3] >> 16) & 0xffff);
-         
+         edges.push_back((arr[n+3] >> 16) & 0xffff); 
+         r.samples.insert(r.samples.end(), edges.begin(), edges.end());
         
          // "fit" the four points to straight line f(x) = a + bx
          double S   = 0;
@@ -133,7 +141,6 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
          const double fraction_Edge = -a/b;
          const double fineTiming_Edge = (samplesSinceTrigger + fraction_Edge)*fSamplingPeriod;
                  
-         ChannelRec& r = fCh[ch];
          for(size_t i=0;i<edges.size();i++) 
             FillH2(r.fEdgeSamples, i, edges[i]);
          r.timing_Edge = fineTiming_Edge;
@@ -188,8 +195,13 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
       const ChannelRec& c = fCh[ch];
       if(c.diffCh<0)
          continue;
-      FillH1(c.fCFDDiffTiming, c.timing_CFD - fCh[c.diffCh].timing_CFD);
-      FillH1(c.fEdgeDiffTiming, c.timing_Edge - fCh[c.diffCh].timing_Edge);
+      const double diff_CFD = c.timing_CFD - fCh[c.diffCh].timing_CFD;
+      const double diff_Edge = c.timing_Edge - fCh[c.diffCh].timing_Edge;
+      FillH1(c.fCFDDiffTiming, diff_CFD);
+      FillH1(c.fEdgeDiffTiming, diff_Edge);
+      base::H2handle h = diff_CFD<209 ? c.fSamples1 : c.fSamples2;
+      for(size_t i=0;i<c.samples.size();i++) 
+         FillH2(h, i, c.samples[i]);
    }
 
    return true;
