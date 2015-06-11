@@ -27,6 +27,7 @@ namespace hadaq {
          struct ChannelRec {
             base::H1handle fValues;          //! histogram of values distribution in channel
             base::H2handle fWaveform;        //! histogram of integrated raw waveform of channel (debug)
+            base::H1handle fRawDiffTiming;   //! histogram of CFD fine time difference to other specified channel            
             base::H1handle fSamplesSinceTrigger;            
             base::H1handle fIntegral;        //! histogram of integrals from CFD feature extraction
             base::H2handle fCFDSamples;      //! histogram of fine timings from CFD feature extraction
@@ -36,11 +37,13 @@ namespace hadaq {
             base::H2handle fSamples1;
             base::H2handle fSamples2;            
             int diffCh;                      //! if not <0, specifies channel for fCFDDiffTiming
+            double timing_Raw;               //! the timing in ns, relative to trigger word. Set in FillHistograms()            
             double timing_CFD;               //! the timing in ns, relative to trigger word. Set in FillHistograms()
             double timing_Edge;              //! the timing in ns, relative to trigger word. Set in FillHistograms()
             std::vector<short> samples;
             ChannelRec() :
                diffCh(-1),
+               timing_Raw(std::numeric_limits<double>::quiet_NaN()),               
                timing_CFD(std::numeric_limits<double>::quiet_NaN()),
                timing_Edge(std::numeric_limits<double>::quiet_NaN()),
                samples()

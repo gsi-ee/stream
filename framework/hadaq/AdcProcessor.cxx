@@ -33,6 +33,7 @@ hadaq::AdcProcessor::AdcProcessor(TrbProcessor* trb, unsigned subid, unsigned nu
       SetSubPrefix("Ch", ch);
       rec.fValues = MakeH1("Values","Distribution of values (unsigned)", 1<<10, 0, 1<<10, "value");
       rec.fWaveform = MakeH2("Waveform", "Integrated Waveform", 512, 0, 512, 1<<11, -(1<<10), 1<<10, "sample;value");
+      rec.fRawDiffTiming = MakeH1("RawDiffTiming","Timing difference",10000,-500,500,"t / ns");      
       rec.fSamplesSinceTrigger = MakeH1("SamplesSinceTrigger","Samples since trigger", 512, 0, 512, "#samples");
       rec.fIntegral = MakeH1("Integral","Summed integral",10000,0,10000,"integral");
       rec.fCFDSamples = MakeH2("CFDSamples","Samples of the zero crossing",2,0,2,1000,-500,500,"crossing;value");
@@ -322,8 +323,8 @@ double getfraction(const vector<short>& edges) {
    for(size_t i=0; i<y_.size(); i++) {
       x_[i] = i;
       y_[i] = edges[i];
-      sx[i] = 50;
-      sy[i] = 10; //0.01*edges[i];
+      sx[i] = 0.5;
+      sy[i] = 0.1+0.01*edges[i];
    }
    double a, b;
    //fitxy(x_, y_, sy, a, b);
@@ -344,6 +345,11 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
    uint32_t nSample = 0; // number of msg from the same ADC channel, aka Sample
    uint32_t lastCh = 0;  // remember last used channel for dumping verbose data
    int lastTriggerEpoch = -1; // remember last trigger epoch
+   vector<int> triggerEpochs;
+   
+   vector< vector<short> > raw_samples;
+   raw_samples.resize(fCh.size());
+   
    for (unsigned n=0;n<len;n++) {
       AdcMessage msg(arr[n]);
 
@@ -421,6 +427,7 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
             trigger_epoch_bin[i] = trigger_epoch_bin[i+1] ^ trigger_epoch_gray[i];
          }
          lastTriggerEpoch = trigger_epoch_bin.to_ulong();
+         triggerEpochs.push_back(lastTriggerEpoch);
       }
       // kind==0 is verbose data word for both firmware versions
       else if(kind == 0) {
@@ -444,6 +451,8 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
          }
 
          FillH2(fCh[ch].fWaveform, nSample, value);
+         
+         raw_samples[ch].push_back(value);
       }
       // other kinds like PSA data or compressed ADC words unsupported for now
       // they are just ignored
@@ -451,29 +460,100 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
 
    // if (!fCrossProcess) AfterFill(); // optional
 
-
+   // analyze raw samples for first two channels
+   for(size_t ch=0;ch<raw_samples.size();ch++) {
+      if(ch>1)
+         continue;
+      // calc baseline
+      const vector<short>& samples = raw_samples[ch];
+      double baseline = 0;
+      size_t n=0;
+      const size_t cut = 100;
+      for(size_t i=cut;i<samples.size();i++) {
+         baseline += samples[i];
+         n++;
+      }
+      baseline /= n;
+      
+      std::vector<double> filtered(cut,baseline);
+      for(size_t i=4;i<cut-4;i++) {
+         filtered[i] = 
+               -0.086 * samples[i-2] 
+               +0.343 * samples[i-1]
+               +0.486 * samples[i+0]
+               +0.343 * samples[i+1]
+               -0.086 * samples[i+2];
+         
+//         filtered[i] = 
+//               +0.035 * samples[i-4]
+//               -0.128 * samples[i-3]
+//               +0.070 * samples[i-2] 
+//               +0.315 * samples[i-1]
+//               +0.417 * samples[i+0]
+//               +0.315 * samples[i+1]
+//               +0.070 * samples[i+2]
+//               -0.128 * samples[i+3]
+//               +0.035 * samples[i+4]
+//               ;
+         
+//         filtered[i] = samples[i];
+      }
+      
+      
+      //cout << baseline << endl;
+      const size_t delay = 1;
+      const int thresh = 32;
+      double cfd_prev;
+      for(size_t i=0;i<cut;i++) {
+         double sample = -(filtered[i]-baseline);
+         if(sample<thresh)
+            continue;
+         double sample_delay = -(filtered[i+delay]-baseline);
+         double cfd = 4*sample-3*sample_delay;
+         if(i>0) {
+            if(cfd_prev<0 && cfd>=0) {
+               
+               const double fraction_Raw = (double)cfd_prev/(cfd_prev-cfd);
+               fCh[ch].timing_Raw = (triggerEpochs[ch]+i+fraction_Raw)*fSamplingPeriod;
+               //cout << fCh[ch].timing_Raw << endl;
+            }
+         }         
+         cfd_prev = cfd;
+      }
+   }
+   
+   
+   // do some reference timing business
    for(size_t ch=0;ch<fCh.size();ch++) {
       const ChannelRec& c = fCh[ch];
       if(c.diffCh<0)
          continue;
+      const double diff_Raw = c.timing_Raw - fCh[c.diffCh].timing_Raw;      
       const double diff_CFD = c.timing_CFD - fCh[c.diffCh].timing_CFD;
       const double diff_Edge = c.timing_Edge - fCh[c.diffCh].timing_Edge;
-      FillH1(c.fCFDDiffTiming, diff_CFD);
-      FillH1(c.fEdgeDiffTiming, diff_Edge);
       
-      base::H2handle h = diff_CFD<209 ? c.fSamples1 : c.fSamples2;
+      FillH1(c.fRawDiffTiming, diff_Raw);
+      FillH1(c.fCFDDiffTiming, diff_CFD);
+      FillH1(c.fEdgeDiffTiming, diff_Edge); 
+      
+      
+      base::H2handle h = diff_CFD<211 ? c.fSamples1 : c.fSamples2;
       for(size_t i=0;i<c.samples.size();i++) 
          FillH2(h, i, c.samples[i]);
-      if(ch!=0)
-         continue;
-      if(storage.size()<1000) {
-         storage.push_back(diff_Edge);
-      }
-      else {
-         double var = calc_variance(storage);
-         cout << "RMS: " << sqrt(var) << endl;
-         storage.clear();
-      }
+      
+      
+      
+      // only for ch==0
+//      if(ch!=0)
+//         continue;
+//      if(storage.size()<1000) {
+//         storage.push_back(diff_Edge);
+//      }
+//      else {
+//         double var = calc_variance(storage);
+//         //cout << "RMS: " << sqrt(var) << endl;
+//         storage.clear();
+//      }
    }
 
    return true;
