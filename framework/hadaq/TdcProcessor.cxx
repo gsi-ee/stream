@@ -589,7 +589,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
          if (chid >= NumChannels()) {
             if (CheckPrintError())
-               printf("%5s Channel number problem %u\n", GetName(), chid);
+               printf("%5s Channel number %u problem\n", GetName(), chid);
             iserr = true;
             continue;
          }
