@@ -10,8 +10,9 @@
 
 #include "hadaq/TrbProcessor.h"
 
-hadaq::AdcProcessor::AdcProcessor(TrbProcessor* trb, unsigned subid, unsigned numchannels) :
+hadaq::AdcProcessor::AdcProcessor(TrbProcessor* trb, unsigned subid, unsigned numchannels, double samplingPeriod) :
    SubProcessor(trb, "ADC_%04x", subid),
+   fSamplingPeriod(samplingPeriod),
    fStoreVect(),
    pStoreVect(0)
 {
@@ -23,7 +24,7 @@ hadaq::AdcProcessor::AdcProcessor(TrbProcessor* trb, unsigned subid, unsigned nu
    }
 
    for (unsigned ch=0;ch<numchannels;ch++) {
-      ChannelRec rec;
+      ChannelRec rec; 
       SetSubPrefix("Ch", ch);
       rec.fValues = MakeH1("Values","Distribution of values (unsigned)", 1<<10, 0, 1<<10, "value");
       rec.fWaveform = MakeH2("Waveform", "Integrated Waveform", 512, 0, 512, 1<<11, -(1<<10), 1<<10, "sample;value");
@@ -31,6 +32,8 @@ hadaq::AdcProcessor::AdcProcessor(TrbProcessor* trb, unsigned subid, unsigned nu
       rec.fCFDCoarseTiming = MakeH1("CFDCoarseTiming","CFD coarse timing",10000,0,10000,"t / ns");
       rec.fCFDFineTiming = MakeH1("CFDFineTiming","CFD fine timing",10000,0,10000,"t / ns");
       rec.fCFDDiffTiming = MakeH1("CFDDiffTiming","Timing difference",10000,-500,500,"t / ns");
+      rec.fEdgeSamples = MakeH2("EdgeSamples","Samples of the leading edge",4,0,4,1000,-500,500,"egde;value");
+      rec.fEdgeDiffTiming = MakeH1("EdgeDiffTiming","Timing difference",10000,-500,500,"t / ns");
       SetSubPrefix();
       fCh.push_back(rec);
    }
@@ -77,15 +80,16 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
          const uint32_t samplesSinceTrigger = arr[++n];
          const int32_t  valBeforeZeroX = arr[++n];
          const int32_t  valAfterZeroX = arr[++n];
-         FillHistograms(ch, integral, samplesSinceTrigger, valBeforeZeroX, valAfterZeroX);
+         FillStandardHistograms(ch, integral, samplesSinceTrigger, valBeforeZeroX, valAfterZeroX);
       }
       // kind==0xd is CFD data word header of CFD firmware
       else if(kind == 0xd) {
          uint32_t ch = msg.getCh(); // has same structure as verbose data word
          if(ch>=fCh.size())
             continue;
-         // there should be now 3 values after this header word
-         if(n+3>len)
+         // there should be now 5 values after this header word
+         const unsigned expected_len = 5;
+         if(n+expected_len>len)
             continue;
          // we should have seen some trigger epoch word
          if(lastTriggerEpoch<0)
@@ -99,13 +103,49 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
                + ((arr[n+1] >> 16) & 0xffff);
          const int samplesSinceTrigger = epochCounter - lastTriggerEpoch;
 
-         // integral and timings
+         // integral and "standard" CFD timings
          const short integral = arr[n+1] & 0xffff;
          const short valBeforeZeroX = (arr[n+2] >> 16) & 0xffff;
          const short valAfterZeroX = arr[n+2] & 0xffff;
-         FillHistograms(ch, integral, samplesSinceTrigger, valBeforeZeroX, valAfterZeroX);
+         FillStandardHistograms(ch, integral, samplesSinceTrigger, valBeforeZeroX, valAfterZeroX);
+         
+         // four samples of the "edge"
+         std::vector<short> edges;
+         edges.push_back(arr[n+4] & 0xffff);
+         edges.push_back((arr[n+4] >> 16) & 0xffff);
+         edges.push_back(arr[n+3] & 0xffff);
+         edges.push_back((arr[n+3] >> 16) & 0xffff);
+         
+         // "fit" the four points to straight line f(x) = a + bx
+         double S   = 0;
+         double Sx  = 0;
+         double Sy  = 0;
+         double Sxx = 0;
+         double Sxy = 0;
+         for(size_t i=0;i<edges.size();i++) {
+            const double s = 1;
+            const double s2 = s*s;
+            const double x  = i*fSamplingPeriod;
+            const double y  = edges[i];
+            S   += 1/s2;
+            Sx  += x/s2;
+            Sy  += y/s2;
+            Sxx += x*x/s2;
+            Sxy += x*y/s2;
+         }
+         const double D = S*Sxx-Sx*Sx;
+         const double a = (Sxx*Sy - Sx*Sxy)/D;
+         const double b = (S*Sxy-Sx*Sy)/D;
+         const double fineTiming = -a/b;
+                 
+         ChannelRec& r = fCh[ch];
+         for(size_t i=0;i<edges.size();i++) 
+            FillH2(r.fEdgeSamples, i, edges[i]);
+         r.timing_Edge = samplesSinceTrigger*fSamplingPeriod + fineTiming;
+         
+         
          // don't forget to move forward
-         n += 3;
+         n += expected_len;
       }
       // kind==0xe is trigger epoch word of CFD firmware
       else if(kind == 0xe) {
@@ -153,7 +193,8 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
       const ChannelRec& c = fCh[ch];
       if(c.diffCh<0)
          continue;
-      FillH1(c.fCFDDiffTiming, c.timing - fCh[c.diffCh].timing);
+      FillH1(c.fCFDDiffTiming, c.timing_CFD - fCh[c.diffCh].timing_CFD);
+      FillH1(c.fEdgeDiffTiming, c.timing_Edge - fCh[c.diffCh].timing_Edge);
    }
 
    return true;
@@ -194,21 +235,20 @@ void hadaq::AdcProcessor::CreateBranch(TTree* t)
    mgr()->CreateBranch(t, GetName(), "std::vector<hadaq::AdcMessage>", (void**) &pStoreVect);
 }
 
-void hadaq::AdcProcessor::FillHistograms(
+void hadaq::AdcProcessor::FillStandardHistograms(
       uint32_t ch,
       const int integral,
       const int samplesSinceTrigger,
       const int valBeforeZeroX,
       const int valAfterZeroX)
 {
-   const double samplingPeriod = 1000.0/64.0; // in nano seconds 25ns=40MHz, 15.625ns=64MHz
    const double fraction = (double)valBeforeZeroX/(valBeforeZeroX-valAfterZeroX);
-   const double coarseTiming = samplingPeriod*samplesSinceTrigger;
-   const double fineTiming = samplingPeriod*fraction + coarseTiming;
+   const double coarseTiming = fSamplingPeriod*samplesSinceTrigger;
+   const double fineTiming = fSamplingPeriod*fraction + coarseTiming;
    FillH1(fCh[ch].fIntegral, integral);
    FillH1(fCh[ch].fCFDCoarseTiming, coarseTiming);
    FillH1(fCh[ch].fCFDFineTiming, fineTiming);
-   fCh[ch].timing = fineTiming;
+   fCh[ch].timing_CFD = fineTiming;
 }
 
 void hadaq::AdcProcessor::Store(base::Event* ev)

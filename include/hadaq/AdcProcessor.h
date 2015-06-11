@@ -29,14 +29,21 @@ namespace hadaq {
             base::H1handle fIntegral;        //! histogram of integrals from CFD feature extraction
             base::H1handle fCFDCoarseTiming; //! histogram of coarse timings from CFD feature extraction
             base::H1handle fCFDFineTiming;   //! histogram of fine timings from CFD feature extraction
-            base::H1handle fCFDDiffTiming;   //! histogram of fine time difference to other specified channel
+            base::H1handle fCFDDiffTiming;   //! histogram of CFD fine time difference to other specified channel
+            base::H2handle fEdgeSamples;     //! histogram of leading edge samples used for timing
+            base::H1handle fEdgeDiffTiming;  //! histogram of edge fine time difference to other specified channel
             int diffCh;                      //! if not <0, specifies channel for fCFDDiffTiming
-            double timing;                   //! the timing in ns, relative to trigger word. Set in FillHistograms()
+            double timing_CFD;               //! the timing in ns, relative to trigger word. Set in FillHistograms()
+            double timing_Edge;              //! the timing in ns, relative to trigger word. Set in FillHistograms()            
             ChannelRec() :
                diffCh(-1),
-               timing(std::numeric_limits<double>::quiet_NaN()) {}
+               timing_CFD(std::numeric_limits<double>::quiet_NaN()),
+               timing_Edge(std::numeric_limits<double>::quiet_NaN())
+            {}
          };
 
+         const double fSamplingPeriod;
+         
 
          base::H1handle fKinds;      //! kinds of messages
          base::H1handle fChannels;   //! histogram with messages per channel
@@ -47,7 +54,7 @@ namespace hadaq {
 
          virtual void CreateBranch(TTree*);
 
-         void FillHistograms(uint32_t ch,
+         void FillStandardHistograms(uint32_t ch,
                          const int integral,
                          const int samplesSinceTrigger,
                          const int valBeforeZeroX,
@@ -56,7 +63,8 @@ namespace hadaq {
 
       public:
 
-         AdcProcessor(TrbProcessor* trb, unsigned subid, unsigned numchannels = 48);
+         AdcProcessor(TrbProcessor* trb, unsigned subid, unsigned numchannels = 48, 
+                      double samplingPeriod = 1000.0/64);
          virtual ~AdcProcessor();
 
          inline unsigned NumChannels() const { return fCh.size(); }
