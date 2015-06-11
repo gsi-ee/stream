@@ -4,13 +4,13 @@ ifneq ($(shell root-config --version 2>/dev/null),)
 IS_ROOT=true
 endif
 
-ifdef debug
-CXXOPT      += -g
-endif
-
 CXXOPT       += -O2 -fPIC -Wall $(INCLUDES:%=-I%) $(DEFINITIONS:%=-D%) 
 LD            = g++
 CXX           = g++
+
+ifdef debug
+CXXOPT      += -O0 -g
+endif
 
 INCLUDES      = $(STREAMSYS)/include
 
