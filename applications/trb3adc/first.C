@@ -9,7 +9,8 @@ void first()
 
    hadaq::TrbProcessor* trb3 = new hadaq::TrbProcessor(0x8000, hld);
    trb3->SetHistFilling(4);
-
+   //trb3->SetPrintRawData();
+   
    hadaq::AdcProcessor* adc = new hadaq::AdcProcessor(trb3, 0x0200);
    adc->SetDiffChannel(12, 13);
    adc->SetDiffChannel(13, 12);
