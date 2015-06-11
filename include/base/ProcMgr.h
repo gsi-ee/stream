@@ -95,6 +95,7 @@ namespace base {
          virtual bool CreateStore(const char* storename) { return false; }
          virtual bool CloseStore() { return false; }
          virtual bool CreateBranch(TTree* t, const char* name, const char* class_name, void** obj) { return false; }
+         virtual bool CreateBranch(TTree* t, const char* name, void* member, const char* kind) { return false; }
 
          // this is list of generic methods for common data processing
 

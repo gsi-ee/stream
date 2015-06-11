@@ -20,6 +20,7 @@ class TRootProcMgr : public base::ProcMgr {
       virtual bool CloseStore();
 
       virtual bool CreateBranch(TTree* t, const char* name, const char* class_name, void** obj);
+      virtual bool CreateBranch(TTree* t, const char* name, void* member, const char* kind);
 
 };
 

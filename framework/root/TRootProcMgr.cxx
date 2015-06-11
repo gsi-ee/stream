@@ -56,3 +56,11 @@ bool TRootProcMgr::CreateBranch(TTree* t, const char* name, const char* class_na
    return true;
 }
 
+bool TRootProcMgr::CreateBranch(TTree* t, const char* name, void* member, const char* kind)
+{
+   if (t==0) return false;
+   t->Branch(name, member, kind);
+   return true;
+}
+
+
