@@ -11,9 +11,12 @@ void first()
    trb3->SetHistFilling(4);
 
    hadaq::AdcProcessor* adc = new hadaq::AdcProcessor(trb3, 0x0200);
+   adc->SetDiffChannel(1, 0);
+   adc->SetDiffChannel(0, 1);
+
 
    // uncomment these line to enable store of all ADC data in the tree
-   hld->SetStoreEnabled(true);
+   //hld->SetStoreEnabled(true);
 
    // create store - typically done in second.C, should be called only once
    // base::ProcMgr::instance()->CreateStore("file.root");

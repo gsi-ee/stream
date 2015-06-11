@@ -5,6 +5,8 @@
 
 #include "hadaq/AdcMessage.h"
 #include "hadaq/AdcSubEvent.h"
+#include <limits>
+#include <iostream>
 
 namespace hadaq {
 
@@ -27,6 +29,12 @@ namespace hadaq {
             base::H1handle fIntegral;        //! histogram of integrals from CFD feature extraction
             base::H1handle fCFDCoarseTiming; //! histogram of coarse timings from CFD feature extraction
             base::H1handle fCFDFineTiming;   //! histogram of fine timings from CFD feature extraction
+            base::H1handle fCFDDiffTiming;   //! histogram of fine time difference to other specified channel
+            int diffCh;                      //! if not <0, specifies channel for fCFDDiffTiming
+            double timing;                   //! the timing in ns, relative to trigger word. Set in FillHistograms()
+            ChannelRec() :
+               diffCh(-1),
+               timing(std::numeric_limits<double>::quiet_NaN()) {}
          };
 
 
@@ -39,7 +47,7 @@ namespace hadaq {
 
          virtual void CreateBranch(TTree*);
 
-         void FillTimingHistos(uint32_t ch,
+         void FillHistograms(uint32_t ch,
                          const int integral,
                          const int samplesSinceTrigger,
                          const int valBeforeZeroX,
@@ -52,6 +60,7 @@ namespace hadaq {
          virtual ~AdcProcessor();
 
          inline unsigned NumChannels() const { return fCh.size(); }
+         void SetDiffChannel(unsigned ch, int diffch);
 
          /** Scan all messages, find reference signals
           * if returned false, buffer has error and must be discarded */

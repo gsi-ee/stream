@@ -26,10 +26,11 @@ hadaq::AdcProcessor::AdcProcessor(TrbProcessor* trb, unsigned subid, unsigned nu
       ChannelRec rec;
       SetSubPrefix("Ch", ch);
       rec.fValues = MakeH1("Values","Distribution of values (unsigned)", 1<<10, 0, 1<<10, "value");
-      rec.fWaveform = MakeH2("Waveform", "Integrated Waveform", 512, 0, 512, 1<<10, 0, 1<<10, "sample;value");
+      rec.fWaveform = MakeH2("Waveform", "Integrated Waveform", 512, 0, 512, 1<<11, -(1<<10), 1<<10, "sample;value");
       rec.fIntegral = MakeH1("Integral","Summed integral",10000,0,10000,"integral");
-      rec.fCFDFineTiming = MakeH1("CFDFineTiming","CFD fine timing",10000,0,10000,"t / ns");
       rec.fCFDCoarseTiming = MakeH1("CFDCoarseTiming","CFD coarse timing",10000,0,10000,"t / ns");
+      rec.fCFDFineTiming = MakeH1("CFDFineTiming","CFD fine timing",10000,0,10000,"t / ns");
+      rec.fCFDDiffTiming = MakeH1("CFDDiffTiming","Timing difference",10000,-500,500,"t / ns");
       SetSubPrefix();
       fCh.push_back(rec);
    }
@@ -38,6 +39,11 @@ hadaq::AdcProcessor::AdcProcessor(TrbProcessor* trb, unsigned subid, unsigned nu
 
 hadaq::AdcProcessor::~AdcProcessor()
 {
+}
+
+void hadaq::AdcProcessor::SetDiffChannel(unsigned ch, int diffch)
+{
+   fCh[ch].diffCh = diffch;
 }
 
 bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
@@ -65,13 +71,13 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
          if(ch>=fCh.size())
             continue;
          // there should be now 4 values after this header word
-         if(n+4>=len)
+         if(n+4>len)
             continue;
          const int32_t  integral = arr[++n];
          const uint32_t samplesSinceTrigger = arr[++n];
          const int32_t  valBeforeZeroX = arr[++n];
          const int32_t  valAfterZeroX = arr[++n];
-         FillTimingHistos(ch, integral, samplesSinceTrigger, valBeforeZeroX, valAfterZeroX);
+         FillHistograms(ch, integral, samplesSinceTrigger, valBeforeZeroX, valAfterZeroX);
       }
       // kind==0xd is CFD data word header of CFD firmware
       else if(kind == 0xd) {
@@ -79,7 +85,7 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
          if(ch>=fCh.size())
             continue;
          // there should be now 3 values after this header word
-         if(n+3>=len)
+         if(n+3>len)
             continue;
          // we should have seen some trigger epoch word
          if(lastTriggerEpoch<0)
@@ -97,7 +103,9 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
          const short integral = arr[n+1] & 0xffff;
          const short valBeforeZeroX = (arr[n+2] >> 16) & 0xffff;
          const short valAfterZeroX = arr[n+2] & 0xffff;
-         FillTimingHistos(ch, integral, samplesSinceTrigger, valBeforeZeroX, valAfterZeroX);
+         FillHistograms(ch, integral, samplesSinceTrigger, valBeforeZeroX, valAfterZeroX);
+         // don't forget to move forward
+         n += 3;
       }
       // kind==0xe is trigger epoch word of CFD firmware
       else if(kind == 0xe) {
@@ -141,6 +149,13 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
    // if (!fCrossProcess) AfterFill(); // optional
 
 
+   for(size_t ch=0;ch<fCh.size();ch++) {
+      const ChannelRec& c = fCh[ch];
+      if(c.diffCh<0)
+         continue;
+      FillH1(c.fCFDDiffTiming, c.timing - fCh[c.diffCh].timing);
+   }
+
    return true;
 
 }
@@ -179,22 +194,21 @@ void hadaq::AdcProcessor::CreateBranch(TTree* t)
    mgr()->CreateBranch(t, GetName(), "std::vector<hadaq::AdcMessage>", (void**) &pStoreVect);
 }
 
-void hadaq::AdcProcessor::FillTimingHistos(
+void hadaq::AdcProcessor::FillHistograms(
       uint32_t ch,
       const int integral,
       const int samplesSinceTrigger,
       const int valBeforeZeroX,
       const int valAfterZeroX)
 {
-   const double samplingPeriod = 1000.0/40.0; // in nano seconds 25ns=40MHz,
-   if(valBeforeZeroX<valAfterZeroX)
-     return;
+   const double samplingPeriod = 1000.0/64.0; // in nano seconds 25ns=40MHz, 15.625ns=64MHz
    const double fraction = (double)valBeforeZeroX/(valBeforeZeroX-valAfterZeroX);
    const double coarseTiming = samplingPeriod*samplesSinceTrigger;
    const double fineTiming = samplingPeriod*fraction + coarseTiming;
    FillH1(fCh[ch].fIntegral, integral);
    FillH1(fCh[ch].fCFDCoarseTiming, coarseTiming);
    FillH1(fCh[ch].fCFDFineTiming, fineTiming);
+   fCh[ch].timing = fineTiming;
 }
 
 void hadaq::AdcProcessor::Store(base::Event* ev)
