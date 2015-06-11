@@ -86,6 +86,8 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
    uint32_t lastCh = 0;  // remember last used channel for dumping verbose data
 
    
+   const char* subprefix = "ChADC";
+   
    vector< vector<short> > raw_samples;
    raw_samples.resize(fCh.size());
    
@@ -100,13 +102,13 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
          uint32_t ch = msg.getCh(); // has same structure as verbose data word
          if(ch>=fCh.size())
             continue;
-         // there should be now 3 values after this header word
-         const unsigned expected_len = 3;
+         // there should be now 2 values after this header word
+         const unsigned expected_len = 2;
          if(n+expected_len>len)
             continue;
 
          ChannelRec& r = fCh[ch]; // helpful shortcut
-         SetSubPrefix("ADCCh", ch);
+         SetSubPrefix(subprefix, ch);
         
          // extract the epoch counter
          // upper 8bits in this word,
@@ -120,7 +122,7 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
          // integral 
          const short integral = arr[n+1] & 0xffff;
          if(r.fIntegral==0)
-            r.fIntegral = MakeH1("ADCIntegral","Summed integral",10000,0,10000,"integral");
+            r.fIntegral = MakeH1("Integral","Summed integral",10000,0,10000,"integral");
          FillH1(r.fIntegral, integral);
          
          // CFD timing
@@ -131,7 +133,7 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
          r.fTiming = fineTiming;
          
          if(r.fSamples==0)
-            r.fSamples = MakeH1("ADCIntegral","Summed integral",10000,0,10000,"integral");
+            r.fSamples = MakeH2("Samples","Samples of the zero crossing",2,0,2,1000,-500,500,"crossing;value");
          FillH2(r.fSamples, 0, valBeforeZeroX);
          FillH2(r.fSamples, 1, valAfterZeroX);
      
@@ -147,7 +149,7 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
          if(ch>=fCh.size())
             continue;
 
-         SetSubPrefix("ADCCh", ch);
+         SetSubPrefix(subprefix, ch);
          
          if(HistFillLevel() > 1)
             FillH1(fChannels, ch);
@@ -155,7 +157,7 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
          ChannelRec& r = fCh[ch]; // helpful shortcut         
          
          if(r.fValues == 0)
-            r.fValues = MakeH1("ADCValues","Distribution of values (unsigned)", 1<<10, 0, 1<<10, "value");
+            r.fValues = MakeH1("Values","Distribution of values (unsigned)", 1<<10, 0, 1<<10, "value");
          FillH1(r.fValues, value);
 
          // check if msg still belongs to same ADC channel
@@ -169,7 +171,7 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
          }
 
          if(r.fWaveform==0)
-            r.fWaveform = MakeH2("ADCWaveform", "Integrated Waveform", 512, 0, 512, 1<<11, -(1<<10), 1<<10, "sample;value");
+            r.fWaveform = MakeH2("Waveform", "Integrated Waveform", 512, 0, 512, 1<<11, -(1<<10), 1<<10, "sample;value");
          FillH2(r.fWaveform, nSample, value);
          
          SetSubPrefix();         
@@ -178,6 +180,24 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
       // they are just ignored
    }
 
+   
+   for(size_t ch=0;ch<fCh.size();ch++) {
+      ChannelRec& c = fCh[ch];
+      if(c.fDiffCh<0)
+         continue;
+      
+      const double diff = c.fTiming - fCh[c.fDiffCh].fTiming;
+      
+      if(!isfinite(diff))
+         continue;
+      
+      SetSubPrefix(subprefix, ch);
+      if(c.fDiffTiming == 0)
+         c.fDiffTiming = MakeH1("DiffTiming","Timing difference",10000,-500,500,"t / ns");
+      FillH1(c.fDiffTiming, diff);
+      SetSubPrefix(); 
+   }
+   
    return true;
 
 }
