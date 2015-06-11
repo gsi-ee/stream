@@ -188,7 +188,8 @@ namespace hadaq {
 
       public:
 
-         TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels = MaxNumTdcChannels, unsigned edge_mask = 1);
+         TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels = MaxNumTdcChannels,
+                      unsigned edge_mask = 1, const char* format = "TDC_%04X");
          virtual ~TdcProcessor();
 
          static void SetMaxBoardId(unsigned) { }

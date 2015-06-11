@@ -23,8 +23,8 @@ void hadaq::TdcProcessor::SetDefaults(unsigned numfinebins, unsigned totrange)
    gTotRange = totrange;
 }
 
-hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels, unsigned edge_mask) :
-   SubProcessor(trb, "TDC_%04X", tdcid),
+hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels, unsigned edge_mask, const char * format) :
+   SubProcessor(trb, format, tdcid),
    fIter1(),
    fIter2(),
    fCalibrProgress(0.),
