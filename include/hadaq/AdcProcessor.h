@@ -49,6 +49,8 @@ namespace hadaq {
 
          const double fSamplingPeriod;
          
+         static std::vector<double> storage;
+         
 
          base::H1handle fKinds;      //! kinds of messages
          base::H1handle fChannels;   //! histogram with messages per channel

@@ -9,6 +9,11 @@
 #include "base/ProcMgr.h"
 
 #include "hadaq/TrbProcessor.h"
+#include <cmath>
+
+using namespace std;
+
+vector<double> hadaq::AdcProcessor::storage; 
 
 hadaq::AdcProcessor::AdcProcessor(TrbProcessor* trb, unsigned subid, unsigned numchannels, double samplingPeriod) :
    SubProcessor(trb, "ADC_%04x", subid),
@@ -49,6 +54,281 @@ hadaq::AdcProcessor::~AdcProcessor()
 void hadaq::AdcProcessor::SetDiffChannel(unsigned ch, int diffch)
 {
    fCh[ch].diffCh = diffch;
+}
+
+double calc_variance(const vector<double>& v) {
+   double sum = 0;
+   double sum2 = 0;
+   for(size_t i=0;i<v.size();i++) {
+      sum += v[i];
+      sum2 += v[i]*v[i];
+   }
+   sum  /= v.size();
+   sum2 /= v.size();
+   const double var = sum2 - sum*sum;
+   return var;
+}
+
+double calc_a_chi2(const vector<double>& xx, const vector<double>& yy, 
+                 const vector<double>& sx, const vector<double>& sy, 
+                 double& a,
+                 const double b_angle
+                 ) {
+   const size_t n = xx.size();
+   const double b = tan(b_angle);
+   // calculate a and weights ww
+   vector<double> ww(n);
+   double suma=0, sumw=0;
+   for(size_t i=0;i<n;i++) {
+      double ww_ = b*sx[i]*b*sx[i] + sy[i]*sy[i];
+      ww_ = 1/ww_;
+      ww[i] = ww_;
+      sumw += ww_;
+      suma += ww[i]*(yy[i]-b*xx[i]);
+   }
+   a = suma/sumw;
+   // calc chi2 based on a and b
+   double chi2 = 0;
+   for(size_t i=0;i<n;i++) {
+      const double num = yy[i]-a-b*xx[i];
+      chi2 += num*num*ww[i];
+   }
+   return chi2;
+}
+
+
+
+double find_chi2_minimum(
+      const vector<double>& xx, const vector<double>& yy, 
+      const vector<double>& sx, const vector<double>& sy, 
+      double& a,
+      double b_angle_a, double b_angle_b, double& b_angle
+      )
+{
+   const double eps = 1e-8;
+   const double t = 1e-4;
+   
+   double c;
+   double d;
+   double e;
+   double fu;
+   double fv;
+   double fw;
+   double fx;
+   double m;
+   double p;
+   double q;
+   double r;
+   double sa;
+   double sb;
+   double t2;
+   double tol;
+   double u;
+   double v;
+   double w;
+
+   c = 0.5 * ( 3.0 - sqrt ( 5.0 ) );
+   
+   sa = b_angle_a;
+   sb = b_angle_b;
+   b_angle = sa + c * ( b_angle_b - b_angle_a );
+   w = b_angle;
+   v = w;
+   e = 0.0;
+   fx = calc_a_chi2(xx,yy,sx,sy,a, b_angle);
+   fw = fx;
+   fv = fw;
+   
+   for ( ; ; )
+   { 
+      m = 0.5 * ( sa + sb ) ;
+      tol = eps * fabs ( b_angle ) + t;
+      t2 = 2.0 * tol;
+
+      if ( fabs ( b_angle - m ) <= t2 - 0.5 * ( sb - sa ) )
+      {
+         break;
+      }
+
+      r = 0.0;
+      q = r;
+      p = q;
+      
+      if ( tol < fabs ( e ) )
+      {
+         r = ( b_angle - w ) * ( fx - fv );
+         q = ( b_angle - v ) * ( fx - fw );
+         p = ( b_angle - v ) * q - ( b_angle - w ) * r;
+         q = 2.0 * ( q - r );
+         if ( 0.0 < q )
+         {
+            p = - p;
+         }
+         q = fabs ( q );
+         r = e;
+         e = d;
+      }
+      
+      if ( fabs ( p ) < fabs ( 0.5 * q * r ) && 
+           q * ( sa - b_angle ) < p && 
+           p < q * ( sb - b_angle ) )
+      {
+
+         d = p / q;
+         u = b_angle + d;
+
+         if ( ( u - sa ) < t2 || ( sb - u ) < t2 )
+         {
+            if ( b_angle < m )
+            {
+               d = tol;
+            }
+            else
+            {
+               d = - tol;
+            }
+         }
+      }
+
+      else
+      {
+         if ( b_angle < m )
+         {
+            e = sb - b_angle;
+         }
+         else
+         {
+            e = sa - b_angle;
+         }
+         d = c * e;
+      }
+
+      if ( tol <= fabs ( d ) )
+      {
+         u = b_angle + d;
+      }
+      else if ( 0.0 < d )
+      {
+         u = b_angle + tol;
+      }
+      else
+      {
+         u = b_angle - tol;
+      }
+      
+      fu = calc_a_chi2(xx,yy,sx,sy,a, u);
+
+      if ( fu <= fx )
+      {
+         if ( u < b_angle )
+         {
+            sb = b_angle;
+         }
+         else
+         {
+            sa = b_angle;
+         }
+         v = w;
+         fv = fw;
+         w = b_angle;
+         fw = fx;
+         b_angle = u;
+         fx = fu;
+      }
+      else
+      {
+         if ( u < b_angle )
+         {
+            sa = u;
+         }
+         else
+         {
+            sb = u;
+         }
+         
+         if ( fu <= fw || w == b_angle )
+         {
+            v = w;
+            fv = fw;
+            w = u;
+            fw = fu;
+         }
+         else if ( fu <= fv || v == b_angle || v == w )
+         {
+            v = u;
+            fv = fu;
+         }
+      }
+   }
+   return fx;
+}
+
+void fitxy(const vector<double>& x_, const vector<double>& y_, 
+           const vector<double>& sigy, 
+           double& a, double& b) {
+   double S   = 0;
+   double Sx  = 0;
+   double Sy  = 0;
+   double Sxx = 0;
+   double Sxy = 0;
+   for(size_t i=0;i<y_.size();i++) {
+      const double s = sigy[i];
+      const double s2 = s*s;
+      const double x  = x_[i];
+      const double y  = y_[i];
+      S   += 1/s2;
+      Sx  += x/s2;
+      Sy  += y/s2;
+      Sxx += x*x/s2;
+      Sxy += x*y/s2;
+   }
+   const double D = S*Sxx-Sx*Sx;
+   a = (Sxx*Sy - Sx*Sxy)/D;
+   b = (S*Sxy-Sx*Sy)/D;
+}
+
+void fitxye(const vector<double>& x_,   const vector<double>& y_, 
+            const vector<double>& sigx, const vector<double>& sigy,
+            double& a, double& b) {
+   double varx = calc_variance(x_);
+   double vary = calc_variance(y_);
+   double scale = sqrt(varx/vary);
+   const size_t n = x_.size();
+   vector<double> xx(n), yy(n), sx(n), sy(n), ww(n);
+   for(size_t i=0;i<n;i++) {
+      xx[i] = x_[i];
+      yy[i] = y_[i]*scale;
+      sx[i] = sigx[i];
+      sy[i] = sigy[i]*scale;
+      ww[i] = sqrt(sx[i]*sx[i]+sy[i]*sy[i]);      
+   }
+   
+   // conventional fit for starting point of b
+   fitxy(xx,yy,sy,a,b);
+   
+   double b_angle = atan(b);
+   
+   // find minimum
+   find_chi2_minimum(xx,yy,sx,sy,a, 0, b_angle, b_angle);
+   
+   // unscale
+   a /= scale;
+   b = tan(b_angle)/scale;
+}
+
+double getfraction(const vector<short>& edges) {
+   const size_t n = edges.size();
+   vector<double> x_(n), y_(n), sx(n), sy(n);
+   for(size_t i=0; i<y_.size(); i++) {
+      x_[i] = i;
+      y_[i] = edges[i];
+      sx[i] = 50;
+      sy[i] = 10; //0.01*edges[i];
+   }
+   double a, b;
+   //fitxy(x_, y_, sy, a, b);
+   fitxye(x_,y_,sx,sy,a,b);
+   return -a/b;
 }
 
 bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
@@ -111,7 +391,7 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
          r.samples.push_back(valAfterZeroX);
          
          // four samples of the "edge"
-         std::vector<short> edges;
+         vector<short> edges;
          edges.push_back(arr[n+4] & 0xffff);
          edges.push_back((arr[n+4] >> 16) & 0xffff);
          edges.push_back(arr[n+3] & 0xffff);
@@ -119,27 +399,8 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
          r.samples.insert(r.samples.end(), edges.begin(), edges.end());
         
          // "fit" the four points to straight line f(x) = a + bx
-         double S   = 0;
-         double Sx  = 0;
-         double Sy  = 0;
-         double Sxx = 0;
-         double Sxy = 0;
-         for(size_t i=0;i<edges.size();i++) {
-            const double s = 1;
-            const double s2 = s*s;
-            const double x  = i;
-            const double y  = edges[i];
-            S   += 1/s2;
-            Sx  += x/s2;
-            Sy  += y/s2;
-            Sxx += x*x/s2;
-            Sxy += x*y/s2;
-         }
-         const double D = S*Sxx-Sx*Sx;
-         const double a = (Sxx*Sy - Sx*Sxy)/D;
-         const double b = (S*Sxy-Sx*Sy)/D;
-         const double fraction_Edge = -a/b;
-         const double fineTiming_Edge = (samplesSinceTrigger + fraction_Edge)*fSamplingPeriod;
+
+         const double fineTiming_Edge = (samplesSinceTrigger + getfraction(edges))*fSamplingPeriod;
                  
          for(size_t i=0;i<edges.size();i++) 
             FillH2(r.fEdgeSamples, i, edges[i]);
@@ -199,9 +460,20 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
       const double diff_Edge = c.timing_Edge - fCh[c.diffCh].timing_Edge;
       FillH1(c.fCFDDiffTiming, diff_CFD);
       FillH1(c.fEdgeDiffTiming, diff_Edge);
+      
       base::H2handle h = diff_CFD<209 ? c.fSamples1 : c.fSamples2;
       for(size_t i=0;i<c.samples.size();i++) 
          FillH2(h, i, c.samples[i]);
+      if(ch!=0)
+         continue;
+      if(storage.size()<1000) {
+         storage.push_back(diff_Edge);
+      }
+      else {
+         double var = calc_variance(storage);
+         cout << "RMS: " << sqrt(var) << endl;
+         storage.clear();
+      }
    }
 
    return true;
