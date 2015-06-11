@@ -11,8 +11,8 @@ void first()
    trb3->SetHistFilling(4);
 
    hadaq::AdcProcessor* adc = new hadaq::AdcProcessor(trb3, 0x0200);
-   adc->SetDiffChannel(1, 0);
-   adc->SetDiffChannel(0, 1);
+   adc->SetDiffChannel(12, 13);
+   adc->SetDiffChannel(13, 12);
 
 
    // uncomment these line to enable store of all ADC data in the tree
