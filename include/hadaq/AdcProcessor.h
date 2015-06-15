@@ -19,7 +19,7 @@ class TrbProcessor;
     * which the only can provide data
     **/
 
-class AdcProcessor : public TdcProcessor {
+class AdcProcessor : public SubProcessor {
    
    friend class TrbProcessor;
    
@@ -56,7 +56,6 @@ protected:
    
    base::H1handle fKinds;        //! kinds of messages
    base::H1handle fChannels;     //! histogram with messages per channel
-   base::H1handle fADCPhase;     //! histogram with ADC clock phase to trigger measured by TDC
    std::vector<ChannelRec>  fCh; //! histogram for individual channels
    
    std::vector<hadaq::AdcMessage>   fStoreVect; //! dummy empty vector

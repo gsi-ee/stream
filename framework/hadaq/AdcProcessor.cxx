@@ -16,7 +16,7 @@ using namespace std;
 vector<double> hadaq::AdcProcessor::storage; 
 
 hadaq::AdcProcessor::AdcProcessor(TrbProcessor* trb, unsigned subid, unsigned numchannels, double samplingPeriod) :
-   TdcProcessor(trb, subid, 2, 0, "ADC_%04X"), // TDC channels 2, edgeMask=0 means just rising edge
+   SubProcessor(trb, "ADC_%04X", subid),
    fSamplingPeriod(samplingPeriod),
    fStoreVect(),
    pStoreVect(0)
@@ -27,9 +27,6 @@ hadaq::AdcProcessor::AdcProcessor(TrbProcessor* trb, unsigned subid, unsigned nu
    if (HistFillLevel() > 1) {
       fKinds = MakeH1("ADCKinds", "Messages kinds", 16, 0, 16, "kinds");
       fChannels = MakeH1("ADCChannels", "Messages per channels", numchannels, 0, numchannels, "ch");
-      if(HistFillLevel() > 3) {
-         fADCPhase = MakeH1("ADCPhase", "ADC Clock phase to trigger", 3000, 0, 3*fSamplingPeriod, "phase / ns");
-      }
    }
    
 
@@ -65,23 +62,7 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
    // marker not found or no TDC data found, skip this buffer 
    if(ADC_offset==0) {
       return false;
-   }
-   
-   // decode the TDC stuff
-   base::Buffer TDC_buf;
-   TDC_buf.makereferenceof(buf.ptr(), 4*ADC_offset);
-   if(!TdcProcessor::FirstBufferScan(TDC_buf))
-      return false;
-   TdcProcessor::SecondBufferScan(TDC_buf);
-   
-   // obtain TDC fine timing for two channels
-   const TdcProcessor::ChannelRec& tdc_trigger  = TdcProcessor::fCh.at(0);
-   const TdcProcessor::ChannelRec& tdc_adcclock = TdcProcessor::fCh.at(1);  
-   // then calculate the ADC clock phase to the trigger signal
-   double adc_phase = 1.0e9*(tdc_adcclock.rising_hit_tm-tdc_trigger.rising_hit_tm);
-   if(HistFillLevel()>3) 
-      FillH1(fADCPhase, adc_phase);
-   
+   } 
   
 
    // start decoding the ADC data
