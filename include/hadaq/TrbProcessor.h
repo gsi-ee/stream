@@ -156,7 +156,7 @@ namespace hadaq {
          void CreateTDC(unsigned id1, unsigned id2 = 0, unsigned id3 = 0, unsigned id4 = 0);
 
          /** Create TDC processor, which extracts TDC information from CTS header */
-         void CreateCTS_TDC() { CreateTDC(fHadaqCTSId); }
+         void CreateCTS_TDC() { new hadaq::TdcProcessor(this, fHadaqCTSId, gNumChannels, gEdgesMask); }
 
          /** Disable calibration of specified channels in all TDCs */
          void DisableCalibrationFor(unsigned firstch, unsigned lastch = 0);
