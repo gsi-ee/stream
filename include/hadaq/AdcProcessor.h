@@ -43,6 +43,7 @@ protected:
          fPhaseVsEpoch(0),  
          fPhaseVsPos(0), 
          fPhaseVsNeg(0), 
+         fPhaseVsSample(0),
          fDiffCh(-1),
          fTiming(std::numeric_limits<double>::quiet_NaN())
       {}
@@ -61,6 +62,7 @@ protected:
       base::H2handle fPhaseVsEpoch;      
       base::H2handle fPhaseVsPos;
       base::H2handle fPhaseVsNeg;
+      base::H2handle fPhaseVsSample;      
       int fDiffCh;                     //! if not <0, specifies channel for fDiffTiming
       double fTiming;                  //! the timing in ns, relative to trigger
    };
