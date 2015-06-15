@@ -28,43 +28,25 @@ protected:
    struct ChannelRec {
    public:
       ChannelRec() :
-         fValues(0),
-         fWaveform(0),
-         fIntegral(0),
-         fSamples(0),
-         fCoarseTiming(0),
-         fFineTiming(0),
-         fDiffTiming(0),
-         fPhaseVsFrac(0),
-         fBeforeVsFrac(0),         
-         fAfterVsFrac(0),       
-         fPhaseVsBefore(0),
-         fPhaseVsAfter(0),
-         fPhaseVsEpoch(0),  
-         fPhaseVsPos(0), 
-         fPhaseVsNeg(0), 
-         fPhaseVsSample(0),
-         fDiffCh(-1),
-         fTiming(std::numeric_limits<double>::quiet_NaN())
+         fHValues(0),
+         fHWaveform(0),
+         fHIntegral(0),
+         fHSamples(0),
+         fHCoarseTiming(0),
+         fHFineTiming(0),
+         fFineTiming(std::numeric_limits<double>::quiet_NaN()),
+         fIntegral(std::numeric_limits<double>::quiet_NaN()),
+         fRawSamples()
       {}
-      base::H1handle fValues;          //! histogram of values distribution in channel
-      base::H2handle fWaveform;        //! histogram of integrated raw waveform of channel (debug)
-      base::H1handle fIntegral;        //! histogram of integrals from CFD feature extraction
-      base::H2handle fSamples;         //! histogram of fine timings from CFD feature extraction
-      base::H1handle fCoarseTiming;    //! ADC samples since trigger detected
-      base::H1handle fFineTiming;      //! histogram of timing of single channel to trigger (received by TDC)     
-      base::H1handle fDiffTiming;      //! histogram of CFD fine time difference to other specified channel
-      base::H2handle fPhaseVsFrac;
-      base::H2handle fBeforeVsFrac;
-      base::H2handle fAfterVsFrac; 
-      base::H2handle fPhaseVsBefore;
-      base::H2handle fPhaseVsAfter;      
-      base::H2handle fPhaseVsEpoch;      
-      base::H2handle fPhaseVsPos;
-      base::H2handle fPhaseVsNeg;
-      base::H2handle fPhaseVsSample;      
-      int fDiffCh;                     //! if not <0, specifies channel for fDiffTiming
-      double fTiming;                  //! the timing in ns, relative to trigger
+      base::H1handle fHValues;          //! histogram of values distribution in channel
+      base::H2handle fHWaveform;        //! histogram of integrated raw waveform of channel (debug)
+      base::H1handle fHIntegral;        //! histogram of integrals from CFD feature extraction
+      base::H2handle fHSamples;         //! histogram of fine timings from CFD feature extraction
+      base::H1handle fHCoarseTiming;    //! ADC samples since trigger detected
+      base::H1handle fHFineTiming;      //! histogram of timing of single channel to trigger    
+      double fFineTiming;               //! the timing in ns, relative to trigger
+      double fIntegral;
+      std::vector<short> fRawSamples;
    };
    
    const double fSamplingPeriod;
@@ -89,7 +71,6 @@ public:
    virtual ~AdcProcessor();
    
    inline unsigned NumChannels() const { return fCh.size(); }
-   void SetDiffChannel(unsigned ch, int diffch);
    
    /** Scan all messages, find reference signals
           * if returned false, buffer has error and must be discarded */
