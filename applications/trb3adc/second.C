@@ -30,7 +30,9 @@ class ADCProc : public base::EventProc {
       base::H1handle  hTimeCh2; 
       base::H2handle  hPhaseVsCh1; 
       base::H2handle  hPhaseVsCh2; 
+      base::H2handle  hTDCHitVsCh2; 
       
+      const static double samplingPeriod = 12.5;
             
    public:
       ADCProc(const char* procname, unsigned id, unsigned ctsid) :
@@ -63,6 +65,7 @@ class ADCProc : public base::EventProc {
          
          hPhaseVsCh1 = MakeH2("PhaseVsCh1","Phase vs. Ch1", 100, 40, 70, 1000, 200, 300, "phase;ch1");
          hPhaseVsCh2 = MakeH2("PhaseVsCh2","Phase vs. Ch2", 100, 40, 70, 1000, 450, 550, "phase;ch2");
+         hTDCHitVsCh2 = MakeH2("TDCHitVsCh2","TDCHit vs. Ch2", 500, 0, 50, 1000, 490, 590, "phase;ch2");
          
          // enable storing already in constructor
          //SetStoreEnabled();
@@ -137,7 +140,7 @@ class ADCProc : public base::EventProc {
             unsigned chid = ext.msg().getHitChannel();
             double tm = ext.GetGlobalTime();
             if(debug)
-               cout << "TDC ch=" << chid << " time=" << tm << endl;  
+               cout << "CTS ch=" << chid << " time=" << tm << endl;  
             if(chid==1) {
                tm_CTS = tm;
                break;
@@ -149,10 +152,22 @@ class ADCProc : public base::EventProc {
             return false;
          
          // convert back to ns from here
-         //double ADC_phase = std::fmod(1e9*(tm_TDC-tm_CTS)+12.5/2, 12.5);
-         double ADC_phase = 1e9*(tm_TDC-tm_CTS);
-         tm_ADC1 = 1e9*tm_ADC1;
-         tm_ADC2 = 1e9*tm_ADC2;
+         tm_TDC  *= 1e9;
+         tm_CTS  *= 1e9;
+         tm_ADC1 *= 1e9;
+         tm_ADC2 *= 1e9;
+         
+         double ADC_phase = tm_TDC-tm_CTS;
+         
+         // due to some unknown but fixed delay between 
+         // the measurement of tm_TDC and tm_CTS, we need 
+         // to correct for an ADC epoch counter "glitch" 
+         // TODO: check if this threshold of 22.7ns is constant 
+         // over TRB3 reboots (due to different PLL locking)
+         if(tm_TDC>22.7) {
+            tm_ADC1 -= samplingPeriod;
+            tm_ADC2 -= samplingPeriod;
+         }
          
          if(debug) {
             cout << "ADC phase from TDC: " << ADC_phase << endl;
@@ -167,8 +182,8 @@ class ADCProc : public base::EventProc {
          FillH1(hTimeCh2, tm_ADC2+ADC_phase);
          FillH2(hPhaseVsCh1, ADC_phase, tm_ADC1);
          FillH2(hPhaseVsCh2, ADC_phase, tm_ADC2);
-         
-         
+         FillH2(hTDCHitVsCh2, 1e9*tm_TDC, tm_ADC2+ADC_phase);
+                 
          if(debug)
             cout << endl;
          return true;

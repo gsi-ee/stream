@@ -103,7 +103,7 @@ bool hadaq::AdcProcessor::SecondBufferScan(const base::Buffer& buf)
          const int samplesSinceTrigger = epochCounter - ADC_trigger_epoch; // TODO: detect 24bit overflow
          if(r.fHCoarseTiming==0)
             r.fHCoarseTiming = MakeH1("CoarseTiming","Coarse timing to external trigger",10000,0,1000,"t / ns");;
-         FillH1(r.fHCoarseTiming, samplesSinceTrigger*fSamplingPeriod);
+         FillH1(r.fHCoarseTiming, 1e9*samplesSinceTrigger*fSamplingPeriod);
 
          // integral is in the lower 16bits
          const short integral = arr[n+1] & 0xffff;
@@ -119,7 +119,7 @@ bool hadaq::AdcProcessor::SecondBufferScan(const base::Buffer& buf)
          
          if(r.fHFineTiming==0)
             r.fHFineTiming = MakeH1("FineTiming","Fine timing to external trigger",10000,0,1000,"t / ns");
-         FillH1(r.fHFineTiming, fineTiming);
+         FillH1(r.fHFineTiming, 1e9*fineTiming);
          
          if(r.fHSamples==0)
             r.fHSamples = MakeH2("Samples","Samples of the zero crossing",2,0,2,1000,-500,500,"crossing;value");
@@ -129,7 +129,6 @@ bool hadaq::AdcProcessor::SecondBufferScan(const base::Buffer& buf)
          unsigned indx = 0; // index 0 is event index in triggered-based analysis
    
          if (indx < fGlobalMarks.size()) {
-            // convert timing to seconds
             msg.fFineTiming = fineTiming;
             msg.fIntegral = integral;
             AddMessage(indx, (hadaq::AdcSubEvent*) fGlobalMarks.item(indx).subev, msg);
