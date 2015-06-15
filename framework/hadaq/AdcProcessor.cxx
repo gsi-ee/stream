@@ -28,7 +28,7 @@ hadaq::AdcProcessor::AdcProcessor(TrbProcessor* trb, unsigned subid, unsigned nu
       fKinds = MakeH1("ADCKinds", "Messages kinds", 16, 0, 16, "kinds");
       fChannels = MakeH1("ADCChannels", "Messages per channels", numchannels, 0, numchannels, "ch");
       if(HistFillLevel() > 3) {
-         fADCPhase = MakeH1("ADCPhase", "ADC Clock phase to trigger", 1000, 0, fSamplingPeriod, "phase / ns");
+         fADCPhase = MakeH1("ADCPhase", "ADC Clock phase to trigger", 3000, 0, 3*fSamplingPeriod, "phase / ns");
       }
    }
    
@@ -74,7 +74,7 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
    
    // decode the TDC stuff
    base::Buffer TDC_buf;
-   TDC_buf.makecopyof(buf.ptr(), 4*ADC_offset);
+   TDC_buf.makereferenceof(buf.ptr(), 4*ADC_offset);
    if(!TdcProcessor::FirstBufferScan(TDC_buf))
       return false;
    TdcProcessor::SecondBufferScan(TDC_buf);
@@ -83,7 +83,7 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
    const TdcProcessor::ChannelRec& tdc_trigger  = TdcProcessor::fCh.at(0);
    const TdcProcessor::ChannelRec& tdc_adcclock = TdcProcessor::fCh.at(1);  
    // then calculate the ADC clock phase to the trigger signal
-   double adc_phase = std::fmod(1.0e9*(tdc_trigger.rising_hit_tm-tdc_adcclock.rising_hit_tm), fSamplingPeriod);
+   double adc_phase = 1.0e9*(tdc_adcclock.rising_hit_tm-tdc_trigger.rising_hit_tm);
    if(HistFillLevel()>3) 
       FillH1(fADCPhase, adc_phase);
    
@@ -139,11 +139,16 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
          const short valBeforeZeroX = (arr[n+2] >> 16) & 0xffff;
          const short valAfterZeroX = arr[n+2] & 0xffff;
          const double fraction = (double)valBeforeZeroX/(valBeforeZeroX-valAfterZeroX);
-         const double fineTiming = (samplesSinceTrigger + fraction)*fSamplingPeriod - adc_phase;
+         const double fineTiming = (samplesSinceTrigger + fraction)*fSamplingPeriod + adc_phase;
+         
          r.fTiming = fineTiming;
          if(r.fFineTiming==0)
             r.fFineTiming = MakeH1("FineTiming","Fine timing to external trigger",10000,0,1000,"t / ns");
          FillH1(r.fFineTiming, r.fTiming);
+         
+         if(r.fPhaseVsFrac==0)
+            r.fPhaseVsFrac = MakeH2("PhaseVsFrac","Phase vs. Fraction",1000,0,3*fSamplingPeriod,1000,0,fSamplingPeriod,"phase;fraction");
+         FillH2(r.fPhaseVsFrac,adc_phase,fraction*fSamplingPeriod);
          
          if(r.fSamples==0)
             r.fSamples = MakeH2("Samples","Samples of the zero crossing",2,0,2,1000,-500,500,"crossing;value");
