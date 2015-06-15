@@ -28,6 +28,9 @@ class ADCProc : public base::EventProc {
       base::H1handle  hAdcPhase;      
       base::H1handle  hTimeCh1; 
       base::H1handle  hTimeCh2; 
+      base::H2handle  hPhaseVsCh1; 
+      base::H2handle  hPhaseVsCh2; 
+      
             
    public:
       ADCProc(const char* procname, unsigned id, unsigned ctsid) :
@@ -54,10 +57,12 @@ class ADCProc : public base::EventProc {
               << " with ref " << fTdcInCTSId << endl;
 
          hDiffTime = MakeH1("DiffTime","Timing of Ch1-Ch2", 10000, -500, 500, "t / ns");
-         hAdcPhase = MakeH1("AdcPhase","Phase of external trigger to ADC clock", 10000, -100, 100, "t / ns");
+         hAdcPhase = MakeH1("AdcPhase","Phase of external trigger to ADC clock", 1000, 0, 100, "t / ns");
          hTimeCh1 = MakeH1("TimeCh1","Timing to trigger Ch1", 10000, 0, 1000, "t / ns");
          hTimeCh2 = MakeH1("TimeCh2","Timing to trigger Ch2", 10000, 0, 1000, "t / ns");
          
+         hPhaseVsCh1 = MakeH2("PhaseVsCh1","Phase vs. Ch1", 100, 40, 70, 1000, 200, 300, "phase;ch1");
+         hPhaseVsCh2 = MakeH2("PhaseVsCh2","Phase vs. Ch2", 100, 40, 70, 1000, 450, 550, "phase;ch2");
          
          // enable storing already in constructor
          //SetStoreEnabled();
@@ -144,9 +149,10 @@ class ADCProc : public base::EventProc {
             return false;
          
          // convert back to ns from here
-         double ADC_phase = (tm_TDC - tm_CTS)*1e9;
-         tm_ADC1 = 1e9*tm_ADC1 + ADC_phase;
-         tm_ADC2 = 1e9*tm_ADC2 + ADC_phase;
+         //double ADC_phase = std::fmod(1e9*(tm_TDC-tm_CTS)+12.5/2, 12.5);
+         double ADC_phase = 1e9*(tm_TDC-tm_CTS);
+         tm_ADC1 = 1e9*tm_ADC1;
+         tm_ADC2 = 1e9*tm_ADC2;
          
          if(debug) {
             cout << "ADC phase from TDC: " << ADC_phase << endl;
@@ -157,8 +163,11 @@ class ADCProc : public base::EventProc {
          // fill some histograms
          FillH1(hAdcPhase, ADC_phase);         
          FillH1(hDiffTime, tm_ADC1-tm_ADC2);
-         FillH1(hTimeCh1, tm_ADC1);
-         FillH1(hTimeCh2, tm_ADC2);
+         FillH1(hTimeCh1, tm_ADC1+ADC_phase);
+         FillH1(hTimeCh2, tm_ADC2+ADC_phase);
+         FillH2(hPhaseVsCh1, ADC_phase, tm_ADC1);
+         FillH2(hPhaseVsCh2, ADC_phase, tm_ADC2);
+         
          
          if(debug)
             cout << endl;
