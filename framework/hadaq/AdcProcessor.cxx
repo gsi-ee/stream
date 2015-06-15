@@ -154,11 +154,21 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
             r.fAfterVsFrac = MakeH2("AfterVsFrac","Second vs. Fraction",1000,-500,500,1000,0,fSamplingPeriod,"after;fraction");
          FillH2(r.fAfterVsFrac,valAfterZeroX,fraction*fSamplingPeriod);
          
+         if(r.fPhaseVsBefore==0)
+            r.fPhaseVsBefore = MakeH2("PhaseVsBefore","Phase vs. Before",1000,0,3*fSamplingPeriod,1000,-500,500,"phase;before");
+         FillH2(r.fPhaseVsBefore,adc_phase,valBeforeZeroX);
+         
+         if(r.fPhaseVsAfter==0) 
+            r.fPhaseVsAfter = MakeH2("PhaseVsAfter","Phase vs. After",1000,0,3*fSamplingPeriod,1000,-500,500,"phase;after");
+         FillH2(r.fPhaseVsAfter,adc_phase,valAfterZeroX);
+         
          if(r.fPhaseVsFrac==0)
             r.fPhaseVsFrac = MakeH2("PhaseVsFrac","Phase vs. Fraction",1000,0,3*fSamplingPeriod,1000,0,fSamplingPeriod,"phase;fraction");
          FillH2(r.fPhaseVsFrac,adc_phase,fraction*fSamplingPeriod);
          
-         
+         if(r.fPhaseVsEpoch==0)
+            r.fPhaseVsEpoch = MakeH2("PhaseVsEpoch","Phase vs. Epoch",1000,0,3*fSamplingPeriod,100,0,100,"phase;epoch");
+         FillH2(r.fPhaseVsEpoch,adc_phase,samplesSinceTrigger);
          
          if(r.fSamples==0)
             r.fSamples = MakeH2("Samples","Samples of the zero crossing",2,0,2,1000,-500,500,"crossing;value");
@@ -216,13 +226,27 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
       
       const double diff = c.fTiming - fCh[c.fDiffCh].fTiming;
       
+      const double pos = std::fmod((c.fTiming + fCh[c.fDiffCh].fTiming)/2, fSamplingPeriod);
+      const double neg = std::fmod((c.fTiming - fCh[c.fDiffCh].fTiming)/2, fSamplingPeriod);
+      
+      
       if(!isfinite(diff))
          continue;
       
       SetSubPrefix(subprefix, ch);
+      
       if(c.fDiffTiming == 0)
          c.fDiffTiming = MakeH1("DiffTiming","Timing difference",10000,-500,500,"t / ns");
       FillH1(c.fDiffTiming, diff);
+      
+      if(c.fPhaseVsPos==0)
+         c.fPhaseVsPos = MakeH2("PhaseVsPos","Phase vs. Pos",1000,0,3*fSamplingPeriod,1000,0,fSamplingPeriod,"phase;pos");
+      FillH2(c.fPhaseVsPos,adc_phase,pos);
+      
+      if(c.fPhaseVsNeg==0)
+         c.fPhaseVsNeg = MakeH2("PhaseVsNeg","Phase vs. Pos",1000,0,3*fSamplingPeriod,1000,0,fSamplingPeriod,"phase;neg");
+      FillH2(c.fPhaseVsNeg,adc_phase,neg);
+      
       SetSubPrefix(); 
    }
    
