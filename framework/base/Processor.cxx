@@ -19,7 +19,7 @@ base::Processor::Processor(const char* name, unsigned brdid) :
 {
    if (brdid != DummyBrdId) {
       char sbuf[100];
-      snprintf(sbuf, sizeof(sbuf), name, brdid);
+      snprintf(sbuf, sizeof(sbuf), name, brdid & 0xffff);
       fName = sbuf;
       fID = brdid;
    }
