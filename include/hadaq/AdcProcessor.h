@@ -36,6 +36,8 @@ protected:
          fFineTiming(0),
          fDiffTiming(0),
          fPhaseVsFrac(0),
+         fBeforeVsFrac(0),         
+         fAfterVsFrac(0),                  
          fDiffCh(-1),
          fTiming(std::numeric_limits<double>::quiet_NaN())
       {}
@@ -47,6 +49,8 @@ protected:
       base::H1handle fFineTiming;      //! histogram of timing of single channel to trigger (received by TDC)     
       base::H1handle fDiffTiming;      //! histogram of CFD fine time difference to other specified channel
       base::H2handle fPhaseVsFrac;
+      base::H2handle fBeforeVsFrac;
+      base::H2handle fAfterVsFrac;      
       int fDiffCh;                     //! if not <0, specifies channel for fDiffTiming
       double fTiming;                  //! the timing in ns, relative to trigger
    };

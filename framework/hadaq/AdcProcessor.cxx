@@ -146,9 +146,19 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
             r.fFineTiming = MakeH1("FineTiming","Fine timing to external trigger",10000,0,1000,"t / ns");
          FillH1(r.fFineTiming, r.fTiming);
          
+         if(r.fBeforeVsFrac==0)
+            r.fBeforeVsFrac = MakeH2("BeforeVsFrac","First vs. Fraction",1000,-500,500,1000,0,fSamplingPeriod,"before;fraction");
+         FillH2(r.fBeforeVsFrac,valBeforeZeroX,fraction*fSamplingPeriod);
+         
+         if(r.fAfterVsFrac==0)
+            r.fAfterVsFrac = MakeH2("AfterVsFrac","Second vs. Fraction",1000,-500,500,1000,0,fSamplingPeriod,"after;fraction");
+         FillH2(r.fAfterVsFrac,valAfterZeroX,fraction*fSamplingPeriod);
+         
          if(r.fPhaseVsFrac==0)
             r.fPhaseVsFrac = MakeH2("PhaseVsFrac","Phase vs. Fraction",1000,0,3*fSamplingPeriod,1000,0,fSamplingPeriod,"phase;fraction");
          FillH2(r.fPhaseVsFrac,adc_phase,fraction*fSamplingPeriod);
+         
+         
          
          if(r.fSamples==0)
             r.fSamples = MakeH2("Samples","Samples of the zero crossing",2,0,2,1000,-500,500,"crossing;value");
