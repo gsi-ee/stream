@@ -316,6 +316,25 @@ void hadaq::TrbProcessor::AfterEventScan()
    }
 }
 
+void hadaq::TrbProcessor::AddBufferToTDC(
+      hadaqs::RawSubevent* sub, 
+      hadaq::SubProcessor* tdcproc, 
+      unsigned ix,
+      unsigned datalen) {   
+   base::Buffer buf;
+   buf.makenew((datalen+1)*4);
+
+   memset(buf.ptr(), 0xff, 4); // fill dummy sync id in the begin
+   sub->CopyDataTo(buf.ptr(4), ix, datalen);
+
+   buf().kind = 0;
+   buf().boardid = tdcproc->GetID();
+   buf().format = 0;
+
+   tdcproc->AddNextBuffer(buf);
+   tdcproc->SetNewDataFlag(true);
+}
+
 void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3eventid)
 {
    // this is first scan of subevent from TRB3 data
@@ -423,24 +442,10 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
          // if not, there is no TDC present
 
          // This is special TDC processor for data from CTS header
-         TdcProcessor* subproc = GetTDC(fHadaqCTSId, true);
-         unsigned tdc_index = ix;  // position where subevents starts
-         unsigned tdc_datalen = datalen;
-
-         if ((subproc!=0) && (tdc_datalen>0)) {
-            // if TDC processor found and length is specified, process such data as normal TDC data
-            base::Buffer buf;
-            buf.makenew((tdc_datalen+1)*4);
-
-            memset(buf.ptr(), 0xff, 4); // fill dummy sync id in the begin
-            sub->CopyDataTo(buf.ptr(4), tdc_index, tdc_datalen);
-
-            buf().kind = 0;
-            buf().boardid = fHadaqCTSId;
-            buf().format = 0;
-
-            subproc->AddNextBuffer(buf);
-            subproc->SetNewDataFlag(true);
+         TdcProcessor* tdcproc = GetTDC(fHadaqCTSId, true);
+         if (tdcproc!=0 && datalen>0) {
+            // if TDC processor found, process such data as normal TDC data
+            AddBufferToTDC(sub, tdcproc, ix, datalen);
          }
 
          // don't forget to skip the words for the TDC (if any)
@@ -462,18 +467,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
             while (iter.next()) iter.printmsg();
          }
 
-         base::Buffer buf;
-         buf.makenew((datalen+1)*4);
-
-         memset(buf.ptr(), 0xff, 4); // fill dummy sync id in the begin
-         sub->CopyDataTo(buf.ptr(4), ix, datalen);
-
-         buf().kind = 0;
-         buf().boardid = tdcid;
-         buf().format = 0;
-
-         tdcproc->AddNextBuffer(buf);
-         tdcproc->SetNewDataFlag(true);
+         AddBufferToTDC(sub, tdcproc, ix, datalen);
 
          ix+=datalen;
 
@@ -507,12 +501,32 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
          RAWPRINT ("   SUB header: 0x%08x, id=0x%04x, size=%u\n", (unsigned) data, subid, datalen);
 
          if(datalen==0)
-            continue;
-
+            continue;         
+         
          base::Buffer buf;
+                 
+         // check if this processor has some attached TDC
+         size_t offset = 0;
+         SubProcMap::const_iterator iter_tdc = fMap.find(subid + 0xff0000);
+         if(iter_tdc != fMap.end()) {
+            // pre-scan for begin marker of non-TDC data
+            for(size_t i=0;i<datalen;i++) {
+               const uint32_t data_ = sub->Data(ix+i);
+               if(data_ >> 28 == 0x1) {
+                  offset = i;
+                  break;
+               }
+            }
+            if(offset>0) {
+               AddBufferToTDC(sub, iter_tdc->second, ix, offset);              
+            }            
+         }        
+         
+         datalen -= offset;
+         
          buf.makenew(datalen*4);
 
-         sub->CopyDataTo(buf.ptr(0), ix, datalen);
+         sub->CopyDataTo(buf.ptr(0), ix+offset, datalen);
 
          buf().kind = 0;
          buf().boardid = subid;

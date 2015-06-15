@@ -21,6 +21,10 @@ hadaq::AdcProcessor::AdcProcessor(TrbProcessor* trb, unsigned subid, unsigned nu
    fStoreVect(),
    pStoreVect(0)
 {
+   // Subprocessors need unique subids, 
+   // thus we attach a TDC with some special subid to it 
+   new TdcProcessor(trb, subid + 0xff0000, 2, 0);
+   
   
    fChannels = 0;
    
@@ -48,31 +52,20 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
    unsigned len = buf.datalen()/4;
    uint32_t* arr = (uint32_t*) buf.ptr();
    
-   // search for ADC marker (also contains epoch counter of trigger hit)
-   // in order to split the whole buffer into TDC part and ADC part
-   unsigned ADC_trigger_epoch;
-   unsigned ADC_offset = 0;
-   for (unsigned n=0;n<len;n++) {
-      if(arr[n] >> 28 == 0x1) {
-         ADC_offset = n;
-         ADC_trigger_epoch = arr[n] & 0xfffffff; // lower 28 bits are epoch
-         break;
-      }
-   }
-   // marker not found or no TDC data found, skip this buffer 
-   if(ADC_offset==0) {
+   if(len<1) {
       return false;
-   } 
-  
-
+   }
+   
+   // first word contains trigger epoch counter
+   const unsigned ADC_trigger_epoch = arr[0] & 0xffffff;
+   
    // start decoding the ADC data
    uint32_t nSample = 0; // number of msg from the same ADC channel, aka Sample
    uint32_t lastCh = 0;  // remember last used channel for dumping verbose data
-
    
-   const char* subprefix = "ChADC";
+   const char* subprefix = "Ch";
    
-   for (unsigned n=ADC_offset+1;n<len;n++) {
+   for (unsigned n=1;n<len;n++) {
       AdcMessage msg(arr[n]);
 
       uint32_t kind = msg.getKind();
@@ -88,6 +81,7 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
          if(n+expected_len>len)
             continue;
 
+         FillH1(fChannels, ch);
          ChannelRec& r = fCh[ch]; // helpful shortcut
          SetSubPrefix(subprefix, ch);
         
@@ -136,6 +130,8 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
          if(ch>=fCh.size())
             continue;
 
+         FillH1(fChannels, ch);
+         
          SetSubPrefix(subprefix, ch);
          
          if(HistFillLevel() > 1)
@@ -187,9 +183,6 @@ bool hadaq::AdcProcessor::SecondBufferScan(const base::Buffer& buf)
       // ignore all other kinds
       if (msg.getKind()!=1) continue;
 
-      // we test hits, but do not allow to close events
-      // this is normal procedure
-      // unsigned indx = TestHitTime(0., true, false);
       unsigned indx = 0; // index 0 is event index in triggered-based analysis
 
       if (indx < fGlobalMarks.size()) {
