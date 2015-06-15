@@ -2,8 +2,8 @@
 #define HADAQ_ADCMESSAGE_H
 
 #include <stdint.h>
-
 #include <stdio.h>
+#include <limits>
 
 namespace hadaq {
 
@@ -13,14 +13,19 @@ namespace hadaq {
    struct AdcMessage {
       protected:
          uint32_t   fData;
-
+          
       public:
-
-         AdcMessage() : fData(0) {}
+         double fFineTiming;
+         double fIntegral;
+         
+         AdcMessage() : fData(0), 
+            fFineTiming(std::numeric_limits<double>::quiet_NaN()),
+            fIntegral(std::numeric_limits<double>::quiet_NaN())
+         {}
 
          AdcMessage(uint32_t d) : fData(d) {}
 
-         void assign(uint32_t d) { fData=d; }
+         //void assign(uint32_t d) { fData=d; }
 
          /** Returns kind of the message */
          uint32_t getKind() const { return fData >> 28; }

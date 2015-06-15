@@ -33,23 +33,17 @@ protected:
          fHIntegral(0),
          fHSamples(0),
          fHCoarseTiming(0),
-         fHFineTiming(0),
-         fFineTiming(std::numeric_limits<double>::quiet_NaN()),
-         fIntegral(std::numeric_limits<double>::quiet_NaN()),
-         fRawSamples()
+         fHFineTiming(0)
       {}
       base::H1handle fHValues;          //! histogram of values distribution in channel
       base::H2handle fHWaveform;        //! histogram of integrated raw waveform of channel (debug)
       base::H1handle fHIntegral;        //! histogram of integrals from CFD feature extraction
       base::H2handle fHSamples;         //! histogram of fine timings from CFD feature extraction
       base::H1handle fHCoarseTiming;    //! ADC samples since trigger detected
-      base::H1handle fHFineTiming;      //! histogram of timing of single channel to trigger    
-      double fFineTiming;               //! the timing in ns, relative to trigger
-      double fIntegral;
-      std::vector<short> fRawSamples;
+      base::H1handle fHFineTiming;      //! histogram of timing of single channel to trigger
    };
    
-   const double fSamplingPeriod;
+   const double fSamplingPeriod; // ADC sampling period in seconds
    
    static std::vector<double> storage;
    
@@ -66,7 +60,7 @@ protected:
 public:
    
    AdcProcessor(TrbProcessor* trb, unsigned subid, unsigned numchannels = 48, 
-                double samplingPeriod = 1000.0/80);
+                double samplingPeriod = 1000.0e-9/80);
    virtual ~AdcProcessor();
    
    inline unsigned NumChannels() const { return fCh.size(); }

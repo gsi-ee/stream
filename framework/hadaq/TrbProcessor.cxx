@@ -523,10 +523,11 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
          }        
          
          datalen -= offset;
+         ix += offset;
          
          buf.makenew(datalen*4);
 
-         sub->CopyDataTo(buf.ptr(0), ix+offset, datalen);
+         sub->CopyDataTo(buf.ptr(0), ix, datalen);
 
          buf().kind = 0;
          buf().boardid = subid;

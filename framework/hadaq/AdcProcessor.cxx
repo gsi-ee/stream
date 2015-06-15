@@ -50,11 +50,20 @@ hadaq::AdcProcessor::~AdcProcessor()
 bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
 {
    unsigned len = buf.datalen()/4;
-   uint32_t* arr = (uint32_t*) buf.ptr();
-   
    if(len<1) {
       return false;
-   }
+   }     
+   return true;
+}
+
+bool hadaq::AdcProcessor::SecondBufferScan(const base::Buffer& buf)
+{
+   unsigned len = buf.datalen()/4;
+   uint32_t* arr = (uint32_t*) buf.ptr();
+
+      
+   // printf("Second scan len %u\n", len);
+
    
    // first word contains trigger epoch counter
    const unsigned ADC_trigger_epoch = arr[0] & 0xffffff;
@@ -108,16 +117,25 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
          const double fraction = (double)valBeforeZeroX/(valBeforeZeroX-valAfterZeroX);
          const double fineTiming = (samplesSinceTrigger + fraction)*fSamplingPeriod;
          
-         r.fFineTiming = fineTiming;
          if(r.fHFineTiming==0)
             r.fHFineTiming = MakeH1("FineTiming","Fine timing to external trigger",10000,0,1000,"t / ns");
-         FillH1(r.fHFineTiming, r.fFineTiming);
+         FillH1(r.fHFineTiming, fineTiming);
          
          if(r.fHSamples==0)
             r.fHSamples = MakeH2("Samples","Samples of the zero crossing",2,0,2,1000,-500,500,"crossing;value");
          FillH2(r.fHSamples, 0, valBeforeZeroX);
          FillH2(r.fHSamples, 1, valAfterZeroX);
      
+         unsigned indx = 0; // index 0 is event index in triggered-based analysis
+   
+         if (indx < fGlobalMarks.size()) {
+            // convert timing to seconds
+            msg.fFineTiming = fineTiming;
+            msg.fIntegral = integral;
+            AddMessage(indx, (hadaq::AdcSubEvent*) fGlobalMarks.item(indx).subev, msg);
+         }
+         
+         
          SetSubPrefix();
          // don't forget to move forward
          n += expected_len;
@@ -157,39 +175,12 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
             r.fHWaveform = MakeH2("Waveform", "Integrated Waveform", 512, 0, 512, 1<<11, -(1<<10), 1<<10, "sample;value");
          FillH2(r.fHWaveform, nSample, value);
          
-         r.fRawSamples.push_back(value);
-         
          SetSubPrefix();         
       }
       // other kinds like PSA data or compressed ADC words unsupported for now
       // they are just ignored
    }
    
-   return true;
-
-}
-
-bool hadaq::AdcProcessor::SecondBufferScan(const base::Buffer& buf)
-{
-   unsigned len = buf.datalen()/4;
-   uint32_t* arr = (uint32_t*) buf.ptr();
-
-   // printf("Second scan len %u\n", len);
-
-   // use iterator only if context is important
-   for (unsigned n=0;n<len;n++) {
-      AdcMessage msg(arr[n]);
-
-      // ignore all other kinds
-      if (msg.getKind()!=1) continue;
-
-      unsigned indx = 0; // index 0 is event index in triggered-based analysis
-
-      if (indx < fGlobalMarks.size()) {
-         AddMessage(indx, (hadaq::AdcSubEvent*) fGlobalMarks.item(indx).subev, msg);
-      }
-   }
-
    return true;
 }
 
