@@ -13,6 +13,11 @@ namespace hadaq {
 
    class HldProcessor;
 
+   // used for ROOT tree storage, similar to TdcMessage and AdcMessage
+   struct TrbMessage {
+      unsigned fETMSyncId;
+      bool fETMSyncIdFound;
+   };
 
    /** This is generic processor for data, coming from TRB board
     * Normally one requires specific sub-processor for frontend like TDC or any other
@@ -73,12 +78,16 @@ namespace hadaq {
          void ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3eventid);
 
          void AfterEventScan();
-
+         
+         virtual void CreateBranch(TTree* t);
+         TrbMessage  fMsg;
+         TrbMessage* pMsg;
+         
       public:
 
          TrbProcessor(unsigned brdid = 0, HldProcessor* hld = 0);
          virtual ~TrbProcessor();
-
+         
          void SetHadaqCTSId(unsigned id) { fHadaqCTSId = id; }
          void SetHadaqHUBId(unsigned id) { fHadaqHUBId = id; }
          void SetHadaqTDCId(unsigned) {} // keep for backward compatibility, can be ignored

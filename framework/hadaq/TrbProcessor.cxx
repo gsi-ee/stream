@@ -57,6 +57,8 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc) :
    fPrintRawData = false;
    fCrossProcess = false;
    fPrintErrCnt = 1000;
+   
+   pMsg = &fMsg;
 
    // this is raw-scan processor, therefore no synchronization is required for it
    SetSynchronisationKind(sync_None);
@@ -68,6 +70,7 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc) :
 hadaq::TrbProcessor::~TrbProcessor()
 {
 }
+
 
 hadaq::TdcProcessor* hadaq::TrbProcessor::FindTDC(unsigned tdcid) const
 {
@@ -316,6 +319,13 @@ void hadaq::TrbProcessor::AfterEventScan()
    }
 }
 
+void hadaq::TrbProcessor::CreateBranch(TTree* t)
+{
+   if(mgr()->IsTriggeredAnalysis()) {
+      mgr()->CreateBranch(t, GetName(), "hadaq::TrbMessage", (void**)&pMsg);
+   }
+}
+
 void hadaq::TrbProcessor::AddBufferToTDC(
       hadaqs::RawSubevent* sub, 
       hadaq::SubProcessor* tdcproc, 
@@ -350,9 +360,8 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
 
    if (trbSubEvSize>100000) printf("LARGE subevent %u\n", trbSubEvSize);
 
-   unsigned syncNumber(0);
-   bool findSync(false);
-
+   fMsg.fETMSyncIdFound = false;
+   
 //   RAWPRINT("Scan TRB3 raw event 4-bytes size %u\n", trbSubEvSize);
 //   printf("Scan TRB3 raw data\n");
 
@@ -416,15 +425,15 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
 	         // ETM sends one word, is probably MBS Vulom Recv
 	         // this is not really tested
 	         data = sub->Data(ix++); datalen--;
-	         syncNumber = (data & 0xFFFFFF);
-	         findSync = true;
+	         fMsg.fETMSyncId = (data & 0xFFFFFF);
+	         fMsg.fETMSyncIdFound = true;
 	         // TODO: evaluate the upper 8 bits in data for status/error
          }
          else if(nExtTrigFlag==0x2) {
 	         // ETM sends four words, is probably a Mainz A2 recv
 	         data = sub->Data(ix++); datalen--;
-	         findSync = true;
-	         syncNumber = data; // full 32bits is trigger number
+	         fMsg.fETMSyncIdFound = true;
+	         fMsg.fETMSyncId = data; // full 32bits is trigger number
 	         // TODO: evaluate word 2 for status/error, skip it for now
 	         // word 3+4 are 0xdeadbeef i.e. not used at the moment, so skip it
 	         ix += 3;
@@ -435,8 +444,8 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
 	         // TODO: try to do some proper error recovery here...
          }
 
-         if(findSync)
-	         RAWPRINT("     Find SYNC %u\n", (unsigned) syncNumber);
+         if(fMsg.fETMSyncIdFound)
+	         RAWPRINT("     Find SYNC %u\n", (unsigned) fMsg.fETMSyncId);
 
          // now ix should point to the first TDC word if datalen>0
          // if not, there is no TDC present
@@ -561,14 +570,14 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
    }
 
    if (fUseTriggerAsSync) {
-      findSync = true;
-      syncNumber = trb3eventid;
+      fMsg.fETMSyncIdFound = true;
+      fMsg.fETMSyncId = trb3eventid;
    }
 
-   if (findSync) {
+   if (fMsg.fETMSyncIdFound) {
       for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++) {
          if (iter->second->IsNewDataFlag())
-            iter->second->AppendTrbSync(syncNumber);
+            iter->second->AppendTrbSync(fMsg.fETMSyncId);
       }
    }
 }
