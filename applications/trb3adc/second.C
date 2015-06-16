@@ -61,7 +61,7 @@ class ADCProc : public base::EventProc {
          hDiffTime = MakeH1("DiffTime","Timing of Ch1-Ch2", 10000, -500, 500, "t / ns");
          hAdcPhase = MakeH1("AdcPhase","Phase of external trigger to ADC clock", 1000, 0, 100, "t / ns");
          hTimeCh1 = MakeH1("TimeCh1","Timing to trigger Ch1", 10000, 0, 1000, "t / ns");
-         hTimeCh2 = MakeH1("TimeCh2","Timing to trigger Ch2", 10000, 0, 1000, "t / ns");
+         hTimeCh2 = MakeH1("TimeCh2","Timing to trigger Ch2", 10000, 525, 555, "t / ns");
          
          hPhaseVsCh1 = MakeH2("PhaseVsCh1","Phase vs. Ch1", 100, 40, 70, 1000, 200, 300, "phase;ch1");
          hPhaseVsCh2 = MakeH2("PhaseVsCh2","Phase vs. Ch2", 100, 40, 70, 1000, 450, 550, "phase;ch2");
@@ -194,7 +194,7 @@ class ADCProc : public base::EventProc {
 void second() 
 {
    // uncomment line to create tree for the events storage
-   //base::ProcMgr::instance()->CreateStore("file.root");
+   base::ProcMgr::instance()->CreateStore("file.root");
    
    new ADCProc("ADCProc", 0x0200, 0x8000);
 }
