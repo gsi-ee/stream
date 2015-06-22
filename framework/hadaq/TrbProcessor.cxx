@@ -360,7 +360,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
 
    if (trbSubEvSize>100000) printf("LARGE subevent %u\n", trbSubEvSize);
 
-   fMsg.fETMSyncIdFound = false;
+   fMsg.fTrigSyncIdFound = false;
    
 //   RAWPRINT("Scan TRB3 raw event 4-bytes size %u\n", trbSubEvSize);
 //   printf("Scan TRB3 raw data\n");
@@ -425,15 +425,15 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
 	         // ETM sends one word, is probably MBS Vulom Recv
 	         // this is not really tested
 	         data = sub->Data(ix++); datalen--;
-	         fMsg.fETMSyncId = (data & 0xFFFFFF);
-	         fMsg.fETMSyncIdFound = true;
+	         fMsg.fTrigSyncId = (data & 0xFFFFFF);
+	         fMsg.fTrigSyncIdFound = true;
 	         // TODO: evaluate the upper 8 bits in data for status/error
          }
          else if(nExtTrigFlag==0x2) {
 	         // ETM sends four words, is probably a Mainz A2 recv
 	         data = sub->Data(ix++); datalen--;
-	         fMsg.fETMSyncIdFound = true;
-	         fMsg.fETMSyncId = data; // full 32bits is trigger number
+	         fMsg.fTrigSyncIdFound = true;
+	         fMsg.fTrigSyncId = data; // full 32bits is trigger number
 	         // TODO: evaluate word 2 for status/error, skip it for now
 	         // word 3+4 are 0xdeadbeef i.e. not used at the moment, so skip it
 	         ix += 3;
@@ -444,8 +444,8 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
 	         // TODO: try to do some proper error recovery here...
          }
 
-         if(fMsg.fETMSyncIdFound)
-	         RAWPRINT("     Find SYNC %u\n", (unsigned) fMsg.fETMSyncId);
+         if(fMsg.fTrigSyncIdFound)
+	         RAWPRINT("     Find SYNC %u\n", (unsigned) fMsg.fTrigSyncId);
 
          // now ix should point to the first TDC word if datalen>0
          // if not, there is no TDC present
@@ -570,14 +570,14 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
    }
 
    if (fUseTriggerAsSync) {
-      fMsg.fETMSyncIdFound = true;
-      fMsg.fETMSyncId = trb3eventid;
+      fMsg.fTrigSyncIdFound = true;
+      fMsg.fTrigSyncId = trb3eventid;
    }
 
-   if (fMsg.fETMSyncIdFound) {
+   if (fMsg.fTrigSyncIdFound) {
       for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++) {
          if (iter->second->IsNewDataFlag())
-            iter->second->AppendTrbSync(fMsg.fETMSyncId);
+            iter->second->AppendTrbSync(fMsg.fTrigSyncId);
       }
    }
 }
