@@ -62,7 +62,7 @@ public:
       hDiffTime = MakeH1("DiffTime","Timing Differences", 4000, -200, 200, "t / ns");
       hAdcPhase = MakeH1("AdcPhase","Phase of external trigger to ADC clock", 1000, 0, 100, "t / ns");
       // enable storing already in constructor
-      //SetStoreEnabled();
+      SetStoreEnabled();
    }
    
    
