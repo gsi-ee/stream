@@ -2,6 +2,7 @@
 
 #include "TClass.h"
 #include "TList.h"
+#include "TString.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -199,7 +200,7 @@ Int_t TUserSource::Open()
 
    fIsHLD = kTRUE;
 
-   if ((fname.Index(".dat") != kNPOS) && (fname.Index(".dat")>0)) fIsHLD = kFALSE;
+   if (fname.EndsWith(".dat")) fIsHLD = kFALSE;
 
 
    fxBuffer = new Char_t[Trb_BUFSIZE];
