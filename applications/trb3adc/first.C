@@ -13,7 +13,7 @@ void first()
 
    hadaq::TrbProcessor* trb3 = new hadaq::TrbProcessor(0x8000, hld);
    trb3->CreateCTS_TDC();
-   trb3->SetUseTriggerAsSync();
+   //trb3->SetUseTriggerAsSync(); // use TRB3 CTS trigger number, not from ETM
    trb3->SetHistFilling(4);
    //trb3->SetPrintRawData();
    
