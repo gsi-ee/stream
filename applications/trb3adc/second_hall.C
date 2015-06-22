@@ -26,11 +26,6 @@ class ADCProc : public base::EventProc {
       
       base::H1handle  hDiffTime; 
       base::H1handle  hAdcPhase;      
-      base::H1handle  hTimeCh1; 
-      base::H1handle  hTimeCh2; 
-      base::H2handle  hPhaseVsCh1; 
-      base::H2handle  hPhaseVsCh2; 
-      base::H2handle  hTDCHitVsCh2; 
       
       const static double samplingPeriod = 12.5;
             
@@ -58,15 +53,8 @@ class ADCProc : public base::EventProc {
               << fAdcId << "/" << fTdcId 
               << " with ref " << fTdcInCTSId << endl;
 
-         hDiffTime = MakeH1("DiffTime","Timing of Ch1-Ch2", 500, -215, -198, "t / ns");
+         hDiffTime = MakeH1("DiffTime","Timing Differences", 4000, -200, 200, "t / ns");
          hAdcPhase = MakeH1("AdcPhase","Phase of external trigger to ADC clock", 1000, 0, 100, "t / ns");
-         hTimeCh1 = MakeH1("TimeCh1","Timing to trigger Ch1", 10000, 0, 1000, "t / ns");
-         hTimeCh2 = MakeH1("TimeCh2","Timing to trigger Ch2", 500, 527, 543, "t / ns");
-         
-         hPhaseVsCh1 = MakeH2("PhaseVsCh1","Phase vs. Ch1", 100, 40, 70, 1000, 200, 300, "phase;ch1");
-         hPhaseVsCh2 = MakeH2("PhaseVsCh2","Phase vs. Ch2", 100, 40, 70, 1000, 450, 550, "phase;ch2");
-         hTDCHitVsCh2 = MakeH2("TDCHitVsCh2","TDCHit vs. Ch2", 500, 14, 30, 1000, 530, 560, "#delta_{2} / ns;T' / ns");
-         
          // enable storing already in constructor
          //SetStoreEnabled();
       }
@@ -91,11 +79,14 @@ class ADCProc : public base::EventProc {
          hadaq::TdcSubEvent* cts = 
                dynamic_cast<hadaq::TdcSubEvent*> (ev->GetSubEvent(fTdcInCTSId));
          
-         if(adc==0 || tdc==0 || cts==0)
+         //if(adc==0 || tdc==0 || cts==0)
+         //   return false;
+         if(adc==0)
             return false;
          
-         // we need one hit from each TDC, 
-         // and timings from two ADC channels
+
+	 /*
+         // we may need one hit from each TDC, 
          // so search the subevents for this
          const double nan = std::numeric_limits<double>::quiet_NaN();
          double tm_TDC=nan, tm_CTS=nan, tm_ADC1=nan, tm_ADC2=nan;
@@ -104,26 +95,6 @@ class ADCProc : public base::EventProc {
          if(debug)
             cout << "trigger=" << trigger << endl;
          
-         for(unsigned cnt=0;cnt<adc->Size();cnt++) {
-            const hadaq::AdcMessage& msg = adc->msg(cnt);
-            
-            unsigned chid = msg.getCh();
-            double finetime = msg.fFineTiming; 
-            double integral = msg.fIntegral;             
-            if(debug)
-               cout << "ADC ch=" << chid 
-                    << " finetime=" << finetime
-                    << " integral=" << integral << endl;  
-            if(!isfinite(tm_ADC1)) {
-               tm_ADC1 = finetime;
-            }
-            else if(!isfinite(tm_ADC2)) {
-               tm_ADC2 = finetime;
-            }
-            else {
-               break;
-            }
-         }
          for(unsigned cnt=0;cnt<tdc->Size();cnt++) {
             const hadaq::TdcMessageExt& ext = tdc->msg(cnt);
             unsigned chid = ext.msg().getHitChannel();
@@ -147,44 +118,38 @@ class ADCProc : public base::EventProc {
             }
          }
          
-         if(!(isfinite(tm_TDC) && isfinite(tm_CTS) 
-              && isfinite(tm_ADC1) && isfinite(tm_ADC2))) 
+         if(!(isfinite(tm_TDC) && isfinite(tm_CTS))) 
             return false;
-         
-         // convert back to ns from here
-         tm_TDC  *= 1e9;
-         tm_CTS  *= 1e9;
-         tm_ADC1 *= 1e9;
-         tm_ADC2 *= 1e9;
-         
+
          double ADC_phase = tm_TDC-tm_CTS;
-         
-         // due to some unknown but fixed delay between 
-         // the measurement of tm_TDC and tm_CTS, we need 
-         // to correct for an ADC epoch counter "glitch" 
-         // TODO: check if this threshold of 22.7ns is constant 
-         // over TRB3 reboots (due to different PLL locking)
-         double tm_ADC2_uncorr = tm_ADC2;
-         if(tm_TDC>22.7) {
-            tm_ADC1 -= samplingPeriod;
-            tm_ADC2 -= samplingPeriod;
+         FillH1(hAdcPhase, ADC_phase);*/
+
+
+	 //cout << adc->Size() << endl;
+
+         for(unsigned cnt=0;cnt<adc->Size();cnt++) {
+            const hadaq::AdcMessage& msg = adc->msg(cnt);
+            unsigned chid = msg.getCh();
+            for(unsigned cnt_=cnt+1;cnt_<adc->Size();cnt_++) {
+               const hadaq::AdcMessage& msg_ = adc->msg(cnt_);
+               unsigned chid_ = msg_.getCh();
+               if(chid==chid_)
+                  continue;
+
+               double diff = msg.fFineTiming - msg_.fFineTiming;
+               diff *= 1e9; // convert to ns
+               // fill some histograms
+               FillH1(hDiffTime, diff);
+               double integral = msg.fIntegral;
+               if(debug)
+                  cout << "ADC ch1=" << chid
+                       << " ch2=" << chid_
+                       << " diff=" << diff
+                       << endl;
+            }
          }
-         
-         if(debug) {
-            cout << "ADC phase from TDC: " << ADC_phase << endl;
-            cout << "ADC1 timing: " << tm_ADC1 << endl;
-            cout << "ADC2 timing: " << tm_ADC2 << endl;         
-         }
-         
-         // fill some histograms
-         FillH1(hAdcPhase, ADC_phase);         
-         FillH1(hDiffTime, tm_ADC1-tm_ADC2);
-         FillH1(hTimeCh1, tm_ADC1+ADC_phase);
-         FillH1(hTimeCh2, tm_ADC2+ADC_phase);
-         FillH2(hPhaseVsCh1, ADC_phase, tm_ADC1);
-         FillH2(hPhaseVsCh2, ADC_phase, tm_ADC2);
-         FillH2(hTDCHitVsCh2, tm_TDC, tm_ADC2_uncorr+ADC_phase);
-                 
+
+
          if(debug)
             cout << endl;
          return true;
