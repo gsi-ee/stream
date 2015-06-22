@@ -58,14 +58,14 @@ class ADCProc : public base::EventProc {
               << fAdcId << "/" << fTdcId 
               << " with ref " << fTdcInCTSId << endl;
 
-         hDiffTime = MakeH1("DiffTime","Timing of Ch1-Ch2", 10000, -500, 500, "t / ns");
+         hDiffTime = MakeH1("DiffTime","Timing of Ch1-Ch2", 500, -215, -198, "t / ns");
          hAdcPhase = MakeH1("AdcPhase","Phase of external trigger to ADC clock", 1000, 0, 100, "t / ns");
          hTimeCh1 = MakeH1("TimeCh1","Timing to trigger Ch1", 10000, 0, 1000, "t / ns");
-         hTimeCh2 = MakeH1("TimeCh2","Timing to trigger Ch2", 10000, 525, 555, "t / ns");
+         hTimeCh2 = MakeH1("TimeCh2","Timing to trigger Ch2", 500, 527, 543, "t / ns");
          
          hPhaseVsCh1 = MakeH2("PhaseVsCh1","Phase vs. Ch1", 100, 40, 70, 1000, 200, 300, "phase;ch1");
          hPhaseVsCh2 = MakeH2("PhaseVsCh2","Phase vs. Ch2", 100, 40, 70, 1000, 450, 550, "phase;ch2");
-         hTDCHitVsCh2 = MakeH2("TDCHitVsCh2","TDCHit vs. Ch2", 500, 0, 50, 1000, 490, 590, "phase;ch2");
+         hTDCHitVsCh2 = MakeH2("TDCHitVsCh2","TDCHit vs. Ch2", 500, 14, 30, 1000, 530, 560, "#delta_{2} / ns;T' / ns");
          
          // enable storing already in constructor
          //SetStoreEnabled();
@@ -164,6 +164,7 @@ class ADCProc : public base::EventProc {
          // to correct for an ADC epoch counter "glitch" 
          // TODO: check if this threshold of 22.7ns is constant 
          // over TRB3 reboots (due to different PLL locking)
+         double tm_ADC2_uncorr = tm_ADC2;
          if(tm_TDC>22.7) {
             tm_ADC1 -= samplingPeriod;
             tm_ADC2 -= samplingPeriod;
@@ -182,7 +183,7 @@ class ADCProc : public base::EventProc {
          FillH1(hTimeCh2, tm_ADC2+ADC_phase);
          FillH2(hPhaseVsCh1, ADC_phase, tm_ADC1);
          FillH2(hPhaseVsCh2, ADC_phase, tm_ADC2);
-         FillH2(hTDCHitVsCh2, 1e9*tm_TDC, tm_ADC2+ADC_phase);
+         FillH2(hTDCHitVsCh2, tm_TDC, tm_ADC2_uncorr+ADC_phase);
                  
          if(debug)
             cout << endl;
