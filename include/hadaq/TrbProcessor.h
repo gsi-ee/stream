@@ -15,8 +15,10 @@ namespace hadaq {
 
    // used for ROOT tree storage, similar to TdcMessage and AdcMessage
    struct TrbMessage {
-      unsigned fTrigSyncId;
+      
       bool fTrigSyncIdFound;
+      unsigned fTrigSyncId;
+      unsigned fTrigSyncIdStatus;
    };
 
    /** This is generic processor for data, coming from TRB board
