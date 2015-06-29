@@ -3,7 +3,6 @@
 #include "base/EventProc.h"
 #include "base/Event.h"
 #include "base/SubEvent.h"
-#include "base/EventStore.h"
 
 #include "get4/SubEvent.h"
 
