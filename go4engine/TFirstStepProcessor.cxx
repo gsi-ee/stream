@@ -47,6 +47,7 @@ TFirstStepProcessor::TFirstStepProcessor(const char* name) :
       }
 
       gROOT->ProcessLine(".include $STREAMSYS/include");
+      gROOT->ProcessLine(".include $GO4SYS/include");
 
       if (ExecuteScript("second.C+") == -1) {
          TGo4Log::Error("Cannot setup analysis with second.C script");

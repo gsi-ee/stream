@@ -14,6 +14,7 @@
 #include "TGo4FileSource.h"
 #include "TGo4MbsEvent.h"
 #include "TGo4Log.h"
+#include "TGo4Analysis.h"
 
 #include "base/defines.h"
 
@@ -204,7 +205,7 @@ Int_t TUserSource::Open()
 
 
    fxBuffer = new Char_t[Trb_BUFSIZE];
-   
+
    TGo4Log::Info("%s user source contains %d files", (fIsHLD ? "HLD" : "GET4"), fNames->GetSize());
 
    return 0;
@@ -225,6 +226,10 @@ Bool_t TUserSource::OpenNextFile()
    TString nextname = obj->GetName();
    fNames->Remove(fNames->FirstLink());
    delete obj;
+
+   TGo4Analysis* ana = TGo4Analysis::Instance();
+   ana->SetNewInputFile(kTRUE);
+   ana->SetInputFileName(nextname.Data());
 
    if (fIsHLD) {
       if(fxFile.isOpened()) fxFile.Close();
