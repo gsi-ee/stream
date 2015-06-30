@@ -23,7 +23,6 @@ protected:
    string fTdcInCTSId;
    
    
-   base::H1handle  hDiffTime; 
    base::H1handle  hAdcPhase;      
  
    struct hChannel_t {
@@ -58,7 +57,6 @@ public:
            << fAdcId << "/" << fTdcId 
            << " with ref " << fTdcInCTSId << endl;
       
-      hDiffTime = MakeH1("DiffTime","Timing Differences", 4000, -200, 200, "t / ns");
       hAdcPhase = MakeH1("AdcPhase","Phase of external trigger to ADC clock", 1000, 0, 100, "t / ns");
       // enable storing already in constructor
       SetStoreEnabled();
@@ -142,7 +140,7 @@ public:
          hChannel_t hCh;
          if(it == hChannels.end()) {
             hCh.Timing = MakeH1("Timing","Timing to Trigger", 1000, -500, -100, "T' / ns");
-            hCh.TDCHitVsTiming = MakeH2("TDCHitVsTiming", "TDCHit vs. Timing", 500, 14, 30, 1000, -400, -200, "#delta_{2} / ns;T' / ns");
+            hCh.TDCHitVsTiming = MakeH2("TDCHitVsTiming", "TDCHit vs. Timing", 200, 14, 30, 300, -500, -100, "#delta_{2} / ns;T' / ns");
             hChannels[chid] = hCh;
          }
          else {
