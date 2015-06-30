@@ -208,6 +208,8 @@ Int_t TUserSource::Open()
 
    TGo4Log::Info("%s user source contains %d files", (fIsHLD ? "HLD" : "GET4"), fNames->GetSize());
 
+   TGo4Analysis::Instance()->SetInputFileName(fname.Data());
+
    return 0;
 }
 

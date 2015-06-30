@@ -46,6 +46,7 @@ TFirstStepProcessor::TFirstStepProcessor(const char* name) :
          throw TGo4EventErrorException(this);
       }
 
+      gROOT->ProcessLine(".include $GO4SYS/include");
       gROOT->ProcessLine(".include $STREAMSYS/include");
       gROOT->ProcessLine(".include $GO4SYS/include");
 
