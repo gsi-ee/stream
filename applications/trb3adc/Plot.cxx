@@ -25,16 +25,55 @@ string AppendCh(const string& s, size_t ch) {
 
 ChHist_t MakeChHist(size_t ch) {
    ChHist_t h;
+   
+   
+   
    string name;
+   TH1D* h1;
+   TH2D* h2;
    name = "Status";
-   h[name] = new TH1D(AppendCh(name,ch).c_str(),
-                      AppendCh(name,ch).c_str(),
-                      16, 0, 16);
+   h1 = new TH1D(AppendCh(name,ch).c_str(),
+                 AppendCh(name,ch).c_str(),
+                 16, 0, 16);
+   h1->SetStats(false);
+   h[name] = h1;
+   
    name = "TimingCorr";
-   h[name] = new TH2D(AppendCh(name,ch).c_str(),
-                      AppendCh(name,ch).c_str(),
-                      500, -500, -200,
-                      500, -500, -200);
+   h2 = new TH2D(AppendCh(name,ch).c_str(),
+                 AppendCh(name,ch).c_str(),
+                 100, -350, -250,
+                 100, -400, -300);
+   h2->GetXaxis()->SetTitle("TRB3_Timing");
+   h2->GetYaxis()->SetTitle("Acqu_Timing");
+   h[name] = h2;
+   
+   name = "IntegralCorr";
+   h2 = new TH2D(AppendCh(name,ch).c_str(),
+                 AppendCh(name,ch).c_str(),
+                 300, 0, 4000,
+                 300, 0, 2500);
+   h2->GetXaxis()->SetTitle("TRB3_Integral");
+   h2->GetYaxis()->SetTitle("Acqu_Integral");
+   h[name] = h2;
+   
+   name = "Timewalk_Acqu";
+   h2 = new TH2D(AppendCh(name,ch).c_str(),
+                 AppendCh(name,ch).c_str(),
+                 100, 0, 2500,
+                 100, -400, -300);
+   h2->GetXaxis()->SetTitle("Acqu_Integral");
+   h2->GetYaxis()->SetTitle("Acqu_Timing");
+   h[name] = h2;
+   
+   name = "Timewalk_TRB3";
+   h2 = new TH2D(AppendCh(name,ch).c_str(),
+                 AppendCh(name,ch).c_str(),
+                 100, 0, 4000,
+                 100, -350, -250);
+   h2->GetXaxis()->SetTitle("TRB3_Integral");
+   h2->GetYaxis()->SetTitle("TRB3_Timing");
+   h[name] = h2;
+   
    return h;
 }
 
@@ -98,21 +137,41 @@ void Plot(const char* fname = "scratch/CBTaggTAPS_9227.dat") {
      const unsigned& ch = Channel;
      ChHists[ch]["Status"]->Fill(Status2String.at(Status).c_str(), 1);
      ChHists[ch]["TimingCorr"]->Fill(Timing_TRB3, Timing_Acqu);
-     
+     ChHists[ch]["IntegralCorr"]->Fill(Integral_TRB3, Integral_Acqu);
+     ChHists[ch]["Timewalk_Acqu"]->Fill(Integral_Acqu, Timing_Acqu);
+     ChHists[ch]["Timewalk_TRB3"]->Fill(Integral_TRB3, Timing_TRB3);
    }
    
    map<string, TCanvas*> c;
    for(size_t ch=0;ch<ChHists.size();ch++) {
-      for(auto& it_ch : ChHists[ch]) {
-         const string& name =  it_ch.first;
+      const auto& ch_map = ChHists[ch];
+      for(auto it_ch = ch_map.begin(); it_ch != ch_map.end(); it_ch++) {
+         const string& name =  it_ch->first;
          // create canvas
-         auto it_canvas = c.find(name);
+         TCanvas* cv = nullptr;
+         const auto& it_canvas = c.find(name);
          if(it_canvas == c.end()) {
-            c[name] = new TCanvas(name.c_str());
-            c[name]->Divide(3,4);
+            cv = new TCanvas(name.c_str(),name.c_str());
+            cv->Divide(3,4);
+            c[name] = cv;
          }
-         c[name]->cd(ch+1);
-         (it_ch.second)->Draw("colz");
+         else {
+            cv = it_canvas->second;
+         }
+         cv->cd(ch+1);
+         it_ch->second->Draw("colz"); // draw the histogram into canvas pad
+         // output canvas if last channel reached and batch mode is on
+         if(!gROOT->IsBatch())
+            continue;
+         if(ch==ChHists.size()-1) {
+            string output = "plots.pdf";
+            if(it_ch == ch_map.begin())
+               cv->Print(output.append("(").c_str());
+            else if(it_ch == next(ch_map.end(), -1))
+               cv->Print(output.append(")").c_str());
+            else
+               cv->Print(output.c_str());
+         }
       }   
    }   
 }
