@@ -11,6 +11,7 @@
 
 #include "TTree.h"
 
+#include <my_config.h>
 
 using namespace std;
 
@@ -32,8 +33,6 @@ protected:
    
    typedef map<unsigned, hChannel_t> hChannels_t;
    hChannels_t hChannels;
-   
-   const static double samplingPeriod = 12.5;
    
 public:
    ADCProc(const char* procname, unsigned id, unsigned ctsid) :
@@ -157,7 +156,7 @@ public:
          // to correct for an ADC epoch counter "glitch"
          // the treshold does not seem to be constant...
          // so this bug should actually be fixed in hardware 
-         if(tm_TDC>17.5) {
+         if(tm_TDC>adcEpochCounterFixThreshold) {
              fineTiming -= samplingPeriod;
          }
          

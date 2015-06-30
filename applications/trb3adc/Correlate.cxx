@@ -14,6 +14,8 @@
 #include <hadaq/TdcSubEvent.h>
 #include <hadaq/TrbProcessor.h>
 
+#include <my_config.h>
+
 using namespace std;
 
 vector<unsigned short> getAcquADCValues(
@@ -46,6 +48,7 @@ void Correlate(const char* fname = "scratch/CBTaggTAPS_9227.dat", const bool deb
    return;
 #endif
    
+   cout << "Working on file basename " << fname << endl;
    
    // build the channel map
    // the order in this vector defines the 12 logical channels
@@ -312,20 +315,21 @@ void Correlate(const char* fname = "scratch/CBTaggTAPS_9227.dat", const bool deb
          cerr << "CTS not finite" << endl;
       
       
-      // due to some unknown but fixed delay between 
-      // the measurement of tm_TDC and tm_CTS, we need 
-      // to correct for an ADC epoch counter "glitch"
-      // the treshold does not seem to be constant,
-      // so this bug should actually be found and fixed in hardware...
-      if(tm_TDC>17.5) {
-         ADC_phase -= 12.5; // samplingPeriod of ADC
-      }
-      
+
       
       for(size_t i=0;i<go4_adc->size();i++) {
          const hadaq::AdcMessage& msg = (*go4_adc)[i];
          const auto id = msg.getCh();
-         const double fineTiming = 1e9*msg.fFineTiming + ADC_phase;
+         double fineTiming = 1e9*msg.fFineTiming;
+         fineTiming += ADC_phase;
+         // due to some unknown but fixed delay between 
+         // the measurement of tm_TDC and tm_CTS, we need 
+         // to correct for an ADC epoch counter "glitch"
+         // the treshold does not seem to be constant...
+         // so this bug should actually be fixed in hardware 
+         if(tm_TDC>adcEpochCounterFixThreshold) {
+             fineTiming -= samplingPeriod;
+         }         
          if(debug && abs(fineTiming)>1e8) 
             cerr << "Very large fine timing found: " 
                  << fineTiming 
