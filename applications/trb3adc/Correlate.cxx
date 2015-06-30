@@ -149,31 +149,73 @@ void Correlate(const char* fname = "scratch/CBTagg_9221.dat", const bool debug =
    
    Long64_t i1 = 0;
    Long64_t i2 = 0;    
+   unsigned go4_EventId_last = 0;
+   unsigned acqu_EventId_last = 0;       
+   unsigned go4_overflows = 0;
+   unsigned acqu_overflows = 0;       
+   
    Long64_t matches = 0;
    while(i1 < n1 && i2 < n2) {
       t1->GetEntry(i1);
       t2->GetEntry(i2);
       // match the the serial ID
-      // it ignores the 16bit overflow for now
       
       // go4 is easily available
       if(!go4_trb->fTrigSyncIdFound) {
-         cerr << "We should always have found some serial ID" << endl;
+         cerr << "We should always have found some serial ID..." << endl;
          exit(1);
       }
+      
+      if(go4_trb->fTrigSyncIdStatus != 0xa) {
+         cerr << "Found invalid TRB3 EventId status (should be 0xa): 0x" 
+              << hex << go4_trb->fTrigSyncIdStatus << dec << endl;
+         // probably a spurious trigger without an ID, just skip it
+         i2++;
+         continue;
+      }
+      
+      
       const unsigned go4_EventId = go4_trb->fTrigSyncId;
+      // acqu needs searching for ADC 400 ID...
       auto EventId = getAcquADCValues(400, acqu_ID, acqu_Values);
       const unsigned acqu_EventId = EventId[0]; // convert 16bit to 32bit...
       
-      if(go4_EventId>acqu_EventId) {
+      if(acqu_EventId<acqu_EventId_last) {
+         if(debug)
+            cout << "Overflow Acqu: " << acqu_EventId << " < " << acqu_EventId_last << endl;
+         acqu_overflows++;
+      }
+      
+      if(go4_EventId<go4_EventId_last) {
+         if(debug)
+            cout << "Overflow Go4: " << go4_EventId << " < " << go4_EventId_last << endl;
+         go4_overflows++;
+      }
+      
+      go4_EventId_last = go4_EventId;
+      acqu_EventId_last = acqu_EventId;      
+      
+      if(abs(go4_overflows-acqu_overflows)>2) {
+         cerr << "Missed one overflow, can't continue." << endl;
+         exit(1);
+      }
+      
+      const unsigned go4_EventId_full = go4_EventId + (go4_overflows << 16);
+      const unsigned acqu_EventId_full = acqu_EventId + (acqu_overflows << 16);
+      
+      
+      if(go4_EventId_full>acqu_EventId_full) {
          i1++;
          continue;
       }
-      else if(go4_EventId<acqu_EventId) {
+      else if(go4_EventId_full<acqu_EventId_full) {
          i2++;
+         continue;
       }
-      
+     
+      // here the EventIDs seem to match (except for overflows)
       matches++;
+      
       if(debug) {
          cout << "Found match=" << matches <<", i1=" << i1 << " i2=" << i2 << endl;
          // just dump events
@@ -306,12 +348,12 @@ void Correlate(const char* fname = "scratch/CBTagg_9221.dat", const bool debug =
          t->Fill();
          
          if(debug && test==15)
-            cout << "Hit Ch=" << i 
+            cout << "Hit Ch=" << i  
                  << " TDC_Acqu=" << TDC_Acqu[i]
-                    << " TDC_TRB3=" << TDC_TRB3[i]
-                       << " ADC_Acqu=" << ADC_Acqu[i]
-                          << " ADC_TRB3=" << ADC_TRB3[i]
-                             << endl;
+                 << " TDC_TRB3=" << TDC_TRB3[i]
+                 << " ADC_Acqu=" << ADC_Acqu[i]
+                 << " ADC_TRB3=" << ADC_TRB3[i]
+                 << endl;
       }       
       
       if(debug)
@@ -320,7 +362,12 @@ void Correlate(const char* fname = "scratch/CBTagg_9221.dat", const bool debug =
       //            break;
       
       if(matches % 1000 == 0)
-         cout << "Matched " << matches << " i1=" << i1 << endl;
+         cout << "Matched " << matches 
+              << " i1=" << i1 
+              << " i2=" << i2 
+              << " id1=" << acqu_EventId_full
+              << " id2=" << go4_EventId_full
+              << endl;
       i1++;
       i2++;
    }
