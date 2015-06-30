@@ -319,6 +319,8 @@ void Correlate(const char* fname = "scratch/CBTagg_9221.dat", const bool debug =
 //        if(matches>10)
 //            break;
         
+        if(matches % 1000 == 0)
+		cout << "Matched " << matches << " i1=" << i1 << endl;
         i1++;
         i2++;
     }
