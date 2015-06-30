@@ -17,62 +17,74 @@ using namespace std;
 typedef map<string, TH1*> ChHist_t;
 
 
-string AppendCh(const string& s, size_t ch) {
+string PrependCh(const string& s, size_t ch) {
    stringstream ss;
    ss << "Ch" << ch << "_" << s;
    return ss.str();
 }
 
+struct axis_t {
+   Int_t Bins;
+   Double_t Low;
+   Double_t High;
+   string Label;
+};
+
+TH2D* MakeH2(const string& titlename, 
+             const axis_t& x_axis,
+             const axis_t& y_axis) {
+   TH2D* h;
+   h = new TH2D(titlename.c_str(),
+                titlename.c_str(),
+                x_axis.Bins, x_axis.Low, x_axis.High,
+                y_axis.Bins, y_axis.Low, y_axis.High
+                );
+   h->GetXaxis()->SetTitle(x_axis.Label.c_str());
+   h->GetYaxis()->SetTitle(y_axis.Label.c_str());
+   return h;
+}
+       
+TH1D* MakeH1(const string& titlename, 
+             const axis_t& x_axis,
+             const string& y_axislabel = "") {
+   TH1D* h;
+   h = new TH1D(titlename.c_str(),
+                titlename.c_str(),
+                x_axis.Bins, x_axis.Low, x_axis.High);
+   h->GetXaxis()->SetTitle(x_axis.Label.c_str());
+   h->GetYaxis()->SetTitle(y_axislabel.c_str());
+   return h;
+}
+
+
 ChHist_t MakeChHist(size_t ch) {
    ChHist_t h;
    
+
+   const axis_t timing_acqu{200, -400, -300, "Timing_Acqu / ns"};   
+   const axis_t timing_trb3{200, -350, -250, "Timing_TRB3 / ns"};
+   const axis_t integral_acqu{300, 0, 2500, "Integral_Acqu"};   
+   const axis_t integral_trb3{300, 0, 4000, "Integral_TRB3"};
    
    
-   string name;
-   TH1D* h1;
-   TH2D* h2;
-   name = "Status";
-   h1 = new TH1D(AppendCh(name,ch).c_str(),
-                 AppendCh(name,ch).c_str(),
-                 16, 0, 16);
-   h1->SetStats(false);
-   h[name] = h1;
+   h["Status"] = MakeH1(PrependCh("Status", ch), {16, 0, 16, ""});
+   h["Status"]->SetStats(false);
    
-   name = "TimingCorr";
-   h2 = new TH2D(AppendCh(name,ch).c_str(),
-                 AppendCh(name,ch).c_str(),
-                 100, -350, -250,
-                 100, -400, -300);
-   h2->GetXaxis()->SetTitle("TRB3_Timing");
-   h2->GetYaxis()->SetTitle("Acqu_Timing");
-   h[name] = h2;
+   h["Timing_Acqu"] = MakeH1(PrependCh("Timing_Acqu", ch), timing_acqu);
+   h["Timing_TRB3"] = MakeH1(PrependCh("Timing_TRB3", ch), timing_trb3);
    
-   name = "IntegralCorr";
-   h2 = new TH2D(AppendCh(name,ch).c_str(),
-                 AppendCh(name,ch).c_str(),
-                 300, 0, 4000,
-                 300, 0, 2500);
-   h2->GetXaxis()->SetTitle("TRB3_Integral");
-   h2->GetYaxis()->SetTitle("Acqu_Integral");
-   h[name] = h2;
+   h["Integral_Acqu"] = MakeH1(PrependCh("Integral_Acqu", ch), integral_acqu);
+   h["Integral_TRB3"] = MakeH1(PrependCh("Integral_TRB3", ch), integral_trb3);   
    
-   name = "Timewalk_Acqu";
-   h2 = new TH2D(AppendCh(name,ch).c_str(),
-                 AppendCh(name,ch).c_str(),
-                 100, 0, 2500,
-                 100, -400, -300);
-   h2->GetXaxis()->SetTitle("Acqu_Integral");
-   h2->GetYaxis()->SetTitle("Acqu_Timing");
-   h[name] = h2;
+   h["TimingCorr"] = MakeH2(PrependCh("TimingCorr",ch), 
+                            timing_trb3,   timing_acqu);   
+   h["IntegralCorr"] = MakeH2(PrependCh("IntegralCorr",ch), 
+                              integral_trb3, integral_acqu);
    
-   name = "Timewalk_TRB3";
-   h2 = new TH2D(AppendCh(name,ch).c_str(),
-                 AppendCh(name,ch).c_str(),
-                 100, 0, 4000,
-                 100, -350, -250);
-   h2->GetXaxis()->SetTitle("TRB3_Integral");
-   h2->GetYaxis()->SetTitle("TRB3_Timing");
-   h[name] = h2;
+   h["Timewalk_Acqu"] = MakeH2(PrependCh("Timewalk_Acqu",ch), 
+                               integral_acqu, timing_acqu);
+   h["Timewalk_TRB3"] = MakeH2(PrependCh("Timewalk_TRB3",ch), 
+                               integral_trb3, timing_trb3);
    
    return h;
 }
@@ -136,6 +148,10 @@ void Plot(const char* fname = "scratch/CBTaggTAPS_9227.dat") {
      t->GetEntry(i);
      const unsigned& ch = Channel;
      ChHists[ch]["Status"]->Fill(Status2String.at(Status).c_str(), 1);
+     ChHists[ch]["Timing_Acqu"]->Fill(Timing_Acqu);
+     ChHists[ch]["Timing_TRB3"]->Fill(Timing_TRB3);    
+     ChHists[ch]["Integral_Acqu"]->Fill(Integral_Acqu);
+     ChHists[ch]["Integral_TRB3"]->Fill(Integral_TRB3);    
      ChHists[ch]["TimingCorr"]->Fill(Timing_TRB3, Timing_Acqu);
      ChHists[ch]["IntegralCorr"]->Fill(Integral_TRB3, Integral_Acqu);
      ChHists[ch]["Timewalk_Acqu"]->Fill(Integral_Acqu, Timing_Acqu);
