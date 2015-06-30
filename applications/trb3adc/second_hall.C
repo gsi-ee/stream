@@ -3,6 +3,7 @@
 #include "base/Event.h"
 #include "hadaq/TdcSubEvent.h"
 #include "hadaq/AdcSubEvent.h"
+#include "TGo4Analysis.h"
 
 #include <iostream>
 #include <sstream>
@@ -33,9 +34,12 @@ protected:
    typedef map<unsigned, hChannel_t> hChannels_t;
    hChannels_t hChannels;
    
+   const my_config_t config;
+   
 public:
-   ADCProc(const char* procname, unsigned id, unsigned ctsid) :
-      base::EventProc(procname)
+   ADCProc(const char* procname, unsigned id, unsigned ctsid, const my_config_t& cfg) :
+      base::EventProc(procname),
+      config(cfg)
    {
       
       stringstream ss;
@@ -154,8 +158,8 @@ public:
          // to correct for an ADC epoch counter "glitch"
          // the treshold does not seem to be constant...
          // so this bug should actually be fixed in hardware 
-         if(tm_TDC>adcEpochCounterFixThreshold) {
-             fineTiming -= samplingPeriod;
+         if(tm_TDC>config.AdcEpochCounterFixThreshold) {
+             fineTiming -= config.SamplingPeriod;
          }
          
          if(debug)
@@ -177,8 +181,19 @@ public:
 
 void second() 
 {
-   // uncomment line to create tree for the events storage
-   base::ProcMgr::instance()->CreateStore("file.root");
    
-   new ADCProc("ADCProc", 0x0200, 0x8000);
+   // search for filename specific config
+   string inputFilename = TGo4Analysis::Instance()->GetInputFileName(); 
+   map<string, my_config_t>::const_iterator it_config = my_config.find(inputFilename);
+   if(it_config == my_config.end()) {
+      cerr << "ERROR: Config for filename " << inputFilename << " not found, returning" << endl;
+      return;
+   }
+   
+   // create outputfile
+   const string outputFilename = inputFilename+string(".root"); 
+   base::ProcMgr::instance()->CreateStore(outputFilename.c_str());
+   
+   // setup the ADCProc
+   new ADCProc("ADCProc", 0x0200, 0x8000, it_config->second);
 }

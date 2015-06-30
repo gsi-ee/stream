@@ -64,7 +64,7 @@ ChHist_t MakeChHist(size_t ch) {
    
 
    const axis_t timing_acqu{200, -400, -300, "Timing_Acqu / ns"};   
-   const axis_t timing_trb3{200, -350, -250, "Timing_TRB3 / ns"};
+   const axis_t timing_trb3{200, -300, -200, "Timing_TRB3 / ns"};
    const axis_t integral_acqu{300, 0, 2500, "Integral_Acqu"};   
    const axis_t integral_trb3{300, 0, 4000, "Integral_TRB3"};
    

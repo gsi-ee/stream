@@ -50,6 +50,14 @@ void Correlate(const char* fname = "scratch/CBTaggTAPS_9227.dat", const bool deb
    
    cout << "Working on file basename " << fname << endl;
    
+   // get some config
+   map<string, my_config_t>::const_iterator it_config = my_config.find(fname+string(".hld"));
+   if(it_config == my_config.end()) {
+      cerr << "ERROR: Config for filename " << fname << ".hld not found" << endl;
+      return;
+   }
+   const my_config_t& config = it_config->second;
+   
    // build the channel map
    // the order in this vector defines the 12 logical channels
    // of this analysis, from 0-11
@@ -327,8 +335,8 @@ void Correlate(const char* fname = "scratch/CBTaggTAPS_9227.dat", const bool deb
          // to correct for an ADC epoch counter "glitch"
          // the treshold does not seem to be constant...
          // so this bug should actually be fixed in hardware 
-         if(tm_TDC>adcEpochCounterFixThreshold) {
-             fineTiming -= samplingPeriod;
+         if(tm_TDC>config.AdcEpochCounterFixThreshold) {
+             fineTiming -= config.SamplingPeriod;
          }         
          if(debug && abs(fineTiming)>1e8) 
             cerr << "Very large fine timing found: " 

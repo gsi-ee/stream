@@ -8,5 +8,5 @@
   o = TString(gSystem->GetMakeExe());
   o = o.ReplaceAll(" -c ", " -std=c++11 -c ");
   gSystem->SetMakeExe(o.Data());
-  gSystem->AddIncludePath(" -I$STREAMSYS/include ");
+  gSystem->AddIncludePath(" -I$STREAMSYS/include -I$GO4SYS/include ");
 }
