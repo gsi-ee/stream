@@ -11,6 +11,8 @@
 #include <sstream>
 
 #include <TROOT.h>
+#include <TEventList.h>
+#include <TEntryList.h>
 
 using namespace std;
 
@@ -89,7 +91,8 @@ ChHist_t MakeChHist(size_t ch) {
    return h;
 }
 
-void Plot(const char* fname = "scratch/CBTaggTAPS_9227.dat") {
+void Plot(const char* cut = "", 
+          const char* fname = "scratch/CBTaggTAPS_9227.dat") {
    stringstream fname_;
    fname_ << fname << ".merged.root";
    TFile* f = new TFile(fname_.str().c_str());
@@ -99,6 +102,14 @@ void Plot(const char* fname = "scratch/CBTaggTAPS_9227.dat") {
       cerr << "Tree T not found in file " << fname_.str() << endl;
       return;
    }
+   
+   // make some eventlist from the given cut
+   t->Draw(">>eventlist",cut);
+   TEventList* eventlist = (TEventList*)gDirectory->Get("eventlist");
+   cout << "Cut reduced events from " << t->GetEntries() << " to " << eventlist->GetN() << endl;
+   t->SetEventList(eventlist);
+   TEntryList* entrylist = t->GetEntryList(); 
+   
    
    const map<unsigned, string> Status2String = {
       {0, "Empty"},
@@ -144,8 +155,8 @@ void Plot(const char* fname = "scratch/CBTaggTAPS_9227.dat") {
    }
    
    
-   for(Long64_t i=0;i<t->GetEntries();i++) {
-     t->GetEntry(i);
+   for(Long64_t i=0;i<entrylist->GetN();i++) {
+     t->GetEntry(entrylist->Next());
      const unsigned& ch = Channel;
      ChHists[ch]["Status"]->Fill(Status2String.at(Status).c_str(), 1);
      ChHists[ch]["Timing_Acqu"]->Fill(Timing_Acqu);
@@ -175,7 +186,17 @@ void Plot(const char* fname = "scratch/CBTaggTAPS_9227.dat") {
             cv = it_canvas->second;
          }
          cv->cd(ch+1);
-         it_ch->second->Draw("colz"); // draw the histogram into canvas pad
+         TH1* h = it_ch->second;
+         // append cut expression to title
+         string s_cut = cut;
+         if(s_cut != "") {
+            string title = h->GetTitle();
+            title.append(" {");
+            title.append(s_cut);
+            title.append("}");
+            h->SetTitle(title.c_str());
+         }
+         h->Draw("colz"); // draw the histogram into canvas pad
          // output canvas if last channel reached and batch mode is on
          if(!gROOT->IsBatch())
             continue;
