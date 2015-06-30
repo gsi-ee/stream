@@ -39,7 +39,7 @@ struct ChannelMap_t {
    unsigned TDC;
 };
 
-void Correlate(const char* fname = "scratch/CBTagg_9221.dat", const bool debug = false) {
+void Correlate(const char* fname = "scratch/CBTaggTAPS_9227.dat", const bool debug = false) {
    
 #if defined(__CINT__) && !defined(__MAKECINT__)
    cout << "Needs to be compiled with ACLIC, append + to filename" << endl;
@@ -98,10 +98,19 @@ void Correlate(const char* fname = "scratch/CBTagg_9221.dat", const bool debug =
    
    TFile* f1 = new TFile(fname1.str().c_str());
    TTree* t1 = (TTree*)f1->Get("rawADC");
+   if(t1==nullptr) {
+      cerr << "Acqu data tree not found" << endl;
+      exit(1);
+   }
+      
    t1->SetMakeClass(1); // very important for reading STL stuff
    
    TFile* f2 = new TFile(fname2.str().c_str());
    TTree* t2 = (TTree*)f2->Get("T");
+   if(t2==nullptr) {
+      cerr << "Go4 data tree not found" << endl;
+      exit(1);
+   }
    // t2->SetMakeClass(1); // Go4 stuff already has compiled classes
    
    Long64_t n1 = t1->GetEntries(); 
@@ -317,8 +326,12 @@ void Correlate(const char* fname = "scratch/CBTagg_9221.dat", const bool debug =
          const hadaq::AdcMessage& msg = (*go4_adc)[i];
          const auto id = msg.getCh();
          const double fineTiming = 1e9*msg.fFineTiming + ADC_phase;
-         if(abs(fineTiming)<1000) // outside 1000ns might be late hit in TRB3 event buffer?
-            TDC_TRB3[TRB3_IDs_map[id]] = fineTiming;
+         if(debug && abs(fineTiming)>1e8) 
+            cerr << "Very large fine timing found: " 
+                 << fineTiming 
+                 << " Corrected: " << (fineTiming - (1<<24)*12.5)
+                 << endl;
+         TDC_TRB3[TRB3_IDs_map[id]] = fineTiming;         
          ADC_TRB3[TRB3_IDs_map[id]] = msg.fIntegral;
       }
       
