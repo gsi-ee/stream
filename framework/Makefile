@@ -17,23 +17,23 @@ INCLUDES      = $(STREAMSYS)/include
 NEWLIB = $(STREAMSYS)/lib/libStream.so
 
 NEWLIB_HEADERS = $(wildcard $(STREAMSYS)/include/base/*.h) \
-                 $(wildcard $(STREAMSYS)/include/dabc/*.h) \
                  $(wildcard $(STREAMSYS)/include/nx/*.h) \
                  $(wildcard $(STREAMSYS)/include/get4/*.h) \
                  $(wildcard $(STREAMSYS)/include/hadaq/*.h) \
-                 $(wildcard $(STREAMSYS)/include/mbs/*.h) 
-                                   
+                 $(wildcard $(STREAMSYS)/include/mbs/*.h) \
+                 $(STREAMSYS)/include/dabc/BinaryFile.h
+
 NEWLIB_SRCS =    $(wildcard base/*.cxx) \
                  $(wildcard nx/*.cxx) \
                  $(wildcard get4/*.cxx) \
                  $(wildcard hadaq/*.cxx) \
                  $(wildcard mbs/*.cxx)
-                 
+
 NEWLIB_OBJS = $(patsubst %.cxx, %.o, $(NEWLIB_SRCS))
 NEWLIB_DEPS = $(patsubst %.cxx, %.d, $(NEWLIB_SRCS))
 
-NEWLIBROOT_HEADERS = $(wildcard $(STREAMSYS)/include/root/*.h)               
-NEWLIBROOT_SRCS    = $(wildcard root/*.cxx)               
+NEWLIBROOT_HEADERS = $(wildcard $(STREAMSYS)/include/root/*.h)
+NEWLIBROOT_SRCS    = $(wildcard root/*.cxx)
 NEWLIBROOT_OBJS    = $(patsubst %.cxx, %.o, $(NEWLIBROOT_SRCS))
 NEWLIBROOT_DEPS    = $(patsubst %.cxx, %.d, $(NEWLIBROOT_SRCS))
 
@@ -105,4 +105,4 @@ $(NEWLIB) : $(NEWLIB_OBJS)
 ifeq ($(findstring $(MAKECMDGOALS), clean),)
 -include $(NEWLIB_DEPS) $(NEWLIBROOT_DEPS)
 endif
-	
+

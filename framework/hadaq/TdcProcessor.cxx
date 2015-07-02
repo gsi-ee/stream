@@ -110,7 +110,7 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
    SetSubPrefix("Ch", ch);
 
    if (DoRisingEdge()) {
-      fCh[ch].fRisingFine = MakeH1("RisingFine", "Rising fine counter", (gNumFineBins==1000 ? 100 : gNumFineBins), 0, gNumFineBins, "fine");
+      fCh[ch].fRisingFine = MakeH1("RisingFine", "Rising fine counter", gNumFineBins, 0, gNumFineBins, "fine");
       fCh[ch].fRisingCoarse = MakeH1("RisingCoarse", "Rising coarse counter", 2048, 0, 2048, "coarse");
       fCh[ch].fRisingMult = MakeH1("RisingMult", "Rising event multiplicity", 128, 0, 128, "nhits");
       fCh[ch].fRisingCalibr = MakeH1("RisingCalibr", "Rising calibration function", FineCounterBins, 0, FineCounterBins, "fine");
@@ -119,7 +119,7 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
    }
 
    if (DoFallingEdge()) {
-      fCh[ch].fFallingFine = MakeH1("FallingFine", "Falling fine counter", (gNumFineBins==1000 ? 100 : gNumFineBins), 0, gNumFineBins, "fine");
+      fCh[ch].fFallingFine = MakeH1("FallingFine", "Falling fine counter", gNumFineBins, 0, gNumFineBins, "fine");
       fCh[ch].fFallingCoarse = MakeH1("FallingCoarse", "Falling coarse counter", 2048, 0, 2048, "coarse");
       fCh[ch].fFallingMult = MakeH1("FallingMult", "Falling event multiplicity", 128, 0, 128, "nhits");
       fCh[ch].fFallingCalibr = MakeH1("FallingCalibr", "Falling calibration function", FineCounterBins, 0, FineCounterBins, "fine");
@@ -541,7 +541,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       cnt++;
 
       if (first_scan)
-         FillH1(fMsgsKind, msg.getKind() >> 29);
+         FastFillH1(fMsgsKind, msg.getKind() >> 29);
 
       if (cnt==1) {
          if (!msg.isHeaderMsg()) {
@@ -589,7 +589,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
          if (chid >= NumChannels()) {
             if (CheckPrintError())
-               printf("%5s Channel number %u problem\n", GetName(), chid);
+               printf("%5s Channel number %u bigger than configured %u\n", GetName(), chid, NumChannels());
             iserr = true;
             continue;
          }
@@ -601,8 +601,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                   printf("%5s Missing hit in channel %u fine counter is %x\n", GetName(), chid, fine);
 
                missinghit = true;
-               FillH1(fChannels, chid);
-               FillH1(fUndHits, chid);
+               FastFillH1(fChannels, chid);
+               FastFillH1(fUndHits, chid);
             }
             continue;
          }
@@ -617,7 +617,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             raw_hit = false;
          } else {
             if (fine >= FineCounterBins) {
-               FillH1(fErrors, chid);
+               FastFillH1(fErrors, chid);
                if (CheckPrintError())
                   printf("%5s Fine counter %u out of allowed range 0..%u in channel %u\n", GetName(), fine, FineCounterBins, chid);
                iserr = true;
@@ -648,7 +648,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             // ensure that histograms are created
             CreateChannelHistograms(chid);
 
-            FillH1(fChannels, chid);
+            FastFillH1(fChannels, chid);
             FillH1(fHits, chid + (isrising ? 0.25 : 0.75));
             FillH2(fAllFine, chid, fine);
             FillH2(fAllCoarse, chid, coarse);

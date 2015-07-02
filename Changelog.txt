@@ -1,3 +1,8 @@
+2.07.2015
+1. Introduce dabcengine, which allows to run code in DABC environment
+   Code is still experimental, data can be only accessed via web server
+   while application running.
+
 18.02.2015
 1. When loading TDC calibrations, one could specify scaling factor 
    (should be grater than 1). This could allow to use calibration,
