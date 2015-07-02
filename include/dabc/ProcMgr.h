@@ -30,7 +30,7 @@ class ProcMgr : public base::ProcMgr {
          h.SetField("right", right);
 
          std::vector<double> bins;
-         bins.resize(nbins+3, 0.);
+         bins.resize(nbins+5, 0.);
          bins[0] = nbins;
          bins[1] = left;
          bins[2] = right;
@@ -55,7 +55,7 @@ class ProcMgr : public base::ProcMgr {
          h.SetField("right2", right2);
 
          std::vector<double> bins;
-         bins.resize(nbins1*nbins2+6, 0.);
+         bins.resize(6+(nbins1+2)*(nbins2+2), 0.);
          bins[0] = nbins1;
          bins[1] = left1;
          bins[2] = right1;

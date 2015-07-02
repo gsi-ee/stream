@@ -43,7 +43,8 @@ namespace base {
                double* arr = (double*) h1;
                int nbin = (int) arr[0];
                int bin = (int) (nbin * (x - arr[1]) / (arr[2] - arr[1]));
-               if ((bin>=0) && (bin<nbin)) arr[bin+3]+=weight;
+               if (bin<0) arr[3]+=weight; else
+               if (bin>=nbin) arr[4+nbin]+=weight; else arr[4+bin]+=weight;
             } else
             if (h1) mgr()->FillH1(h1, x, weight);
          }
@@ -51,7 +52,7 @@ namespace base {
          /** Can only be used where index is same as x itself, no range checks are performed */
          inline void FastFillH1(H1handle h1, int x) {
             if (h1 && fIntHistFormat)
-               ((double*) h1)[x+3] += 1.;
+               ((double*) h1)[4+x] += 1.;
             else
                if (h1) mgr()->FillH1(h1, x, 1.);
          }
@@ -79,9 +80,10 @@ namespace base {
 
                int bin1 = (int) (nbin1 * (x - arr[1]) / (arr[2] - arr[1]));
                int bin2 = (int) (nbin2 * (y - arr[4]) / (arr[5] - arr[4]));
+               if (bin1<0) bin1 = -1; else if (bin1>nbin1) bin1 = nbin1;
+               if (bin2<0) bin2 = -1; else if (bin2>nbin2) bin2 = nbin2;
 
-               if ((bin1>=0) && (bin1<nbin1) && (bin2>=0) && (bin2<nbin2))
-                  arr[bin1 + bin2*nbin1 + 6]+=weight;
+               arr[6 + (bin1+1) + (bin2+1)*(nbin1+2)]+=weight;
             } else
             if (h2) mgr()->FillH2(h2, x, y, weight);
          }
@@ -90,7 +92,7 @@ namespace base {
          inline void FastFillH2(H1handle h2, int x, int y)
          {
             if (h2 && fIntHistFormat) {
-               ((double*) h2)[x + y * (int) *((double*)h2) + 6] += 1.;
+               ((double*) h2)[6 + (x+1) + (y+1) * ((int) *((double*)h2) + 2)] += 1.;
             } else
             if (h2) mgr()->FillH2(h2, x, y, 1.);
          }

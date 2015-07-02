@@ -2,6 +2,9 @@
 1. Introduce dabcengine, which allows to run code in DABC environment
    Code is still experimental, data can be only accessed via web server
    while application running.
+2. Change internal histogram format - add undeflow/overflow bins.
+   Let use such histogram later for better analysis. 
+
 
 18.02.2015
 1. When loading TDC calibrations, one could specify scaling factor 

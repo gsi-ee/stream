@@ -63,32 +63,36 @@ base::H1handle base::ProcMgr::MakeH1(const char* name, const char* title, int nb
 {
    if (!InternalHistFormat()) return 0;
 
-   double* arr = new double[nbins+3];
+   double* arr = new double[nbins+5];
    arr[0] = nbins;
    arr[1] = left;
    arr[2] = right;
-   for (int n=0;n<nbins;n++) arr[n+3] = 0.;
+   for (int n=0;n<nbins+2;n++) arr[n+3] = 0.;
    return arr;
 }
 
 void base::ProcMgr::FillH1(H1handle h1, double x, double weight)
 {
-   // put code here, but it should be called already performed in processor
+   // put code here, but it should be already performed in processor
    if (!InternalHistFormat() || !h1) return;
 
    double* arr = (double*) h1;
    int nbin = (int) arr[0];
    int bin = (int) (nbin * (x - arr[1]) / (arr[2] - arr[1]));
-   if ((bin>=0) && (bin<nbin)) arr[bin+3]+=weight;
+   if (bin<0) arr[3]+=weight; else
+   if (bin>=nbin) arr[4+nbin]+=weight; else arr[4+bin]+=weight;
 }
 
-double base::ProcMgr::GetH1Content(H1handle h1, int nbin)
+double base::ProcMgr::GetH1Content(H1handle h1, int bin)
 {
    // put code here, but it should be called already performed in processor
    if (!InternalHistFormat() || !h1) return 0.;
 
    double* arr = (double*) h1;
-   return (nbin>=0) && (nbin<arr[0]) ? arr[nbin+3] : 0.;
+   int nbin = (int) arr[0];
+   if (bin<0) return arr[3];
+   if (bin>=nbin) return arr[4+nbin];
+   return arr[4+bin];
 }
 
 void base::ProcMgr::ClearH1(base::H1handle h1)
@@ -98,7 +102,7 @@ void base::ProcMgr::ClearH1(base::H1handle h1)
    if (!InternalHistFormat() || !h1) return;
 
    double* arr = (double*) h1;
-   for (int n=0;n<arr[0];n++) arr[n+3] = 0.;
+   for (int n=0;n<arr[0]+2;n++) arr[n+3] = 0.;
 }
 
 
@@ -106,7 +110,7 @@ base::H2handle base::ProcMgr::MakeH2(const char* name, const char* title, int nb
 {
    if (!InternalHistFormat()) return 0;
 
-   double* bins = new double[nbins1*nbins2+6];
+   double* bins = new double[(nbins1+2)*(nbins2+2)+6];
    bins[0] = nbins1;
    bins[1] = left1;
    bins[2] = right1;
@@ -129,8 +133,10 @@ void base::ProcMgr::FillH2(H1handle h2, double x, double y, double weight)
    int bin1 = (int) (nbin1 * (x - arr[1]) / (arr[2] - arr[1]));
    int bin2 = (int) (nbin2 * (y - arr[4]) / (arr[5] - arr[4]));
 
-   if ((bin1>=0) && (bin1<nbin1) && (bin2>=0) && (bin2<nbin2))
-      arr[bin1 + bin2*nbin1 + 6]+=weight;
+   if (bin1<0) bin1 = -1; else if (bin1>nbin1) bin1 = nbin1;
+   if (bin2<0) bin2 = -1; else if (bin2>nbin2) bin2 = nbin2;
+
+   arr[6 + (bin1+1) + (bin2+1)*(nbin1+2)]+=weight;
 }
 
 void base::ProcMgr::ClearH2(base::H2handle h2)
@@ -140,9 +146,8 @@ void base::ProcMgr::ClearH2(base::H2handle h2)
 
    int nbin1 = (int) arr[0];
    int nbin2 = (int) arr[3];
-   for (int n=0;n<nbin1*nbin2;n++) arr[n+6] = 0.;
+   for (int n=0;n<(nbin1+2)*(nbin2+2);n++) arr[6+n] = 0.;
 }
-
 
 base::C1handle base::ProcMgr::MakeC1(const char* name, double left, double right, base::H1handle h1)
 {
