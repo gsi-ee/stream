@@ -1,7 +1,8 @@
 <?xml version="1.0"?>
 <dabc version="2">
   <Variables>
-     <asf value="hierarchy.bin"/>
+     <parallel value="0"/>
+     <asf value="file.root"/>
      <file value="pilas_15178162456.hld"/>
   </Variables>
 
@@ -26,7 +27,9 @@
 
     <Module name="Run" class="dabc::StreamModule">
        <asf value="${asf}"/>
+       <parallel value="${parallel}"/>
        <InputPort name="Input0" url="hld://${file}"/>
+       <OutputPort name="*" auto="false"/>
        <Events width="4" prec="1" low="0" up="1000" debug="0"/>
      </Module>
 

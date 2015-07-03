@@ -29,11 +29,11 @@ namespace dabc {
 
    class ProcMgr;
 
-
-
    class StreamModule : public dabc::ModuleAsync {
 
    protected:
+      int          fParallel; // how many parallel processes to start
+      void        *fInitFunc; // init function
       dabc::ProcMgr* fProcMgr;
       std::string  fAsf;
       long unsigned fTotalSize;
@@ -41,11 +41,19 @@ namespace dabc {
       long unsigned fTotalOutEvnts;
       virtual int ExecuteCommand(dabc::Command cmd);
 
+      virtual void OnThreadAssigned();
+
+      bool ProcessNextBuffer();
+
+      bool RedistributeBuffer();
+
    public:
       StreamModule(const std::string& name, dabc::Command cmd = 0);
       virtual ~StreamModule();
 
       virtual bool ProcessRecv(unsigned port);
+
+      virtual bool ProcessSend(unsigned port) { return RedistributeBuffer(); }
 
       virtual void BeforeModuleStart();
 
