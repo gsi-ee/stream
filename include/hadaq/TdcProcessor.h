@@ -122,6 +122,7 @@ namespace hadaq {
          base::H2handle fRisingCalibr;//! histogram with all rising calibrations
          base::H2handle fFallingCalibr; //! histogram all rising calibrations
 
+         unsigned                 fNumChannels; //! number of channels
          std::vector<ChannelRec>  fCh; //! histogram for individual channels
 
          double fCalibrProgress;      //! progress of auto calibration
@@ -195,7 +196,7 @@ namespace hadaq {
 
          static void SetDefaults(unsigned numfinebins=600, unsigned totrange = 100);
 
-         inline unsigned NumChannels() const { return fCh.size(); }
+         inline unsigned NumChannels() const { return fNumChannels; }
          inline bool DoRisingEdge() const { return true; }
          inline bool DoFallingEdge() const { return fEdgeMask > 1; }
 

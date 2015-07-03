@@ -106,10 +106,10 @@ dabc::StreamModule::StreamModule(const std::string& name, dabc::Command cmd) :
 
    func();
 
-   CreatePar("Events").SetRatemeter(false, 3.).SetUnits("Ev");
-
    // remove pointer, let other modules to create and use it
    base::ProcMgr::ClearInstancePointer();
+
+   CreatePar("Events").SetRatemeter(false, 3.).SetUnits("Ev");
 
    Publish(fWorkerHierarchy, dabc::format("$CONTEXT$/%s", GetName()));
 }

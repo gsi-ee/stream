@@ -88,13 +88,13 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
 
    while ((ev = iter.nextEvent()) != 0) {
 
-      FillH1(fEvType, ev->GetId() & 0xf);
+      DefFillH1(fEvType, (ev->GetId() & 0xf), 1.);
 
       if ((fEventTypeSelect <= 0xf) && ((ev->GetId() & 0xf) != fEventTypeSelect)) continue;
 
       if (IsPrintRawData()) ev->Dump();
 
-      FillH1(fEvSize, ev->GetPaddedSize());
+      DefFillH1(fEvSize, ev->GetPaddedSize(), 1.);
 
       hadaqs::RawSubevent* sub = 0;
 
@@ -102,7 +102,7 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
 
          if (IsPrintRawData()) sub->Dump(true);
 
-         FillH1(fSubevSize, sub->GetSize());
+         DefFillH1(fSubevSize, sub->GetSize(), 1.);
 
          // use only 16-bit in trigger number while CTS make a lot of errors in higher 8 bits
          // AccountTriggerId((sub->GetTrigNr() >> 8) & 0xffff);

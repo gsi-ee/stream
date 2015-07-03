@@ -27,6 +27,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    SubProcessor(trb, "TDC_%04X", tdcid),
    fIter1(),
    fIter2(),
+   fNumChannels(numchannels),
    fCalibrProgress(0.),
    fCalibrStatus("Init"),
    fStoreVect(),
@@ -653,7 +654,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             // if (chid>0) printf("%s HIT ch %u tm %12.9f diff %12.9f\n", GetName(), chid, localtm, localtm - ch0time);
 
             // ensure that histograms are created
-            CreateChannelHistograms(chid);
+            if (rec.fRisingFine == 0)
+               CreateChannelHistograms(chid);
 
             DefFastFillH1(fChannels, chid);
             DefFillH1(fHits, (chid + (isrising ? 0.25 : 0.75)), 1.);
