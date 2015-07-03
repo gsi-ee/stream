@@ -508,7 +508,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
    uint32_t syncid(0xffffffff);
    // copy first 4 bytes - it is syncid
-   memcpy(&syncid, buf.ptr(), 4);
+   if (buf().format==0)
+      memcpy(&syncid, buf.ptr(), 4);
 
    unsigned cnt(0), hitcnt(0);
 
@@ -524,7 +525,10 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
    TdcIterator& iter = first_scan ? fIter1 : fIter2;
 
-   iter.assign((uint32_t*) buf.ptr(4), buf.datalen()/4-1, false);
+   if (buf().format==0)
+      iter.assign((uint32_t*) buf.ptr(4), buf.datalen()/4-1, false);
+   else
+      iter.assign((uint32_t*) buf.ptr(0), buf.datalen()/4, buf().format==2);
 
    unsigned help_index(0);
 

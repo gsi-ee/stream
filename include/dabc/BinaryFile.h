@@ -1,4 +1,4 @@
-// $Id: BinaryFile.h 1575 2013-05-08 15:40:20Z linev $
+// $Id: BinaryFile.h 2116 2014-03-17 12:01:37Z linev $
 
 /************************************************************
  * The Data Acquisition Backbone Core (DABC)                *
@@ -21,17 +21,24 @@
 
 namespace dabc {
 
-   // implement basic POSIX interface, can be extended in the future
-
    class Object;
+
+   /** \brief Defines and implements basic POSIX file interface
+    *
+    * \ingroup dabc_all_classes
+    *
+    * Used to virtualize access to file system and be able to replace such access by other file engines
+    */
 
    class FileInterface {
       public:
+
+         /** \brief File handle descriptor */
          typedef void* Handle;
 
          virtual ~FileInterface() {}
 
-         virtual Handle fopen(const char* fname, const char* mode) { return (Handle) ::fopen(fname, mode); }
+         virtual Handle fopen(const char* fname, const char* mode, const char* = 0) { return (Handle) ::fopen(fname, mode); }
 
          virtual void fclose(Handle f) { if (f!=0) ::fclose((FILE*)f); }
 
@@ -50,11 +57,29 @@ namespace dabc {
          virtual bool fseek(Handle f, long int offset, bool relative = true)
          { return f==0 ? false : ::fseek((FILE*)f, offset, relative ? SEEK_CUR : SEEK_SET) == 0; }
 
-         /** Produce list of files, object must be explicitly destroyed with ref.Destroy call */
-//         virtual Object* fmatch(const char* fmask);
+         /** Produce list of files, object must be explicitly destroyed with ref.Destroy call
+          * One could decide if files or directories should be listed */
+         virtual Object* fmatch(const char* fmask, bool select_files = true) { return 0; }
+
+         virtual bool mkdir(const char* path) { return false; }
+
+         /** Method returns file-specific int parameter */
+         virtual int GetFileIntPar(Handle h, const char* parname) { return 0; }
+
+         /** Method returns file-specific string parameter */
+         virtual bool GetFileStrPar(Handle h, const char* parname, char* sbuf, int sbuflen) { if (sbuf) *sbuf = 0; return false; }
+
    };
 
    // ==============================================================================
+
+   /** \brief Base class for file writing/reading in DABC
+    *
+    * \ingroup dabc_all_classes
+    *
+    * Mainly used to handle \ref FileInterface instance and
+    * \ref FileInterface::Handle pointer
+    */
 
    class BasicFile {
       protected:
@@ -108,6 +133,16 @@ namespace dabc {
          inline bool isWriting() const { return isOpened() && !fReadingMode; }
 
          bool eof() const { return isReading() ? io->feof(fd) : true; }
+
+         /** Return integer file parameter */
+         int GetIntPar(const char* parname) { return io ? io->GetFileIntPar(fd, parname) : 0; }
+
+         /** Return string file parameter */
+         bool GetStrPar(const char* parname, char* sbuf, int sbuflen) { return io ? io->GetFileStrPar(fd, parname, sbuf, sbuflen) : false; }
+
+         /** Returns true when RFIO is used */
+         bool IsRFIO() { return GetIntPar("RFIO") > 0; }
+
    };
 
 
@@ -115,21 +150,33 @@ namespace dabc {
    // ===============================================================================
 
 
+   /** \brief Binary file header structure */
    struct BinaryFileHeader {
-      uint64_t magic;
-      uint64_t version;
+      uint64_t magic;    ///< special word, expected in the beginning of the file
+      uint64_t version;  ///< version number of the binary file
 
+      /** \brief Default constructor */
       BinaryFileHeader() : magic(0), version(0) {}
    };
 
-   struct BinaryFileBufHeader {
-      uint64_t datalength;
-      uint64_t buftype;
+   // ===============================================================================
 
+   /** \brief Binary file buffer header structure */
+   struct BinaryFileBufHeader {
+      uint64_t datalength;   ///< overall length of buffer
+      uint64_t buftype;      ///< type id of the buffer
+
+      /** \brief Default constructor */
       BinaryFileBufHeader() : datalength(0), buftype(0) {}
    };
 
-   enum { BinaryFileMagicValue  = 1234 };
+   enum { BinaryFileMagicValue  = 1237 };
+
+
+   /** \brief Generic file storage for DABC buffers
+    *
+    * \ingroup dabc_all_classes
+    */
 
    class BinaryFile : public BasicFile {
       protected:
@@ -166,7 +213,7 @@ namespace dabc {
 
             size_t res = io->fread(&fFileHdr, sizeof(fFileHdr), 1, fd);
             if ((res!=1) || (fFileHdr.magic != BinaryFileMagicValue)) {
-               fprintf(stderr, "Failure reading file %s header", fname);
+               fprintf(stderr, "Failure reading file %s header\n", fname);
                Close();
                return false;
             }

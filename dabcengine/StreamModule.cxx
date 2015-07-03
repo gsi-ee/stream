@@ -13,6 +13,8 @@
  * which is part of the distribution.                       *
  ************************************************************/
 
+#include "dabc/BinaryFile.h"
+
 #include "StreamModule.h"
 
 #include "hadaq/Iterator.h"
@@ -27,7 +29,6 @@
 #include "base/Buffer.h"
 #include "base/StreamProc.h"
 #include "dabc/ProcMgr.h"
-#include "dabc/BinaryFileIO.h"
 
 // ==================================================================================
 
@@ -144,11 +145,27 @@ void dabc::StreamModule::AfterModuleStop()
    if (fAsf.length()>0) {
 
       dabc::Buffer buf = fWorkerHierarchy.SaveToBuffer();
-      DOUT0("stored hierarchy = %d", buf.GetTotalSize());
+      DOUT0("store hierarchy size %d in temporary h.bin file", buf.GetTotalSize(), buf.NumSegments());
+      {
+         dabc::BinaryFile f;
+         system("rm -f h.bin");
+         if (f.OpenWriting("h.bin")) {
+            if (f.WriteBufHeader(buf.GetTotalSize(), buf.GetTypeId()))
+               for (unsigned n=0;n<buf.NumSegments();n++)
+                  f.WriteBufPayload(buf.SegmentPtr(n), buf.SegmentSize(n));
+            f.Close();
+         }
+      }
 
-      BinaryFileOutput f(fAsf);
-      if (f.Write_Init())
-         f.Write_Buffer(buf);
+      std::string args("dabc_root -h h.bin -o ");
+      args += fAsf;
+
+      DOUT0("Calling: %s", args.c_str());
+
+      int res = system(args.c_str());
+
+      if (res!=0) EOUT("Fail to convert DABC histograms in ROOT file, check h.bin file");
+             else system("rm -f h.bin");
    }
 }
 

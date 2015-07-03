@@ -15,7 +15,7 @@ namespace hadaq {
 
    // used for ROOT tree storage, similar to TdcMessage and AdcMessage
    struct TrbMessage {
-      
+
       bool fTrigSyncIdFound;
       unsigned fTrigSyncId;
       unsigned fTrigSyncIdStatus;
@@ -65,7 +65,8 @@ namespace hadaq {
          bool fCompensateEpochReset;  ///< when true, artificially create contiguous epoch value
 
          static unsigned gNumChannels;     ///< default number of channels
-         static unsigned gEdgesMask;      ///< default edges mask
+         static unsigned gEdgesMask;       ///< default edges mask
+         static bool gIgnoreSync;          ///< ignore sync in analysis, very rare used for sync with other data sources
 
          /** Returns true when processor used to select trigger signal
           * TRB3 not yet able to perform trigger selection */
@@ -80,16 +81,16 @@ namespace hadaq {
          void ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3eventid);
 
          void AfterEventScan();
-         
+
          virtual void CreateBranch(TTree* t);
          TrbMessage  fMsg;
          TrbMessage* pMsg;
-         
+
       public:
 
          TrbProcessor(unsigned brdid = 0, HldProcessor* hld = 0);
          virtual ~TrbProcessor();
-         
+
          void SetHadaqCTSId(unsigned id) { fHadaqCTSId = id; }
          void SetHadaqHUBId(unsigned id) { fHadaqHUBId = id; }
          void SetHadaqTDCId(unsigned) {} // keep for backward compatibility, can be ignored
@@ -150,7 +151,7 @@ namespace hadaq {
          TdcProcessor* GetTDC(unsigned tdcid, bool fullid = false) const
          {
             SubProcMap::const_iterator iter = fMap.find(tdcid);
-            
+
             // ignore integrated TDCs, they have upper 16bits set
             if(iter->first >> 16 != 0)
                return 0;
@@ -161,17 +162,17 @@ namespace hadaq {
             if (iter == fMap.end()) return 0;
             return iter->second->IsTDC() ? (TdcProcessor*) iter->second : 0;
          }
-         
+
          void AddBufferToTDC(
-               hadaqs::RawSubevent* sub, 
-               hadaq::SubProcessor* tdcproc, 
+               hadaqs::RawSubevent* sub,
+               hadaq::SubProcessor* tdcproc,
                unsigned ix,
                unsigned datalen);
 
          /** Search TDC in current TRB or in the top HLD */
          TdcProcessor* FindTDC(unsigned tdcid) const;
 
-         static void SetDefaults(unsigned numch=65, unsigned edges=0x1);
+         static void SetDefaults(unsigned numch=65, unsigned edges=0x1, bool ignore_sync = false);
 
          /** Create up-to 4 TDCs processors with specified IDs */
          void CreateTDC(unsigned id1, unsigned id2 = 0, unsigned id3 = 0, unsigned id4 = 0);

@@ -13,11 +13,13 @@
 
 unsigned hadaq::TrbProcessor::gNumChannels = 65;
 unsigned hadaq::TrbProcessor::gEdgesMask = 0x1;
+bool hadaq::TrbProcessor::gIgnoreSync = false;
 
-void hadaq::TrbProcessor::SetDefaults(unsigned numch, unsigned edges)
+void hadaq::TrbProcessor::SetDefaults(unsigned numch, unsigned edges, bool ignore_sync)
 {
    gNumChannels = numch;
    gEdgesMask = edges;
+   gIgnoreSync = ignore_sync;
 }
 
 
@@ -57,7 +59,7 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc) :
    fPrintRawData = false;
    fCrossProcess = false;
    fPrintErrCnt = 1000;
-   
+
    pMsg = &fMsg;
 
    // this is raw-scan processor, therefore no synchronization is required for it
@@ -326,20 +328,27 @@ void hadaq::TrbProcessor::CreateBranch(TTree* t)
    }
 }
 
-void hadaq::TrbProcessor::AddBufferToTDC(
-      hadaqs::RawSubevent* sub, 
-      hadaq::SubProcessor* tdcproc, 
-      unsigned ix,
-      unsigned datalen) {   
+void hadaq::TrbProcessor::AddBufferToTDC(hadaqs::RawSubevent* sub,
+                                         hadaq::SubProcessor* tdcproc,
+                                         unsigned ix, unsigned datalen)
+{
    base::Buffer buf;
-   buf.makenew((datalen+1)*4);
 
-   memset(buf.ptr(), 0xff, 4); // fill dummy sync id in the begin
-   sub->CopyDataTo(buf.ptr(4), ix, datalen);
+   if (gIgnoreSync && (sub->Alignment()==4)) {
+      // special case - could use data directly without copying
+      buf.makereferenceof((char*)sub->RawData() + 4*ix, 4*datalen);
+      buf().kind = 0;
+      buf().boardid = tdcproc->GetID();
+      buf().format = sub->IsSwapped() ? 2 : 1; // special format without sync
+   } else {
+      buf.makenew((datalen+1)*4);
+      memset(buf.ptr(), 0xff, 4); // fill dummy sync id in the begin
+      sub->CopyDataTo(buf.ptr(4), ix, datalen);
 
-   buf().kind = 0;
-   buf().boardid = tdcproc->GetID();
-   buf().format = 0;
+      buf().kind = 0;
+      buf().boardid = tdcproc->GetID();
+      buf().format = 0;
+   }
 
    tdcproc->AddNextBuffer(buf);
    tdcproc->SetNewDataFlag(true);
@@ -361,7 +370,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
    if (trbSubEvSize>100000) printf("LARGE subevent %u\n", trbSubEvSize);
 
    fMsg.fTrigSyncIdFound = false;
-   
+
 //   RAWPRINT("Scan TRB3 raw event 4-bytes size %u\n", trbSubEvSize);
 //   printf("Scan TRB3 raw data\n");
 
@@ -427,7 +436,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
 	         data = sub->Data(ix++); datalen--;
 	         fMsg.fTrigSyncId = (data & 0xFFFFFF);
             fMsg.fTrigSyncIdStatus = data >> 24; // untested
-            fMsg.fTrigSyncIdFound = true;             
+            fMsg.fTrigSyncIdFound = true;
 	         // TODO: evaluate the upper 8 bits in data for status/error
          }
          else if(nExtTrigFlag==0x2) {
@@ -515,10 +524,10 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
          RAWPRINT ("   SUB header: 0x%08x, id=0x%04x, size=%u\n", (unsigned) data, subid, datalen);
 
          if(datalen==0)
-            continue;         
-         
+            continue;
+
          base::Buffer buf;
-                 
+
          // check if this processor has some attached TDC
          size_t offset = 0;
          SubProcMap::const_iterator iter_tdc = fMap.find(subid + 0xff0000);
@@ -532,13 +541,13 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
                }
             }
             if(offset>0) {
-               AddBufferToTDC(sub, iter_tdc->second, ix, offset);              
-            }            
-         }        
-         
+               AddBufferToTDC(sub, iter_tdc->second, ix, offset);
+            }
+         }
+
          datalen -= offset;
          ix += offset;
-         
+
          buf.makenew(datalen*4);
 
          sub->CopyDataTo(buf.ptr(0), ix, datalen);
@@ -580,7 +589,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
       fMsg.fTrigSyncIdStatus = 0; // dummy
    }
 
-   if (fMsg.fTrigSyncIdFound) {
+   if (fMsg.fTrigSyncIdFound && !gIgnoreSync) {
       for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++) {
          if (iter->second->IsNewDataFlag())
             iter->second->AppendTrbSync(fMsg.fTrigSyncId);
