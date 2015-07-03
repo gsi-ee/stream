@@ -24,8 +24,6 @@ hadaqs::RawEvent* hadaq::TrbIterator::nextEvent()
 
       unsigned fulllen = prev->GetPaddedSize();
 
-//      printf("nextEvent fEvLen = %u evlen = %u\n", fEvLen, fulllen);
-
       if (fulllen >= fEvLen) {
          if (fulllen > fEvLen)
             printf("hadaqs::RawEvent length mismatch %u %u\n", fulllen, fEvLen);

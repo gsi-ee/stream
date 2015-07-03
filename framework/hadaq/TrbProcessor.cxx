@@ -39,7 +39,7 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc) :
    fErrPerBrd = 0;
    fHitsPerBrd = 0;
 
-   fEvSize = MakeH1("EvSize", "Event size", 500, 0, 5000, "bytes");
+   fEvSize = MakeH1("EvSize", "Event size", 500, 0, 50000, "bytes");
    fSubevSize = MakeH1("SubevSize", "Subevent size", 500, 0, 5000, "bytes");
    fLostRate = MakeH1("LostRate", "Relative number of lost packets", 1000, 0, 1., "data lost");
 
@@ -279,7 +279,7 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
 
       if (IsPrintRawData()) ev->Dump();
 
-      FillH1(fEvSize, ev->GetSize());
+      FillH1(fEvSize, ev->GetPaddedSize());
 
       hadaqs::RawSubevent* sub = 0;
       unsigned subcnt(0);
@@ -291,8 +291,6 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
          }
 
          if (IsPrintRawData()) sub->Dump(true);
-
-         FillH1(fSubevSize, sub->GetSize());
 
          // use only 16-bit in trigger number while CTS make a lot of errors in higher 8 bits
          AccountTriggerId((sub->GetTrigNr() >> 8) & 0xffff);
@@ -359,6 +357,8 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
    // this is first scan of subevent from TRB3 data
    // our task is statistic over all messages we will found
    // also for trigger-type 1 we should add SYNC message to each processor
+
+   FillH1(fSubevSize, sub->GetSize());
 
    for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
       iter->second->SetNewDataFlag(false);

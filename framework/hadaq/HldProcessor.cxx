@@ -19,7 +19,7 @@ hadaq::HldProcessor::HldProcessor() :
    mgr()->RegisterProc(this, base::proc_TRBEvent, 0);
 
    fEvType = MakeH1("EvType", "Event type", 16, 0, 16, "id");
-   fEvSize = MakeH1("EvSize", "Event size", 500, 0, 5000, "bytes");
+   fEvSize = MakeH1("EvSize", "Event size", 500, 0, 50000, "bytes");
    fSubevSize = MakeH1("SubevSize", "Subevent size", 500, 0, 5000, "bytes");
 
    printf("Create HldProcessor %s\n", GetName());
@@ -94,7 +94,7 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
 
       if (IsPrintRawData()) ev->Dump();
 
-      FillH1(fEvSize, ev->GetSize());
+      FillH1(fEvSize, ev->GetPaddedSize());
 
       hadaqs::RawSubevent* sub = 0;
 
