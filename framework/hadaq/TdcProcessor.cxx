@@ -303,7 +303,12 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
    if (HistFillLevel()>=4)
    for (unsigned ch=0;ch<NumChannels();ch++) {
 
+      DefFillH1(fCh[ch].fRisingMult, fCh[ch].rising_cnt, 1.); fCh[ch].rising_cnt = 0;
+      DefFillH1(fCh[ch].fFallingMult, fCh[ch].falling_cnt, 1.); fCh[ch].falling_cnt = 0;
+
       unsigned ref = fCh[ch].refch;
+      if (ref > 0xffff) continue; // no any settings for ref channel, can ignore
+
       unsigned reftdc = fCh[ch].reftdc;
       if (reftdc>=0xffff) reftdc = GetID();
 
@@ -316,9 +321,6 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
          if ((iter != subprocmap->end()) && iter->second->IsTDC())
             refproc = (TdcProcessor*) iter->second;
       }
-
-      FillH1(fCh[ch].fRisingMult, fCh[ch].rising_cnt); fCh[ch].rising_cnt = 0;
-      FillH1(fCh[ch].fFallingMult, fCh[ch].falling_cnt); fCh[ch].falling_cnt = 0;
 
       // RAWPRINT("TDC%u Ch:%u Try to use as ref TDC%u %u proc:%p\n", GetID(), ch, reftdc, ref, refproc);
 
@@ -337,12 +339,13 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
             double diff = fCh[ch].rising_ref_tm*1e9;
 
             // when refch is 0 on same board, histogram already filled
-            if ((ref!=0) || (refproc!=this)) FillH1(fCh[ch].fRisingRef, diff);
+            if ((ref!=0) || (refproc!=this)) DefFillH1(fCh[ch].fRisingRef, diff, 1.);
 
-            FillH1(fCh[ch].fRisingCoarseRef, 0. + fCh[ch].rising_coarse - refproc->fCh[ref].rising_coarse);
-            FillH2(fCh[ch].fRisingRef2D, diff, fCh[ch].rising_fine);
-            FillH2(fCh[ch].fRisingRef2D, diff-1., refproc->fCh[ref].rising_fine);
-            FillH2(fCh[ch].fRisingRef2D, diff-2., fCh[ch].rising_coarse/4);
+            double coarse_diff = 0. + fCh[ch].rising_coarse - refproc->fCh[ref].rising_coarse;
+            DefFillH1(fCh[ch].fRisingCoarseRef, coarse_diff, 1.);
+            DefFillH2(fCh[ch].fRisingRef2D, diff, fCh[ch].rising_fine, 1.);
+            DefFillH2(fCh[ch].fRisingRef2D, (diff-1.), refproc->fCh[ref].rising_fine, 1.);
+            DefFillH2(fCh[ch].fRisingRef2D, (diff-2.), fCh[ch].rising_coarse/4, 1.);
             RAWPRINT("Difference rising %04x:%02u\t %04x:%02u\t %12.3f\t %12.3f\t %7.3f  coarse %03x - %03x = %4d  fine %03x %03x \n",
                   GetID(), ch, reftdc, ref,
                   tm*1e9,  tm_ref*1e9, diff,
@@ -353,7 +356,7 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
             // if ((fCh[ch].doublerefch < NumChannels()) &&
             //    (fCh[ch].fRisingDoubleRef != 0) &&
             //    (fCh[fCh[ch].doublerefch].rising_ref_tm != 0)) {
-            //   FillH1(fCh[ch].fRisingDoubleRef, diff, fCh[fCh[ch].doublerefch].rising_ref_tm*1e9);
+            //   DefFillH1(fCh[ch].fRisingDoubleRef, diff, fCh[fCh[ch].doublerefch].rising_ref_tm*1e9);
             // }
          }
       }
@@ -375,7 +378,7 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
 
          if ((refproc!=0) && (ref<refproc->NumChannels()) && ((ref!=ch) || (refproc!=this))) {
             if ((fCh[ch].rising_ref_tm != 0) && (refproc->fCh[ref].rising_ref_tm != 0))
-               FillH1(fCh[ch].fRisingDoubleRef, fCh[ch].rising_ref_tm*1e9, refproc->fCh[ref].rising_ref_tm*1e9);
+               DefFillH2(fCh[ch].fRisingDoubleRef, fCh[ch].rising_ref_tm*1e9, refproc->fCh[ref].rising_ref_tm*1e9, 1.);
          }
       }
    }
@@ -436,7 +439,7 @@ bool hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigned in
 
    while (fIter1.next()) {
       cnt++;
-      if (fMsgsKind) FillH1(fMsgsKind, msg.getKind() >> 29);
+      if (fMsgsKind) DefFastFillH1(fMsgsKind, (msg.getKind() >> 29));
       if (!msg.isHitMsg()) continue;
       hitcnt++;
 
@@ -472,26 +475,26 @@ bool hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigned in
 
       if (HistFillLevel()<1) continue;
 
-      FastFillH1(fChannels, chid);
-      FastFillH1(fHits, chid*2 + (isrising ? 0 : 1));
-      FastFillH2(fAllFine, chid, fine);
-      FastFillH2(fAllCoarse, chid, coarse);
+      DefFastFillH1(fChannels, chid);
+      DefFastFillH1(fHits, (chid*2 + (isrising ? 0 : 1)));
+      DefFastFillH2(fAllFine, chid, fine);
+      DefFastFillH2(fAllCoarse, chid, coarse);
       if ((HistFillLevel()>2) && ((rec.fRisingFine==0) || (rec.fFallingFine==0)))
          CreateChannelHistograms(chid);
 
       if (isrising) {
-         FastFillH1(rec.fRisingFine, fine);
-         FastFillH1(rec.fRisingCoarse, coarse);
+         DefFastFillH1(rec.fRisingFine, fine);
+         DefFastFillH1(rec.fRisingCoarse, coarse);
       } else {
-         FastFillH1(rec.fFallingFine, fine);
-         FastFillH1(rec.fFallingCoarse, coarse);
+         DefFastFillH1(rec.fFallingFine, fine);
+         DefFastFillH1(rec.fFallingCoarse, coarse);
       }
    }
 
-   if (fMsgPerBrd) FillH1(*fMsgPerBrd, fSeqeunceId, cnt);
+   if (fMsgPerBrd) DefFillH1(*fMsgPerBrd, fSeqeunceId, cnt);
    // fill number of "good" hits
-   if (fHitsPerBrd) FillH1(*fHitsPerBrd, fSeqeunceId, hitcnt);
-   if (fErrPerBrd && (errcnt>0)) FillH1(*fErrPerBrd, fSeqeunceId, errcnt);
+   if (fHitsPerBrd) DefFillH1(*fHitsPerBrd, fSeqeunceId, hitcnt);
+   if (fErrPerBrd && (errcnt>0)) DefFillH1(*fErrPerBrd, fSeqeunceId, errcnt);
 
    return true;
 }
@@ -545,7 +548,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       cnt++;
 
       if (first_scan)
-         FastFillH1(fMsgsKind, msg.getKind() >> 29);
+         DefFastFillH1(fMsgsKind, (msg.getKind() >> 29));
 
       if (cnt==1) {
          if (!msg.isHeaderMsg()) {
@@ -605,8 +608,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                   printf("%5s Missing hit in channel %u fine counter is %x\n", GetName(), chid, fine);
 
                missinghit = true;
-               FastFillH1(fChannels, chid);
-               FastFillH1(fUndHits, chid);
+               DefFastFillH1(fChannels, chid);
+               DefFastFillH1(fUndHits, chid);
             }
             continue;
          }
@@ -621,7 +624,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             raw_hit = false;
          } else {
             if (fine >= FineCounterBins) {
-               FastFillH1(fErrors, chid);
+               DefFastFillH1(fErrors, chid);
                if (CheckPrintError())
                   printf("%5s Fine counter %u out of allowed range 0..%u in channel %u\n", GetName(), fine, FineCounterBins, chid);
                iserr = true;
@@ -652,10 +655,10 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             // ensure that histograms are created
             CreateChannelHistograms(chid);
 
-            FastFillH1(fChannels, chid);
-            FillH1(fHits, chid + (isrising ? 0.25 : 0.75));
-            FillH2(fAllFine, chid, fine);
-            FillH2(fAllCoarse, chid, coarse);
+            DefFastFillH1(fChannels, chid);
+            DefFillH1(fHits, (chid + (isrising ? 0.25 : 0.75)), 1.);
+            DefFillH2(fAllFine, chid, fine, 1.);
+            DefFillH2(fAllCoarse, chid, coarse, 1.);
 
             if (isrising) {
                if (raw_hit) {
@@ -664,8 +667,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                }
 
                rec.rising_cnt++;
-               FillH1(rec.fRisingFine, fine);
-               FillH1(rec.fRisingCoarse, coarse);
+               DefFastFillH1(rec.fRisingFine, fine);
+               DefFastFillH1(rec.fRisingCoarse, coarse);
 
                bool print_cond = false;
 
@@ -691,7 +694,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
                // special case - when ref channel defined as 0, fill all hits
                if ((chid!=0) && (rec.refch==0) && (rec.reftdc == GetID()) && (fCh[0].rising_hit_tm!=0)) {
-                  FillH1(rec.fRisingRef, (localtm - fCh[0].rising_hit_tm)*1e9);
+                  DefFillH1(rec.fRisingRef, ((localtm - fCh[0].rising_hit_tm)*1e9), 1.);
 
                   if (IsPrintRawData() || print_cond)
                   printf("Difference rising %04x:%02u\t %04x:%02u\t %12.3f\t %12.3f\t %7.3f  coarse %03x - %03x = %4d  fine %03x %03x \n",
@@ -708,11 +711,11 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                }
                rec.falling_cnt++;
 
-               FillH1(rec.fFallingFine, fine);
-               FillH1(rec.fFallingCoarse, coarse);
+               DefFastFillH1(rec.fFallingFine, fine);
+               DefFastFillH1(rec.fFallingCoarse, coarse);
 
                if (rec.rising_new_value && (rec.rising_last_tm!=0)) {
-                  FillH1(rec.fTot, (localtm - rec.rising_last_tm)*1e9);
+                  DefFillH1(rec.fTot, ((localtm - rec.rising_last_tm)*1e9), 1.);
                   rec.rising_new_value = false;
                }
             }
@@ -803,13 +806,13 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
 //      printf("Proc:%p first scan iserr:%d  minm: %12.9f\n", this, iserr, minimtm*1e-9);
 
-      FillH1(fMsgPerBrd ? *fMsgPerBrd : 0, fSeqeunceId, cnt);
+      if (fMsgPerBrd) DefFillH1(*fMsgPerBrd, fSeqeunceId, cnt);
 
       // fill number of "good" hits
-      FillH1(fHitsPerBrd ? *fHitsPerBrd : 0, fSeqeunceId, hitcnt);
+      if (fHitsPerBrd) DefFillH1(*fHitsPerBrd, fSeqeunceId, hitcnt);
 
       if (iserr || missinghit)
-         FillH1(fErrPerBrd ? *fErrPerBrd : 0, fSeqeunceId);
+         if (fErrPerBrd) DefFillH1(*fErrPerBrd, fSeqeunceId, 1.);
    } else {
 
       // use first channel only for flushing
@@ -822,7 +825,10 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    if (rawprint && first_scan) {
       printf("RAW data of %s\n", GetName());
       TdcIterator iter;
-      iter.assign((uint32_t*) buf.ptr(4), buf.datalen()/4 -1, false);
+      if (buf().format==0)
+         iter.assign((uint32_t*) buf.ptr(4), buf.datalen()/4-1, false);
+      else
+         iter.assign((uint32_t*) buf.ptr(0), buf.datalen()/4, buf().format==2);
       while (iter.next()) iter.printmsg();
    }
 
@@ -867,8 +873,8 @@ void hadaq::TdcProcessor::CopyCalibration(float* calibr, base::H1handle hcalibr,
    ClearH1(hcalibr);
 
    for (unsigned n=0;n<FineCounterBins;n++) {
-      FillH1(hcalibr, n, calibr[n]*1e12);
-      FillH2(h2calibr, ch, n, calibr[n]*1e12);
+      DefFillH1(hcalibr, n, calibr[n]*1e12);
+      DefFillH2(h2calibr, ch, n, calibr[n]*1e12);
    }
 }
 

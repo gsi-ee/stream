@@ -73,11 +73,11 @@ hadaq::TrbProcessor::~TrbProcessor()
 {
 }
 
-
 hadaq::TdcProcessor* hadaq::TrbProcessor::FindTDC(unsigned tdcid) const
 {
-   if (fHldProc!=0) return fHldProc->FindTDC(tdcid);
-   return GetTDC(tdcid, true);
+   hadaq::TdcProcessor* res = GetTDC(tdcid, true);;
+   if ((res==0) && (fHldProc!=0)) res = fHldProc->FindTDC(tdcid);
+   return res;
 }
 
 void hadaq::TrbProcessor::UserPreLoop()
@@ -252,7 +252,7 @@ void hadaq::TrbProcessor::AccountTriggerId(unsigned subid)
 
    if (fTakenTriggerCnt + fLostTriggerCnt > 1000) {
       double lostratio = 1.*fLostTriggerCnt / (fTakenTriggerCnt + fLostTriggerCnt + 0.);
-      FillH1(fLostRate, lostratio);
+      DefFillH1(fLostRate, lostratio, 1.);
       fTakenTriggerCnt = 0;
       fLostTriggerCnt = 0;
    }
@@ -279,7 +279,7 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
 
       if (IsPrintRawData()) ev->Dump();
 
-      FillH1(fEvSize, ev->GetPaddedSize());
+      DefFillH1(fEvSize, ev->GetPaddedSize(), 1.);
 
       hadaqs::RawSubevent* sub = 0;
       unsigned subcnt(0);
@@ -358,7 +358,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
    // our task is statistic over all messages we will found
    // also for trigger-type 1 we should add SYNC message to each processor
 
-   FillH1(fSubevSize, sub->GetSize());
+   DefFillH1(fSubevSize, sub->GetSize(), 1.);
 
    for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
       iter->second->SetNewDataFlag(false);
@@ -372,7 +372,6 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
    fMsg.fTrigSyncIdFound = false;
 
 //   RAWPRINT("Scan TRB3 raw event 4-bytes size %u\n", trbSubEvSize);
-//   printf("Scan TRB3 raw data\n");
 
    while (ix < trbSubEvSize) {
       //! Extract data portion from the whole packet (in a loop)
@@ -391,7 +390,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
 //         continue;
 //      }
 
-      if ((data & 0xFF00) == fHadaqHUBId) {
+      if (((data & 0xFFFF) == fHadaqHUBId) || ((data & 0xFF00) == fHadaqHUBId))  {
          RAWPRINT ("   HUB header: 0x%08x, hub=%u, size=%u (ignore)\n", (unsigned) data, (unsigned) data & 0xFF, datalen);
 
          // ix+=datalen;  // WORKAROUND !!!

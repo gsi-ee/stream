@@ -153,14 +153,12 @@ namespace hadaq {
             SubProcMap::const_iterator iter = fMap.find(tdcid);
 
             // ignore integrated TDCs, they have upper 16bits set
-            if(iter->first >> 16 != 0)
-               return 0;
+            if(iter->first >> 16 != 0) return 0;
 
             // for old analysis, where IDs are only last 8 bit
             if ((iter == fMap.end()) && !fullid) iter = fMap.find(tdcid & 0xff);
 
-            if (iter == fMap.end()) return 0;
-            return iter->second->IsTDC() ? (TdcProcessor*) iter->second : 0;
+            return ((iter != fMap.end()) && iter->second->IsTDC()) ? (TdcProcessor*) iter->second : 0;
          }
 
          void AddBufferToTDC(
