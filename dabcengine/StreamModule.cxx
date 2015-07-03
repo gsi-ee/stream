@@ -19,12 +19,15 @@
 
 #include "dabc/Manager.h"
 #include "dabc/Factory.h"
+#include "dabc/Iterator.h"
+#include "dabc/Buffer.h"
 
 #include <stdlib.h>
 
 #include "base/Buffer.h"
 #include "base/StreamProc.h"
 #include "dabc/ProcMgr.h"
+#include "dabc/BinaryFileIO.h"
 
 // ==================================================================================
 
@@ -54,6 +57,11 @@ dabc::StreamModule::StreamModule(const std::string& name, dabc::Command cmd) :
       dabc::mgr.StopApplication();
       return;
    }
+
+   fAsf = Cfg("asf",cmd).AsStr();
+
+   // do not autosave is specified, module will not stop when data source disappears
+   if (fAsf.length()==0) SetAutoStop(false);
 
    fWorkerHierarchy.Create("Worker");
 
@@ -126,7 +134,22 @@ void dabc::StreamModule::AfterModuleStop()
 {
    fProcMgr->UserPostLoop();
 
+
+//   dabc::Iterator iter(fWorkerHierarchy);
+//   while (iter.next())
+//      DOUT0("Item %s", iter.fullname());
+
    DOUT0("STOP STREAM MODULE len %lu evnts %lu out %lu", fTotalSize, fTotalEvnts, fTotalOutEvnts);
+
+   if (fAsf.length()>0) {
+
+      dabc::Buffer buf = fWorkerHierarchy.SaveToBuffer();
+      DOUT0("stored hierarchy = %d", buf.GetTotalSize());
+
+      BinaryFileOutput f(fAsf);
+      if (f.Write_Init())
+         f.Write_Buffer(buf);
+   }
 }
 
 bool dabc::StreamModule::ProcessRecv(unsigned port)

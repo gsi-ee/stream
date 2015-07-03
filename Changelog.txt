@@ -1,3 +1,9 @@
+3.07.2015
+1. In dabcengine introduce data storage in autosave file. It is binary buffer
+   with all histograms. In DABC special conversion utility will be introduced to
+   convert such file into ROOT histograms.  
+   
+
 2.07.2015
 1. Introduce dabcengine, which allows to run code in DABC environment
    Code is still experimental, data can be only accessed via web server

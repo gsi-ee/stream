@@ -35,6 +35,7 @@ namespace dabc {
 
    protected:
       dabc::ProcMgr* fProcMgr;
+      std::string  fAsf;
       long unsigned fTotalSize;
       long unsigned fTotalEvnts;
       long unsigned fTotalOutEvnts;

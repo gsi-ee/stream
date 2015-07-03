@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <dabc version="2">
   <Variables>
+     <asf value="hierarchy.bin"/>
      <file value="pilas_15178162456.hld"/>
   </Variables>
 
@@ -24,6 +25,7 @@
     </MemoryPool>
 
     <Module name="Run" class="dabc::StreamModule">
+       <asf value="${asf}"/>
        <InputPort name="Input0" url="hld://${file}"/>
        <Events width="4" prec="1" low="0" up="1000" debug="0"/>
      </Module>
