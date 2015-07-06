@@ -304,6 +304,8 @@ void dabc::StreamModule::AfterModuleStop()
       ProduceMergedHierarchy();
    } else
    if (fAsf.length()>0) SaveHierarchy(fWorkerHierarchy.SaveToBuffer());
+
+   DestroyPar("Events");
 }
 
 bool dabc::StreamModule::ProcessNextEvent(void* evnt, unsigned evntsize)
