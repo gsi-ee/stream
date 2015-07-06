@@ -20,6 +20,7 @@
 #include "dabc/ModuleAsync.h"
 #endif
 
+
 namespace dabc {
 
    /** \brief Runs code of stream framework
@@ -34,8 +35,10 @@ namespace dabc {
    protected:
       int          fParallel; // how many parallel processes to start
       void        *fInitFunc; // init function
+      int          fStopMode; // for central module waiting that others finishe
       dabc::ProcMgr* fProcMgr;
       std::string  fAsf;
+      bool         fDidMerge;
       long unsigned fTotalSize;
       long unsigned fTotalEvnts;
       long unsigned fTotalOutEvnts;
@@ -43,9 +46,15 @@ namespace dabc {
 
       virtual void OnThreadAssigned();
 
+      bool ProcessNextEvent(void* evnt, unsigned evntsize);
+
       bool ProcessNextBuffer();
 
       bool RedistributeBuffer();
+
+      void ProduceMergedHierarchy();
+
+      void SaveHierarchy(dabc::Buffer buf);
 
    public:
       StreamModule(const std::string& name, dabc::Command cmd = 0);

@@ -162,6 +162,7 @@ namespace hadaq {
 
          static unsigned gNumFineBins;  //! default value for number of bins in histograms for fine bins
          static unsigned gTotRange;  //! default range for TOT histogram
+         static bool gAllHistos;     //! when true, all histos for all channels created simultaneosely
 
          /** Method will be called by TRB processor if SYNC message was found
           * One should change 4 first bytes in the last buffer in the queue */
@@ -195,6 +196,8 @@ namespace hadaq {
          static void SetMaxBoardId(unsigned) { }
 
          static void SetDefaults(unsigned numfinebins=600, unsigned totrange = 100);
+
+         static void SetAllHistos(bool on = true);
 
          inline unsigned NumChannels() const { return fNumChannels; }
          inline bool DoRisingEdge() const { return true; }

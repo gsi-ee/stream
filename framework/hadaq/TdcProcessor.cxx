@@ -16,11 +16,17 @@
 
 unsigned hadaq::TdcProcessor::gNumFineBins = FineCounterBins;
 unsigned hadaq::TdcProcessor::gTotRange = 100;
+bool hadaq::TdcProcessor::gAllHistos = false;
 
 void hadaq::TdcProcessor::SetDefaults(unsigned numfinebins, unsigned totrange)
 {
    gNumFineBins = numfinebins;
    gTotRange = totrange;
+}
+
+void hadaq::TdcProcessor::SetAllHistos(bool on)
+{
+   gAllHistos = on;
 }
 
 hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels, unsigned edge_mask) :
@@ -87,6 +93,9 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
 
    // always create histograms for channel 0
    CreateChannelHistograms(0);
+   if (gAllHistos)
+      for (unsigned ch=1;ch<numchannels;ch++)
+         CreateChannelHistograms(ch);
 
    fWriteCalibr.clear();
    fWriteEveryTime = false;

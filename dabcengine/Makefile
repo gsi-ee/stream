@@ -15,7 +15,7 @@ DABCSTREAM_S     = $(wildcard $(DABCSTREAMDIRS)/*.$(SrcSuf))
 DABCSTREAM_O     = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(DABCSTREAM_S))
 DABCSTREAM_D     = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(DABCSTREAM_S))
 
-DABCSTREAM_LIBS  = -lrt -Wl,-rpath,$(STREAMSYS)/lib -L$(STREAMSYS)/lib -lStream
+DABCSTREAM_LIBS  = -lDabcMbs -lDabcHadaq -lrt -Wl,-rpath,$(STREAMSYS)/lib -L$(STREAMSYS)/lib -lStream
 
 # used in the main Makefile
 
