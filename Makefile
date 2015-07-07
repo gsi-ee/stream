@@ -20,10 +20,6 @@ IS_GO4=true
 endif
 endif
 
-ifdef DABCSYS
-IS_DABC=true
-endif
-
 ifdef ROOTSYS
 IS_ROOT=true
 else
@@ -34,7 +30,7 @@ endif
 
 
 
-all: baselib go4lib dabclib
+all: baselib go4lib
 
 
 baselib: $(LIBDIR) $(LOGINFILE)
@@ -47,23 +43,11 @@ else
 	@echo "Go4 not configured - not able to build go4 engine"
 endif
 
-dabclib: baselib
-ifdef IS_DABC
-	cd dabcengine; $(MAKE) STREAMSYS=..
-else
-	@echo "DABC not configured - not able to build dabc engine"
-endif
-
 clean:
 ifdef IS_GO4
 	cd go4engine; $(MAKE) clean STREAMSYS=..
 else
 	@rm -f go4engine/G__*.* go4engine/*.o go4engine/*.d 
-endif
-ifdef IS_DABC
-	cd dabcengine; $(MAKE) clean STREAMSYS=..
-else
-	@rm -f dabcengine/x86_64 
 endif
 	cd framework; $(MAKE) clean STREAMSYS=..
 	@rm -rf $(LIBDIR) $(LOGINFILE)

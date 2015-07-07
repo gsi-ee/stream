@@ -8,10 +8,8 @@
 
   <Context host="localhost" name="Stream">
     <Run>
-      <lib value="libDabcMbs.so"/>
-      <lib value="libDabcHadaq.so"/>  
-      <lib value="libDabcHttp.so"/>  
-      <lib value="libDabcStream.so"/>  
+      <lib value="libDabcHttp.so"/>
+      <lib value="libDabcStream.so"/>
       <logfile value="stream.log"/>
       <debuglevel value="1"/>
       <loglevel value="-1"/>
@@ -25,7 +23,7 @@
        <NumBuffers value="1000"/>
     </MemoryPool>
 
-    <Module name="Run" class="dabc::StreamModule">
+    <Module name="Run" class="stream::RunModule">
        <asf value="${asf}"/>
        <parallel value="${parallel}"/>
        <InputPort name="Input0" url="hld://${file}"/>

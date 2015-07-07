@@ -1,3 +1,8 @@
+7.07.2015
+1. dabcengine is now plugin in DABC itself while DABC uses some of classes
+   inside TdcCalibrationModule. Keep only configuration file as example.
+
+
 6.07.2015
 1. Provide merging of histograms, produced in parallel by several workers.
    When producing ROOT files, remove empty histograms (if any)
