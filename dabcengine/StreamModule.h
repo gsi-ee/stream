@@ -50,7 +50,7 @@ namespace dabc {
 
       bool ProcessNextBuffer();
 
-      bool RedistributeBuffer();
+      bool RedistributeBuffers();
 
       void ProduceMergedHierarchy();
 
@@ -62,7 +62,7 @@ namespace dabc {
 
       virtual bool ProcessRecv(unsigned port);
 
-      virtual bool ProcessSend(unsigned port) { return RedistributeBuffer(); }
+      virtual bool ProcessSend(unsigned port) { return RedistributeBuffers(); }
 
       virtual void BeforeModuleStart();
 

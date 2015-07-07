@@ -402,45 +402,51 @@ bool dabc::StreamModule::ProcessNextBuffer()
    return true;
 }
 
-bool dabc::StreamModule::RedistributeBuffer()
+bool dabc::StreamModule::RedistributeBuffers()
 {
-   if (!CanRecv()) return false;
+   while (CanRecv()) {
 
-   unsigned indx(0), max(0), min(10);
-   for (unsigned n=0;n<NumOutputs();n++) {
-      unsigned can = NumCanSend(n);
-      if (can>max) { max = can; indx = n; }
-      if (can<min) min = can;
+      unsigned indx(0), max(0), min(10);
+      for (unsigned n=0;n<NumOutputs();n++) {
+         unsigned can = NumCanSend(n);
+         if (can>max) { max = can; indx = n; }
+         if (can<min) min = can;
+      }
+      if (max==0) return false;
+
+      if ((min==0) && (RecvQueueItem().GetTypeId() == dabc::mbt_EOF)) return false;
+
+      dabc::Buffer buf = Recv();
+
+      if (buf.GetTypeId() == dabc::mbt_EOF) {
+         fStopMode = fParallel;
+         SendToAllOutputs(buf);
+         DOUT0("END of FILE, DO SOMETHING");
+         return false;
+      }
+
+      fTotalSize += buf.GetTotalSize();
+
+      int cnt = 0;
+
+      if (buf.GetTypeId() == mbs::mbt_MbsEvents) {
+         mbs::ReadIterator iter(buf);
+         while (iter.NextEvent()) cnt++;
+      } else {
+         hadaq::ReadIterator iter(buf);
+         while (iter.NextEvent()) cnt++;
+      }
+
+      fTotalEvnts+=cnt;
+
+      Par("Events").SetValue(cnt);
+
+      //   DOUT0("Send buffer to output %d\n", indx);
+
+      Send(indx, buf);
    }
-   if (max==0) return false;
 
-   if ((min==0) && (RecvQueueItem().GetTypeId() == dabc::mbt_EOF)) return false;
-
-   dabc::Buffer buf = Recv();
-
-   if (buf.GetTypeId() == dabc::mbt_EOF) {
-      fStopMode = fParallel;
-      SendToAllOutputs(buf);
-      DOUT0("END of FILE, DO SOMETHING");
-      return false;
-   }
-
-   fTotalSize += buf.GetTotalSize();
-
-   hadaq::ReadIterator iter(buf);
-
-   int cnt = 0;
-   while (iter.NextEvent()) cnt++;
-
-   fTotalEvnts+=cnt;
-
-   Par("Events").SetValue(cnt);
-
-//   DOUT0("Send buffer to output %d\n", indx);
-
-   Send(indx, buf);
-
-   return true;
+   return false;
 }
 
 bool dabc::StreamModule::ProcessRecv(unsigned port)
@@ -450,6 +456,6 @@ bool dabc::StreamModule::ProcessRecv(unsigned port)
       return true;
    }
 
-   return RedistributeBuffer();
+   return RedistributeBuffers();
 }
 
