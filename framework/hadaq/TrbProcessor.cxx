@@ -87,7 +87,7 @@ void hadaq::TrbProcessor::UserPreLoop()
    std::string lbl = "tdc;xbin:";
    unsigned cnt = 0;
    for (SubProcMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
-      if (++cnt>0) lbl.append(",");
+      if (cnt++>0) lbl.append(",");
       char sbuf[50];
       sprintf(sbuf, "%04X", iter->second->GetID());
       lbl.append(sbuf);
