@@ -31,17 +31,17 @@ parallel data streams.
 
 ## Some implementation details and ideas
 1. No any external dependencies - no any Go4, DABC or ROOT
-2. Simple go4 run engine allows to run code in the go4 environment and 
+2. Simple go4 run engine allows to run code in the go4 environment and
    use histograms and conditions for visualization, pure ROOT wrapper also exists
 3. There is DABC run engine, which allows to run code without ROOT at all,
-   producing ROOT histograms at the end. If possible, analysis can run in 
+   producing ROOT histograms at the end. If possible, analysis can run in
    parallel in many threads.
 4. All classes provided with ROOT dictionaries and therefore can be used in ROOT scripts
 5. Configuration of particular analysis setup is done via ROOT-like scripts, 
    same setup script can be used for all kinds of run engines (go4/dabc/root)
 6. base::Buffer class provides simplified functionality of dabc::Buffer class
    Same raw buffer can have many references and automatically destroyed when
-   last reference is removed. Allows to use STL collections for base::Buffer class  
+   last reference is removed. Allows to use STL collections for base::Buffer class
 7. Code will be designed to be able run separate streams in different threads 
    with only minimal synchronization
 8. Way how current beamtime/test setups software organized should be preserved.
