@@ -30,6 +30,7 @@ parallel data streams.
 
 
 ## Some implementation details and ideas
+
 1. No any external dependencies - no any Go4, DABC or ROOT
 2. Simple go4 run engine allows to run code in the go4 environment and
    use histograms and conditions for visualization, pure ROOT wrapper also exists
@@ -83,7 +84,7 @@ parallel data streams.
    all data (with some duplication) should be delivered to next step
  
 
-# How to use package
+## How to use package
 
 1. Checkout repository with command
 
@@ -121,4 +122,3 @@ parallel data streams.
 For any questions or suggestions contact:
 S.Linev@gsi.de
 
-   
