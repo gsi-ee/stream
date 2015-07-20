@@ -1,7 +1,7 @@
 # Stream analysis framework
 
 This is new analysis framework, which should be able to work with many
-parallel data streams. 
+parallel data streams.
 
 ## Main ideas behind
 
@@ -24,8 +24,8 @@ parallel data streams.
     entities to the next analysis steps
 12. Data buffers are stored in queues until they are scanned, 
     number of preserved buffers is independent for each stream
-13. Triggered source (like MBS or SPADIC 0.3 or EPICS) will be treated 
-    like data assigned directly with reference marker - trigger. 
+13. Triggered source (like MBS or SPADIC 0.3 or EPICS) will be treated
+    like data assigned directly with reference marker - trigger.
     Time for such marker will be derived from other branches like ROC
 
 
