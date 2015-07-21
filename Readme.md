@@ -63,10 +63,9 @@ parallel data streams.
    skipped completely from analysis     
 7. Preliminary code for GET4 testing is implemented.
    It allows to recognize different problems from measured pulser data  
-8. Files from cern-oct12 (CERN/PS) and cern-gem12 (CERB/SPS) 
+8. Files from cern-oct12 (CERN/PS) and cern-gem12 (CERN/SPS) 
    beamtimes can be processed (at least primary data selection).
    For GEM detector-mapping (second step) is implemented.
-   can be processed. See applications folder for examples
 9. Solid time model. Universal time unit is seconds.
    Each subsystem able to provide continuous time scale without
    any overflows, which are typical problem of simple binary counters.
@@ -120,5 +119,5 @@ parallel data streams.
    
 
 For any questions or suggestions contact:
-S.Linev@gsi.de
+S.Linev (at) gsi.de
 
