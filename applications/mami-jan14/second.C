@@ -8,17 +8,17 @@
 
 class PadiwaProc : public base::EventProc {
    protected:
-      
+
       std::string fTdcId;    //!< tdc id with padiwa asic like "TDC_8a00"
       unsigned    fChId;     //!< first channel
       double      fHits[4];  //!< time of 4 TDC channels, stored in the tree (when enabled)
-      
+
       base::H1handle  hFast;  //!< histogram of fast channel
       base::H1handle  hSlow;  //!< histogram of slow channel
       base::H2handle  hCorr;  //!< correlation between fast and slow
-      
+
    public:
-      PadiwaProc(unsigned padiwaid, const char* _tdcid, unsigned _chid) : 
+      PadiwaProc(unsigned padiwaid, const char* _tdcid, unsigned _chid) :
          base::EventProc("Padiwa%u", padiwaid),
          fTdcId(_tdcid),
          fChId(_chid)
@@ -38,73 +38,73 @@ class PadiwaProc : public base::EventProc {
          t->Branch(GetName(), fHits, "hits[4]/D");
       }
 
-      void ResetHits() 
+      void ResetHits()
       {
          for (unsigned n=0;n<4;n++) fHits[n] = 0;
       }
 
-      bool IsComplete() 
+      bool IsComplete()
       {
-         for (unsigned n=0;n<4;n++) 
+         for (unsigned n=0;n<4;n++)
             if (fHits[n] == 0) return false;
          return true;
       }
 
-      double GetHit(unsigned n) const { return fHits[n]; } 
+      double GetHit(unsigned n) const { return fHits[n]; }
 
       double GetFast() const { return fHits[1] - fHits[0]; }
       double GetSlow() const { return fHits[3] - fHits[2]; }
 
-      virtual bool Process(base::Event* ev) 
+      virtual bool Process(base::Event* ev)
       {
          ResetHits();
 
-         hadaq::TdcSubEvent* sub = 
+         hadaq::TdcSubEvent* sub =
                dynamic_cast<hadaq::TdcSubEvent*> (ev->GetSubEvent(fTdcId));
-         
+
          if (sub==0) return false;
          // printf("%s process sub %p\n", GetName(), sub);
-         
+
          for (unsigned cnt=0;cnt<sub->Size();cnt++) {
             const hadaq::TdcMessageExt& ext = sub->msg(cnt);
-            
+
             // exclude all channels which has nothing to do with Padiwa
             if ((ext.msg().getHitChannel()<=fChId) ||
                 (ext.msg().getHitChannel()>fChId+4)) continue;
-            
+
             unsigned id = ext.msg().getHitChannel() - fChId - 1;
-            
+
             fHits[id] = ext.GetGlobalTime() - ev->GetTriggerTime();
             // printf("   %s id %u time %12.9f\n", GetName(), id, fHits[id]);
          }
-         
+
          if (IsComplete()) {
             FillH1(hFast, GetFast()*1e9);
             FillH1(hSlow, GetSlow()*1e9);
             FillH2(hCorr, GetFast()*1e9, GetSlow()*1e9);
          }
-         
+
          return true;
       }
 };
 
 class TestProc : public base::EventProc {
    protected:
-      
+
       PadiwaProc* fProc1;     //!< first processor
       PadiwaProc* fProc2;     //!< second processor
       base::H2handle  hCorr;  //!< correlation between padiwas
       double fX, fY;          //!< calculated coordinates, stored in the tree (when tree enabled)
-      
+
    public:
-      TestProc(PadiwaProc* proc1, PadiwaProc* proc2) : 
+      TestProc(PadiwaProc* proc1, PadiwaProc* proc2) :
          base::EventProc("TEST"),
          fProc1(proc1),
          fProc2(proc2),
          fX(0), fY(0)
       {
          hCorr = MakeH2("Corr","Correlation between detector and trigger", 80, -10., 30., 500, 0., 500., "trigger, ns;detector, ns");
-         
+
          SetStoreEnabled();
       }
 
@@ -113,8 +113,8 @@ class TestProc : public base::EventProc {
          t->Branch("testx", &fX, "X/D");
          t->Branch("testy", &fY, "Y/D");
       }
-      
-      virtual bool Process(base::Event*) 
+
+      virtual bool Process(base::Event*)
       {
          if ((fProc2->GetHit(2)!=0) && (fProc1->GetHit(3)!=0)) {
             fX = (fProc2->GetHit(2) - fProc2->GetHit(0))*1e9;
@@ -122,25 +122,25 @@ class TestProc : public base::EventProc {
             FillH2(hCorr, fX, fY);
             return (fX>0) && (fY>0);
          }
-         
+
          fX = 0; fY = 0;
          // event is not complete and should not be stored
          return false;
       }
-      
+
 };
 
 
-void second() 
+void second()
 {
    // uncomment line to create tree for the events storage
    // base::ProcMgr::instance()->CreateStore("file.root");
-   
-   PadiwaProc* proc1 = new PadiwaProc(0, "TDC_8a00", 48);
+
+   PadiwaProc* proc1 = new PadiwaProc(0, "TDC_8A00", 48);
    proc1->SetStoreEnabled();
-   
-   PadiwaProc* proc2 = new PadiwaProc(1, "TDC_8a03", 0);
+
+   PadiwaProc* proc2 = new PadiwaProc(1, "TDC_8A03", 0);
    proc2->SetStoreEnabled();
-   
+
    new TestProc(proc1, proc2);
 }
