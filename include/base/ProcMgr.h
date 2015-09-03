@@ -10,6 +10,7 @@
 #include "base/Event.h"
 
 class TTree;
+class TObject;
 
 namespace base {
 
@@ -96,6 +97,10 @@ namespace base {
          virtual bool CloseStore() { return false; }
          virtual bool CreateBranch(TTree* t, const char* name, const char* class_name, void** obj) { return false; }
          virtual bool CreateBranch(TTree* t, const char* name, void* member, const char* kind) { return false; }
+
+         // method to register ROOT objects, object should be derived from TObject class
+         // if returns true, object is registered and will be owned by framework
+         virtual bool RegisterObject(TObject* tobj, const char* subfolder = 0) { return false; }
 
          // this is list of generic methods for common data processing
 

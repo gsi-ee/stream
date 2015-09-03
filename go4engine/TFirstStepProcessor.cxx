@@ -3,14 +3,18 @@
 #include "TGo4Log.h"
 #include "TH1.h"
 #include "TH2.h"
+#include "TTree.h"
 #include "TObjArray.h"
 #include "TSystem.h"
 #include "TROOT.h"
+#include "TCanvas.h"
 #include "TUrl.h"
 
 #include "TGo4WinCond.h"
 #include "TGo4MbsEvent.h"
 #include "TGo4MbsSubEvent.h"
+#include "TGo4Parameter.h"
+#include "TGo4Picture.h"
 #include "TGo4Analysis.h"
 
 #include "TStreamEvent.h"
@@ -343,3 +347,32 @@ double TFirstStepProcessor::GetC1Limit(base::C1handle c1, bool isleft)
    if (cond==0) return 0.;
    return isleft ? cond->GetXLow() : cond->GetXUp();
 }
+
+bool TFirstStepProcessor::RegisterObject(TObject* tobj, const char* subfolder)
+{
+   if (tobj==0) return false;
+
+   if (tobj->InheritsFrom(TH1::Class()))
+      TGo4Analysis::Instance()->AddHistogram((TH1*)tobj, subfolder);
+
+   if (tobj->InheritsFrom(TTree::Class()))
+      TGo4Analysis::Instance()->AddTree((TTree*)tobj);
+
+   if (tobj->InheritsFrom(TGo4Condition::Class()))
+      TGo4Analysis::Instance()->AddAnalysisCondition((TGo4Condition*)tobj, subfolder);
+
+   if (tobj->InheritsFrom(TGo4Parameter::Class()))
+      TGo4Analysis::Instance()->AddParameter((TGo4Parameter*)tobj, subfolder);
+
+   if (tobj->InheritsFrom(TGo4Picture::Class()))
+      TGo4Analysis::Instance()->AddPicture((TGo4Picture*)tobj, subfolder);
+
+   if (tobj->InheritsFrom(TCanvas::Class()))
+      TGo4Analysis::Instance()->AddCanvas((TCanvas*)tobj, subfolder);
+
+   if (tobj->InheritsFrom(TNamed::Class()))
+      return TGo4Analysis::Instance()->AddObject((TNamed*)tobj, subfolder);
+
+   return false;
+}
+

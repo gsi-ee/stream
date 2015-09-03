@@ -125,6 +125,12 @@ namespace base {
 
          virtual void CreateBranch(TTree*) {}
 
+         virtual bool RegisterObject(TObject* tobj, const char* subfolder = 0)
+         {
+            return mgr()->RegisterObject(tobj, subfolder);
+         }
+
+
       public:
 
          virtual ~Processor();
