@@ -41,6 +41,9 @@ namespace hadaq {
 
          void assign(uint32_t d) { fData=d; }
 
+         /** assign operator for the message */
+         TdcMessage& operator=(const TdcMessage& src) { fData = src.fData; return *this; }
+
          /** Returns kind of the message
           * If used for the hit message, four different values can be returned */
          inline uint32_t getKind() const { return fData & tdckind_Mask; }
