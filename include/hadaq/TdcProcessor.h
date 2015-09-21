@@ -156,6 +156,8 @@ namespace hadaq {
 
          bool      fCh0Enabled;           //! when true, channel 0 stored in output event
 
+         TdcMessage fLastTdcHeader;      //! copy of last TDC header
+
          /** Returns true when processor used to select trigger signal
           * TDC not yet able to perform trigger selection */
          virtual bool doTriggerSelection() const { return false; }
@@ -293,6 +295,9 @@ namespace hadaq {
          void SetUseLastHit(bool on = true) { fUseLastHit = on; }
 
          bool IsUseLastHist() const { return fUseLastHit; }
+
+         /** Return last TDC header, seen by the processor */
+         const TdcMessage& GetLastTdcHeader() const { return fLastTdcHeader; }
 
          virtual void UserPostLoop();
 

@@ -1,8 +1,10 @@
+21.09.2015
+1. Provide access to last TDC header from hadaq::TdcProcessor. 
+
 3.09.2015
 1. Add RegisterObject method to register ROOT objects like canvas or graph
    to the go4 framework. Such objects will be stored in the autosave file.
    Method not implemented for other engines
-   
 
 7.07.2015
 1. dabcengine is now plugin in DABC itself while DABC uses some of classes

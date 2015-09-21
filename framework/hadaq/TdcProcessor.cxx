@@ -47,7 +47,8 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fUseNativeTrigger(false),
    fCompensateEpochReset(false),
    fCompensateEpochCounter(0),
-   fCh0Enabled(false)
+   fCh0Enabled(false),
+   fLastTdcHeader()
 {
    fIsTDC = true;
 
@@ -763,6 +764,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
            break;
         case tdckind_Header: {
            unsigned errbits = msg.getHeaderErr();
+           if (first_scan) fLastTdcHeader = msg;
            if (errbits && first_scan)
               if (CheckPrintError())
                  printf("%5s found error bits: 0x%x\n", GetName(), errbits);
