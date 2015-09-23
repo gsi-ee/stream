@@ -121,6 +121,7 @@ namespace hadaq {
          base::H2handle fAllCoarse;  //! histogram of all coarse counters
          base::H2handle fRisingCalibr;//! histogram with all rising calibrations
          base::H2handle fFallingCalibr; //! histogram all rising calibrations
+         base::H1handle fHitsRate;    //! histogram with data rate
 
          unsigned                 fNumChannels; //! number of channels
          std::vector<ChannelRec>  fCh; //! histogram for individual channels
@@ -157,6 +158,9 @@ namespace hadaq {
          bool      fCh0Enabled;           //! when true, channel 0 stored in output event
 
          TdcMessage fLastTdcHeader;      //! copy of last TDC header
+
+         long      fRateCnt;             //! counter used for rate calculation
+         double    fLastRateTm;          //! last ch0 time when rate was calculated
 
          /** Returns true when processor used to select trigger signal
           * TDC not yet able to perform trigger selection */
@@ -269,6 +273,9 @@ namespace hadaq {
          bool SetDoubleRefChannel(unsigned ch1, unsigned ch2,
                                   int npx = 200, double xmin = -10., double xmax = 10.,
                                   int npy = 200, double ymin = -10., double ymax = 10.);
+
+         /** Create rate histogram to count hits per second (excluding channel 0) */
+         void CreateRateHisto(int np = 1000, double xmin = 0., double xmax = 1e5);
 
          /** Enable print of TDC data when time difference to ref channel belong to specified interval
           * Work ONLY when reference channel 0 is used.

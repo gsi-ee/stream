@@ -68,6 +68,9 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fAllCoarse = 0;
    fRisingCalibr = 0;
    fFallingCalibr = 0;
+   fHitsRate = 0;
+   fRateCnt = 0;
+   fLastRateTm = -1;
 
    if (HistFillLevel() > 1) {
       fChannels = MakeH1("Channels", "Messages per TDC channels", numchannels, 0, numchannels, "ch");
@@ -272,6 +275,13 @@ bool hadaq::TdcProcessor::SetDoubleRefChannel(unsigned ch1, unsigned ch2,
 
    return true;
 }
+
+void hadaq::TdcProcessor::CreateRateHisto(int np, double xmin, double xmax)
+{
+   SetSubPrefix();
+   fHitsRate = MakeH1("HitsRate", "Hits rate", np, xmin, xmax, "hits/sec");
+}
+
 
 
 bool hadaq::TdcProcessor::EnableRefCondPrint(unsigned ch, double left, double right, int numprint)
@@ -662,6 +672,17 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          if (first_scan) {
 
             // if (chid>0) printf("%s HIT ch %u tm %12.9f diff %12.9f\n", GetName(), chid, localtm, localtm - ch0time);
+
+            if (chid==0) {
+               if (fLastRateTm < 0) fLastRateTm = ch0time;
+               if (ch0time - fLastRateTm > 1) {
+                  FillH1(fHitsRate, fRateCnt / (ch0time - fLastRateTm));
+                  fLastRateTm = ch0time;
+                  fRateCnt = 0;
+               }
+            } else {
+               fRateCnt++;
+            }
 
             // ensure that histograms are created
             if (rec.fRisingFine == 0)
