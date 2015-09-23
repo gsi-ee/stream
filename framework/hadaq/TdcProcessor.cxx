@@ -726,7 +726,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                if (print_cond) rawprint = true;
 
                // special case - when ref channel defined as 0, fill all hits
-               if ((chid!=0) && (rec.refch==0) && (rec.reftdc == GetID()) && (fCh[0].rising_hit_tm!=0)) {
+               if ((chid!=0) && (rec.refch==0) && (rec.reftdc == GetID())) {
+
                   DefFillH1(rec.fRisingRef, ((localtm - fCh[0].rising_hit_tm)*1e9), 1.);
 
                   if (IsPrintRawData() || print_cond)

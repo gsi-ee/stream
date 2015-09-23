@@ -1,6 +1,7 @@
 23.09.2015
 1. If hadaq::TdcProcessor::CreateRateHisto method called,
    fill hits rate histogram for that TDC
+2. Let configure multiple HUBs for each TRB processor. 
     
 
 21.09.2015

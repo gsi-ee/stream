@@ -9,6 +9,8 @@
 
 #include "hadaq/SubProcessor.h"
 
+#include <vector>
+
 namespace hadaq {
 
    class HldProcessor;
@@ -39,7 +41,7 @@ namespace hadaq {
          SubProcMap fMap;            ///< map of sub-processors
 
          unsigned fHadaqCTSId;       ///< identifier of CTS header in HADAQ event
-         unsigned fHadaqHUBId;       ///< identifier of HUB header in HADQ event
+         std::vector<unsigned> fHadaqHUBId;   ///< identifier of HUB header in HADQ event
 
          unsigned fLastTriggerId;    ///< last seen trigger id
          unsigned fLostTriggerCnt;   ///< lost trigger counts
@@ -92,7 +94,16 @@ namespace hadaq {
          virtual ~TrbProcessor();
 
          void SetHadaqCTSId(unsigned id) { fHadaqCTSId = id; }
-         void SetHadaqHUBId(unsigned id) { fHadaqHUBId = id; }
+         void SetHadaqHUBId(unsigned id1, unsigned id2=0, unsigned id3=0, unsigned id4=0)
+         {
+            fHadaqHUBId.clear();
+            fHadaqHUBId.push_back(id1);
+            if (id2!=0) fHadaqHUBId.push_back(id2);
+            if (id3!=0) fHadaqHUBId.push_back(id3);
+            if (id4!=0) fHadaqHUBId.push_back(id4);
+         }
+         void AddHadaqHUBId(unsigned id) { fHadaqHUBId.push_back(id); }
+
          void SetHadaqTDCId(unsigned) {} // keep for backward compatibility, can be ignored
          void SetHadaqSUBId(unsigned) {} // keep for backward compatibility, can be ignored
 

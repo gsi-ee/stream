@@ -1,6 +1,7 @@
 #include "hadaq/TrbProcessor.h"
 
 #include <string.h>
+#include <algorithm>
 
 #include "base/defines.h"
 #include "base/ProcMgr.h"
@@ -26,7 +27,8 @@ void hadaq::TrbProcessor::SetDefaults(unsigned numch, unsigned edges, bool ignor
 hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc) :
    base::StreamProc("TRB_%04X", brdid, false),
    fHldProc(hldproc),
-   fMap()
+   fMap(),
+   fHadaqHUBId()
 {
    if (hldproc==0)
       mgr()->RegisterProc(this, base::proc_TRBEvent, brdid & 0xFF);
@@ -44,7 +46,6 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc) :
    fLostRate = MakeH1("LostRate", "Relative number of lost packets", 1000, 0, 1., "data lost");
 
    fHadaqCTSId = 0x8000;
-   fHadaqHUBId = 0x9000;  // high 8 bit important,
 
    fLastTriggerId = 0;
    fLostTriggerCnt = 0;
@@ -137,12 +138,12 @@ void hadaq::TrbProcessor::CreateTDC(unsigned id1, unsigned id2, unsigned id3, un
       }
 
       if (tdcid==fHadaqCTSId) {
-         printf("TDC id 0x%04x is used as CTS id\n", tdcid);
+         printf("TDC id 0x%04x already used as CTS id\n", tdcid);
          continue;
       }
 
-      if (tdcid==fHadaqHUBId) {
-         printf("TDC id 0x%04x is used as HUB id\n", tdcid);
+      if (std::find(fHadaqHUBId.begin(), fHadaqHUBId.end(), tdcid) != fHadaqHUBId.end()) {
+         printf("TDC id 0x%04x already used as HUB id\n", tdcid);
          continue;
       }
 
@@ -393,7 +394,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
 //         continue;
 //      }
 
-      if (((data & 0xFFFF) == fHadaqHUBId) || ((data & 0xFF00) == fHadaqHUBId))  {
+      if (std::find(fHadaqHUBId.begin(), fHadaqHUBId.end(), data & 0xFFFF) != fHadaqHUBId.end()) {
          RAWPRINT ("   HUB header: 0x%08x, hub=%u, size=%u (ignore)\n", (unsigned) data, (unsigned) data & 0xFF, datalen);
 
          // ix+=datalen;  // WORKAROUND !!!
@@ -612,7 +613,7 @@ void hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub)
 
       unsigned datalen = (data >> 16) & 0xFFFF;
 
-      if ((data & 0xFF00) == fHadaqHUBId) {
+      if (std::find(fHadaqHUBId.begin(), fHadaqHUBId.end(), data & 0xFFFF) != fHadaqHUBId.end()) {
          // ix+=datalen;  // WORKAROUND !!!
 
          // TODO: formally we should analyze HUB subevent as real subevent but
