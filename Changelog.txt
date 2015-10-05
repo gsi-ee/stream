@@ -1,8 +1,11 @@
+5.10.2015
+1. Correctly clear all TDC processors before each event
+
+
 23.09.2015
 1. If hadaq::TdcProcessor::CreateRateHisto method called,
    fill hits rate histogram for that TDC
 2. Let configure multiple HUBs for each TRB processor. 
-    
 
 21.09.2015
 1. Provide access to last TDC header from hadaq::TdcProcessor. 
@@ -30,7 +33,7 @@
    convert such file into ROOT histograms.  
 2. One could disable sync-message appending to each TDC buffer. This allows to
    work without TDC data copying in new buffer, gives ~5% performance increase  
-3. Use defines for histogram filiing methods. This let increase performance 
+3. Use defines for histogram filling methods. This let increase performance 
    of dabcengine (where build-in histogram format used) by ~40%.
    
 
@@ -38,7 +41,7 @@
 1. Introduce dabcengine, which allows to run code in DABC environment
    Code is still experimental, data can be only accessed via web server
    while application running.
-2. Change internal histogram format - add undeflow/overflow bins.
+2. Change internal histogram format - add underflow/overflow bins.
    Let use such histogram later for better analysis. 
 
 

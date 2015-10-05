@@ -558,8 +558,6 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
    double localtm(0.), minimtm(0), ch0time(0);
 
-   if (first_scan) BeforeFill();
-
    hadaq::TdcMessage& msg = iter.msg();
 
    while (iter.next()) {

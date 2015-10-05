@@ -96,6 +96,9 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
 
       DefFillH1(fEvSize, ev->GetPaddedSize(), 1.);
 
+      for (TrbProcMap::iterator diter = fMap.begin(); diter != fMap.end(); diter++)
+         diter->second->BeforeEventScan();
+
       hadaqs::RawSubevent* sub = 0;
 
       while ((sub = iter.nextSubevent()) != 0) {
@@ -113,8 +116,8 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
             iter->second->ScanSubEvent(sub, ev->GetSeqNr());
       }
 
-      for (TrbProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
-         iter->second->AfterEventScan();
+      for (TrbProcMap::iterator diter = fMap.begin(); diter != fMap.end(); diter++)
+         diter->second->AfterEventScan();
    }
 
    return true;

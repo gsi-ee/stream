@@ -285,6 +285,8 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
 
       DefFillH1(fEvSize, ev->GetPaddedSize(), 1.);
 
+      BeforeEventScan();
+
       hadaqs::RawSubevent* sub = 0;
       unsigned subcnt(0);
 
@@ -309,6 +311,13 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
 
    return true;
 }
+
+void hadaq::TrbProcessor::BeforeEventScan()
+{
+   for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
+      iter->second->BeforeFill();
+}
+
 
 void hadaq::TrbProcessor::AfterEventScan()
 {

@@ -82,6 +82,8 @@ namespace hadaq {
          /** Scan FPGA-TDC data, distribute over sub-processors */
          void ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3eventid);
 
+         void BeforeEventScan();
+
          void AfterEventScan();
 
          virtual void CreateBranch(TTree* t);
