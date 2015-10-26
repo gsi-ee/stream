@@ -450,18 +450,23 @@ bool hadaq::TdcProcessor::PerformAutoCalibrate()
 }
 
 
-bool hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigned indx, unsigned datalen)
+unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigned indx, unsigned datalen, hadaqs::RawSubevent* tgt, unsigned tgtindx)
 {
-   fIter1.assign(sub, indx, datalen);
-
-   hadaq::TdcMessage& msg = fIter1.msg();
+   hadaq::TdcMessage msg, calibr;
 
    int cnt(0), hitcnt(0), errcnt(0);
+   unsigned tgtindx0 = tgtindx, calibr_indx = 0, calibr_num = 0;
 
-   while (fIter1.next()) {
+   while (datalen > 0) {
+      msg.assign(sub->Data(indx++));
+
       cnt++;
       if (fMsgsKind) DefFastFillH1(fMsgsKind, (msg.getKind() >> 29));
-      if (!msg.isHitMsg()) continue;
+      if (!msg.isHit0Msg()) {
+         if (msg.isCalibrMsg()) { calibr_indx = tgtindx; calibr_num = 0; }
+         tgt->SetData(tgtindx++, msg.getData());
+         continue;
+      }
       hitcnt++;
 
       unsigned chid = msg.getHitChannel();
@@ -470,7 +475,8 @@ bool hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigned in
       bool isrising = msg.isHitRisingEdge();
 
       if ((chid >= NumChannels()) || (fine >= FineCounterBins)) {
-         fIter1.setFineTime(0x3ff);
+         msg.setAsHit1(0x3ff);
+         sub->SetData(indx-1, msg.getData());
          errcnt++;
          continue;
       }
@@ -479,10 +485,35 @@ bool hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigned in
 
       double corr = isrising ? rec.rising_calibr[fine] : rec.falling_calibr[fine];
 
-      // value from 0 to 1000 is 5 ps unit, should be SUB from coarse time value
-      uint32_t new_fine = (uint32_t) (corr/5e-12);
-      if (new_fine>=1000) new_fine = 1000;
-      fIter1.setFineTime(new_fine);
+
+      if (tgt==0) {
+         // simple approach - replace data in the source buffer
+         // value from 0 to 1000 is 5 ps unit, should be SUB from coarse time value
+         uint32_t new_fine = (uint32_t) (corr/5e-12);
+         if (new_fine>=1000) new_fine = 1000;
+         msg.setAsHit1(new_fine);
+         sub->SetData(indx-1, msg.getData());
+      } else {
+         // copy data to the target, introduce extra messages with calibrated
+
+         uint32_t new_fine = (uint32_t) (corr/5e-9*0x3ffe);
+         if (new_fine>0x3ffe) new_fine = 0x3ffe;
+         if (calibr_indx==0) {
+            calibr_indx = tgtindx++;
+            calibr_num = 0;
+            calibr.assign(tdckind_Calibr);
+         } else {
+            calibr.assign(tgt->Data(calibr_indx));
+         }
+
+         // set data of calibr message
+         calibr.setCalibrFine(calibr_num++, new_fine);
+         tgt->SetData(calibr_indx, calibr.getData());
+         if (calibr_num>1) calibr_indx = 0;
+
+         // copy original hit message
+         tgt->SetData(tgtindx++, msg.getData());
+      }
 
       if (isrising) {
          rec.rising_stat[fine]++;
@@ -517,7 +548,7 @@ bool hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigned in
    if (fHitsPerBrd) DefFillH1(*fHitsPerBrd, fSeqeunceId, hitcnt);
    if (fErrPerBrd && (errcnt>0)) DefFillH1(*fErrPerBrd, fSeqeunceId, errcnt);
 
-   return true;
+   return tgt ? (tgtindx - tgtindx0) : cnt;
 }
 
 

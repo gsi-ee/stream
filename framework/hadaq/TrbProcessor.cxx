@@ -610,20 +610,36 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
 }
 
 
-void hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub)
+unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub, void* tgtbuf, unsigned tgtlen)
 {
-   unsigned ix = 0;           // cursor
+   hadaqs::RawSubevent* tgt = (hadaqs::RawSubevent*) tgtbuf;
+   // copy complete header first
+   if (tgt!=0) {
+      // copy header
+      memcpy(tgt, sub, sizeof(hadaqs::RawSubevent));
+      tgtlen = (tgtlen - sizeof(hadaqs::RawSubevent)) / 4; // how many 32-bit values can be used
+   }
 
-   unsigned trbSubEvSize = sub->GetSize() / 4 - 4;
+   unsigned ix(0), tgtix(0); // cursor
+
+   unsigned trbSubEvSize = (sub->GetSize() - sizeof(hadaqs::RawSubevent))/ 4;
 
    while (ix < trbSubEvSize) {
       //! Extract data portion from the whole packet (in a loop)
       uint32_t data = sub->Data(ix++);
 
+      if (tgt && (tgtix >= (tgtlen - sizeof(hadaqs::RawSubevent)) / 4)) {
+         fprintf(stderr,"TrbProcessor::TransformSubEvent not enough space in output buffer\n");
+         return 0;
+      }
+
       unsigned datalen = (data >> 16) & 0xFFFF;
 
       if (std::find(fHadaqHUBId.begin(), fHadaqHUBId.end(), data & 0xFFFF) != fHadaqHUBId.end()) {
          // ix+=datalen;  // WORKAROUND !!!
+
+         // copy hub header to the target
+         if (tgt) tgt->SetData(tgtix++, data);
 
          // TODO: formally we should analyze HUB subevent as real subevent but
          // we just skip header and continue to analyze data
@@ -633,23 +649,40 @@ void hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub)
       //! ================= FPGA TDC header ========================
       TdcProcessor* subproc = GetTDC(data & 0xFFFF, true);
       if (subproc != 0) {
-         subproc->TransformTdcData(sub, ix, datalen);
-
+         unsigned newlen = subproc->TransformTdcData(sub, ix, datalen, tgt, tgtix+1);
+         if (tgt!=0) {
+            tgt->SetData(tgtix++, (data & 0xFFFF) | ((newlen & 0xffff) << 16));
+            tgtix+=newlen;
+         }
          ix+=datalen;
          continue; // go to next block
       }  // end of if TDC header
 
 
+      // copy unrecognized data to the target
+      if (tgt) {
+         tgt->SetData(tgtix++, data);
+         memcpy(tgt->RawData(tgtix), sub->RawData(ix), datalen*4);
+         tgtix+=datalen;
+      }
+
       // all other blocks are ignored
       ix+=datalen;
    }
+
+   if (tgt) {
+      tgt->SetSize(sizeof(hadaqs::RawSubevent) + tgtix*4);
+      return tgt->GetPaddedSize();
+   }
+
+   return 0;
 }
 
 double hadaq::TrbProcessor::CheckAutoCalibration()
 {
    // check and perform auto calibration for all TDCs
    // return calibration progress
-   // negative when not all TDCs are ready, positiove when all TDC were calibrated at least once
+   // negative when not all TDCs are ready, positive when all TDC were calibrated at least once
 
    double p0(0), p1(1);
    bool ready(true);

@@ -139,7 +139,7 @@ namespace hadaqs {
                                   (((uint8_t *) member)[3])) : *member;
          }
 
-         /** swapsave method to set value stolen from hadtu.h */
+         /** swap-save method to set value stolen from hadtu.h */
          inline void SetValue(uint32_t *member, uint32_t val)
          {
             *member = IsSwapped() ?
@@ -161,6 +161,7 @@ namespace hadaqs {
          }
 
          void SetSize(uint32_t bytes) { SetValue(&tuSize, bytes); }
+         void SetDecoding(uint32_t decod) { SetValue(&tuDecoding, decod); }
    };
 
    // ======================================================================
@@ -421,6 +422,22 @@ namespace hadaqs {
             return ((uint8_t*) my)[idx];
          }
 
+         void SetData(unsigned idx, uint32_t value)
+         {
+            const void* my = (char*) (this) + sizeof(hadaqs::RawSubevent);
+
+            switch (Alignment()) {
+               case 4:
+                  return SetValue((uint32_t *) my + idx, value);
+
+               case 2: {
+                  if (IsSwapped()) value = ((value & 0xff00) >> 8) | ((value & 0xff) << 8);
+
+                  ((uint16_t *) my)[idx]  = value & 0xffff;
+               }
+            }
+         }
+
          uint32_t GetErrBits()
          {
             return Data(GetNrOfDataWords()-1);
@@ -436,7 +453,7 @@ namespace hadaqs {
          }
 
          /** Return pointer where raw data should starts */
-         void* RawData() const { return (char*) (this) + sizeof(hadaqs::RawSubevent); }
+         void* RawData(unsigned ix = 0) const { return (char*) (this) + sizeof(hadaqs::RawSubevent) + ix*4; }
 
 
          void Dump(bool print_raw_data = false);

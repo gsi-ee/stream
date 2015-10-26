@@ -92,8 +92,9 @@ namespace hadaq {
          // return fine time value for current message
          inline double getMsgTimeFine() const
          {
-           if (!fMsg.isHitMsg()) return 0.;
-           return fMsg.isHit1Msg() ? hadaq::TdcMessage::CoarseUnit()*fMsg.getHitTmFine()*0.001 : hadaq::TdcMessage::SimpleFineCalibr(fMsg.getHitTmFine());
+           if (fMsg.isHit0Msg()) return hadaq::TdcMessage::SimpleFineCalibr(fMsg.getHitTmFine());
+           if (fMsg.isHit1Msg()) return hadaq::TdcMessage::CoarseUnit()*fMsg.getHitTmFine()*0.001;
+           return 0;
          }
 
          hadaq::TdcMessage& msg() { return fMsg; }
@@ -116,25 +117,6 @@ namespace hadaq {
             if (msg().isHitMsg() || msg().isEpochMsg())
                tm = getMsgTimeCoarse() - getMsgTimeFine();
             msg().print(tm);
-         }
-
-         void setFineTime(uint32_t v) {
-            if (fLastBuf==0) {
-               printf("fLastBuf pointer is 0"); exit(1);
-            }
-
-            uint32_t buf = *fLastBuf;
-            if (fSwapped) buf = (((uint8_t *) fLastBuf)[0] << 24) | (((uint8_t *) fLastBuf)[1] << 16) | (((uint8_t *) fLastBuf)[2] << 8) | (((uint8_t *) fLastBuf)[3]);
-
-            buf = (buf & ~tdckind_Mask) | tdckind_Hit1; // mark as message 1
-            if (v>=0x3ff) {
-              buf |= (0x3ff << 12);
-            } else {
-              buf = (buf & ~(0x3ff << 12)) | (v << 12);
-            }
-
-            *fLastBuf = buf;
-            if (fSwapped) *fLastBuf = (((uint8_t *) fLastBuf)[0] << 24) | (((uint8_t *) fLastBuf)[1] << 16) | (((uint8_t *) fLastBuf)[2] << 8) | (((uint8_t *) fLastBuf)[3]);
          }
    };
 }

@@ -341,7 +341,8 @@ namespace hadaq {
 
          virtual void Store(base::Event*);
 
-         bool TransformTdcData(hadaqs::RawSubevent* sub, unsigned indx, unsigned datalen);
+         /** Method transform TDC data, if output specified, use it otherwise change original data */
+         unsigned TransformTdcData(hadaqs::RawSubevent* sub, unsigned indx, unsigned datalen, hadaqs::RawSubevent* tgt = 0, unsigned tgtindx = 0);
 
          /** Check if automatic calibration can be performed - enough statistic is accumulated */
          double TestCanCalibrate();

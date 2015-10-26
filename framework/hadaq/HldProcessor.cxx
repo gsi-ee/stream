@@ -1,6 +1,7 @@
 #include "hadaq/HldProcessor.h"
 
 #include <string.h>
+#include <stdio.h>
 
 #include "base/defines.h"
 #include "base/ProcMgr.h"
@@ -122,4 +123,28 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
 
    return true;
 }
+
+bool hadaq::HldProcessor::TransformEvent(void* src, unsigned len)
+{
+   hadaq::TrbIterator iter(src, len);
+
+   // only single event is transformed
+   if (iter.nextEvent() == 0) return false;
+
+   hadaqs::RawSubevent* sub = 0;
+
+   while ((sub = iter.nextSubevent()) != 0) {
+      TrbProcMap::iterator iter = fMap.find(sub->GetId());
+      if (iter != fMap.end())
+         iter->second->TransformSubEvent(sub);
+   }
+
+   if (iter.nextEvent() != 0) {
+      fprintf(stderr,"HLD should transform only single event\n");
+      return false;
+   }
+
+   return true;
+}
+
 

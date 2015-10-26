@@ -13,10 +13,10 @@ namespace hadaq {
       tdckind_Debug    = 0x40000000,
       tdckind_Epoch    = 0x60000000,
       tdckind_Mask     = 0xe0000000,
-      tdckind_Hit      = 0x80000000,
-      tdckind_Hit1     = 0xa0000000,
+      tdckind_Hit      = 0x80000000,  // original hit message
+      tdckind_Hit1     = 0xa0000000,  // fine time replaced with 5ps binning value
       tdckind_Hit2     = 0xc0000000,
-      tdckind_Hit3     = 0xe0000000
+      tdckind_Calibr   = 0xe0000000   // calibration data for next two hits
    };
 
    enum TdcConstants {
@@ -39,7 +39,9 @@ namespace hadaq {
 
          TdcMessage(uint32_t d) : fData(d) {}
 
-         void assign(uint32_t d) { fData=d; }
+         void assign(uint32_t d) { fData = d; }
+
+         inline uint32_t getData() const { return fData; }
 
          /** assign operator for the message */
          TdcMessage& operator=(const TdcMessage& src) { fData = src.fData; return *this; }
@@ -48,13 +50,15 @@ namespace hadaq {
           * If used for the hit message, four different values can be returned */
          inline uint32_t getKind() const { return fData & tdckind_Mask; }
 
-         inline bool isHitMsg() const { return fData & tdckind_Hit; }
-         inline bool isHit1Msg() const { return getKind() == tdckind_Hit1; }
+         inline bool isHit0Msg() const { return getKind() == tdckind_Hit; } // original hit message
+         inline bool isHit1Msg() const { return getKind() == tdckind_Hit1; } // with replaced fine counter
+         inline bool isHitMsg() const { return isHit0Msg() || isHit1Msg(); }
 
          inline bool isEpochMsg() const { return getKind() == tdckind_Epoch; }
          inline bool isDebugMsg() const { return getKind() == tdckind_Debug; }
          inline bool isHeaderMsg() const { return getKind() == tdckind_Header; }
          inline bool isReservedMsg() const { return getKind() == tdckind_Reserved; }
+         inline bool isCalibrMsg() const { return getKind() == tdckind_Calibr; }
 
          // methods for epoch
 
@@ -83,8 +87,15 @@ namespace hadaq {
          inline bool isHitRisingEdge() const { return getHitEdge() == 0x1; }
          inline bool isHitFallingEdge() const { return getHitEdge() == 0x0; }
 
+         void setAsHit1(uint32_t finebin);
+
          /** Returns hit reserved value, 2 bits */
          inline uint32_t getHitReserved() const { return (fData >> 29) & 0x3; }
+
+         // methods for calibration message
+
+         inline uint32_t getCalibrFine(unsigned n = 0) const { return (fData >> n*14) & 0x3fff; }
+         inline void setCalibrFine(unsigned n = 0, uint32_t v = 0) { fData = (fData & ~(0x3fff << n*14)) | ((v & 0x3fff) << n*14); }
 
          // methods for header
 
