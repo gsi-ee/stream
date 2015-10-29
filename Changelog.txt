@@ -1,3 +1,11 @@
+29.10.2015
+1. Introduce new message type in for the TDC - calibration.
+   It contains two corrected values for fine time for next two hit messages
+2. Implement transformation of HLD events/subevents in the way, 
+   that one could either replace hit messages or insert new calibration messages
+3. Use such feature in recalibration module in DABC
+   
+
 5.10.2015
 1. Correctly clear all TDC processors before each event
 
@@ -6,6 +14,7 @@
 1. If hadaq::TdcProcessor::CreateRateHisto method called,
    fill hits rate histogram for that TDC
 2. Let configure multiple HUBs for each TRB processor. 
+
 
 21.09.2015
 1. Provide access to last TDC header from hadaq::TdcProcessor. 

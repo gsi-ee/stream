@@ -67,7 +67,7 @@ namespace hadaq {
          bool IsPrintRawData() const { return fPrintRawData; }
 
          /** Function to transform HLD event, used for TDC calibrations */
-         bool TransformEvent(void* src, unsigned len);
+         unsigned TransformEvent(void* src, unsigned len, void* tgt = 0, unsigned tgtlen = 0);
    };
 }
 

@@ -79,7 +79,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
       fErrors = MakeH1("Errors", "Errors in TDC channels", numchannels, 0, numchannels, "ch");
       fUndHits = MakeH1("UndetectedHits", "Undetected hits in TDC channels", numchannels, 0, numchannels, "ch");
 
-      fMsgsKind = MakeH1("MsgKind", "kind of messages", 8, 0, 8, "xbin:Reserved,Header,Debug,Epoch,Hit,-,-,-;kind");
+      fMsgsKind = MakeH1("MsgKind", "kind of messages", 8, 0, 8, "xbin:Reserved,Header,Debug,Epoch,Hit,-,-,Calibr;kind");
 
       fAllFine = MakeH2("FineTm", "fine counter value", numchannels, 0, numchannels, (gNumFineBins==1000 ? 100 : gNumFineBins), 0, gNumFineBins, "ch;fine");
       fAllCoarse = MakeH2("CoarseTm", "coarse counter value", numchannels, 0, numchannels, 2048, 0, 2048, "ch;coarse");
@@ -589,6 +589,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    double localtm(0.), minimtm(0), ch0time(0);
 
    hadaq::TdcMessage& msg = iter.msg();
+   hadaq::TdcMessage calibr;
+   unsigned ncalibr = 2;
 
    while (iter.next()) {
 
@@ -622,6 +624,12 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             isfirstepoch = true;
             first_epoch = ep;
          }
+         continue;
+      }
+
+      if (msg.isCalibrMsg()) {
+         ncalibr = 0;
+         calibr = msg;
          continue;
       }
 
@@ -671,6 +679,10 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          if (msg.getKind() == tdckind_Hit1) {
             corr = fine * 5e-12;
             raw_hit = false;
+         } else
+         if (ncalibr<2) {
+            // use correction from special message
+            corr = calibr.getCalibrFine(ncalibr++)*5e-9/0x3ffe;
          } else {
             if (fine >= FineCounterBins) {
                DefFastFillH1(fErrors, chid);

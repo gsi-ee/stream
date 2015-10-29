@@ -622,13 +622,13 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub, void* 
 
    unsigned ix(0), tgtix(0); // cursor
 
-   unsigned trbSubEvSize = (sub->GetSize() - sizeof(hadaqs::RawSubevent))/ 4;
+   unsigned trbSubEvSize = (sub->GetSize() - sizeof(hadaqs::RawSubevent)) / 4;
 
    while (ix < trbSubEvSize) {
       //! Extract data portion from the whole packet (in a loop)
       uint32_t data = sub->Data(ix++);
 
-      if (tgt && (tgtix >= (tgtlen - sizeof(hadaqs::RawSubevent)) / 4)) {
+      if (tgt && (tgtix >= tgtlen)) {
          fprintf(stderr,"TrbProcessor::TransformSubEvent not enough space in output buffer\n");
          return 0;
       }

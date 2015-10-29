@@ -134,27 +134,63 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
    return true;
 }
 
-bool hadaq::HldProcessor::TransformEvent(void* src, unsigned len)
+unsigned hadaq::HldProcessor::TransformEvent(void* src, unsigned len, void* tgt, unsigned tgtlen)
 {
    hadaq::TrbIterator iter(src, len);
 
    // only single event is transformed
-   if (iter.nextEvent() == 0) return false;
+   if (iter.nextEvent() == 0) return 0;
+
+   if ((tgt!=0) && (tgtlen<len)) {
+      fprintf(stderr,"HLD requires larger output buffer than original\n");
+      return 0;
+   }
 
    hadaqs::RawSubevent* sub = 0;
 
+   unsigned reslen = 0;
+   unsigned char* curr = (unsigned char*) tgt;
+   if (tgt!=0) {
+      // copy event header
+      memcpy(tgt, iter.currEvent(), sizeof(hadaqs::RawEvent));
+      reslen += sizeof(hadaqs::RawEvent);
+      curr += sizeof(hadaqs::RawEvent);
+   }
+
    while ((sub = iter.nextSubevent()) != 0) {
       TrbProcMap::iterator iter = fMap.find(sub->GetId());
-      if (iter != fMap.end())
-         iter->second->TransformSubEvent(sub);
+      if (iter != fMap.end()) {
+         if (curr && (tgtlen-reslen < sub->GetSize())) {
+            fprintf(stderr,"not enough space for subevent in output buffer\n");
+            return 0;
+         }
+         unsigned sublen = iter->second->TransformSubEvent(sub, curr, tgtlen - reslen);
+         if (curr) {
+            curr += sublen;
+            reslen += sublen;
+         }
+      } else
+      if (curr) {
+         // copy subevent which cannot be recognized
+         memcpy(curr, sub, sub->GetPaddedSize());
+         curr += sub->GetPaddedSize();
+         reslen += sub->GetPaddedSize();
+      }
+   }
+
+   if (tgt==0) {
+      reslen = len;
+   } else {
+      // set new event size
+      ((hadaqs::RawEvent*) tgt)->SetSize(reslen);
    }
 
    if (iter.nextEvent() != 0) {
       fprintf(stderr,"HLD should transform only single event\n");
-      return false;
+      return 0;
    }
 
-   return true;
+   return reslen;
 }
 
 
