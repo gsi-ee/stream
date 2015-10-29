@@ -48,6 +48,9 @@ namespace hadaq {
          /** Search for specified TDC in all subprocessors */
          TdcProcessor* FindTDC(unsigned tdcid) const;
 
+         /** Check auto-calibration for all TRBs */
+         double CheckAutoCalibration();
+
          /** Set event type, only used in the analysis */
          void SetEventTypeSelect(unsigned evid) { fEventTypeSelect = evid; }
 

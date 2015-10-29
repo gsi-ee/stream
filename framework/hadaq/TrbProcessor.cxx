@@ -702,7 +702,8 @@ double hadaq::TrbProcessor::CheckAutoCalibration()
       }
    }
 
-   return ready ? p1 : -p0; // return negative value when autocalibration not fully completed
+   // return negative value when auto-calibration not fully completed
+   return ready ? p1 : -p0;
 }
 
 

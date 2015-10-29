@@ -50,6 +50,16 @@ hadaq::TdcProcessor* hadaq::HldProcessor::FindTDC(unsigned tdcid) const
    return 0;
 }
 
+double hadaq::HldProcessor::CheckAutoCalibration()
+{
+   double lvl = 1.;
+   for (TrbProcMap::const_iterator iter = fMap.begin(); iter != fMap.end(); iter++) {
+      double v = iter->second->CheckAutoCalibration();
+      if (v<lvl) lvl = v;
+   }
+   return lvl;
+}
+
 void hadaq::HldProcessor::SetTriggerWindow(double left, double right)
 {
    base::StreamProc::SetTriggerWindow(left, right);
