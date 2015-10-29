@@ -87,35 +87,35 @@ parallel data streams.
 
 1. Checkout repository with command
 
-  [shell] svn co https://subversion.gsi.de/go4/app/stream stream
+    [shell] svn co https://subversion.gsi.de/go4/app/stream stream
   
 2. If required, configure ROOT and Go4 shell variables.
    Typically one should call go4login initialization script
    
-   [shell] . go4login 
+    [shell] . go4login 
    
    Project can be compiled without ROOT and Go4, there is run engine
    provided with DABC framework
     
 3. Compile project:
 
-   [shell] cd stream
-   [shell] make all
+    [shell] cd stream
+    [shell] make all
    
 4. Use generated streamlogin script to set variables:
 
-   [shell] . streamlogin
+    [shell] . streamlogin
 
 5. Run any example from applications sub-directory with go4.
    If necessary, compile additional code there:
 
-   [shell] cd applications/get4test
-   [shell] make all
-   [shell] go4analysis -file your_file_name.lmd
+    [shell] cd applications/get4test
+    [shell] make all
+    [shell] go4analysis -file your_file_name.lmd
 
 6. Results histogram can be seen from autosave file
 
-   [shell] go4 Go4AnalysisASF.root    
+    [shell] go4 Go4AnalysisASF.root    
    
 
 For any questions or suggestions contact:
