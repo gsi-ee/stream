@@ -457,14 +457,14 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
    int cnt(0), hitcnt(0), errcnt(0);
    unsigned tgtindx0 = tgtindx, calibr_indx = 0, calibr_num = 0;
 
-   while (datalen > 0) {
+   while (datalen-- > 0) {
       msg.assign(sub->Data(indx++));
 
       cnt++;
       if (fMsgsKind) DefFastFillH1(fMsgsKind, (msg.getKind() >> 29));
       if (!msg.isHit0Msg()) {
          if (msg.isCalibrMsg()) { calibr_indx = tgtindx; calibr_num = 0; }
-         tgt->SetData(tgtindx++, msg.getData());
+         if (tgt) tgt->SetData(tgtindx++, msg.getData());
          continue;
       }
       hitcnt++;
@@ -484,7 +484,6 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
       ChannelRec& rec = fCh[chid];
 
       double corr = isrising ? rec.rising_calibr[fine] : rec.falling_calibr[fine];
-
 
       if (tgt==0) {
          // simple approach - replace data in the source buffer

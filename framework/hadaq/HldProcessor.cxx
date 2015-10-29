@@ -23,7 +23,7 @@ hadaq::HldProcessor::HldProcessor() :
    fEvSize = MakeH1("EvSize", "Event size", 500, 0, 50000, "bytes");
    fSubevSize = MakeH1("SubevSize", "Subevent size", 500, 0, 5000, "bytes");
 
-   printf("Create HldProcessor %s\n", GetName());
+   // printf("Create HldProcessor %s\n", GetName());
 
    // this is raw-scan processor, therefore no synchronization is required for it
    SetSynchronisationKind(sync_None);
