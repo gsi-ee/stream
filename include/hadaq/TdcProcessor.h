@@ -126,6 +126,8 @@ namespace hadaq {
          unsigned                 fNumChannels; //! number of channels
          std::vector<ChannelRec>  fCh; //! histogram for individual channels
 
+         unsigned                 fCalibrTrigger; //! kind of trigger used for calibration, default all
+
          double fCalibrProgress;      //! progress of auto calibration
          std::string fCalibrStatus;   //! calibration status
 
@@ -249,6 +251,9 @@ namespace hadaq {
           * int channels[] = {33, 34, 35, 36, 0};
           * tdc->CreateHistograms( channels ); */
          void CreateHistograms(int *arr = 0);
+
+         /** Set calibration trigger type, default is 0xFFFF - all kinds of triggers */
+         void SetCalibrTrigger(unsigned trig = 0xFFFF) { fCalibrTrigger = trig; }
 
          /** Disable calibration for specified channels */
          void DisableCalibrationFor(unsigned firstch, unsigned lastch = 0);

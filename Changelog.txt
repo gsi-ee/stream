@@ -1,3 +1,8 @@
+3.11.2015
+1. Configurable trigger type used for TDC calibration.
+   Either all trigger types or only specific trigger type is used.
+
+
 29.10.2015
 1. Introduce new message type in for the TDC - calibration.
    It contains two corrected values for fine time for next two hit messages

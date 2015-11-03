@@ -148,7 +148,9 @@ void hadaq::TrbProcessor::CreateTDC(unsigned id1, unsigned id2, unsigned id3, un
          continue;
       }
 
-      new hadaq::TdcProcessor(this, tdcid, gNumChannels, gEdgesMask);
+      hadaq::TdcProcessor *tdc = new hadaq::TdcProcessor(this, tdcid, gNumChannels, gEdgesMask);
+
+      tdc->SetCalibrTrigger(fCalibrTrigger);
    }
 }
 
@@ -202,6 +204,17 @@ bool hadaq::TrbProcessor::LoadCalibrations(const char* fileprefix, double koef)
    }
 
    return res;
+}
+
+void hadaq::TrbProcessor::SetCalibrTrigger(unsigned trig)
+{
+   fCalibrTrigger = trig;
+
+   for (SubProcMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
+      if (!iter->second->IsTDC()) continue;
+      TdcProcessor* tdc = (TdcProcessor*) iter->second;
+      tdc->SetCalibrTrigger(fCalibrTrigger);
+   }
 }
 
 void hadaq::TrbProcessor::AddSub(SubProcessor* tdc, unsigned id)
@@ -349,7 +362,7 @@ void hadaq::TrbProcessor::AddBufferToTDC(hadaqs::RawSubevent* sub,
    if (gIgnoreSync && (sub->Alignment()==4)) {
       // special case - could use data directly without copying
       buf.makereferenceof((char*)sub->RawData() + 4*ix, 4*datalen);
-      buf().kind = 0;
+      buf().kind = sub->GetTrigTypeTrb3();
       buf().boardid = tdcproc->GetID();
       buf().format = sub->IsSwapped() ? 2 : 1; // special format without sync
    } else {
@@ -357,7 +370,7 @@ void hadaq::TrbProcessor::AddBufferToTDC(hadaqs::RawSubevent* sub,
       memset(buf.ptr(), 0xff, 4); // fill dummy sync id in the begin
       sub->CopyDataTo(buf.ptr(4), ix, datalen);
 
-      buf().kind = 0;
+      buf().kind = sub->GetTrigTypeTrb3();
       buf().boardid = tdcproc->GetID();
       buf().format = 0;
    }

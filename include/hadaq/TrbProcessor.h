@@ -62,6 +62,7 @@ namespace hadaq {
 
          unsigned fSyncTrigMask;     ///< mask which should be applied for trigger type
          unsigned fSyncTrigValue;    ///< value from trigger type (after mask) which corresponds to sync message
+         unsigned fCalibrTrigger;    ///< trigger used for calibration
 
          bool fUseTriggerAsSync;     ///< when true, trigger number used as sync message between TRBs
 
@@ -207,6 +208,9 @@ namespace hadaq {
          /** Load TDC calibrations, as argument file prefix (without TDC id) should be specified
           * One also could specify coefficient to scale calibration (koef >= 1) */
          bool LoadCalibrations(const char* fileprefix, double koef = 1.);
+
+         /** Set calibration trigger type for all TDCs */
+         void SetCalibrTrigger(unsigned trig = 0xFFFF);
 
          /** Calibrate hits in subevent */
          unsigned TransformSubEvent(hadaqs::RawSubevent* sub, void* tgtbuf = 0, unsigned tgtlen = 0);

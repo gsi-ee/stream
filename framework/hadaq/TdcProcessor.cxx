@@ -34,6 +34,8 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fIter1(),
    fIter2(),
    fNumChannels(numchannels),
+   fCh(),
+   fCalibrTrigger(0xFFFF),
    fCalibrProgress(0.),
    fCalibrStatus("Init"),
    fStoreVect(),
@@ -457,6 +459,8 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
    int cnt(0), hitcnt(0), errcnt(0);
    unsigned tgtindx0 = tgtindx, calibr_indx = 0, calibr_num = 0;
 
+   bool use_in_calibr = (fCalibrTrigger > 0xFF) || (fCalibrTrigger == sub->GetTrigTypeTrb3());
+
    while (datalen-- > 0) {
       msg.assign(sub->Data(indx++));
 
@@ -515,13 +519,11 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
       }
 
       if (isrising) {
-         rec.rising_stat[fine]++;
-         rec.all_rising_stat++;
          rec.rising_cnt++;
+         if (use_in_calibr) { rec.rising_stat[fine]++; rec.all_rising_stat++; }
       } else {
-         rec.falling_stat[fine]++;
-         rec.all_falling_stat++;
          rec.falling_cnt++;
+         if (use_in_calibr) { rec.rising_stat[fine]++; rec.all_rising_stat++; }
       }
 
       if (HistFillLevel()<1) continue;
@@ -564,6 +566,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    // copy first 4 bytes - it is syncid
    if (buf().format==0)
       memcpy(&syncid, buf.ptr(), 4);
+
+   bool use_for_calibr = (fCalibrTrigger > 0xFF) || (buf().kind == fCalibrTrigger);
 
    unsigned cnt(0), hitcnt(0);
 
@@ -734,7 +738,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             DefFillH2(fAllCoarse, chid, coarse, 1.);
 
             if (isrising) {
-               if (raw_hit) {
+               if (raw_hit && use_for_calibr) {
                   rec.rising_stat[fine]++;
                   rec.all_rising_stat++;
                }
@@ -779,7 +783,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                }
 
             } else {
-               if (raw_hit) {
+               if (raw_hit && use_for_calibr) {
                   rec.falling_stat[fine]++;
                   rec.all_falling_stat++;
                }
