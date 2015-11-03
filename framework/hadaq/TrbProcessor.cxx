@@ -44,6 +44,7 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc) :
    fEvSize = MakeH1("EvSize", "Event size", 500, 0, 50000, "bytes");
    fSubevSize = MakeH1("SubevSize", "Subevent size", 500, 0, 5000, "bytes");
    fLostRate = MakeH1("LostRate", "Relative number of lost packets", 1000, 0, 1., "data lost");
+   fTrigType = MakeH1("TrigType", "Number of different trigger types", 16, 0, 16, "trigger;xbin:0x0,0x1,0x2,0x3,0x4,0x5,0x6,0x7,0x8,0x9,0xA,0xB,0xC,0xD,0xE,0xF");
 
    fHadaqCTSId = 0x8000;
 
@@ -370,6 +371,8 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
    // this is first scan of subevent from TRB3 data
    // our task is statistic over all messages we will found
    // also for trigger-type 1 we should add SYNC message to each processor
+
+   DefFillH1(fTrigType, sub->GetTrigTypeTrb3(), 1.);
 
    DefFillH1(fSubevSize, sub->GetSize(), 1.);
 

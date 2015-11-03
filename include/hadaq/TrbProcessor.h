@@ -50,6 +50,7 @@ namespace hadaq {
          base::H1handle fEvSize;     ///< HADAQ event size
          base::H1handle fSubevSize;  ///< HADAQ subevent size
          base::H1handle fLostRate;   ///< lost rate
+         base::H1handle fTrigType;   ///< trigger type
 
          base::H1handle fMsgPerBrd;  //! messages per board - from TRB
          base::H1handle fErrPerBrd;  //! errors per board - from TRB
@@ -183,7 +184,10 @@ namespace hadaq {
          /** Search TDC in current TRB or in the top HLD */
          TdcProcessor* FindTDC(unsigned tdcid) const;
 
-         static void SetDefaults(unsigned numch=65, unsigned edges=0x1, bool ignore_sync = false);
+         /** Set defaults for the next creation of TDC processors.
+          * One provides number of channels and edges.
+          * Also one can enable usage of sync message - by default sync messages are ignored. */
+         static void SetDefaults(unsigned numch=65, unsigned edges=0x1, bool ignore_sync = true);
 
          /** Create up-to 4 TDCs processors with specified IDs */
          void CreateTDC(unsigned id1, unsigned id2 = 0, unsigned id3 = 0, unsigned id4 = 0);

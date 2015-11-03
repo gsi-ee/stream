@@ -160,7 +160,7 @@ unsigned hadaq::HldProcessor::TransformEvent(void* src, unsigned len, void* tgt,
    while ((sub = iter.nextSubevent()) != 0) {
       TrbProcMap::iterator iter = fMap.find(sub->GetId());
       if (iter != fMap.end()) {
-         if (curr && (tgtlen-reslen < sub->GetSize())) {
+         if (curr && (tgtlen-reslen < sub->GetPaddedSize())) {
             fprintf(stderr,"not enough space for subevent in output buffer\n");
             return 0;
          }
