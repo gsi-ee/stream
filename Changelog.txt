@@ -87,7 +87,7 @@
 4.02.2015
 1. In hadaq::TrbProcessor::CheckAutoCalibration handle each TDC separately.
    Return negative value when some TDCs not yet ready
-2. When calibrating TDC, write value which should be substructed from the coarse
+2. When calibrating TDC, write value which should be subtracted from the coarse
    time stamp - like original fine counter 
 3. Implement different modes for calibration of falling edge. 
    Mode can be specified by edge mask.

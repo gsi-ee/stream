@@ -743,7 +743,13 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          bool raw_hit(true);
 
          if (msg.getKind() == tdckind_Hit1) {
-            corr = fine * 5e-12;
+            if (isrising) {
+               corr = fine * 5e-12;
+            } else {
+               corr = (fine & 0x1FF) * 10e-12;
+               if (fine & 0x200) corr += 0x800 * 5e-9; // complete epoch should be subtracted
+            }
+
             raw_hit = false;
          } else
          if (ncalibr<2) {
