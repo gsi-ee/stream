@@ -35,6 +35,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fIter2(),
    fNumChannels(numchannels),
    fCh(),
+   fCalibrTemp(30.),
    fCalibrTrigger(0xFFFF),
    fCalibrProgress(0.),
    fCalibrStatus("Init"),
@@ -140,6 +141,7 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
       fCh[ch].fFallingMult = MakeH1("FallingMult", "Falling event multiplicity", 128, 0, 128, "nhits");
       fCh[ch].fFallingCalibr = MakeH1("FallingCalibr", "Falling calibration function", FineCounterBins, 0, FineCounterBins, "fine");
       fCh[ch].fTot = MakeH1("Tot", "Time over threshold", gTotRange*100, 0, gTotRange, "ns");
+      fCh[ch].fTot0D = MakeH1("Tot0D", "Time over threshold with 0xD trigger", TotBins, TotLeft, TotRight, "ns");
       // copy calibration only when histogram created
       CopyCalibration(fCh[ch].falling_calibr, fCh[ch].fFallingCalibr, ch, fFallingCalibr);
    }
@@ -317,11 +319,22 @@ void hadaq::TdcProcessor::BeforeFill()
       fCh[ch].rising_last_tm = 0;
       fCh[ch].rising_ref_tm = 0.;
       fCh[ch].rising_new_value = false;
+      fCh[ch].last_tot = 0.;
    }
 }
 
 void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
 {
+   // when doing TOT calibration, use only last TOT value - before one could find other signals
+   if ((fCalibrTrigger == 0xD) && DoFallingEdge())
+      for (unsigned ch=0;ch<NumChannels();ch++) {
+         if (fCh[ch].hascalibr && (fCh[ch].last_tot >= TotLeft) && (fCh[ch].last_tot < TotRight)) {
+            int bin = (int) ((fCh[ch].last_tot - TotLeft) / (TotRight - TotLeft) * TotBins);
+            fCh[ch].tot0d_hist[bin]++;
+            fCh[ch].tot0d_cnt++;
+         }
+      }
+
    // complete logic only when hist level is specified
    if (HistFillLevel()>=4)
    for (unsigned ch=0;ch<NumChannels();ch++) {
@@ -793,8 +806,12 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                DefFastFillH1(rec.fFallingCoarse, coarse);
 
                if (rec.rising_new_value && (rec.rising_last_tm!=0)) {
-                  DefFillH1(rec.fTot, ((localtm - rec.rising_last_tm)*1e9), 1.);
+                  double tot = (localtm - rec.rising_last_tm)*1e9;
+
+                  DefFillH1(rec.fTot, tot - rec.tot_shift, 1.);
                   rec.rising_new_value = false;
+
+                  if (buf().kind == 0xD) rec.last_tot = tot;
                }
             }
 
@@ -924,15 +941,15 @@ void hadaq::TdcProcessor::AppendTrbSync(uint32_t syncid)
    memcpy(fQueue.back().ptr(), &syncid, 4);
 }
 
-void hadaq::TdcProcessor::CalibrateChannel(unsigned nch, long* statistic, float* calibr)
+bool hadaq::TdcProcessor::CalibrateChannel(unsigned nch, long* statistic, float* calibr)
 {
    double sum(0.);
-     for (int n=0;n<FineCounterBins;n++) {
-        sum+=statistic[n];
-        calibr[n] = sum;
-     }
+   for (int n=0;n<FineCounterBins;n++) {
+      sum+=statistic[n];
+      calibr[n] = sum;
+   }
 
-   if (sum<1000) {
+   if (sum<=1000) {
       if (sum>0)
          printf("%s Ch:%u Too few counts %5.0f for calibration of fine counter, use linear\n", GetName(), nch, sum);
    } else {
@@ -945,7 +962,61 @@ void hadaq::TdcProcessor::CalibrateChannel(unsigned nch, long* statistic, float*
       else
          calibr[n] = (calibr[n]-statistic[n]/2) / sum * hadaq::TdcMessage::CoarseUnit();
    }
+
+   return sum > 1000;
 }
+
+bool hadaq::TdcProcessor::CalibrateTot(unsigned nch, long* hist, float& tot_shift, float cut)
+{
+   int left(0), right(TotBins);
+   double sum0(0), sum1(0), sum2(0);
+
+   for (int n=left;n<right;n++) sum0 += hist[n];
+   if (sum0 < 10) {
+      printf("%s Ch:%u TOT failed - not enough statistic\n", GetName(), nch);
+      return false; // no statistic for small number of counts
+   }
+
+   if ((cut>0) && (cut<0.3)) {
+      double suml(0.), sumr(0.);
+
+      while ((left<right-1) && (suml < sum0*cut))
+         suml+=hist[left++];
+
+      while ((right > left+1) && (sumr < sum0*cut))
+         sumr+=hist[--right];
+   }
+
+   sum0 = 0;
+
+   for (int n=left;n<right;n++) {
+      double x = TotLeft + (n + 0.5) / TotBins * (TotRight-TotLeft); // x coordinate of center bin
+
+      sum0 += hist[n];
+      sum1 += hist[n]*x;
+      sum2 += hist[n]*x*x;
+   }
+
+   double mean = sum1/sum0;
+   double rms = sum2/sum0 - mean*mean;
+   if (rms<0) {
+      printf("%s Ch:%u TOT failed - error in RMS calculation\n", GetName(), nch);
+      return false;
+   }
+   rms = sqrt(rms);
+
+   if (rms > 0.1) {
+      printf("%s Ch:%u TOT failed - RMS %5.3f too high\n", GetName(), nch, rms);
+      return false;
+   }
+
+   tot_shift = mean - 30.;
+
+   printf("%s Ch:%u TOT: %6.3f rms: %5.3f\n", GetName(), nch, mean, rms);
+
+   return true;
+}
+
 
 void hadaq::TdcProcessor::CopyCalibration(float* calibr, base::H1handle hcalibr, unsigned ch, base::H2handle h2calibr)
 {
@@ -977,11 +1048,24 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat)
             }
          }
 
+         bool res = false;
+
          if (DoRisingEdge() && (fCh[ch].all_rising_stat>0))
-            CalibrateChannel(ch, fCh[ch].rising_stat, fCh[ch].rising_calibr);
+            res = CalibrateChannel(ch, fCh[ch].rising_stat, fCh[ch].rising_calibr);
 
          if (DoFallingEdge() && (fCh[ch].all_falling_stat>0) && (fEdgeMask == edge_BothIndepend))
-            CalibrateChannel(ch, fCh[ch].falling_stat, fCh[ch].falling_calibr);
+            if (!CalibrateChannel(ch, fCh[ch].falling_stat, fCh[ch].falling_calibr)) res = false;
+
+         if (DoFallingEdge() && (fCh[ch].tot0d_cnt > 100)) {
+            CalibrateTot(ch, fCh[ch].tot0d_hist, fCh[ch].tot_shift, 0.01);
+            // ClearH1(fCh[ch].fTot0D);
+            for (unsigned n=0;n<TotBins;n++) {
+               double x = TotLeft + (n + 0.1) / TotBins * (TotRight-TotLeft);
+               DefFillH1(fCh[ch].fTot0D, x, fCh[ch].tot0d_hist[n]);
+            }
+         }
+
+         fCh[ch].hascalibr = res;
 
          if ((fEdgeMask == edge_CommonStatistic) || (fEdgeMask == edge_ForceRising))
             for (unsigned n=0;n<FineCounterBins;n++)
@@ -994,6 +1078,9 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat)
             }
             fCh[ch].all_falling_stat = 0;
             fCh[ch].all_rising_stat = 0;
+            fCh[ch].tot0d_cnt = 0;
+            for (unsigned n=0;n<TotBins;n++)
+               fCh[ch].tot0d_hist[n] = 0;
          }
       }
       if (DoRisingEdge())
@@ -1020,10 +1107,19 @@ void hadaq::TdcProcessor::StoreCalibration(const std::string& fname)
 
    fwrite(&num, sizeof(num), 1, f);
 
+   // calibration curves
    for (unsigned ch=0;ch<NumChannels();ch++) {
       fwrite(fCh[ch].rising_calibr, sizeof(fCh[ch].rising_calibr), 1, f);
       fwrite(fCh[ch].falling_calibr, sizeof(fCh[ch].falling_calibr), 1, f);
    }
+
+   // tot shifts
+   for (unsigned ch=0;ch<NumChannels();ch++) {
+      fwrite(&(fCh[ch].tot_shift), sizeof(fCh[ch].tot_shift), 1, f);
+   }
+
+   // temprature
+   fwrite(&fCalibrTemp, sizeof(fCalibrTemp), 1, f);
 
    fclose(f);
 
@@ -1049,26 +1145,45 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fname, double koef)
 
    if (num!=NumChannels()) {
       printf("%s mismatch of channels number in calibration file %u and in processor %u\n", GetName(), (unsigned) num, NumChannels());
-   } else {
-      for (unsigned ch=0;ch<NumChannels();ch++) {
-         fread(fCh[ch].rising_calibr, sizeof(fCh[ch].rising_calibr), 1, f);
-         fread(fCh[ch].falling_calibr, sizeof(fCh[ch].falling_calibr), 1, f);
+   }
 
-         if (koef>1)
-            for (unsigned n=0;n<FineCounterBins;n++) {
-               fCh[ch].rising_calibr[n] *= koef;
-               fCh[ch].falling_calibr[n] *= koef;
-               if (fCh[ch].rising_calibr[n] > hadaq::TdcMessage::CoarseUnit())
-                  fCh[ch].rising_calibr[n] = hadaq::TdcMessage::CoarseUnit();
+   for (unsigned ch=0;ch<num;ch++) {
+     fCh[ch].hascalibr = false;
 
-               if (fCh[ch].falling_calibr[n] > hadaq::TdcMessage::CoarseUnit())
-                  fCh[ch].falling_calibr[n] = hadaq::TdcMessage::CoarseUnit();
-            }
+     if (ch>=NumChannels()) {
+        fseek(f, sizeof(fCh[0].rising_calibr) + sizeof(fCh[0].rising_calibr), SEEK_CUR);
+        continue;
+     }
 
-         CopyCalibration(fCh[ch].rising_calibr, fCh[ch].fRisingCalibr, ch, fRisingCalibr);
+     fCh[ch].hascalibr =
+        (fread(fCh[ch].rising_calibr, sizeof(fCh[ch].rising_calibr), 1, f) ==1) &&
+        (fread(fCh[ch].falling_calibr, sizeof(fCh[ch].falling_calibr), 1, f) == 1);
 
-         CopyCalibration(fCh[ch].falling_calibr, fCh[ch].fFallingCalibr, ch, fFallingCalibr);
+     if ((koef!=1.) && fCh[ch].hascalibr)
+        for (unsigned n=0;n<FineCounterBins;n++) {
+           fCh[ch].rising_calibr[n] *= koef;
+           fCh[ch].falling_calibr[n] *= koef;
+           if (fCh[ch].rising_calibr[n] > hadaq::TdcMessage::CoarseUnit())
+              fCh[ch].rising_calibr[n] = hadaq::TdcMessage::CoarseUnit();
+
+           if (fCh[ch].falling_calibr[n] > hadaq::TdcMessage::CoarseUnit())
+              fCh[ch].falling_calibr[n] = hadaq::TdcMessage::CoarseUnit();
+        }
+
+     CopyCalibration(fCh[ch].rising_calibr, fCh[ch].fRisingCalibr, ch, fRisingCalibr);
+
+     CopyCalibration(fCh[ch].falling_calibr, fCh[ch].fFallingCalibr, ch, fFallingCalibr);
+   }
+
+   if (!feof(f)) {
+      for (unsigned ch=0;ch<num;ch++) {
+         if (ch>=NumChannels())
+            fseek(f, sizeof(fCh[0].tot_shift), SEEK_CUR);
+         else
+            fread(&(fCh[ch].tot_shift), sizeof(fCh[ch].tot_shift), 1, f);
       }
+
+      fread(&fCalibrTemp, sizeof(fCalibrTemp), 1, f);
    }
 
    fclose(f);

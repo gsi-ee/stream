@@ -9,7 +9,7 @@
 
 namespace hadaq {
 
-   enum { FineCounterBins = 600 };
+   enum { FineCounterBins = 600, TotBins = 3000, TotLeft = 50, TotRight = 80 };
 
    /** This is specialized sub-processor for FPGA-TDC.
     * Normally it should be used together with TrbProcessor,
@@ -37,6 +37,7 @@ namespace hadaq {
             unsigned doublerefch;          //! double reference channel
             unsigned doublereftdc;         //! tdc of double reference channel
             bool docalibr;                 //! if false, simple calibration will be used
+            bool hascalibr;                //! indicate if channel has valid calibration (not simple linear)
             base::H1handle fRisingFine;    //! histogram of all fine counters
             base::H1handle fRisingCoarse;  //! histogram of all coarse counters
             base::H1handle fRisingMult;    //! number of hits per event
@@ -50,6 +51,7 @@ namespace hadaq {
             base::H1handle fFallingCoarse; //! histogram of all coarse counters
             base::H1handle fFallingMult;   //! number of hits per event
             base::H1handle fTot;           //! histogram of time-over-threshold measurement
+            base::H1handle fTot0D;         //! TOT from 0xD trigger (used for shift calibration)
             base::H1handle fFallingCoarseRef; //! histogram
             base::H1handle fFallingCalibr; //! histogram of channel calibration function
             int rising_cnt;                //! number of rising hits in last event
@@ -66,7 +68,12 @@ namespace hadaq {
             float rising_calibr[FineCounterBins];
             long falling_stat[FineCounterBins];
             float falling_calibr[FineCounterBins];
+            float last_tot;
+            long tot0d_cnt;                 //! counter of tot0d statistic for calibration
+            long tot0d_hist[TotBins];       //! histogram for TOT calibration
+            float tot_shift;
             int rising_cond_prnt;
+
 
             ChannelRec() :
                refch(0xffffff),
@@ -75,6 +82,7 @@ namespace hadaq {
                doublerefch(0xffffff),
                doublereftdc(0xffffff),
                docalibr(true),
+               hascalibr(false),
                fRisingFine(0),
                fRisingCoarse(0),
                fRisingMult(0),
@@ -88,6 +96,7 @@ namespace hadaq {
                fFallingCoarse(0),
                fFallingMult(0),
                fTot(0),
+               fTot0D(0),
                fFallingCoarseRef(0),
                fFallingCalibr(0),
                rising_cnt(0),
@@ -100,11 +109,17 @@ namespace hadaq {
                rising_fine(0),
                all_rising_stat(0),
                all_falling_stat(0),
+               last_tot(0.),
+               tot0d_cnt(0),
+               tot_shift(0.),
                rising_cond_prnt(-1)
             {
                for (unsigned n=0;n<FineCounterBins;n++) {
                   falling_stat[n] = rising_stat[n] = 0;
                   falling_calibr[n] = rising_calibr[n] = hadaq::TdcMessage::SimpleFineCalibr(n);
+               }
+               for (unsigned n=0;n<TotBins;n++) {
+                  tot0d_hist[n] = 0;
                }
             }
          };
@@ -125,6 +140,7 @@ namespace hadaq {
 
          unsigned                 fNumChannels; //! number of channels
          std::vector<ChannelRec>  fCh; //! histogram for individual channels
+         float                    fCalibrTemp;  //! temperature when calibration was performed
 
          unsigned                 fCalibrTrigger; //! kind of trigger used for calibration, default all
 
@@ -187,8 +203,10 @@ namespace hadaq {
          virtual void BeforeFill();
          virtual void AfterFill(SubProcMap* = 0);
 
-         void CalibrateChannel(unsigned nch, long* statistic, float* calibr);
+         bool CalibrateChannel(unsigned nch, long* statistic, float* calibr);
          void CopyCalibration(float* calibr, base::H1handle hcalibr, unsigned ch = 0, base::H2handle h2calibr = 0);
+
+         bool CalibrateTot(unsigned ch, long* hist, float& tot_shift, float cut = 0.);
 
          bool CheckPrintError();
 
