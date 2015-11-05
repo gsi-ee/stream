@@ -327,7 +327,7 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
 {
    // when doing TOT calibration, use only last TOT value - before one could find other signals
    if ((fCalibrTrigger == 0xD) && DoFallingEdge())
-      for (unsigned ch=0;ch<NumChannels();ch++) {
+      for (unsigned ch=1;ch<NumChannels();ch++) {
          if (fCh[ch].hascalibr && (fCh[ch].last_tot >= TotLeft) && (fCh[ch].last_tot < TotRight)) {
             int bin = (int) ((fCh[ch].last_tot - TotLeft) / (TotRight - TotLeft) * TotBins);
             fCh[ch].tot0d_hist[bin]++;
@@ -470,9 +470,11 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
    hadaq::TdcMessage msg, calibr;
 
    int cnt(0), hitcnt(0), errcnt(0);
-   unsigned tgtindx0 = tgtindx, calibr_indx = 0, calibr_num = 0;
+   unsigned tgtindx0(tgtindx), calibr_indx(0), calibr_num(0), epoch(0);
 
    bool use_in_calibr = (fCalibrTrigger > 0xFF) || (fCalibrTrigger == sub->GetTrigTypeTrb3());
+   bool is_0d_trig = sub->GetTrigTypeTrb3() == 0xD;
+   bool do_tot = is_0d_trig && DoFallingEdge();
 
    while (datalen-- > 0) {
       msg.assign(sub->Data(indx++));
@@ -480,6 +482,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
       cnt++;
       if (fMsgsKind) DefFastFillH1(fMsgsKind, (msg.getKind() >> 29));
       if (!msg.isHit0Msg()) {
+         if (msg.isEpochMsg()) { epoch = msg.getEpochValue(); } else
          if (msg.isCalibrMsg()) { calibr_indx = tgtindx; calibr_num = 0; }
          if (tgt) tgt->SetData(tgtindx++, msg.getData());
          continue;
@@ -503,11 +506,35 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
       double corr = isrising ? rec.rising_calibr[fine] : rec.falling_calibr[fine];
 
       if (tgt==0) {
-         // simple approach - replace data in the source buffer
-         // value from 0 to 1000 is 5 ps unit, should be SUB from coarse time value
-         uint32_t new_fine = (uint32_t) (corr/5e-12);
-         if (new_fine>=1000) new_fine = 1000;
-         msg.setAsHit1(new_fine);
+         if (isrising) {
+            // simple approach for rising edge - replace data in the source buffer
+            // value from 0 to 1000 is 5 ps unit, should be SUB from coarse time value
+            uint32_t new_fine = (uint32_t) (corr/5e-12);
+            if (new_fine>=1000) new_fine = 1000;
+            msg.setAsHit1(new_fine);
+         } else {
+            // simple approach for falling edge - replace data in the source buffer
+            // value from 0 to 500 is 10 ps unit, should be SUB from coarse time value
+
+            unsigned corr_coarse = 0;
+            if (rec.tot_shift > 0) {
+               // if tot_shift calibrated (in ns), included it into correction
+               // in such case which should add correction into coarse counter
+               corr += rec.tot_shift*1e-9;
+               corr_coarse = (unsigned) (corr/5e-9);
+               corr -= corr_coarse*5e-9;
+            }
+
+            uint32_t new_fine = (uint32_t) (corr/10e-12);
+            if (new_fine>=500) new_fine = 500;
+
+            if (corr_coarse > coarse)
+               new_fine |= 0x200; // indicate that corrected time belongs to the previous epoch
+
+            msg.setAsHit1(new_fine);
+            if (corr_coarse > 0)
+               msg.setHitTmCoarse(coarse - corr_coarse);
+         }
          sub->SetData(indx-1, msg.getData());
       } else {
          // copy data to the target, introduce extra messages with calibrated
@@ -534,9 +561,17 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
       if (isrising) {
          rec.rising_cnt++;
          if (use_in_calibr) { rec.rising_stat[fine]++; rec.all_rising_stat++; }
+         if (do_tot) {
+            rec.rising_last_tm = ((epoch << 11) | coarse) * 5e-9 - corr;
+            rec.rising_new_value = true;
+         }
       } else {
          rec.falling_cnt++;
          if (use_in_calibr) { rec.rising_stat[fine]++; rec.all_rising_stat++; }
+         if (do_tot && rec.rising_new_value) {
+            rec.last_tot = ((epoch << 11) | coarse) * 5e-9 - corr - rec.rising_last_tm;
+            rec.rising_new_value = false;
+         }
       }
 
       if (HistFillLevel()<1) continue;
@@ -561,6 +596,20 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
    // fill number of "good" hits
    if (fHitsPerBrd) DefFillH1(*fHitsPerBrd, fSeqeunceId, hitcnt);
    if (fErrPerBrd && (errcnt>0)) DefFillH1(*fErrPerBrd, fSeqeunceId, errcnt);
+
+   if (do_tot)
+      for (unsigned ch=1;ch<NumChannels();ch++) {
+         ChannelRec& rec = fCh[ch];
+
+         if (rec.hascalibr && (rec.last_tot >= TotLeft) && (rec.last_tot < TotRight)) {
+            int bin = (int) ((rec.last_tot - TotLeft) / (TotRight - TotLeft) * TotBins);
+            rec.tot0d_hist[bin]++;
+            rec.tot0d_cnt++;
+         }
+
+         rec.last_tot = 0.;
+         rec.rising_new_value = false;
+      }
 
    return tgt ? (tgtindx - tgtindx0) : cnt;
 }

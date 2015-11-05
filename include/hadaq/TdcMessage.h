@@ -74,6 +74,7 @@ namespace hadaq {
 
          /** Returns hit coarse time counter, 11 bit */
          inline uint32_t getHitTmCoarse() const { return fData & 0x7FF; }
+         inline void setHitTmCoarse(uint32_t coarse) { fData = (fData & ~0x7FF) | (coarse & 0x7FF); }
 
          /** Returns hit fine time counter, 10 bit */
          inline uint32_t getHitTmFine() const { return (fData >> 12) & 0x3FF; }

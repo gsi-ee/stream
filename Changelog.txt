@@ -3,6 +3,9 @@
    Activated when 0xD trigger specified as source for calibration data.
    Only affects values in TOT histogram. 
 2. Store calibrated TOT shift in the files.     
+3. Use calibrated TOT shift when set fine-counter value for falling edge hit.
+   It uses 10ps binning, while most significant bit of new fine counter
+   used to check overflow of the coarse-counter  
 
 
 3.11.2015
