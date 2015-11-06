@@ -181,26 +181,27 @@ base::H1handle TFirstStepProcessor::MakeH1(const char* name, const char* title, 
    // For instance, labels for each bin:
    //      xbin:EPOCH,HIT,SYNC,AUX,,,SYS;
 
-   TString newxtitle(xtitle ? xtitle : "");
+   TString newxtitle, newytitle;
    TString xbins;
 
    char kind = 'I';
    Bool_t useexisting = kFALSE;
 
-   TObjArray* arr = newxtitle.Length() > 0 ? newxtitle.Tokenize(";") : 0;
+   TObjArray* arr = (xtitle!=0) && strlen(xtitle)!=0 ? TString(xtitle).Tokenize(";") : 0;
 
    for (int n=0; n <= (arr ? arr->GetLast() : -1); n++) {
       TString part = arr->At(n)->GetName();
       if (part.Index("xbin:")==0) { xbins = part; xbins.Remove(0, 5); } else
       if (part.Index("kind:")==0) { kind = part[5]; } else
       if (part.Index("reuse")==0) { useexisting = kTRUE; } else
-         newxtitle = part;
+      if (newxtitle.Length()>0) newytitle = part;
+                           else newxtitle = part;
    }
    delete arr;
 
    SetMakeWithAutosave(useexisting);
 
-   TH1* histo1 = MakeTH1(kind, name, title, nbins, left, right, newxtitle.Data());
+   TH1* histo1 = MakeTH1(kind, name, title, nbins, left, right, newxtitle.Data(), newytitle.Data());
 
    if (xbins.Length()>0) {
       arr = xbins.Tokenize(",");

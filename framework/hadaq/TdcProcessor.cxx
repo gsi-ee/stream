@@ -71,6 +71,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fAllCoarse = 0;
    fRisingCalibr = 0;
    fFallingCalibr = 0;
+   fTotShifts = 0;
    fHitsRate = 0;
    fRateCnt = 0;
    fLastRateTm = -1;
@@ -90,8 +91,10 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
       if (DoRisingEdge())
          fRisingCalibr  = MakeH2("RisingCalibr",  "rising edge calibration", numchannels, 0, numchannels, FineCounterBins, 0, FineCounterBins, "ch;fine");
 
-      if (DoFallingEdge())
+      if (DoFallingEdge()) {
          fFallingCalibr = MakeH2("FallingCalibr", "falling edge calibration", numchannels, 0, numchannels, FineCounterBins, 0, FineCounterBins, "ch;fine");
+         fTotShifts = MakeH1("TotShifts", "Calibrated time shift for falling edge", numchannels, 0, numchannels, "kind:F;ch;ns");
+      }
    }
 
    for (unsigned ch=0;ch<numchannels;ch++) {
@@ -1089,6 +1092,7 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat)
 
    ClearH2(fRisingCalibr);
    ClearH2(fFallingCalibr);
+   ClearH1(fTotShifts);
 
    for (unsigned ch=0;ch<NumChannels();ch++) {
       if (fCh[ch].docalibr) {
@@ -1143,6 +1147,8 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat)
 
       if (DoFallingEdge())
          CopyCalibration(fCh[ch].falling_calibr, fCh[ch].fFallingCalibr, ch, fFallingCalibr);
+
+      DefFillH1(fTotShifts, ch, fCh[ch].tot_shift);
    }
 
    fCalibrStatus = "Ready";
@@ -1173,8 +1179,8 @@ void hadaq::TdcProcessor::StoreCalibration(const std::string& fname)
       fwrite(&(fCh[ch].tot_shift), sizeof(fCh[ch].tot_shift), 1, f);
    }
 
-   // temprature
-   fwrite(&fCalibrTemp, sizeof(fCalibrTemp), 1, f);
+   // temperature
+   // fwrite(&fCalibrTemp, sizeof(fCalibrTemp), 1, f);
 
    fclose(f);
 
@@ -1197,6 +1203,7 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fname, double koef)
 
    ClearH2(fRisingCalibr);
    ClearH2(fFallingCalibr);
+   ClearH1(fTotShifts);
 
    if (num!=NumChannels()) {
       printf("%s mismatch of channels number in calibration file %u and in processor %u\n", GetName(), (unsigned) num, NumChannels());
@@ -1236,9 +1243,11 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fname, double koef)
             fseek(f, sizeof(fCh[0].tot_shift), SEEK_CUR);
          else
             fread(&(fCh[ch].tot_shift), sizeof(fCh[ch].tot_shift), 1, f);
+
+         DefFillH1(fTotShifts, ch, fCh[ch].tot_shift);
       }
 
-      fread(&fCalibrTemp, sizeof(fCalibrTemp), 1, f);
+      // fread(&fCalibrTemp, sizeof(fCalibrTemp), 1, f);
    }
 
    fclose(f);

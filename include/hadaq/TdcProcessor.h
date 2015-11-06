@@ -137,6 +137,7 @@ namespace hadaq {
          base::H2handle fRisingCalibr;//! histogram with all rising calibrations
          base::H2handle fFallingCalibr; //! histogram all rising calibrations
          base::H1handle fHitsRate;    //! histogram with data rate
+         base::H1handle fTotShifts;  //! histogram with all tot shifts
 
          unsigned                 fNumChannels; //! number of channels
          std::vector<ChannelRec>  fCh; //! histogram for individual channels

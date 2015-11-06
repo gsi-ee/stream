@@ -1,7 +1,10 @@
+6.11.2015
+1. Show TOT shifts in special histograms.  
+
+
 5.11.2015
 1. First attempt to use 0xD trigger for calibration of TOT value.
    Activated when 0xD trigger specified as source for calibration data.
-   Only affects values in TOT histogram. 
 2. Store calibrated TOT shift in the files.     
 3. Use calibrated TOT shift when set fine-counter value for falling edge hit.
    It uses 10ps binning, while most significant bit of new fine counter
