@@ -768,6 +768,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          if (ncalibr<2) {
             // use correction from special message
             corr = calibr.getCalibrFine(ncalibr++)*5e-9/0x3ffe;
+            if (!isrising) corr *= 10.; // range for falling edge is 50 ns.
          } else {
             if (fine >= FineCounterBins) {
                DefFastFillH1(fErrors, chid);
