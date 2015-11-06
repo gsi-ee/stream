@@ -542,8 +542,18 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
       } else {
          // copy data to the target, introduce extra messages with calibrated
 
-         uint32_t new_fine = (uint32_t) (corr/5e-9*0x3ffe);
+         uint32_t new_fine = 0;
+         if (isrising) {
+            // rising edge correction used for 5 ns range, approx 0.305ps binning
+            new_fine = (uint32_t) (corr/5e-9*0x3ffe);
+         } else {
+            // account TOT shift
+            corr += rec.tot_shift*1e-9;
+            // falling edge correction used for 50 ns, approx 3.05ps binning
+            new_fine = (uint32_t) (corr/5e-8*0x3ffe);
+         }
          if (new_fine>0x3ffe) new_fine = 0x3ffe;
+
          if (calibr_indx==0) {
             calibr_indx = tgtindx++;
             calibr_num = 0;
