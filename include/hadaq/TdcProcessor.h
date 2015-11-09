@@ -313,12 +313,12 @@ namespace hadaq {
 
          void SetAutoCalibration(long cnt = 100000) { fAutoCalibration = cnt; }
 
-         bool LoadCalibration(const std::string& fname, double koef = 1.);
+         bool LoadCalibration(const std::string& fprefix, double koef = 1.);
 
          /** When specified, calibration will be written to the file
           * If every_time == true, when every time when automatic calibration performed, otherwise only at the end */
-         void SetWriteCalibration(const std::string& fname, bool every_time = false)
-            { fWriteCalibr = fname; fWriteEveryTime = every_time; }
+         void SetWriteCalibration(const std::string& fprefix, bool every_time = false)
+            { fWriteCalibr = fprefix; fWriteEveryTime = every_time; }
 
          /** When enabled, last hit time in the channel used for reference time calculations
           * By default, first hit time is used

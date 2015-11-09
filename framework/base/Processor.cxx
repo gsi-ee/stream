@@ -26,14 +26,23 @@ base::Processor::Processor(const char* name, unsigned brdid) :
 
    fPrefix = fName;
 
-   fMgr = base::ProcMgr::instance();
+   SetManager(base::ProcMgr::instance());
 
-   if (fMgr) fIntHistFormat = fMgr->InternalHistFormat();
 }
 
 
 base::Processor::~Processor()
 {
+}
+
+void base::Processor::SetManager(base::ProcMgr* m)
+{
+   fMgr = m;
+
+   if (fMgr) {
+      fIntHistFormat = fMgr->InternalHistFormat();
+      fHistFilling = fMgr->fDfltHistLevel;
+   }
 }
 
 void base::Processor::SetSubPrefix(const char* name, int indx, const char* subname2, int indx2)

@@ -1,3 +1,16 @@
+9.11.2015
+1. First steps toward automatic TRB/TDC configuration when processing HLD data.
+2. When autocreate property configured, TRB and TDC created automatically. 
+3. One could configure defualt hist filling level for proc manager - it used for
+   every new created histogram.
+4. Cross-processing configured automatically when reference to other TDC channel
+   is configured          
+5. Central ConfigureCalibration() method setup whole calibration. One provides 
+   file prefix and count for automatic calibration. If count == 0, no calibration done 
+   at all (only load files if exists). If count == -1, calibration will be written at the 
+   end of files processing.
+
+
 6.11.2015
 1. Show TOT shifts in special histograms.  
 2. When store calibrated value for falling edge in calibr message,

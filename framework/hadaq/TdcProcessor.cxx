@@ -197,6 +197,10 @@ void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned re
    } else {
       fCh[ch].reftdc = reftdc & 0xffff;
       fCh[ch].refabs = ((reftdc & 0xf0000) == 0x70000);
+
+      // if other TDC configured as ref channel, enable cross processing
+      if (fTrb) fTrb->SetCrossProcess(true);
+
    }
 
    CreateChannelHistograms(ch);
@@ -762,7 +766,6 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                corr = (fine & 0x1FF) * 10e-12;
                if (fine & 0x200) corr += 0x800 * 5e-9; // complete epoch should be subtracted
             }
-
             raw_hit = false;
          } else
          if (ncalibr<2) {
@@ -781,13 +784,16 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             corr = isrising ? rec.rising_calibr[fine] : rec.falling_calibr[fine];
          }
 
+         // apply correction
          localtm -= corr;
 
          if ((chid==0) && (ch0time==0)) ch0time = localtm;
 
          if (IsTriggeredAnalysis()) {
-            if ((ch0time==0) && CheckPrintError())
-               printf("%5s channel 0 time not found when first HIT in channel %u appears\n", GetName(), chid);
+            if (ch0time==0) {
+               if (CheckPrintError())
+                  printf("%5s channel 0 time not found when first HIT in channel %u appears\n", GetName(), chid);
+            }
 
             localtm -= ch0time;
          }
@@ -811,7 +817,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             }
 
             // ensure that histograms are created
-            if (rec.fRisingFine == 0)
+            if ((HistFillLevel()>2) && (rec.fRisingFine == 0))
                CreateChannelHistograms(chid);
 
             DefFastFillH1(fChannels, chid);
@@ -917,9 +923,10 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
         case tdckind_Header: {
            unsigned errbits = msg.getHeaderErr();
            if (first_scan) fLastTdcHeader = msg;
-           if (errbits && first_scan)
+           if (errbits && first_scan) {
               if (CheckPrintError())
                  printf("%5s found error bits: 0x%x\n", GetName(), errbits);
+           }
 
            break;
         }
@@ -1127,8 +1134,7 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat)
             if (!CalibrateChannel(ch, fCh[ch].falling_stat, fCh[ch].falling_calibr)) res = false;
 
          if (DoFallingEdge() && (fCh[ch].tot0d_cnt > 100)) {
-            CalibrateTot(ch, fCh[ch].tot0d_hist, fCh[ch].tot_shift, 0.01);
-            // ClearH1(fCh[ch].fTot0D);
+            CalibrateTot(ch, fCh[ch].tot0d_hist, fCh[ch].tot_shift, 0.05);
             for (unsigned n=0;n<TotBins;n++) {
                double x = TotLeft + (n + 0.1) / TotBins * (TotRight-TotLeft);
                DefFillH1(fCh[ch].fTot0D, x, fCh[ch].tot0d_hist[n]);
@@ -1165,13 +1171,16 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat)
    fCalibrStatus = "Ready";
 }
 
-void hadaq::TdcProcessor::StoreCalibration(const std::string& fname)
+void hadaq::TdcProcessor::StoreCalibration(const std::string& fprefix)
 {
-   if (fname.empty()) return;
+   if (fprefix.empty()) return;
 
-   FILE* f = fopen(fname.c_str(),"w");
+   char fname[1024];
+   snprintf(fname, sizeof(fname), "%s%04x.cal", fprefix.c_str(), GetID());
+
+   FILE* f = fopen(fname,"w");
    if (f==0) {
-      printf("%s Cannot open file %s for writing calibration\n", GetName(), fname.c_str());
+      printf("%s Cannot open file %s for writing calibration\n", GetName(), fname);
       return;
    }
 
@@ -1195,16 +1204,20 @@ void hadaq::TdcProcessor::StoreCalibration(const std::string& fname)
 
    fclose(f);
 
-   printf("%s storing calibration in %s\n", GetName(), fname.c_str());
+   printf("%s storing calibration in %s\n", GetName(), fname);
 }
 
-bool hadaq::TdcProcessor::LoadCalibration(const std::string& fname, double koef)
+bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix, double koef)
 {
-   if (fname.empty()) return false;
+   if (fprefix.empty()) return false;
 
-   FILE* f = fopen(fname.c_str(),"r");
+   char fname[1024];
+
+   snprintf(fname, sizeof(fname), "%s%04x.cal", fprefix.c_str(), GetID());
+
+   FILE* f = fopen(fname,"r");
    if (f==0) {
-      printf("Cannot open file %s for reading calibration\n", fname.c_str());
+      printf("Cannot open file %s for reading calibration\n", fname);
       return false;
    }
 
@@ -1217,7 +1230,7 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fname, double koef)
    ClearH1(fTotShifts);
 
    if (num!=NumChannels()) {
-      printf("%s mismatch of channels number in calibration file %u and in processor %u\n", GetName(), (unsigned) num, NumChannels());
+      printf("%s in file %s mismatch of channels number in calibrations  %u and in processor %u\n", GetName(), fname, (unsigned) num, NumChannels());
    }
 
    for (unsigned ch=0;ch<num;ch++) {
@@ -1263,7 +1276,7 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fname, double koef)
 
    fclose(f);
 
-   printf("%s reading calibration from %s done\n", GetName(), fname.c_str());
+   printf("%s reading calibration from %s done\n", GetName(), fname);
 
    fCalibrStatus = std::string("File ") + fname;
 

@@ -15,7 +15,8 @@ base::ProcMgr::ProcMgr() :
    fTriggers(10000),                // FIXME: size should be configurable
    fTimeMasterIndex(DummyIndex),
    fAnalysisKind(kind_Stream),
-   fTree(0)
+   fTree(0),
+   fDfltHistLevel(0)
 {
    if (fInstance==0) fInstance = this;
 }
@@ -56,6 +57,13 @@ void base::ProcMgr::DeleteAllProcessors()
    }
 
    fProc.clear();
+}
+
+void base::ProcMgr::SetHistFilling(int lvl)
+{
+   fDfltHistLevel = lvl;
+   for (unsigned n=0;n<fProc.size();n++)
+      fProc[n]->SetHistFilling(lvl);
 }
 
 
@@ -207,21 +215,20 @@ void base::ProcMgr::UserPostLoop()
    CloseStore();
 }
 
-
-base::ProcMgr* base::ProcMgr::AddProc(StreamProc* proc)
+base::ProcMgr* base::ProcMgr::AddProcessor(Processor* proc)
 {
-   if (fInstance==0) return 0;
-   fInstance->fProc.push_back(proc);
-   return fInstance;
+   StreamProc* sproc = dynamic_cast<StreamProc*> (proc);
+   EventProc* eproc = dynamic_cast<EventProc*> (proc);
+   if (proc && (proc->mgr()!=this)) proc->SetManager(this);
+   if (sproc) fProc.push_back(sproc);
+   if (eproc) fEvProc.push_back(eproc);
+   return this;
 }
 
-base::ProcMgr*  base::ProcMgr::AddProc(EventProc* proc)
+base::ProcMgr* base::ProcMgr::AddProc(Processor* proc)
 {
-   if (fInstance==0) return 0;
-   fInstance->fEvProc.push_back(proc);
-   return fInstance;
+   return fInstance==0 ? 0 : fInstance->AddProcessor(proc);
 }
-
 
 bool base::ProcMgr::RegisterProc(StreamProc* proc, unsigned kind, unsigned brdid)
 {

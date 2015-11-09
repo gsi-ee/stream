@@ -18,11 +18,14 @@ namespace base {
     * to any external frameworks like ROOT or Go4 or ...
     * It is singleton - the only instance for whole system  */
 
+   class Processor;
    class StreamProc;
    class EventProc;
    class EventStore;
 
    class ProcMgr {
+
+      friend class Processor;
 
       protected:
 
@@ -42,6 +45,8 @@ namespace base {
          unsigned                 fTimeMasterIndex; //!< processor index, which time is used for all other subsystems
          AnalysisKind             fAnalysisKind;    //!< ignore all events, only single scan, not output events
          TTree                   *fTree;            //!< abstract tree pointer, will be used in ROOT implementation
+         int                      fDfltHistLevel;   //!< default histogram fill level for any new created processor
+
 
          static ProcMgr* fInstance;                 //!
 
@@ -62,9 +67,9 @@ namespace base {
 
          static void ClearInstancePointer();
 
-         static ProcMgr* AddProc(StreamProc* proc);
+         ProcMgr* AddProcessor(Processor* proc);
 
-         static ProcMgr* AddProc(EventProc* proc);
+         static ProcMgr* AddProc(Processor* proc);
 
          /** Enter processor for processing data of specified kind */
          bool RegisterProc(StreamProc* proc, unsigned kind, unsigned brdid);
@@ -72,6 +77,8 @@ namespace base {
          unsigned NumProc() const { return fProc.size(); }
          StreamProc* GetProc(unsigned n) const { return n<NumProc() ? fProc[n] : 0; }
          StreamProc* FindProc(const char* name) const;
+
+         void SetHistFilling(int lvl);
 
          /** When returns true, indicates that simple histogram format is used */
          virtual bool InternalHistFormat() const { return true; }

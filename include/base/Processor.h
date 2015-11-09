@@ -56,6 +56,11 @@ namespace base {
    class Processor {
       friend class ProcMgr;
 
+      private:
+
+         void SetManager(base::ProcMgr* m);
+
+
       protected:
 
          enum { DummyBrdId = 0xffffffff };

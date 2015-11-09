@@ -32,8 +32,10 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc) :
 {
    if (hldproc==0)
       mgr()->RegisterProc(this, base::proc_TRBEvent, brdid & 0xFF);
-   else
+   else {
       hldproc->AddTrb(this, brdid);
+      if ((mgr()==0) && (hldproc->mgr()!=0)) hldproc->mgr()->AddProcessor(this);
+   }
 
    // printf("Create TrbProcessor %s\n", GetName());
 
@@ -60,7 +62,9 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc) :
 
    fPrintRawData = false;
    fCrossProcess = false;
-   fPrintErrCnt = 1000;
+   fPrintErrCnt = 30;
+
+   fAutoCreate = false;
 
    pMsg = &fMsg;
 
@@ -175,35 +179,36 @@ void hadaq::TrbProcessor::DisableCalibrationFor(unsigned firstch, unsigned lastc
 
 void hadaq::TrbProcessor::SetWriteCalibrations(const char* fileprefix, bool every_time)
 {
-   char fname[1024];
-
    for (SubProcMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
       if (!iter->second->IsTDC()) continue;
       TdcProcessor* tdc = (TdcProcessor*) iter->second;
 
-      snprintf(fname, sizeof(fname), "%s%04x.cal", fileprefix, tdc->GetID());
-
-      tdc->SetWriteCalibration(fname, every_time);
+      tdc->SetWriteCalibration(fileprefix, every_time);
    }
 }
 
 
 bool hadaq::TrbProcessor::LoadCalibrations(const char* fileprefix, double koef)
 {
-   char fname[1024];
-
    bool res = true;
 
    for (SubProcMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
       if (!iter->second->IsTDC()) continue;
       TdcProcessor* tdc = (TdcProcessor*) iter->second;
-
-      snprintf(fname, sizeof(fname), "%s%04x.cal", fileprefix, tdc->GetID());
-
-      if (!tdc->LoadCalibration(fname, koef)) res = false;
+      if (!tdc->LoadCalibration(fileprefix, koef)) res = false;
    }
 
    return res;
+}
+
+void hadaq::TrbProcessor::ConfigureCalibration(const std::string& name, long period)
+{
+   if (period > 0) SetAutoCalibrations(period);
+
+   if (name.length() > 0) {
+      LoadCalibrations(name.c_str());
+      if (period == -1) SetWriteCalibrations(name.c_str());
+   }
 }
 
 void hadaq::TrbProcessor::SetCalibrTrigger(unsigned trig)
@@ -346,6 +351,15 @@ void hadaq::TrbProcessor::AfterEventScan()
    }
 }
 
+
+void hadaq::TrbProcessor::SetCrossProcess(bool on)
+{
+   fCrossProcess = on;
+   for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
+      iter->second->fCrossProcess = on;
+}
+
+
 void hadaq::TrbProcessor::CreateBranch(TTree* t)
 {
    if(mgr()->IsTriggeredAnalysis()) {
@@ -407,6 +421,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
       uint32_t data = sub->Data(ix++);
 
       unsigned datalen = (data >> 16) & 0xFFFF;
+      unsigned dataid = data & 0xFFFF;
 
 //      RAWPRINT("Subevent id 0x%04x len %u\n", (data & 0xFFFF), datalen);
 
@@ -419,7 +434,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
 //         continue;
 //      }
 
-      if (std::find(fHadaqHUBId.begin(), fHadaqHUBId.end(), data & 0xFFFF) != fHadaqHUBId.end()) {
+      if (std::find(fHadaqHUBId.begin(), fHadaqHUBId.end(), dataid) != fHadaqHUBId.end()) {
          RAWPRINT ("   HUB header: 0x%08x, hub=%u, size=%u (ignore)\n", (unsigned) data, (unsigned) data & 0xFF, datalen);
 
          // ix+=datalen;  // WORKAROUND !!!
@@ -430,7 +445,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
       }
 
       //! ==================== CTS header and inside ================
-      if ((data & 0xFFFF) == fHadaqCTSId) {
+      if (dataid == fHadaqCTSId) {
          RAWPRINT("   CTS header: 0x%x, size=%d\n", (unsigned) data, datalen);
          //hTrbTriggerCount->Fill(5);          //! TRB - CTS
          //hTrbTriggerCount->Fill(0);          //! TRB TOTAL
@@ -505,12 +520,10 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
          continue;
       }
 
-      TdcProcessor* tdcproc = GetTDC(data & 0xFFFF);
+      TdcProcessor* tdcproc = GetTDC(dataid);
       //! ================= FPGA TDC header ========================
       if (tdcproc != 0) {
-         unsigned tdcid = data & 0xFFFF;
-
-         RAWPRINT ("   FPGA-TDC header: 0x%08x, tdcid=0x%04x, size=%u\n", (unsigned) data, tdcid, datalen);
+         RAWPRINT("   FPGA-TDC header: 0x%08x, tdcid=0x%04x, size=%u\n", (unsigned) data, dataid, datalen);
 
          if (IsPrintRawData()) {
             TdcIterator iter;
@@ -527,7 +540,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
 
 
       //! ==================  Dummy header and inside ==========================
-      if ((data & 0xFFFF) == 0x5555) {
+      if (dataid == 0x5555) {
          RAWPRINT("   Dummy header: 0x%x, size=%d\n", (unsigned) data, datalen);
          //hTrbTriggerCount->Fill(4);          //! TRB - DUMMY
          //hTrbTriggerCount->Fill(0);          //! TRB TOTAL
@@ -542,14 +555,12 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
          continue;
       }
 
-      SubProcMap::const_iterator iter = fMap.find(data & 0xFFFF);
+      SubProcMap::const_iterator iter = fMap.find(dataid);
       SubProcessor* subproc = iter != fMap.end() ? iter->second : 0;
 
       //! ================= any other header ========================
       if (subproc!=0) {
-         unsigned subid = data & 0xFFFF;
-
-         RAWPRINT ("   SUB header: 0x%08x, id=0x%04x, size=%u\n", (unsigned) data, subid, datalen);
+         RAWPRINT ("   SUB header: 0x%08x, id=0x%04x, size=%u\n", (unsigned) data, dataid, datalen);
 
          if(datalen==0)
             continue;
@@ -558,7 +569,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
 
          // check if this processor has some attached TDC
          size_t offset = 0;
-         SubProcMap::const_iterator iter_tdc = fMap.find(subid + 0xff0000);
+         SubProcMap::const_iterator iter_tdc = fMap.find(dataid | 0xff0000);
          if(iter_tdc != fMap.end()) {
             // pre-scan for begin marker of non-TDC data
             for(size_t i=0;i<datalen;i++) {
@@ -581,7 +592,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
          sub->CopyDataTo(buf.ptr(0), ix, datalen);
 
          buf().kind = 0;
-         buf().boardid = subid;
+         buf().boardid = dataid;
          buf().format = 0;
 
          subproc->AddNextBuffer(buf);
@@ -592,21 +603,39 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
          continue; // go to next block
       }  // end of if SUB header
 
+      if (fAutoCreate) {
+         if (((dataid & 0xF000) == 0xC000) || ((dataid & 0xF000) == 0x0000)) {
+            // suppose this is TDC data, first word should be TDC header
+            TdcMessage msg(sub->Data(ix));
+
+            if (msg.isHeaderMsg()) {
+               unsigned numch = gNumChannels, edges = gEdgesMask;
+               // here should be channel/edge/min/max selection based on TDC design ID
+
+               TdcProcessor* tdcproc = new TdcProcessor(this, dataid, numch, edges);
+               tdcproc->SetCalibrTrigger(fCalibrTrigger);
+
+               printf("Create TDC 0x%04x nch:%u edges:%u  lvl:%d mgr:%p\n", dataid, numch, edges, tdcproc->HistFillLevel(), tdcproc->mgr());
+
+/*               if (fHldProc) {
+                  if (fHldProc->fCalibrPeriod > 0) tdcproc->SetAutoCalibration(fHldProc->fCalibrPeriod);
+                  if (fHldProc->fCalibrName.length() > 0) {
+                     tdcproc->LoadCalibration(fHldProc->fCalibrName);
+                     if (fHldProc->fCalibrPeriod==-1) tdcproc->SetWriteCalibration(fHldProc->fCalibrName);
+                  }
+               }
+*/
+               // in auto-create mode buffers are not processed - normally it is only first event
+               // AddBufferToTDC(sub, tdcproc, ix, datalen);
+               ix+=datalen;
+               continue; // go to next block
+            } else {
+               if (CheckPrintError()) printf("sub-sub-event data with id 0x%04x does not belong to TDC\n", dataid);
+            }
+         }
+      }
 
 
-//      if ((data & 0xFFFF) == 0x8001) {
-//         // no idea that this, but appeared in beam-time data with different sizes
-//         ix+=datalen;
-//         continue;
-//      }
-//
-//      if ((data & 0xFFFF) == 0x8002) {
-//         // no idea that this, but appeared in beam-time data with size 0
-//         if (datalen!=0) printf("Strange length %u, expected 0 with 8002 subtype\n", datalen);
-//         ix+=datalen;
-//         continue;
-//      }
-//
       RAWPRINT("Unknown header 0x%04x length %u in TRB 0x%04x subevent\n", data & 0xFFFF, datalen, GetID());
       ix+=datalen;
    }

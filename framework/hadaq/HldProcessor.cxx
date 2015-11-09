@@ -11,11 +11,14 @@
 
 #define RAWPRINT( args ...) if(IsPrintRawData()) printf( args )
 
-hadaq::HldProcessor::HldProcessor() :
+hadaq::HldProcessor::HldProcessor(bool auto_create) :
    base::StreamProc("HLD", 0, false),
    fMap(),
    fEventTypeSelect(0xfffff),
-   fPrintRawData(false)
+   fPrintRawData(false),
+   fAutoCreate(auto_create),
+   fCalibrName(),
+   fCalibrPeriod(-111)
 {
    mgr()->RegisterProc(this, base::proc_TRBEvent, 0);
 
@@ -59,6 +62,15 @@ double hadaq::HldProcessor::CheckAutoCalibration()
    }
    return lvl;
 }
+
+void hadaq::HldProcessor::ConfigureCalibration(const std::string& name, long period)
+{
+   fCalibrName = name;
+   fCalibrPeriod = period;
+   for (TrbProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
+      iter->second->ConfigureCalibration(name, period);
+}
+
 
 void hadaq::HldProcessor::SetTriggerWindow(double left, double right)
 {
@@ -125,6 +137,23 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
 
          if (iter != fMap.end())
             iter->second->ScanSubEvent(sub, ev->GetSeqNr());
+         else
+         if (fAutoCreate) {
+            TrbProcessor* trb = new TrbProcessor(sub->GetId(), this);
+            trb->SetAutoCreate(true);
+            trb->SetHadaqCTSId(sub->GetId());
+            for (unsigned id = 0x8100; id < 0x8110; id++)
+               trb->AddHadaqHUBId(id);
+
+            printf("Create TRB 0x%04x procmgr %p lvl %d \n", sub->GetId(), base::ProcMgr::instance(), trb->HistFillLevel());
+
+            // in auto mode only TDC processors should be created
+            trb->ScanSubEvent(sub, ev->GetSeqNr());
+
+            trb->ConfigureCalibration(fCalibrName, fCalibrPeriod);
+
+            trb->SetAutoCreate(false); // do not create TDCs after first event
+         }
       }
 
       for (TrbProcMap::iterator diter = fMap.begin(); diter != fMap.end(); diter++)

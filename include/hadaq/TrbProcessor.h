@@ -17,7 +17,6 @@ namespace hadaq {
 
    // used for ROOT tree storage, similar to TdcMessage and AdcMessage
    struct TrbMessage {
-
       bool fTrigSyncIdFound;
       unsigned fTrigSyncId;
       unsigned fTrigSyncIdStatus;
@@ -68,13 +67,22 @@ namespace hadaq {
 
          bool fCompensateEpochReset;  ///< when true, artificially create contiguous epoch value
 
+         bool fAutoCreate;            ///< when true, automatically crates TDC processors
+
+         TrbMessage  fMsg;            ///< used for TTree store
+         TrbMessage* pMsg;            ///< used for TTree store
+
          static unsigned gNumChannels;     ///< default number of channels
          static unsigned gEdgesMask;       ///< default edges mask
          static bool gIgnoreSync;          ///< ignore sync in analysis, very rare used for sync with other data sources
 
+
+
          /** Returns true when processor used to select trigger signal
           * TRB3 not yet able to perform trigger selection */
          virtual bool doTriggerSelection() const { return false; }
+
+         void SetAutoCreate(bool on = true) { fAutoCreate = on; }
 
          void AccountTriggerId(unsigned id);
 
@@ -89,8 +97,6 @@ namespace hadaq {
          void AfterEventScan();
 
          virtual void CreateBranch(TTree* t);
-         TrbMessage  fMsg;
-         TrbMessage* pMsg;
 
       public:
 
@@ -128,7 +134,7 @@ namespace hadaq {
          void SetPrintErrors(int cnt = 100) { fPrintErrCnt = cnt; }
          bool CheckPrintError();
 
-         void SetCrossProcess(bool on = true) { fCrossProcess = on; }
+         void SetCrossProcess(bool on = true);
          bool IsCrossProcess() const { return fCrossProcess; }
 
          /** Enable/disable ch0 store in output event for all TDC processors */
@@ -208,6 +214,9 @@ namespace hadaq {
          /** Load TDC calibrations, as argument file prefix (without TDC id) should be specified
           * One also could specify coefficient to scale calibration (koef >= 1) */
          bool LoadCalibrations(const char* fileprefix, double koef = 1.);
+
+         /** Central method to configure way how calibrations will be performed */
+         void ConfigureCalibration(const std::string& name, long period);
 
          /** Set calibration trigger type for all TDCs */
          void SetCalibrTrigger(unsigned trig = 0xFFFF);

@@ -10,6 +10,8 @@ hadaq::SubProcessor::SubProcessor(TrbProcessor* trb, const char* nameprefix, uns
    fNewDataFlag(false)
 {
    if (trb) {
+      if ((mgr()==0) && (trb->mgr()!=0)) trb->mgr()->AddProcessor(this);
+
       trb->AddSub(this, subid);
       fPrintRawData = trb->IsPrintRawData();
       fCrossProcess = trb->IsCrossProcess();
