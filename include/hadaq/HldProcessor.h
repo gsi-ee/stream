@@ -55,6 +55,9 @@ namespace hadaq {
          /** Search for specified TDC in all subprocessors */
          TdcProcessor* FindTDC(unsigned tdcid) const;
 
+         unsigned NumberOfTDC() const;
+         TdcProcessor* GetTDC(unsigned indx) const;
+
          /** Configure calibration for all components
           *  \par name  file prefix for calibrations. Could include path. Will be extend for individual TDC
           *  \par period how often automatic calibration will be performed. 0 - never, -1 - at the end of run */
@@ -83,8 +86,8 @@ namespace hadaq {
          /** Function to transform HLD event, used for TDC calibrations */
          unsigned TransformEvent(void* src, unsigned len, void* tgt = 0, unsigned tgtlen = 0);
 
+         virtual void UserPreLoop();
 
-         static void Test(void*) { printf("Test call\n"); }
    };
 }
 

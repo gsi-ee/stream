@@ -54,6 +54,25 @@ hadaq::TdcProcessor* hadaq::HldProcessor::FindTDC(unsigned tdcid) const
    return 0;
 }
 
+unsigned hadaq::HldProcessor::NumberOfTDC() const
+{
+   unsigned num = 0;
+   for (TrbProcMap::const_iterator iter = fMap.begin(); iter != fMap.end(); iter++)
+      num += iter->second->NumberOfTDC();
+   return num;
+}
+
+hadaq::TdcProcessor* hadaq::HldProcessor::GetTDC(unsigned indx) const
+{
+   for (TrbProcMap::const_iterator iter = fMap.begin(); iter != fMap.end(); iter++) {
+      unsigned num = iter->second->NumberOfTDC();
+      if (indx < num) return iter->second->GetTDCWithIndex(indx);
+      indx -= num;
+   }
+
+   return 0;
+}
+
 double hadaq::HldProcessor::CheckAutoCalibration()
 {
    double lvl = 1.;
@@ -225,6 +244,12 @@ unsigned hadaq::HldProcessor::TransformEvent(void* src, unsigned len, void* tgt,
    }
 
    return reslen;
+}
+
+void hadaq::HldProcessor::UserPreLoop()
+{
+   if (!fAutoCreate && (fAfterFunc.length()>0))
+      mgr()->CallFunc(fAfterFunc.c_str(), this);
 }
 
 

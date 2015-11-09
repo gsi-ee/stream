@@ -186,6 +186,25 @@ namespace hadaq {
             return ((iter != fMap.end()) && iter->second->IsTDC()) ? (TdcProcessor*) iter->second : 0;
          }
 
+         unsigned NumberOfTDC() const
+         {
+            unsigned num = 0;
+            for (SubProcMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
+               if (iter->second->IsTDC()) num++;
+            }
+            return num;
+         }
+
+         TdcProcessor* GetTDCWithIndex(unsigned indx) const
+         {
+            for (SubProcMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
+               if (!iter->second->IsTDC()) continue;
+               if (indx == 0) return (TdcProcessor*) iter->second;
+               indx--;
+            }
+            return 0;
+         }
+
          void AddBufferToTDC(
                hadaqs::RawSubevent* sub,
                hadaq::SubProcessor* tdcproc,
