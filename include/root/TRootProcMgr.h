@@ -22,6 +22,7 @@ class TRootProcMgr : public base::ProcMgr {
       virtual bool CreateBranch(TTree* t, const char* name, const char* class_name, void** obj);
       virtual bool CreateBranch(TTree* t, const char* name, void* member, const char* kind);
 
+      bool CallFunc(const char* funcname, void* arg);
 };
 
 #endif

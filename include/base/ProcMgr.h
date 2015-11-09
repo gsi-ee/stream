@@ -109,6 +109,10 @@ namespace base {
          // if returns true, object is registered and will be owned by framework
          virtual bool RegisterObject(TObject* tobj, const char* subfolder = 0) { return false; }
 
+
+         // method to call function by name
+         virtual bool CallFunc(const char* funcname, void* arg) { return false; }
+
          // this is list of generic methods for common data processing
 
          bool IsRawAnalysis() const { return fAnalysisKind == kind_RawOnly; }

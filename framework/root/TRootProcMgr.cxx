@@ -2,8 +2,8 @@
 
 #include "TTree.h"
 #include "TFile.h"
-
-
+#include "TROOT.h"
+#include "TInterpreter.h"
 
 TRootProcMgr::TRootProcMgr() :
    base::ProcMgr(),
@@ -61,6 +61,21 @@ bool TRootProcMgr::CreateBranch(TTree* t, const char* name, void* member, const 
    if (t==0) return false;
    t->Branch(name, member, kind);
    return true;
+}
+
+bool TRootProcMgr::CallFunc(const char* funcname, void* arg)
+{
+   if (funcname==0) return false;
+
+   TString callargs;
+   callargs.Form("%p", arg);
+
+   int err = 0;
+   gInterpreter->Execute(funcname, callargs.Data(), &err);
+
+   printf("CINT: call %s(%s) err = %d\n", funcname,callargs.Data(), err);
+
+   return err == 0;
 }
 
 

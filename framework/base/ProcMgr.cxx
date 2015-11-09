@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <dlfcn.h>
 
 #include "base/StreamProc.h"
 #include "base/EventProc.h"
@@ -601,3 +602,4 @@ bool base::ProcMgr::ProcessEvent(base::Event* evt)
 
    return true;
 }
+
