@@ -54,6 +54,26 @@ hadaq::TdcProcessor* hadaq::HldProcessor::FindTDC(unsigned tdcid) const
    return 0;
 }
 
+hadaq::TrbProcessor* hadaq::HldProcessor::FindTRB(unsigned trbid) const
+{
+   TrbProcMap::const_iterator iter = fMap.find(trbid);
+   return iter == fMap.end() ? 0 : iter->second;
+}
+
+unsigned hadaq::HldProcessor::NumberOfTRB() const
+{
+   return fMap.size();
+}
+
+hadaq::TrbProcessor* hadaq::HldProcessor::GetTRB(unsigned indx) const
+{
+   for (TrbProcMap::const_iterator iter = fMap.begin(); iter != fMap.end(); iter++) {
+      if (indx==0) return iter->second;
+      indx--;
+   }
+   return 0;
+}
+
 unsigned hadaq::HldProcessor::NumberOfTDC() const
 {
    unsigned num = 0;

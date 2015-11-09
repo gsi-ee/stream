@@ -13,7 +13,7 @@
    ROOT CINT or compiled function when running with DABC
 7. Call function after components were created in HLD processor   
 8. Let configure default TDC and HUB ranges, used when auto-create option is on
-9. Add enumeration of TDC processors from HldProcessor. Simplify configuration scripts.
+9. Add enumeration of TRB and TDC processors from HldProcessor. Simplify configuration scripts.
  
 
 6.11.2015

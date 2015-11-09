@@ -55,8 +55,13 @@ namespace hadaq {
          /** Search for specified TDC in all subprocessors */
          TdcProcessor* FindTDC(unsigned tdcid) const;
 
+         TrbProcessor* FindTRB(unsigned trbid) const;
+
          unsigned NumberOfTDC() const;
          TdcProcessor* GetTDC(unsigned indx) const;
+
+         unsigned NumberOfTRB() const;
+         TrbProcessor* GetTRB(unsigned indx) const;
 
          /** Configure calibration for all components
           *  \par name  file prefix for calibrations. Could include path. Will be extend for individual TDC
