@@ -9,6 +9,9 @@
    file prefix and count for automatic calibration. If count == 0, no calibration done 
    at all (only load files if exists). If count == -1, calibration will be written at the 
    end of files processing.
+6. Allow to call function from ProcMgr - it could be interpreted function from
+   ROOT CINT or compiled function when running with DABC
+7. Call function after components were created in HLD processor   
 
 
 6.11.2015

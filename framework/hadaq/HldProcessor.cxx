@@ -11,12 +11,13 @@
 
 #define RAWPRINT( args ...) if(IsPrintRawData()) printf( args )
 
-hadaq::HldProcessor::HldProcessor(bool auto_create) :
+hadaq::HldProcessor::HldProcessor(bool auto_create, const char* after_func) :
    base::StreamProc("HLD", 0, false),
    fMap(),
    fEventTypeSelect(0xfffff),
    fPrintRawData(false),
    fAutoCreate(auto_create),
+   fAfterFunc(after_func),
    fCalibrName(),
    fCalibrPeriod(-111)
 {
@@ -158,6 +159,12 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
 
       for (TrbProcMap::iterator diter = fMap.begin(); diter != fMap.end(); diter++)
          diter->second->AfterEventScan();
+
+      if (fAutoCreate) {
+         fAutoCreate = false; // with first event
+         if (fAfterFunc.length()>0) mgr()->CallFunc(fAfterFunc.c_str(), this);
+      }
+
    }
 
    return true;

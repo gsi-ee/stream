@@ -15,6 +15,7 @@ namespace hadaq {
 
    typedef std::map<unsigned,TrbProcessor*> TrbProcMap;
 
+   typedef void* AfterCreateFunc(void*);
 
    class HldProcessor : public base::StreamProc {
 
@@ -29,6 +30,7 @@ namespace hadaq {
          bool fPrintRawData;         ///< true when raw data should be printed
 
          bool fAutoCreate;           ///< when true, TRB/TDC processors will be created automatically
+         std::string fAfterFunc; ///< function called after new elements are created
 
          std::string fCalibrName;    ///< name of calibration for (auto)created components
          long fCalibrPeriod;         ///< how often calibration should be performed
@@ -47,7 +49,7 @@ namespace hadaq {
 
       public:
 
-         HldProcessor(bool auto_create = false);
+         HldProcessor(bool auto_create = false, const char* after_func = 0);
          virtual ~HldProcessor();
 
          /** Search for specified TDC in all subprocessors */
@@ -80,6 +82,9 @@ namespace hadaq {
 
          /** Function to transform HLD event, used for TDC calibrations */
          unsigned TransformEvent(void* src, unsigned len, void* tgt = 0, unsigned tgtlen = 0);
+
+
+         static void Test(void*) { printf("Test call\n"); }
    };
 }
 
