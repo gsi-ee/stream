@@ -76,7 +76,11 @@ namespace hadaq {
          static unsigned gEdgesMask;       ///< default edges mask
          static bool gIgnoreSync;          ///< ignore sync in analysis, very rare used for sync with other data sources
 
+         static unsigned gTDCMin;          ///< min TDC id when doing autoscan
+         static unsigned gTDCMax;          ///< max TDC id when doing autoscan
 
+         static unsigned gHUBMin;          ///< min HUB id when doing autoscan
+         static unsigned gHUBMax;          ///< max HUB id when doing autoscan
 
          /** Returns true when processor used to select trigger signal
           * TRB3 not yet able to perform trigger selection */
@@ -195,6 +199,18 @@ namespace hadaq {
           * One provides number of channels and edges.
           * Also one can enable usage of sync message - by default sync messages are ignored. */
          static void SetDefaults(unsigned numch=65, unsigned edges=0x1, bool ignore_sync = true);
+
+         static void SetTDCRange(unsigned min, unsigned max)
+         {
+            gTDCMin = min;
+            gTDCMax = max;
+         }
+
+         static void SetHUBRange(unsigned min, unsigned max)
+         {
+            gHUBMin = min;
+            gHUBMax = max;
+         }
 
          /** Create up-to 4 TDCs processors with specified IDs */
          void CreateTDC(unsigned id1, unsigned id2 = 0, unsigned id3 = 0, unsigned id4 = 0);

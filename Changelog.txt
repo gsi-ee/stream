@@ -12,7 +12,8 @@
 6. Allow to call function from ProcMgr - it could be interpreted function from
    ROOT CINT or compiled function when running with DABC
 7. Call function after components were created in HLD processor   
-
+8. Let configure default TDC and HUB ranges, used when auto-create option is on
+ 
 
 6.11.2015
 1. Show TOT shifts in special histograms.  

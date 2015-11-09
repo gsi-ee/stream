@@ -143,8 +143,6 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
             TrbProcessor* trb = new TrbProcessor(sub->GetId(), this);
             trb->SetAutoCreate(true);
             trb->SetHadaqCTSId(sub->GetId());
-            for (unsigned id = 0x8100; id < 0x8110; id++)
-               trb->AddHadaqHUBId(id);
 
             printf("Create TRB 0x%04x procmgr %p lvl %d \n", sub->GetId(), base::ProcMgr::instance(), trb->HistFillLevel());
 

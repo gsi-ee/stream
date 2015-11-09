@@ -15,6 +15,10 @@
 unsigned hadaq::TrbProcessor::gNumChannels = 65;
 unsigned hadaq::TrbProcessor::gEdgesMask = 0x1;
 bool hadaq::TrbProcessor::gIgnoreSync = false;
+unsigned hadaq::TrbProcessor::gTDCMin = 0x0000;
+unsigned hadaq::TrbProcessor::gTDCMax = 0x0FFF;
+unsigned hadaq::TrbProcessor::gHUBMin = 0x8100;
+unsigned hadaq::TrbProcessor::gHUBMax = 0x81FF;
 
 void hadaq::TrbProcessor::SetDefaults(unsigned numch, unsigned edges, bool ignore_sync)
 {
@@ -604,7 +608,15 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
       }  // end of if SUB header
 
       if (fAutoCreate) {
-         if (((dataid & 0xF000) == 0xC000) || ((dataid & 0xF000) == 0x0000)) {
+         if ((dataid >= gHUBMin) && (dataid <= gHUBMax)) {
+            // suppose this is HUB
+            AddHadaqHUBId(dataid);
+            printf("%s: Assign HUB 0x%04x\n", GetName(), dataid);
+
+            // continue processing
+            continue;
+         } else
+         if ((dataid >= gTDCMin) && (dataid <= gTDCMax)) {
             // suppose this is TDC data, first word should be TDC header
             TdcMessage msg(sub->Data(ix));
 
@@ -615,16 +627,8 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
                TdcProcessor* tdcproc = new TdcProcessor(this, dataid, numch, edges);
                tdcproc->SetCalibrTrigger(fCalibrTrigger);
 
-               printf("Create TDC 0x%04x nch:%u edges:%u  lvl:%d mgr:%p\n", dataid, numch, edges, tdcproc->HistFillLevel(), tdcproc->mgr());
+               printf("%s: Create TDC 0x%04x nch:%u edges:%u\n", GetName(), dataid, numch, edges);
 
-/*               if (fHldProc) {
-                  if (fHldProc->fCalibrPeriod > 0) tdcproc->SetAutoCalibration(fHldProc->fCalibrPeriod);
-                  if (fHldProc->fCalibrName.length() > 0) {
-                     tdcproc->LoadCalibration(fHldProc->fCalibrName);
-                     if (fHldProc->fCalibrPeriod==-1) tdcproc->SetWriteCalibration(fHldProc->fCalibrName);
-                  }
-               }
-*/
                // in auto-create mode buffers are not processed - normally it is only first event
                // AddBufferToTDC(sub, tdcproc, ix, datalen);
                ix+=datalen;
