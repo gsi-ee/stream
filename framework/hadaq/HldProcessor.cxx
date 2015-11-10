@@ -120,12 +120,12 @@ void hadaq::HldProcessor::SetTriggerWindow(double left, double right)
       iter->second->SetTriggerWindow(left, right);
 }
 
-void hadaq::HldProcessor::SetStoreEnabled(bool on)
+void hadaq::HldProcessor::SetStoreKind(unsigned kind)
 {
-   base::StreamProc::SetStoreEnabled(on);
+   base::StreamProc::SetStoreKind(kind);
 
    for (TrbProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
-      iter->second->SetStoreEnabled(on);
+      iter->second->SetStoreKind(kind);
 }
 
 
@@ -182,6 +182,7 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
             TrbProcessor* trb = new TrbProcessor(sub->GetId(), this);
             trb->SetAutoCreate(true);
             trb->SetHadaqCTSId(sub->GetId());
+            trb->SetStoreKind(GetStoreKind());
 
             mgr()->UserPreLoop(trb); // while loop already running, call it once again for new processor
 
@@ -189,8 +190,6 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
 
             // in auto mode only TDC processors should be created
             trb->ScanSubEvent(sub, ev->GetSeqNr());
-
-            if (IsStoreEnabled()) trb->SetStoreEnabled(true);
 
             trb->ConfigureCalibration(fCalibrName, fCalibrPeriod);
 

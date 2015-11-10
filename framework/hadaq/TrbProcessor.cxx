@@ -231,12 +231,12 @@ void hadaq::TrbProcessor::AddSub(SubProcessor* tdc, unsigned id)
    fMap[id] = tdc;
 }
 
-void hadaq::TrbProcessor::SetStoreEnabled(bool on)
+void hadaq::TrbProcessor::SetStoreKind(unsigned kind)
 {
-   base::StreamProc::SetStoreEnabled(on);
+   base::StreamProc::SetStoreKind(kind);
 
    for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
-      iter->second->SetStoreEnabled(on);
+      iter->second->SetStoreKind(kind);
 }
 
 void hadaq::TrbProcessor::SetCh0Enabled(bool on)
@@ -626,6 +626,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
 
                TdcProcessor* tdcproc = new TdcProcessor(this, dataid, numch, edges);
                tdcproc->SetCalibrTrigger(fCalibrTrigger);
+               tdcproc->SetStoreKind(GetStoreKind());
 
                mgr()->UserPreLoop(tdcproc); // while loop already running, call it once again for new processor
 

@@ -143,6 +143,8 @@ Bool_t TFirstStepProcessor::BuildEvent(TGo4EventElement* outevnt)
       if (TRootProcMgr::IsStreamAnalysis())
          SetKeepInputEvent(kTRUE);
 
+      // printf("Store event %s\n", store ? "true" : "false");
+
       outevnt->SetValid(store);
 
       fNumOutEvents++;

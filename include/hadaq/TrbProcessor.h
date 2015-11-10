@@ -127,7 +127,7 @@ namespace hadaq {
          virtual void SetTriggerWindow(double left, double right);
 
          /** Enable/disable store for TRB and all TDC processors */
-         virtual void SetStoreEnabled(bool on = true);
+         virtual void SetStoreKind(unsigned kind = 1);
 
          /** Scan all messages, find reference signals */
          virtual bool FirstBufferScan(const base::Buffer& buf);

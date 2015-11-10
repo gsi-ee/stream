@@ -6,7 +6,11 @@
 3. For processors, created "on-the-fly", explicitely call pre-loop methods.
 4. In TDC processor use tot_shift correction for all falling edges, including storage
    in output tree.
-
+5. With Processor::SetStoreKind() one could specify different store formats.
+   It is extenstion of SetStoreEnabled() function, replaced with SetStoreKind(on?1:0) 
+6. Provide compact (SetStoreKind(2)) format for TDC data. It is MessageCompact struct with
+   channel id and float time stamp relative to ch0.   
+    
 
 9.11.2015
 1. First steps toward automatic TRB/TDC configuration when processing HLD data.

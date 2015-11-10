@@ -28,7 +28,6 @@ namespace base {
 
    };
 
-
    template<class MsgClass>
    class MessageExt {
       protected:

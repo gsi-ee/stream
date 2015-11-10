@@ -72,7 +72,7 @@ namespace base {
          std::string   fSubPrefixD;               //!< sub-prefix for histogram directory
          std::string   fSubPrefixN;               //!< sub-prefix for histogram names
          int           fHistFilling;              //!< level of histogram filling
-         bool          fStoreEnabled;             //!< if true, store will be enabled for processor
+         unsigned      fStoreKind;                //!< if >0, store will be enabled for processor
          bool          fIntHistFormat;            //!< if true, internal histogram format is used
 
          /** Make constructor protected - no way to create base class instance */
@@ -149,8 +149,11 @@ namespace base {
          bool IsHistFilling() const { return fHistFilling > 0; }
          int  HistFillLevel() const { return fHistFilling; }
 
-         virtual void SetStoreEnabled(bool on = true) { fStoreEnabled = on; }
-         bool IsStoreEnabled() const { return fStoreEnabled; }
+         unsigned GetStoreKind() const { return fStoreKind; }
+         bool IsStoreEnabled() const { return GetStoreKind()!=0; }
+
+         virtual void SetStoreKind(unsigned kind = 1) { fStoreKind = kind; }
+         void SetStoreEnabled(bool on = true) { SetStoreKind(on ? 1 : 0); }
 
          virtual void UserPreLoop() {}
 

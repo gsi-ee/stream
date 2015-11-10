@@ -14,7 +14,7 @@ base::Processor::Processor(const char* name, unsigned brdid) :
    fSubPrefixD(),
    fSubPrefixN(),
    fHistFilling(99),
-   fStoreEnabled(false),
+   fStoreKind(0),
    fIntHistFormat(false)
 {
    if (brdid != DummyBrdId) {

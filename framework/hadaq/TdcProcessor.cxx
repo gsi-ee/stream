@@ -39,8 +39,10 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fCalibrTrigger(0xFFFF),
    fCalibrProgress(0.),
    fCalibrStatus("Init"),
-   fStoreVect(),
+   fDummyVect(),
    pStoreVect(0),
+   fStoreCompact(),
+   pStoreCompact(0),
    fEdgeMask(edge_mask),
    fAutoCalibration(0),
    fWriteCalibr(),
@@ -650,11 +652,17 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
    unsigned cnt(0), hitcnt(0);
 
-   bool iserr(false), isfirstepoch(false), rawprint(false), missinghit(false);
+   bool iserr(false), isfirstepoch(false), rawprint(false), missinghit(false), dostore(false);
 
    hadaq::TdcSubEvent* trig_subevnt = 0;
-   if (first_scan && mgr()->IsTriggeredAnalysis())
-      trig_subevnt = new hadaq::TdcSubEvent;
+   if (first_scan && mgr()->IsTriggeredAnalysis() && IsStoreEnabled()) {
+      dostore = true;
+      switch (GetStoreKind()) {
+         case 1: trig_subevnt = new hadaq::TdcSubEvent; break;
+         case 2: fStoreCompact.clear(); break;
+         default: break; // not supported
+      }
+   }
 
    uint32_t first_epoch(0);
 
@@ -899,8 +907,18 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                hitcnt++;
                if ((minimtm==0) || (localtm < minimtm)) minimtm = localtm;
 
-               if (trig_subevnt)
-                  trig_subevnt->AddMsg(hadaq::TdcMessageExt(msg, (chid>0) ? localtm : ch0time));
+               if (dostore)
+                  switch(GetStoreKind()) {
+                     case 1:
+                        if (trig_subevnt)
+                           trig_subevnt->AddMsg(hadaq::TdcMessageExt(msg, (chid>0) ? localtm : ch0time));
+                        break;
+                     case 2:
+                        if (chid>0)
+                           fStoreCompact.push_back(hadaq::MessageCompact(chid, isrising, localtm));
+                        break;
+                     default: break;
+                  }
             }
          } else
 
@@ -960,7 +978,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
    if (first_scan) {
 
-      if (trig_subevnt) {
+      if (trig_subevnt!=0) {
          // put event back to the trigger event
          if (!mgr()->AddToTrigEvent(GetName(), trig_subevnt))
             delete trig_subevnt;
@@ -1315,21 +1333,36 @@ void hadaq::TdcProcessor::IncCalibration(unsigned ch, bool rising, unsigned fine
 
 void hadaq::TdcProcessor::CreateBranch(TTree* t)
 {
-   pStoreVect = &fStoreVect;
-   mgr()->CreateBranch(t, GetName(), "std::vector<hadaq::TdcMessageExt>", (void**) &pStoreVect);
+   printf("%s create branch kind %u\n", GetName(), GetStoreKind());
+
+   switch(GetStoreKind()) {
+      case 1:
+         pStoreVect = &fDummyVect;
+         mgr()->CreateBranch(t, GetName(), "std::vector<hadaq::TdcMessageExt>", (void**) &pStoreVect);
+         break;
+      case 2:
+         pStoreCompact = &fStoreCompact;
+         mgr()->CreateBranch(t, GetName(), "std::vector<hadaq::MessageCompact>", (void**) &pStoreCompact);
+         break;
+      default:
+         break;
+   }
 }
 
 void hadaq::TdcProcessor::Store(base::Event* ev)
 {
-   fStoreVect.clear();
+   if ((GetStoreKind() == 1) && (ev!=0)) {
+      // only for stream analysis use special handling when many events could be produced at once
 
-   hadaq::TdcSubEvent* sub =
-      dynamic_cast<hadaq::TdcSubEvent*> (ev->GetSubEvent(GetName()));
+      fDummyVect.clear();
 
-   // when subevent exists, use directly pointer on messages vector
-   if (sub!=0)
-      pStoreVect = sub->vect_ptr();
-   else
-      pStoreVect = &fStoreVect;
+      hadaq::TdcSubEvent* sub =
+            dynamic_cast<hadaq::TdcSubEvent*> (ev->GetSubEvent(GetName()));
+
+      // when subevent exists, use directly pointer on messages vector
+      if (sub!=0)
+         pStoreVect = sub->vect_ptr();
+      else
+         pStoreVect = &fDummyVect;
+   }
 }
-
