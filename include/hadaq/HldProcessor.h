@@ -3,6 +3,8 @@
 
 #include "base/StreamProc.h"
 
+#include "base/EventProc.h"
+
 #include "hadaq/definess.h"
 
 #include "hadaq/TrbProcessor.h"
@@ -32,6 +34,28 @@ namespace hadaq {
 
          /** Method returns event multiplicity - that ever it means */
          virtual unsigned Multiplicity() const { return 1; }
+   };
+
+   // processor used to filter-out all HLD events with specific trigger
+   // only these events will be processed and stored
+
+   class HldFilter : public base::EventProc {
+      protected:
+         unsigned fOnlyTrig;
+      public:
+
+         HldFilter(unsigned trig = 0x1) : base::EventProc(), fOnlyTrig(trig) {}
+         virtual ~HldFilter() {}
+
+         virtual bool Process(base::Event* ev)
+         {
+            hadaq::HldSubEvent* sub =
+                  dynamic_cast<hadaq::HldSubEvent*> (ev->GetSubEvent("HLD"));
+
+            if (sub==0) return false;
+
+            return sub->fMsg.trig_type == fOnlyTrig;
+         }
    };
 
    class HldProcessor : public base::StreamProc {
@@ -115,8 +139,10 @@ namespace hadaq {
          unsigned TransformEvent(void* src, unsigned len, void* tgt = 0, unsigned tgtlen = 0);
 
          virtual void UserPreLoop();
-
    };
+
+
+
 }
 
 #endif

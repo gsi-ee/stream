@@ -14,6 +14,7 @@
    struct, using double for absolute time stamp in s. Channel 0 is included.
 8. Store trigger type in HLD file - one could add more info later into HldMessage. 
 9. Store HLD message also in output triggered event, let filter results base on trigger type  
+10.Implement hadaq::HldFilter, useful when one want to store data only of special trigger.
     
 
 9.11.2015
