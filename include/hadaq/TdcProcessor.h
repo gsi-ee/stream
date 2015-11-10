@@ -151,8 +151,11 @@ namespace hadaq {
          std::vector<hadaq::TdcMessageExt>  fDummyVect; //! dummy empty vector
          std::vector<hadaq::TdcMessageExt> *pStoreVect; //! pointer on store vector
 
-         std::vector<hadaq::MessageCompact> fStoreCompact;  //! vector with compact messages
-         std::vector<hadaq::MessageCompact> *pStoreCompact; //! pointer on store vector
+         std::vector<hadaq::MessageFloat> fStoreFloat;  //! vector with compact messages
+         std::vector<hadaq::MessageFloat> *pStoreFloat; //! pointer on store vector
+
+         std::vector<hadaq::MessageDouble> fStoreDouble;  //! vector with compact messages
+         std::vector<hadaq::MessageDouble> *pStoreDouble; //! pointer on store vector
 
          enum { edge_None = 0, edge_Rising = 1, edge_BothIndepend = 2, edge_ForceRising  = 3, edge_CommonStatistic = 4 };
 

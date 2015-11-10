@@ -77,8 +77,10 @@
 #pragma link C++ class hadaq::TrbProcessor+;
 #pragma link C++ class hadaq::TrbMessage+;
 #pragma link C++ class hadaq::HldProcessor+;
-#pragma link C++ struct hadaq::MessageCompact+;
-#pragma link C++ class std::vector<hadaq::MessageCompact>+;
+#pragma link C++ struct hadaq::MessageFloat+;
+#pragma link C++ class std::vector<hadaq::MessageFloat>+;
+#pragma link C++ struct hadaq::MessageDouble+;
+#pragma link C++ class std::vector<hadaq::MessageDouble>+;
 
 // MBS data processing
 #pragma link C++ namespace mbs;

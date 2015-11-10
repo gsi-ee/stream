@@ -41,8 +41,10 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fCalibrStatus("Init"),
    fDummyVect(),
    pStoreVect(0),
-   fStoreCompact(),
-   pStoreCompact(0),
+   fStoreFloat(),
+   pStoreFloat(0),
+   fStoreDouble(),
+   pStoreDouble(0),
    fEdgeMask(edge_mask),
    fAutoCalibration(0),
    fWriteCalibr(),
@@ -659,7 +661,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       dostore = true;
       switch (GetStoreKind()) {
          case 1: trig_subevnt = new hadaq::TdcSubEvent; break;
-         case 2: fStoreCompact.clear(); break;
+         case 2: fStoreFloat.clear(); break;
+         case 3: fStoreDouble.clear(); break;
          default: break; // not supported
       }
    }
@@ -915,7 +918,10 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                         break;
                      case 2:
                         if (chid>0)
-                           fStoreCompact.push_back(hadaq::MessageCompact(chid, isrising, localtm));
+                           fStoreFloat.push_back(hadaq::MessageFloat(chid, isrising, localtm*1e9));
+                        break;
+                     case 3:
+                        fStoreDouble.push_back(hadaq::MessageDouble(chid, isrising, ch0time + localtm));
                         break;
                      default: break;
                   }
@@ -1330,19 +1336,20 @@ void hadaq::TdcProcessor::IncCalibration(unsigned ch, bool rising, unsigned fine
    }
 }
 
-
 void hadaq::TdcProcessor::CreateBranch(TTree* t)
 {
-   printf("%s create branch kind %u\n", GetName(), GetStoreKind());
-
    switch(GetStoreKind()) {
       case 1:
          pStoreVect = &fDummyVect;
          mgr()->CreateBranch(t, GetName(), "std::vector<hadaq::TdcMessageExt>", (void**) &pStoreVect);
          break;
       case 2:
-         pStoreCompact = &fStoreCompact;
-         mgr()->CreateBranch(t, GetName(), "std::vector<hadaq::MessageCompact>", (void**) &pStoreCompact);
+         pStoreFloat = &fStoreFloat;
+         mgr()->CreateBranch(t, GetName(), "std::vector<hadaq::MessageFloat>", (void**) &pStoreFloat);
+         break;
+      case 3:
+         pStoreDouble = &fStoreDouble;
+         mgr()->CreateBranch(t, GetName(), "std::vector<hadaq::MessageDouble>", (void**) &pStoreDouble);
          break;
       default:
          break;

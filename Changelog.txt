@@ -8,8 +8,10 @@
    in output tree.
 5. With Processor::SetStoreKind() one could specify different store formats.
    It is extenstion of SetStoreEnabled() function, replaced with SetStoreKind(on?1:0) 
-6. Provide compact (SetStoreKind(2)) format for TDC data. It is MessageCompact struct with
-   channel id and float time stamp relative to ch0.   
+6. Provide compact (SetStoreKind(2)) format for TDC data. It is MessageFloat struct with
+   channel id and float time stamp relative to ch0 in ns. Channel 0 is excluded.    
+7. Implement also double (SetStoreKind(3)) format for TDC data. It is MessageDouble
+   struct, using double for absolute time stamp in s. Channel 0 is included.
     
 
 9.11.2015
