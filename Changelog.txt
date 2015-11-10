@@ -12,6 +12,7 @@
    channel id and float time stamp relative to ch0 in ns. Channel 0 is excluded.    
 7. Implement also double (SetStoreKind(3)) format for TDC data. It is MessageDouble
    struct, using double for absolute time stamp in s. Channel 0 is included.
+8. Store trigger type in HLD file - one could add more info later into HldMessage. 
     
 
 9.11.2015

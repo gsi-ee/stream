@@ -15,7 +15,12 @@ namespace hadaq {
 
    typedef std::map<unsigned,TrbProcessor*> TrbProcMap;
 
-   typedef void* AfterCreateFunc(void*);
+   struct HldMessage {
+      uint8_t trig_type;
+
+      HldMessage() : trig_type(0) {}
+   };
+
 
    class HldProcessor : public base::StreamProc {
 
@@ -39,6 +44,9 @@ namespace hadaq {
          base::H1handle fEvSize;     ///< HADAQ event size
          base::H1handle fSubevSize;  ///< HADAQ sub-event size
 
+         HldMessage     fMsg;        ///< used for TTree store
+         HldMessage    *pMsg;        ///< used for TTree store
+
          /** Returns true when processor used to select trigger signal
           * TRB3 not yet able to perform trigger selection */
          virtual bool doTriggerSelection() const { return false; }
@@ -46,6 +54,7 @@ namespace hadaq {
          /** Way to register trb processor */
          void AddTrb(TrbProcessor* trb, unsigned id);
 
+         virtual void CreateBranch(TTree* t);
 
       public:
 

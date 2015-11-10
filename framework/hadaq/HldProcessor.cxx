@@ -19,7 +19,9 @@ hadaq::HldProcessor::HldProcessor(bool auto_create, const char* after_func) :
    fAutoCreate(auto_create),
    fAfterFunc(after_func),
    fCalibrName(),
-   fCalibrPeriod(-111)
+   fCalibrPeriod(-111),
+   fMsg(),
+   pMsg(0)
 {
    mgr()->RegisterProc(this, base::proc_TRBEvent, 0);
 
@@ -136,6 +138,15 @@ void hadaq::HldProcessor::SetPrintRawData(bool on)
       iter->second->SetPrintRawData(on);
 }
 
+void hadaq::HldProcessor::CreateBranch(TTree* t)
+{
+   if(mgr()->IsTriggeredAnalysis()) {
+      pMsg = &fMsg;
+      mgr()->CreateBranch(t, GetName(), "hadaq::HldMessage", (void**)&pMsg);
+   }
+}
+
+
 
 bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
 {
@@ -152,6 +163,8 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
    while ((ev = iter.nextEvent()) != 0) {
 
       DefFillH1(fEvType, (ev->GetId() & 0xf), 1.);
+
+      fMsg.trig_type = ev->GetId() & 0xf;
 
       if ((fEventTypeSelect <= 0xf) && ((ev->GetId() & 0xf) != fEventTypeSelect)) continue;
 
