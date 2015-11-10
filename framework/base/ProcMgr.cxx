@@ -17,7 +17,8 @@ base::ProcMgr::ProcMgr() :
    fTimeMasterIndex(DummyIndex),
    fAnalysisKind(kind_Stream),
    fTree(0),
-   fDfltHistLevel(0)
+   fDfltHistLevel(0),
+   fTrigEvent(0)
 {
    if (fInstance==0) fInstance = this;
 }
@@ -182,13 +183,14 @@ double base::ProcMgr::GetC1Limit(C1handle c1, bool isleft)
 }
 
 
-void base::ProcMgr::UserPreLoop()
+void base::ProcMgr::UserPreLoop(Processor* only_proc)
 {
    for (unsigned n=0;n<fProc.size();n++) {
       if (fProc[n]==0) continue;
+      if ((only_proc!=0) && (fProc[n]!=only_proc)) continue;
 
       if (fTree && fProc[n]->IsStoreEnabled()) fProc[n]->CreateBranch(fTree);
-      if (fProc[n]->fAnalysisKind!=kind_RawOnly)
+      if (fProc[n]->fAnalysisKind != kind_RawOnly)
          fProc[n]->fAnalysisKind = fAnalysisKind;
 
       if (!IsStreamAnalysis())
@@ -199,21 +201,26 @@ void base::ProcMgr::UserPreLoop()
 
    for (unsigned n=0;n<fEvProc.size();n++) {
       if (fEvProc[n]==0) continue;
+      if ((only_proc!=0) && (fEvProc[n]!=only_proc)) continue;
       if (fTree && fEvProc[n]->IsStoreEnabled()) fEvProc[n]->CreateBranch(fTree);
       fEvProc[n]->UserPreLoop();
    }
 }
 
-void base::ProcMgr::UserPostLoop()
+void base::ProcMgr::UserPostLoop(Processor* only_proc)
 {
-   for (unsigned n=0;n<fProc.size();n++)
+   for (unsigned n=0;n<fProc.size();n++) {
+      if ((only_proc!=0) && (fProc[n]!=only_proc)) continue;
       if (fProc[n]) fProc[n]->UserPostLoop();
+   }
 
-   for (unsigned n=0;n<fEvProc.size();n++)
+   for (unsigned n=0;n<fEvProc.size();n++) {
+      if ((only_proc!=0) && (fEvProc[n]!=only_proc)) continue;
       if (fEvProc[n]) fEvProc[n]->UserPostLoop();
+   }
 
    // close store file already here
-   CloseStore();
+   if (only_proc==0) CloseStore();
 }
 
 base::ProcMgr* base::ProcMgr::AddProcessor(Processor* proc)
@@ -279,19 +286,6 @@ void base::ProcMgr::ProvideRawData(const Buffer& buf)
    // printf("Provide new data kind %d  board %u\n", buf().kind, buf().boardid);
 
    it->second->AddNextBuffer(buf);
-}
-
-void base::ProcMgr::ScanNewData()
-{
-   for (unsigned n=0;n<fProc.size();n++)
-      fProc[n]->ScanNewBuffers();
-}
-
-bool base::ProcMgr::SkipAllData()
-{
-   for (unsigned n=0;n<fProc.size();n++)
-      fProc[n]->SkipAllData();
-   return true;
 }
 
 int base::ProcMgr::SyncIdDiff(unsigned id1, unsigned id2) const
@@ -534,6 +528,54 @@ bool base::ProcMgr::ScanDataForNewTriggers()
    return true;
 }
 
+bool base::ProcMgr::AnalyzeNewData(base::Event* &evt)
+{
+   // scan raw data
+   // if triggered analysis configured, fill event at the same time
+
+   if (IsTriggeredAnalysis()) {
+      if (evt==0)
+         evt = new base::Event;
+      else
+         evt->DestroyEvents();
+      evt->SetTriggerTime(0.);
+      fTrigEvent = evt;
+   }
+
+   // scan new data in the processors
+   for (unsigned n=0;n<fProc.size();n++)
+      fProc[n]->ScanNewBuffers();
+
+   if (IsRawAnalysis()) return false;
+
+   if (IsTriggeredAnalysis()) {
+      fTrigEvent = 0;
+      return true;
+   }
+
+   // analyze new sync markers
+   if (AnalyzeSyncMarkers()) {
+      // get and redistribute new triggers
+      CollectNewTriggers();
+      // scan for new triggers
+      ScanDataForNewTriggers();
+   }
+
+   return ProduceNextEvent(evt);
+}
+
+bool base::ProcMgr::AddToTrigEvent(const std::string& name, base::SubEvent* sub)
+{
+   // method used to add data, extracted with first scan
+
+   if (fTrigEvent==0) return false;
+
+   fTrigEvent->AddSubEvent(name, sub);
+
+   return true;
+}
+
+
 
 bool base::ProcMgr::ProduceNextEvent(base::Event* &evt)
 {
@@ -541,7 +583,7 @@ bool base::ProcMgr::ProduceNextEvent(base::Event* &evt)
    // for special cases (like MBS or EPICS) processor itself should declare that
    // triggers in between are correctly filled
 
-   if (IsRawAnalysis()) return false;
+   if (!IsStreamAnalysis()) return false;
 
    unsigned numready = fTriggers.size();
 

@@ -513,7 +513,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
 
          // This is special TDC processor for data from CTS header
          TdcProcessor* tdcproc = GetTDC(fHadaqCTSId, true);
-         if (tdcproc!=0 && datalen>0) {
+         if ((tdcproc!=0) && (datalen>0)) {
             // if TDC processor found, process such data as normal TDC data
             AddBufferToTDC(sub, tdcproc, ix, datalen);
          }
@@ -626,6 +626,8 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
 
                TdcProcessor* tdcproc = new TdcProcessor(this, dataid, numch, edges);
                tdcproc->SetCalibrTrigger(fCalibrTrigger);
+
+               mgr()->UserPreLoop(tdcproc); // while loop already running, call it once again for new processor
 
                printf("%s: Create TDC 0x%04x nch:%u edges:%u\n", GetName(), dataid, numch, edges);
 

@@ -1,3 +1,13 @@
+10.11.2015
+1. Simplify logic of triggered analysis. Output structures can be created already during
+   first buffer scan - one do not needs any artificial sync and trigger marks.
+2. Create central ProcMgr::AnalyzeNewData() function, which correctly handles
+   new data in different situations. Use in both go4 and DABC run engines.   
+3. For processors, created "on-the-fly", explicitely call pre-loop methods.
+4. In TDC processor use tot_shift correction for all falling edges, including storage
+   in output tree.
+
+
 9.11.2015
 1. First steps toward automatic TRB/TDC configuration when processing HLD data.
 2. When autocreate property configured, TRB and TDC created automatically. 

@@ -183,10 +183,14 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
             trb->SetAutoCreate(true);
             trb->SetHadaqCTSId(sub->GetId());
 
+            mgr()->UserPreLoop(trb); // while loop already running, call it once again for new processor
+
             printf("Create TRB 0x%04x procmgr %p lvl %d \n", sub->GetId(), base::ProcMgr::instance(), trb->HistFillLevel());
 
             // in auto mode only TDC processors should be created
             trb->ScanSubEvent(sub, ev->GetSeqNr());
+
+            if (IsStoreEnabled()) trb->SetStoreEnabled(true);
 
             trb->ConfigureCalibration(fCalibrName, fCalibrPeriod);
 

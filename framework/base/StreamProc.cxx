@@ -197,7 +197,7 @@ bool base::StreamProc::ScanNewBuffers()
    }
 
    // for raw scanning any other steps are not interesting
-   if (IsRawScanOnly()) SkipAllData();
+   if (!IsStreamAnalysis()) SkipAllData();
 
    return isany;
 }
@@ -427,7 +427,6 @@ void base::StreamProc::SkipAllData()
 }
 
 
-
 bool base::StreamProc::CollectTriggers(GlobalMarksQueue& trigs)
 {
    // TODO: one can make more sophisticated rules like time combination of several AUXs or even channles
@@ -505,7 +504,7 @@ bool base::StreamProc::AppendSubevent(base::Event* evt)
    if (IsRawScanOnly()) return true;
 
    if (fGlobalMarks.size()==0) {
-      printf("global trigger queue empty !!!\n");
+      fprintf(stderr, "global trigger queue empty !!!\n");
       exit(14);
       return false;
    }
@@ -518,7 +517,7 @@ bool base::StreamProc::AppendSubevent(base::Event* evt)
          if (IsTimeSorting()) fGlobalMarks.front().subev->Sort();
          evt->AddSubEvent(GetName(), fGlobalMarks.front().subev);
       } else {
-         printf("Something wrong - subevent could not be assigned normal %d!!!!\n", fGlobalMarks.front().normal());
+         fprintf(stderr, "Something went wrong - subevent could not be assigned normal %d!!!!\n", fGlobalMarks.front().normal());
          delete fGlobalMarks.front().subev;
       }
       fGlobalMarks.front().subev = 0;

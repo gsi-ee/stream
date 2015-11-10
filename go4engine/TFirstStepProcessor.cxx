@@ -96,6 +96,8 @@ Bool_t TFirstStepProcessor::BuildEvent(TGo4EventElement* outevnt)
    if ((mbsev==0) || (event==0))
       throw TGo4EventErrorException(this);
 
+   Bool_t filled_event = kFALSE;
+
    if (!IsKeepInputEvent()) {
       // if keep input was not specified before,
       // framework has delivered new MBS event, it should be processed
@@ -125,34 +127,15 @@ Bool_t TFirstStepProcessor::BuildEvent(TGo4EventElement* outevnt)
 
       //TGo4Log::Info("Start scanning");
 
-      // scan new data
-      TRootProcMgr::ScanNewData();
-
-      if (IsRawAnalysis()) {
-
-         TRootProcMgr::SkipAllData();
-
-      } else {
-
-         //TGo4Log::Info("Analyze data");
-
-         // analyze new sync markers
-         if (TRootProcMgr::AnalyzeSyncMarkers()) {
-
-            // get and redistribute new triggers
-            TRootProcMgr::CollectNewTriggers();
-
-            // scan for new triggers
-            TRootProcMgr::ScanDataForNewTriggers();
-         }
-      }
+      filled_event = TRootProcMgr::AnalyzeNewData(event);
    } else {
     //  TGo4Log::Info("Keep event %d", mbsev->GetIntLen()*4);
    }
 
-   if (TRootProcMgr::ProduceNextEvent(event)) {
+   if (!filled_event)
+      filled_event = TRootProcMgr::ProduceNextEvent(event);
 
-      // TGo4Log::Info("Produce event");
+   if (filled_event) {
 
       Bool_t store = TRootProcMgr::ProcessEvent(event);
 

@@ -652,6 +652,10 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
    bool iserr(false), isfirstepoch(false), rawprint(false), missinghit(false);
 
+   hadaq::TdcSubEvent* trig_subevnt = 0;
+   if (first_scan && mgr()->IsTriggeredAnalysis())
+      trig_subevnt = new hadaq::TdcSubEvent;
+
    uint32_t first_epoch(0);
 
    unsigned epoch_shift = 0;
@@ -673,7 +677,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
    hadaq::TdcMessage& msg = iter.msg();
    hadaq::TdcMessage calibr;
-   unsigned ncalibr = 2;
+   unsigned ncalibr = 20; // clear indicate that no calibration data present
 
    while (iter.next()) {
 
@@ -756,7 +760,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
          ChannelRec& rec = fCh[chid];
 
-         double corr = 0.;
+         double corr(0.);
          bool raw_hit(true);
 
          if (msg.getKind() == tdckind_Hit1) {
@@ -781,7 +785,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                continue;
             }
 
-            corr = isrising ? rec.rising_calibr[fine] : rec.falling_calibr[fine];
+            corr = isrising ? rec.rising_calibr[fine] : rec.falling_calibr[fine] + rec.tot_shift*1e-9;
          }
 
          // apply correction
@@ -877,22 +881,26 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                }
                rec.falling_cnt++;
 
-               DefFastFillH1(rec.fFallingFine, fine);
+               if (raw_hit) DefFastFillH1(rec.fFallingFine, fine);
                DefFastFillH1(rec.fFallingCoarse, coarse);
 
                if (rec.rising_new_value && (rec.rising_last_tm!=0)) {
                   double tot = (localtm - rec.rising_last_tm)*1e9;
 
-                  DefFillH1(rec.fTot, tot - rec.tot_shift, 1.);
+                  DefFillH1(rec.fTot, tot, 1.);
                   rec.rising_new_value = false;
 
-                  if (buf().kind == 0xD) rec.last_tot = tot;
+                  // use only raw hit
+                  if (raw_hit && (ncalibr<3) && (buf().kind == 0xD)) rec.last_tot = tot + rec.tot_shift;
                }
             }
 
             if (!iserr) {
                hitcnt++;
                if ((minimtm==0) || (localtm < minimtm)) minimtm = localtm;
+
+               if (trig_subevnt)
+                  trig_subevnt->AddMsg(hadaq::TdcMessageExt(msg, (chid>0) ? localtm : ch0time));
             }
          } else
 
@@ -951,6 +959,12 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    }
 
    if (first_scan) {
+
+      if (trig_subevnt) {
+         // put event back to the trigger event
+         if (!mgr()->AddToTrigEvent(GetName(), trig_subevnt))
+            delete trig_subevnt;
+      }
 
       // if we use trigger as time marker
       if (fUseNativeTrigger && (ch0time!=0)) {
@@ -1310,7 +1324,7 @@ void hadaq::TdcProcessor::Store(base::Event* ev)
    fStoreVect.clear();
 
    hadaq::TdcSubEvent* sub =
-         dynamic_cast<hadaq::TdcSubEvent*> (ev->GetSubEvent(GetName()));
+      dynamic_cast<hadaq::TdcSubEvent*> (ev->GetSubEvent(GetName()));
 
    // when subevent exists, use directly pointer on messages vector
    if (sub!=0)

@@ -46,7 +46,7 @@ namespace base {
          AnalysisKind             fAnalysisKind;    //!< ignore all events, only single scan, not output events
          TTree                   *fTree;            //!< abstract tree pointer, will be used in ROOT implementation
          int                      fDfltHistLevel;   //!< default histogram fill level for any new created processor
-
+         base::Event             *fTrigEvent;       //!< current event, filled when performing triggered analysis
 
          static ProcMgr* fInstance;                 //!
 
@@ -132,12 +132,6 @@ namespace base {
          /** Method to provide raw data on base of data kind to the processor */
          void ProvideRawData(const Buffer& buf);
 
-         /** Let scan new data of all processors */
-         void ScanNewData();
-
-         /** Method cleanup all queues, used in case of raw analysis */
-         bool SkipAllData();
-
 
          /** Check current sync markers */
          bool AnalyzeSyncMarkers();
@@ -148,6 +142,11 @@ namespace base {
          /** Method to produce data for new triggers */
          bool ScanDataForNewTriggers();
 
+         /** Analyze new data, if triggered analysis configured - immediately produce new event */
+         bool AnalyzeNewData(base::Event* &evt);
+
+         bool AddToTrigEvent(const std::string& name, base::SubEvent* sub);
+
          /** Very central method - select if possible data for next event
           * Only can be done that each processor is agree to deliver data within
           * trigger interval. It may not be a case when messages from future buffers may be required */
@@ -156,9 +155,9 @@ namespace base {
          /** Process event - consequently calls all event processors */
          virtual bool ProcessEvent(base::Event* evt);
 
-         void UserPreLoop();
+         void UserPreLoop(Processor* only_proc = 0);
 
-         void UserPostLoop();
+         void UserPostLoop(Processor* only_proc = 0);
    };
 }
 
