@@ -34,9 +34,9 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc) :
    fMap(),
    fHadaqHUBId()
 {
-   if (hldproc==0)
+   if (hldproc==0) {
       mgr()->RegisterProc(this, base::proc_TRBEvent, brdid & 0xFF);
-   else {
+   } else {
       hldproc->AddTrb(this, brdid);
       if ((mgr()==0) && (hldproc->mgr()!=0)) hldproc->mgr()->AddProcessor(this);
    }
@@ -334,6 +334,7 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
 
    return true;
 }
+
 
 void hadaq::TrbProcessor::BeforeEventScan()
 {

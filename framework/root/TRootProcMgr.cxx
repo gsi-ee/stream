@@ -19,12 +19,11 @@ TRootProcMgr::~TRootProcMgr()
 
 bool TRootProcMgr::ProcessEvent(base::Event* evt)
 {
-   if (base::ProcMgr::ProcessEvent(evt)) {
-      if (fTree) fTree->Fill();
-      return true;
-   }
+   if (!base::ProcMgr::ProcessEvent(evt)) return false;
 
-   return false;
+   if (fTree) fTree->Fill();
+
+   return true;
 }
 
 bool TRootProcMgr::CreateStore(const char* fname)

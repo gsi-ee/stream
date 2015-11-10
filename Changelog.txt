@@ -13,6 +13,7 @@
 7. Implement also double (SetStoreKind(3)) format for TDC data. It is MessageDouble
    struct, using double for absolute time stamp in s. Channel 0 is included.
 8. Store trigger type in HLD file - one could add more info later into HldMessage. 
+9. Store HLD message also in output triggered event, let filter results base on trigger type  
     
 
 9.11.2015

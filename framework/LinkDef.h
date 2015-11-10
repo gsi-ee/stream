@@ -77,6 +77,7 @@
 #pragma link C++ class hadaq::TrbMessage+;
 #pragma link C++ class hadaq::TrbProcessor+;
 #pragma link C++ class hadaq::HldMessage+;
+#pragma link C++ class hadaq::HldSubEvent+;
 #pragma link C++ class hadaq::HldProcessor+;
 #pragma link C++ struct hadaq::MessageFloat+;
 #pragma link C++ class std::vector<hadaq::MessageFloat>+;

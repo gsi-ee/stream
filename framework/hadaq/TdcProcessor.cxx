@@ -657,7 +657,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    bool iserr(false), isfirstepoch(false), rawprint(false), missinghit(false), dostore(false);
 
    hadaq::TdcSubEvent* trig_subevnt = 0;
-   if (first_scan && mgr()->IsTriggeredAnalysis() && IsStoreEnabled()) {
+   if (first_scan && IsTriggeredAnalysis() && IsStoreEnabled()) {
       dostore = true;
       switch (GetStoreKind()) {
          case 1: trig_subevnt = new hadaq::TdcSubEvent; break;
@@ -986,8 +986,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
       if (trig_subevnt!=0) {
          // put event back to the trigger event
-         if (!mgr()->AddToTrigEvent(GetName(), trig_subevnt))
-            delete trig_subevnt;
+         mgr()->AddToTrigEvent(GetName(), trig_subevnt);
       }
 
       // if we use trigger as time marker

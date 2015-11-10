@@ -146,8 +146,6 @@ void hadaq::HldProcessor::CreateBranch(TTree* t)
    }
 }
 
-
-
 bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
 {
    if (buf.null()) return false;
@@ -160,7 +158,11 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
 
    hadaqs::RawEvent* ev = 0;
 
+   unsigned evcnt = 0;
+
    while ((ev = iter.nextEvent()) != 0) {
+
+      evcnt++;
 
       DefFillH1(fEvType, (ev->GetId() & 0xf), 1.);
 
@@ -217,11 +219,33 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
          fAutoCreate = false; // with first event
          if (fAfterFunc.length()>0) mgr()->CallFunc(fAfterFunc.c_str(), this);
       }
+   }
 
+   if (mgr()->IsTriggeredAnalysis()) {
+      if (evcnt>1)
+         fprintf(stderr, "event count %u bigger than 1 - not work for triggered analysis\n", evcnt);
+      mgr()->AddToTrigEvent(GetName(), new hadaq::HldSubEvent(fMsg));
    }
 
    return true;
 }
+
+void hadaq::HldProcessor::Store(base::Event* ev)
+{
+   if (ev!=0) {
+      // only for stream analysis use special handling when many events could be produced at once
+
+      hadaq::HldSubEvent* sub =
+         dynamic_cast<hadaq::HldSubEvent*> (ev->GetSubEvent(GetName()));
+
+      // when subevent exists, use directly pointer on message
+      if (sub!=0)
+         pMsg = &(sub->fMsg);
+      else
+         pMsg = &fMsg;
+   }
+}
+
 
 unsigned hadaq::HldProcessor::TransformEvent(void* src, unsigned len, void* tgt, unsigned tgtlen)
 {

@@ -189,9 +189,11 @@ void base::ProcMgr::UserPreLoop(Processor* only_proc)
       if (fProc[n]==0) continue;
       if ((only_proc!=0) && (fProc[n]!=only_proc)) continue;
 
-      if (fTree && fProc[n]->IsStoreEnabled()) fProc[n]->CreateBranch(fTree);
       if (fProc[n]->fAnalysisKind != kind_RawOnly)
          fProc[n]->fAnalysisKind = fAnalysisKind;
+
+      if (fTree && fProc[n]->IsStoreEnabled())
+         fProc[n]->CreateBranch(fTree);
 
       if (!IsStreamAnalysis())
          fProc[n]->SetSynchronisationKind(base::StreamProc::sync_None);
@@ -566,9 +568,10 @@ bool base::ProcMgr::AnalyzeNewData(base::Event* &evt)
 
 bool base::ProcMgr::AddToTrigEvent(const std::string& name, base::SubEvent* sub)
 {
-   // method used to add data, extracted with first scan
+   // method used to add data, extracted with first scan, to the special triggered event
+   // if subevent not accepted, it will be deleted
 
-   if (fTrigEvent==0) return false;
+   if (fTrigEvent==0) { delete sub; return false; }
 
    fTrigEvent->AddSubEvent(name, sub);
 

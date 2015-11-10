@@ -19,8 +19,20 @@ namespace hadaq {
       uint8_t trig_type;
 
       HldMessage() : trig_type(0) {}
+      HldMessage(const HldMessage& src) : trig_type(src.trig_type) {}
    };
 
+   class HldSubEvent : public base::SubEvent {
+      public:
+         HldMessage fMsg;
+
+         HldSubEvent() : base::SubEvent(), fMsg() {}
+         HldSubEvent(const HldMessage& msg) : base::SubEvent(), fMsg(msg) {}
+         virtual ~HldSubEvent() {}
+
+         /** Method returns event multiplicity - that ever it means */
+         virtual unsigned Multiplicity() const { return 1; }
+   };
 
    class HldProcessor : public base::StreamProc {
 
@@ -55,6 +67,8 @@ namespace hadaq {
          void AddTrb(TrbProcessor* trb, unsigned id);
 
          virtual void CreateBranch(TTree* t);
+
+         virtual void Store(base::Event* ev);
 
       public:
 
