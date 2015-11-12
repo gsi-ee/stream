@@ -645,6 +645,8 @@ bool base::ProcMgr::ProcessEvent(base::Event* evt)
       if (fProc[n]->IsStoreEnabled())
          fProc[n]->Store(evt);
 
+   StoreEvent();
+
    return true;
 }
 

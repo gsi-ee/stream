@@ -365,10 +365,10 @@ void hadaq::TrbProcessor::SetCrossProcess(bool on)
 }
 
 
-void hadaq::TrbProcessor::CreateBranch(TTree* t)
+void hadaq::TrbProcessor::CreateBranch(TTree*)
 {
    if(mgr()->IsTriggeredAnalysis()) {
-      mgr()->CreateBranch(t, GetName(), "hadaq::TrbMessage", (void**)&pMsg);
+      mgr()->CreateBranch(GetName(), "hadaq::TrbMessage", (void**)&pMsg);
    }
 }
 

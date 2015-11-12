@@ -138,11 +138,11 @@ void hadaq::HldProcessor::SetPrintRawData(bool on)
       iter->second->SetPrintRawData(on);
 }
 
-void hadaq::HldProcessor::CreateBranch(TTree* t)
+void hadaq::HldProcessor::CreateBranch(TTree*)
 {
    if(mgr()->IsTriggeredAnalysis()) {
       pMsg = &fMsg;
-      mgr()->CreateBranch(t, GetName(), "hadaq::HldMessage", (void**)&pMsg);
+      mgr()->CreateBranch(GetName(), "hadaq::HldMessage", (void**)&pMsg);
    }
 }
 

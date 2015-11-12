@@ -102,8 +102,9 @@ namespace base {
          // create data store, for the moment - ROOT tree
          virtual bool CreateStore(const char* storename) { return false; }
          virtual bool CloseStore() { return false; }
-         virtual bool CreateBranch(TTree* t, const char* name, const char* class_name, void** obj) { return false; }
-         virtual bool CreateBranch(TTree* t, const char* name, void* member, const char* kind) { return false; }
+         virtual bool CreateBranch(const char* name, const char* class_name, void** obj) { return false; }
+         virtual bool CreateBranch(const char* name, void* member, const char* kind) { return false; }
+         virtual bool StoreEvent() { return false; }
 
          // method to register ROOT objects, object should be derived from TObject class
          // if returns true, object is registered and will be owned by framework

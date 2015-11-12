@@ -14,13 +14,13 @@ class TRootProcMgr : public base::ProcMgr {
       TRootProcMgr();
       virtual ~TRootProcMgr();
 
-      virtual bool ProcessEvent(base::Event* evt);
-
       virtual bool CreateStore(const char* storename);
       virtual bool CloseStore();
 
-      virtual bool CreateBranch(TTree* t, const char* name, const char* class_name, void** obj);
-      virtual bool CreateBranch(TTree* t, const char* name, void* member, const char* kind);
+      virtual bool CreateBranch(const char* name, const char* class_name, void** obj);
+      virtual bool CreateBranch(const char* name, void* member, const char* kind);
+
+      virtual bool StoreEvent();
 
       bool CallFunc(const char* funcname, void* arg);
 };

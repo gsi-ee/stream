@@ -1335,20 +1335,20 @@ void hadaq::TdcProcessor::IncCalibration(unsigned ch, bool rising, unsigned fine
    }
 }
 
-void hadaq::TdcProcessor::CreateBranch(TTree* t)
+void hadaq::TdcProcessor::CreateBranch(TTree*)
 {
    switch(GetStoreKind()) {
       case 1:
          pStoreVect = &fDummyVect;
-         mgr()->CreateBranch(t, GetName(), "std::vector<hadaq::TdcMessageExt>", (void**) &pStoreVect);
+         mgr()->CreateBranch(GetName(), "std::vector<hadaq::TdcMessageExt>", (void**) &pStoreVect);
          break;
       case 2:
          pStoreFloat = &fStoreFloat;
-         mgr()->CreateBranch(t, GetName(), "std::vector<hadaq::MessageFloat>", (void**) &pStoreFloat);
+         mgr()->CreateBranch(GetName(), "std::vector<hadaq::MessageFloat>", (void**) &pStoreFloat);
          break;
       case 3:
          pStoreDouble = &fStoreDouble;
-         mgr()->CreateBranch(t, GetName(), "std::vector<hadaq::MessageDouble>", (void**) &pStoreDouble);
+         mgr()->CreateBranch(GetName(), "std::vector<hadaq::MessageDouble>", (void**) &pStoreDouble);
          break;
       default:
          break;

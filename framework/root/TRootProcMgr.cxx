@@ -16,12 +16,11 @@ TRootProcMgr::~TRootProcMgr()
    CloseStore();
 }
 
-
-bool TRootProcMgr::ProcessEvent(base::Event* evt)
+bool TRootProcMgr::StoreEvent()
 {
-   if (!base::ProcMgr::ProcessEvent(evt)) return false;
+   if (fTree==0) return false;
 
-   if (fTree) fTree->Fill();
+   fTree->Fill();
 
    return true;
 }
@@ -48,17 +47,17 @@ bool TRootProcMgr::CloseStore()
    return true;
 }
 
-bool TRootProcMgr::CreateBranch(TTree* t, const char* name, const char* class_name, void** obj)
+bool TRootProcMgr::CreateBranch(const char* name, const char* class_name, void** obj)
 {
-   if (t==0) return false;
-   t->Branch(name, class_name, obj);
+   if (fTree==0) return false;
+   fTree->Branch(name, class_name, obj);
    return true;
 }
 
-bool TRootProcMgr::CreateBranch(TTree* t, const char* name, void* member, const char* kind)
+bool TRootProcMgr::CreateBranch(const char* name, void* member, const char* kind)
 {
-   if (t==0) return false;
-   t->Branch(name, member, kind);
+   if (fTree==0) return false;
+   fTree->Branch(name, member, kind);
    return true;
 }
 

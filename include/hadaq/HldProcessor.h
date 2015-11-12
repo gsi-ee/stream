@@ -90,7 +90,7 @@ namespace hadaq {
          /** Way to register trb processor */
          void AddTrb(TrbProcessor* trb, unsigned id);
 
-         virtual void CreateBranch(TTree* t);
+         virtual void CreateBranch(TTree*);
 
          virtual void Store(base::Event* ev);
 
