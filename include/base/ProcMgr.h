@@ -146,6 +146,8 @@ namespace base {
          /** Analyze new data, if triggered analysis configured - immediately produce new event */
          bool AnalyzeNewData(base::Event* &evt);
 
+         bool HasTrigEvent() const { return fTrigEvent!=0; }
+
          bool AddToTrigEvent(const std::string& name, base::SubEvent* sub);
 
          /** Very central method - select if possible data for next event

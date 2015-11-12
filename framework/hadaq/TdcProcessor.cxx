@@ -657,7 +657,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    bool iserr(false), isfirstepoch(false), rawprint(false), missinghit(false), dostore(false);
 
    hadaq::TdcSubEvent* trig_subevnt = 0;
-   if (first_scan && IsTriggeredAnalysis() && IsStoreEnabled()) {
+   if (first_scan && IsTriggeredAnalysis() && IsStoreEnabled() && mgr()->HasTrigEvent()) {
       dostore = true;
       switch (GetStoreKind()) {
          case 1: trig_subevnt = new hadaq::TdcSubEvent; break;

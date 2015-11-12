@@ -221,7 +221,7 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
       }
    }
 
-   if (mgr()->IsTriggeredAnalysis()) {
+   if (mgr()->IsTriggeredAnalysis() && mgr()->HasTrigEvent()) {
       if (evcnt>1)
          fprintf(stderr, "event count %u bigger than 1 - not work for triggered analysis\n", evcnt);
       mgr()->AddToTrigEvent(GetName(), new hadaq::HldSubEvent(fMsg));
