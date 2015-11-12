@@ -661,8 +661,20 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       dostore = true;
       switch (GetStoreKind()) {
          case 1: trig_subevnt = new hadaq::TdcSubEvent; break;
-         case 2: fStoreFloat.clear(); break;
-         case 3: fStoreDouble.clear(); break;
+         case 2: {
+            fStoreFloat.clear();
+            // strange effect when capacity too low - it corrupts data in the buffer??
+            if (fStoreFloat.capacity() < buf.datalen()/4)
+               fStoreFloat.resize(buf.datalen()/4);
+            break;
+         }
+         case 3: {
+            fStoreDouble.clear();
+            if (fStoreDouble.capacity() < buf.datalen()/4)
+               fStoreDouble.resize(buf.datalen()/4);
+            break;
+         }
+
          default: break; // not supported
       }
    }
