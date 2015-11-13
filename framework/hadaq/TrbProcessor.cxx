@@ -70,6 +70,7 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc) :
    fPrintErrCnt = 30;
 
    fAutoCreate = false;
+   fCalibrProgress = 0.;
 
    pMsg = &fMsg;
 
@@ -757,7 +758,10 @@ double hadaq::TrbProcessor::CheckAutoCalibration()
    }
 
    // return negative value when auto-calibration not fully completed
-   return ready ? p1 : -p0;
+
+   fCalibrProgress = ready ? p1 : -p0;
+
+   return fCalibrProgress;
 }
 
 
