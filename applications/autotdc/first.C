@@ -3,8 +3,8 @@
 
 void first()
 {
-   // base::ProcMgr::instance()->SetRawAnalysis(true);
-   base::ProcMgr::instance()->SetTriggeredAnalysis(true);
+   base::ProcMgr::instance()->SetRawAnalysis(true);
+   // base::ProcMgr::instance()->SetTriggeredAnalysis(true);
 
    // all new instances get this value
    base::ProcMgr::instance()->SetHistFilling(4);
@@ -41,7 +41,12 @@ void first()
    // 1 - std::vector<hadaq::TdcMessageExt> - includes original TDC message
    // 2 - std::vector<hadaq::MessageFloat>  - compact form, without channel 0, stamp as float (relative to ch0)
    // 3 - std::vector<hadaq::MessageDouble> - compact form, with channel 0, absolute time stamp as double
-   hld->SetStoreKind(3);
+   base::ProcMgr::instance()->SetStoreKind(3);
+
+
+   // when configured as output in DABC, one specifies:
+   // <OutputPort name="Output2" url="stream://file.root?maxsize=5000&kind=3"/>
+
 
 }
 

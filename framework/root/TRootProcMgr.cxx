@@ -6,8 +6,7 @@
 #include "TInterpreter.h"
 
 TRootProcMgr::TRootProcMgr() :
-   base::ProcMgr(),
-   fFile(0)
+   base::ProcMgr()
 {
 }
 
@@ -28,21 +27,21 @@ bool TRootProcMgr::StoreEvent()
 bool TRootProcMgr::CreateStore(const char* fname)
 {
    if (fTree) return true;
-   fFile = TFile::Open(fname, "RECREATE","Store for stream events");
-   if (fFile==0) return false;
+   TFile* f = TFile::Open(fname, "RECREATE","Store for stream events");
+   if (f==0) return false;
    fTree = new TTree("T", "Tree with stream data");
    return true;
 }
 
 bool TRootProcMgr::CloseStore()
 {
-   if (fTree && fFile) {
-      fFile->cd();
+   if (fTree) {
+      TFile* f = fTree->GetCurrentFile();
+      f->cd();
       fTree->Write();
       delete fTree;
       fTree = 0;
-      delete fFile;
-      fFile = 0;
+      delete f;
    }
    return true;
 }

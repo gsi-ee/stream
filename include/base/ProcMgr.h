@@ -46,6 +46,7 @@ namespace base {
          AnalysisKind             fAnalysisKind;    //!< ignore all events, only single scan, not output events
          TTree                   *fTree;            //!< abstract tree pointer, will be used in ROOT implementation
          int                      fDfltHistLevel;   //!< default histogram fill level for any new created processor
+         int                      fDfltStoreKind;   //!< default store kind for any new created processor
          base::Event             *fTrigEvent;       //!< current event, filled when performing triggered analysis
 
          static ProcMgr* fInstance;                 //!
@@ -78,7 +79,11 @@ namespace base {
          StreamProc* GetProc(unsigned n) const { return n<NumProc() ? fProc[n] : 0; }
          StreamProc* FindProc(const char* name) const;
 
+         /** Set histogram fill level for all processors */
          void SetHistFilling(int lvl);
+
+         /** Set store kind for all processors */
+         virtual void SetStoreKind(unsigned kind = 1);
 
          /** When returns true, indicates that simple histogram format is used */
          virtual bool InternalHistFormat() const { return true; }

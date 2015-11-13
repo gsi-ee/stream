@@ -27,7 +27,6 @@ base::Processor::Processor(const char* name, unsigned brdid) :
    fPrefix = fName;
 
    SetManager(base::ProcMgr::instance());
-
 }
 
 
@@ -42,6 +41,7 @@ void base::Processor::SetManager(base::ProcMgr* m)
    if (fMgr) {
       fIntHistFormat = fMgr->InternalHistFormat();
       fHistFilling = fMgr->fDfltHistLevel;
+      fStoreKind = fMgr->fDfltStoreKind;
    }
 }
 

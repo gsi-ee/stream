@@ -18,6 +18,7 @@ base::ProcMgr::ProcMgr() :
    fAnalysisKind(kind_Stream),
    fTree(0),
    fDfltHistLevel(0),
+   fDfltStoreKind(0),
    fTrigEvent(0)
 {
    if (fInstance==0) fInstance = this;
@@ -66,8 +67,18 @@ void base::ProcMgr::SetHistFilling(int lvl)
    fDfltHistLevel = lvl;
    for (unsigned n=0;n<fProc.size();n++)
       fProc[n]->SetHistFilling(lvl);
+   for (unsigned n=0;n<fEvProc.size();n++)
+      fEvProc[n]->SetHistFilling(lvl);
 }
 
+void base::ProcMgr::SetStoreKind(unsigned kind)
+{
+   fDfltStoreKind = kind;
+   for (unsigned n=0;n<fProc.size();n++)
+      fProc[n]->SetStoreKind(kind);
+   for (unsigned n=0;n<fEvProc.size();n++)
+      fEvProc[n]->SetStoreKind(kind);
+}
 
 base::H1handle base::ProcMgr::MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle)
 {

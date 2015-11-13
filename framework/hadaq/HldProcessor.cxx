@@ -201,7 +201,7 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
 
             mgr()->UserPreLoop(trb); // while loop already running, call it once again for new processor
 
-            printf("Create TRB 0x%04x procmgr %p lvl %d \n", sub->GetId(), base::ProcMgr::instance(), trb->HistFillLevel());
+            printf("Create TRB 0x%04x procmgr %p lvl %d \n", sub->GetId(), trb->mgr(), trb->HistFillLevel());
 
             // in auto mode only TDC processors should be created
             trb->ScanSubEvent(sub, ev->GetSeqNr());
