@@ -45,7 +45,9 @@ void first()
 
 }
 
-void after_create(hadaq::HldProcessor* hld)
+// extern "C" required by DABC to find function from compiled code
+
+extern "C" void after_create(hadaq::HldProcessor* hld)
 {
    printf("Called after all sub-components are created\n");
 
