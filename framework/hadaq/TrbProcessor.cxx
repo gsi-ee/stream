@@ -60,6 +60,7 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc) :
 
    fSyncTrigMask = 0;
    fSyncTrigValue = 0;
+   fCalibrTrigger = 0xFFFF;
 
    fUseTriggerAsSync = false;
    fCompensateEpochReset = false;
