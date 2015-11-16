@@ -26,18 +26,15 @@ namespace base {
    };
 
    enum AnalysisKind {
-      kind_RawOnly,     //!< make first scan only, no output produced
+      kind_RawOnly,     //!< make first scan only, no output can be produced
+      kind_Raw,         //!< make first scan only, no output event produced, one could switch to other kinds
       kind_Triggered,   //!< triggered mode, after each input event single output event is produced and all data flushed
       kind_Stream       //!< normal analysis
    };
 
-
    typedef void* H1handle;
    typedef void* H2handle;
    typedef void* C1handle;
-
 }
-
-
 
 #endif

@@ -679,6 +679,9 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       }
    }
 
+   //static int ddd = 0;
+   //if (ddd++ % 10000 == 0) printf("%s dostore %d istriggered %d hasevt %d kind %d\n", GetName(), dostore, IsTriggeredAnalysis(), mgr()->HasTrigEvent(), GetStoreKind());
+
    uint32_t first_epoch(0);
 
    unsigned epoch_shift = 0;

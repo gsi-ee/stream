@@ -121,8 +121,8 @@ namespace base {
 
          // this is list of generic methods for common data processing
 
-         bool IsRawAnalysis() const { return fAnalysisKind == kind_RawOnly; }
-         void SetRawAnalysis(bool on = true) { fAnalysisKind = on ? kind_RawOnly : kind_Stream; }
+         bool IsRawAnalysis() const { return fAnalysisKind == kind_Raw; }
+         void SetRawAnalysis(bool on = true) { fAnalysisKind = on ? kind_Raw : kind_Stream; }
 
          bool IsTriggeredAnalysis() const { return fAnalysisKind == kind_Triggered; }
          void SetTriggeredAnalysis(bool on = true) { fAnalysisKind = on ? kind_Triggered : kind_Stream; }
@@ -163,7 +163,7 @@ namespace base {
          /** Process event - consequently calls all event processors */
          virtual bool ProcessEvent(base::Event* evt);
 
-         void UserPreLoop(Processor* only_proc = 0);
+         void UserPreLoop(Processor* only_proc = 0, bool call_when_running = false);
 
          void UserPostLoop(Processor* only_proc = 0);
    };

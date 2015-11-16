@@ -153,8 +153,8 @@ namespace base {
          void SetRawScanOnly() { fAnalysisKind = kind_RawOnly; }
          bool IsRawScanOnly() const { return fAnalysisKind == kind_RawOnly; }
 
+         bool IsRawAnalysis() const { return fAnalysisKind <= kind_Raw; }
          bool IsTriggeredAnalysis() const { return fAnalysisKind == kind_Triggered; }
-
          bool IsStreamAnalysis() const { return fAnalysisKind == kind_Stream; }
 
          /** Method indicate if any kind of time-synchronization technique

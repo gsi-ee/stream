@@ -208,7 +208,7 @@ bool base::StreamProc::ScanNewBuffersTm()
    // this only can be done when appropriate syncs are produced
 
    // for raw processor no any time is interesting
-   if (IsRawScanOnly()) return true;
+   if (IsRawAnalysis()) return true;
 
    // printf("%s ScanNewBuffersTm() indx %u size %u\n", GetName(), fQueueScanIndexTm, fQueue.size());
 
@@ -260,7 +260,7 @@ bool base::StreamProc::VerifyFlushTime(const base::GlobalTime_t& flush_time)
    // for that buffer time should be assigned
 
    // when processor doing raw scan, one can ignore flushing as well
-   if (IsRawScanOnly()) return true;
+   if (IsRawAnalysis()) return true;
 
    if ((flush_time==0.) || (fQueueScanIndexTm<2)) return false;
 
@@ -474,7 +474,7 @@ bool base::StreamProc::DistributeTriggers(const base::GlobalMarksQueue& queue)
    // TODO: make each trigger with unique id
 
    // no need for trigger when doing only raw scan
-   if (IsRawScanOnly()) return true;
+   if (IsRawAnalysis()) return true;
 
    while (fGlobalMarks.size() < queue.size()) {
       unsigned indx = fGlobalMarks.size();
@@ -501,7 +501,7 @@ bool base::StreamProc::DistributeTriggers(const base::GlobalMarksQueue& queue)
 
 bool base::StreamProc::AppendSubevent(base::Event* evt)
 {
-   if (IsRawScanOnly()) return true;
+   if (IsRawAnalysis()) return true;
 
    if (fGlobalMarks.size()==0) {
       fprintf(stderr, "global trigger queue empty !!!\n");
@@ -619,10 +619,8 @@ bool base::StreamProc::ScanDataForNewTriggers()
    // time of last trigger is used to check which buffers can be scanned
    // time of last buffer is used to check which triggers we could check
 
-   // printf("Proc:%s  Try scan data numtrig %u scan tm %u raw %u\n", GetName(), fGlobalMarks.size(), fQueueScanIndexTm, IsRawScanOnly());
-
    // never do any seconds scan in such situation
-   if (IsRawScanOnly()) return true;
+   if (IsRawAnalysis()) return true;
 
    // never scan when no triggers are exists
    if (fGlobalMarks.size() == 0) return true;

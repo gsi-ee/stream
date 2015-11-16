@@ -193,8 +193,7 @@ double base::ProcMgr::GetC1Limit(C1handle c1, bool isleft)
    return 0;
 }
 
-
-void base::ProcMgr::UserPreLoop(Processor* only_proc)
+void base::ProcMgr::UserPreLoop(Processor* only_proc, bool call_when_running)
 {
    for (unsigned n=0;n<fProc.size();n++) {
       if (fProc[n]==0) continue;
@@ -209,14 +208,19 @@ void base::ProcMgr::UserPreLoop(Processor* only_proc)
       if (!IsStreamAnalysis())
          fProc[n]->SetSynchronisationKind(base::StreamProc::sync_None);
 
-      fProc[n]->UserPreLoop();
+      if (!call_when_running)
+         fProc[n]->UserPreLoop();
    }
 
    for (unsigned n=0;n<fEvProc.size();n++) {
       if (fEvProc[n]==0) continue;
       if ((only_proc!=0) && (fEvProc[n]!=only_proc)) continue;
-      if (fTree && fEvProc[n]->IsStoreEnabled()) fEvProc[n]->CreateBranch(fTree);
-      fEvProc[n]->UserPreLoop();
+
+      if (fTree && fEvProc[n]->IsStoreEnabled())
+         fEvProc[n]->CreateBranch(fTree);
+
+      if (!call_when_running)
+         fEvProc[n]->UserPreLoop();
    }
 }
 
@@ -602,7 +606,7 @@ bool base::ProcMgr::ProduceNextEvent(base::Event* &evt)
    unsigned numready = fTriggers.size();
 
    for (unsigned n=0;n<fProc.size();n++) {
-      if (fProc[n]->IsRawScanOnly()) continue;
+      if (fProc[n]->IsRawAnalysis()) continue;
       unsigned local = fProc[n]->NumReadySubevents();
       if (local<numready) numready = local;
    }

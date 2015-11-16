@@ -1,3 +1,8 @@
+16.11.2015
+1. Differentiate btween raw and raw-only analysis kind. In first case one could switch
+   analysis to other kind, raw-only analysis remains so
+
+
 10.11.2015
 1. Simplify logic of triggered analysis. Output structures can be created already during
    first buffer scan - one do not needs any artificial sync and trigger marks.

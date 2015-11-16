@@ -122,6 +122,7 @@ void hadaq::HldProcessor::SetTriggerWindow(double left, double right)
       iter->second->SetTriggerWindow(left, right);
 }
 
+
 void hadaq::HldProcessor::SetStoreKind(unsigned kind)
 {
    base::StreamProc::SetStoreKind(kind);
@@ -138,6 +139,7 @@ void hadaq::HldProcessor::SetPrintRawData(bool on)
       iter->second->SetPrintRawData(on);
 }
 
+
 void hadaq::HldProcessor::CreateBranch(TTree*)
 {
    if(mgr()->IsTriggeredAnalysis()) {
@@ -145,6 +147,7 @@ void hadaq::HldProcessor::CreateBranch(TTree*)
       mgr()->CreateBranch(GetName(), "hadaq::HldMessage", (void**)&pMsg);
    }
 }
+
 
 bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
 {
@@ -229,6 +232,7 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
 
    return true;
 }
+
 
 void hadaq::HldProcessor::Store(base::Event* ev)
 {
