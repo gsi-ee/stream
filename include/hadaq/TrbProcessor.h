@@ -100,6 +100,8 @@ namespace hadaq {
 
          void AfterEventScan();
 
+         void CreatePerTDCHistos();
+
          virtual void CreateBranch(TTree* t);
 
       public:

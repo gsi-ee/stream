@@ -91,7 +91,7 @@ hadaq::TdcProcessor* hadaq::TrbProcessor::FindTDC(unsigned tdcid) const
    return res;
 }
 
-void hadaq::TrbProcessor::UserPreLoop()
+void hadaq::TrbProcessor::CreatePerTDCHistos()
 {
    unsigned numtdc = fMap.size();
    if (numtdc<4) numtdc = 4;
@@ -100,7 +100,7 @@ void hadaq::TrbProcessor::UserPreLoop()
    for (SubProcMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
       if (cnt++>0) lbl.append(",");
       char sbuf[50];
-      sprintf(sbuf, "%04X", iter->second->GetID());
+      sprintf(sbuf, "0x%04X", iter->second->GetID());
       lbl.append(sbuf);
    }
 
@@ -113,6 +113,12 @@ void hadaq::TrbProcessor::UserPreLoop()
       fErrPerBrd = MakeH1("ErrPerTDC", "Number of errors per TDC", numtdc, 0, numtdc, lbl.c_str());
    if (!fHitsPerBrd)
       fHitsPerBrd = MakeH1("HitsPerTDC", "Number of data hits per TDC", numtdc, 0, numtdc, lbl.c_str());
+}
+
+void hadaq::TrbProcessor::UserPreLoop()
+{
+   if (fMap.size()>0)
+      CreatePerTDCHistos();
 }
 
 
@@ -420,6 +426,8 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
 
    fMsg.fTrigSyncIdFound = false;
 
+   bool did_create_tdc = false;
+
 //   RAWPRINT("Scan TRB3 raw event 4-bytes size %u\n", trbSubEvSize);
 
    while (ix < trbSubEvSize) {
@@ -632,6 +640,8 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
 
                mgr()->UserPreLoop(tdcproc); // while loop already running, call it once again for new processor
 
+               did_create_tdc = true;
+
                printf("%s: Create TDC 0x%04x nch:%u edges:%u\n", GetName(), dataid, numch, edges);
 
                // in auto-create mode buffers are not processed - normally it is only first event
@@ -648,6 +658,8 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
       RAWPRINT("Unknown header 0x%04x length %u in TRB 0x%04x subevent\n", data & 0xFFFF, datalen, GetID());
       ix+=datalen;
    }
+
+   if (did_create_tdc) CreatePerTDCHistos();
 
    if (fUseTriggerAsSync) {
       fMsg.fTrigSyncIdFound = true;
