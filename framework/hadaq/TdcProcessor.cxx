@@ -430,8 +430,8 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
       }
    }
 
-   if (TestCanCalibrate()>=1.)
-      PerformAutoCalibrate();
+   fCalibrProgress = TestCanCalibrate();
+   if (fCalibrProgress>=1.) PerformAutoCalibrate();
 }
 
 double hadaq::TdcProcessor::TestCanCalibrate()
@@ -631,6 +631,9 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
          rec.last_tot = 0.;
          rec.rising_new_value = false;
       }
+
+   fCalibrProgress = TestCanCalibrate();
+   if (fCalibrProgress>=1.) PerformAutoCalibrate();
 
    return tgt ? (tgtindx - tgtindx0) : cnt;
 }

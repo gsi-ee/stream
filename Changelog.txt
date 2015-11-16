@@ -1,6 +1,8 @@
 16.11.2015
 1. Differentiate btween raw and raw-only analysis kind. In first case one could switch
    analysis to other kind, raw-only analysis remains so
+2. TDC calibration called individually for each TDC, HLD or TRB processor can only
+   check calibration status.
 
 
 10.11.2015

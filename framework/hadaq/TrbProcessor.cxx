@@ -70,7 +70,6 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc) :
    fPrintErrCnt = 30;
 
    fAutoCreate = false;
-   fCalibrProgress = 0.;
 
    pMsg = &fMsg;
 
@@ -745,9 +744,6 @@ double hadaq::TrbProcessor::CheckAutoCalibration()
    for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++) {
       if (!iter->second->IsTDC()) continue;
       TdcProcessor* tdc = (TdcProcessor*) iter->second;
-      tdc->fCalibrProgress = tdc->TestCanCalibrate();
-
-      if (tdc->fCalibrProgress>=1.) tdc->PerformAutoCalibrate();
 
       if (tdc->GetCalibrStatus().find("Ready")==0) {
          if (p1 > tdc->fCalibrProgress) p1 = tdc->fCalibrProgress;
@@ -758,10 +754,7 @@ double hadaq::TrbProcessor::CheckAutoCalibration()
    }
 
    // return negative value when auto-calibration not fully completed
-
-   fCalibrProgress = ready ? p1 : -p0;
-
-   return fCalibrProgress;
+   return ready ? p1 : -p0;
 }
 
 

@@ -43,9 +43,7 @@ class TFirstStepProcessor : public TGo4EventProcessor,
       virtual void UserPreLoop();
       virtual void UserPostLoop();
 
-   private:
-
-      ClassDef(TFirstStepProcessor,1)
+   ClassDef(TFirstStepProcessor,1)
 };
 
 #endif

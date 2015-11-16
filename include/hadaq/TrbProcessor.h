@@ -72,8 +72,6 @@ namespace hadaq {
          TrbMessage  fMsg;            ///< used for TTree store
          TrbMessage* pMsg;            ///< used for TTree store
 
-         double fCalibrProgress;           ///< last value of calibration progress
-
          static unsigned gNumChannels;     ///< default number of channels
          static unsigned gEdgesMask;       ///< default edges mask
          static bool gIgnoreSync;          ///< ignore sync in analysis, very rare used for sync with other data sources
@@ -261,14 +259,9 @@ namespace hadaq {
          /** Calibrate hits in subevent */
          unsigned TransformSubEvent(hadaqs::RawSubevent* sub, void* tgtbuf = 0, unsigned tgtlen = 0);
 
-         /** Checks if all TDC can perform auto calibration and do it,
-          * return progress from 0 to 1 */
+         /** Checks current calibration level for all TDCs, return progress.
+          * Negative values - not yet ready */
          double CheckAutoCalibration();
-
-         /** Return last value from progress */
-         double GetCalibrProgress() const { return fCalibrProgress; }
-
-
    };
 }
 

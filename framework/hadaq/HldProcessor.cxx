@@ -2,6 +2,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <math.h>
 
 #include "base/defines.h"
 #include "base/ProcMgr.h"
@@ -97,12 +98,16 @@ hadaq::TdcProcessor* hadaq::HldProcessor::GetTDC(unsigned indx) const
 
 double hadaq::HldProcessor::CheckAutoCalibration()
 {
-   double lvl = 1.;
+   double lvl0(0.), lvl1(1.);
    for (TrbProcMap::const_iterator iter = fMap.begin(); iter != fMap.end(); iter++) {
       double v = iter->second->CheckAutoCalibration();
-      if (v<lvl) lvl = v;
+      if (v<0.) {
+         if (v < lvl0) lvl0 = v;
+      } else {
+         if (v < lvl1) lvl1 = v;
+      }
    }
-   return lvl;
+   return lvl0<0. ? lvl0 : lvl1;
 }
 
 void hadaq::HldProcessor::ConfigureCalibration(const std::string& name, long period)

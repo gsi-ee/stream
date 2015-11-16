@@ -8,6 +8,8 @@
 #include "TSystem.h"
 #include "TROOT.h"
 #include "TCanvas.h"
+#include "TTimer.h"
+#include "TSystem.h"
 #include "TUrl.h"
 
 #include "TGo4WinCond.h"
@@ -89,6 +91,8 @@ void TFirstStepProcessor::UserPostLoop()
 Bool_t TFirstStepProcessor::BuildEvent(TGo4EventElement* outevnt)
 {
 //   TGo4Log::Info("Start processing!!!");
+
+   gSystem->ProcessEvents();
 
    TGo4MbsEvent* mbsev = (TGo4MbsEvent*) GetInputEvent();
    base::Event* event = (TStreamEvent*) outevnt;
@@ -361,4 +365,3 @@ bool TFirstStepProcessor::RegisterObject(TObject* tobj, const char* subfolder)
 
    return false;
 }
-
