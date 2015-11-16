@@ -115,9 +115,6 @@ namespace hadaq {
           *  \par period how often automatic calibration will be performed. 0 - never, -1 - at the end of run */
          void ConfigureCalibration(const std::string& name, long period);
 
-         /** Check auto-calibration for all TRBs */
-         double CheckAutoCalibration();
-
          /** Set event type, only used in the analysis */
          void SetEventTypeSelect(unsigned evid) { fEventTypeSelect = evid; }
 

@@ -3,6 +3,7 @@
    analysis to other kind, raw-only analysis remains so
 2. TDC calibration called individually for each TDC, HLD or TRB processor can only
    check calibration status.
+3. Remove no longer used CheckAutoCalibration methods
 
 
 10.11.2015

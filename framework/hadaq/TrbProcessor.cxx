@@ -731,30 +731,3 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub, void* 
 
    return 0;
 }
-
-double hadaq::TrbProcessor::CheckAutoCalibration()
-{
-   // check and perform auto calibration for all TDCs
-   // return calibration progress
-   // negative when not all TDCs are ready, positive when all TDC were calibrated at least once
-
-   double p0(0), p1(1);
-   bool ready(true);
-
-   for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++) {
-      if (!iter->second->IsTDC()) continue;
-      TdcProcessor* tdc = (TdcProcessor*) iter->second;
-
-      if (tdc->GetCalibrStatus().find("Ready")==0) {
-         if (p1 > tdc->fCalibrProgress) p1 = tdc->fCalibrProgress;
-      } else {
-         if (p0 < tdc->fCalibrProgress) p0 = tdc->fCalibrProgress;
-         ready = false;
-      }
-   }
-
-   // return negative value when auto-calibration not fully completed
-   return ready ? p1 : -p0;
-}
-
-

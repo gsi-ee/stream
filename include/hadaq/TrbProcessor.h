@@ -258,10 +258,6 @@ namespace hadaq {
 
          /** Calibrate hits in subevent */
          unsigned TransformSubEvent(hadaqs::RawSubevent* sub, void* tgtbuf = 0, unsigned tgtlen = 0);
-
-         /** Checks current calibration level for all TDCs, return progress.
-          * Negative values - not yet ready */
-         double CheckAutoCalibration();
    };
 }
 

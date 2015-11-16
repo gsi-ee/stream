@@ -96,20 +96,6 @@ hadaq::TdcProcessor* hadaq::HldProcessor::GetTDC(unsigned indx) const
    return 0;
 }
 
-double hadaq::HldProcessor::CheckAutoCalibration()
-{
-   double lvl0(0.), lvl1(1.);
-   for (TrbProcMap::const_iterator iter = fMap.begin(); iter != fMap.end(); iter++) {
-      double v = iter->second->CheckAutoCalibration();
-      if (v<0.) {
-         if (v < lvl0) lvl0 = v;
-      } else {
-         if (v < lvl1) lvl1 = v;
-      }
-   }
-   return lvl0<0. ? lvl0 : lvl1;
-}
-
 void hadaq::HldProcessor::ConfigureCalibration(const std::string& name, long period)
 {
    fCalibrName = name;
