@@ -93,6 +93,12 @@ namespace base {
          /** Returns number of messages */
          unsigned Size() const { return fExtMessages.size(); }
 
+         /** Returns capacity of the message container */
+         unsigned Capacity() const { return fExtMessages.capacity(); }
+
+         /** Change capacity of the container */
+         void SetCapacity(unsigned sz) { fExtMessages.reserve(sz); }
+
          /** Returns message with specified index */
          MsgClass& msg(unsigned indx) { return fExtMessages[indx]; }
 

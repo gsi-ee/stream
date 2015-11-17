@@ -659,22 +659,30 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
    bool iserr(false), isfirstepoch(false), rawprint(false), missinghit(false), dostore(false);
 
-   hadaq::TdcSubEvent* trig_subevnt = 0;
    if (first_scan && IsTriggeredAnalysis() && IsStoreEnabled() && mgr()->HasTrigEvent()) {
       dostore = true;
       switch (GetStoreKind()) {
-         case 1: trig_subevnt = new hadaq::TdcSubEvent; break;
+         case 1: {
+            hadaq::TdcSubEvent* subevnt = new hadaq::TdcSubEvent;
+            mgr()->AddToTrigEvent(GetName(), subevnt);
+            pStoreVect = subevnt->vect_ptr();
+            pStoreVect->reserve(buf.datalen()/4);
+            break;
+         }
          case 2: {
-            fStoreFloat.clear();
+            hadaq::TdcSubEventFloat* subevnt = new hadaq::TdcSubEventFloat;
+            mgr()->AddToTrigEvent(GetName(), subevnt);
+            pStoreFloat = subevnt->vect_ptr();
             // strange effect when capacity too low - it corrupts data in the buffer??
-            if (fStoreFloat.capacity() < buf.datalen()/4)
-               fStoreFloat.resize(buf.datalen()/4);
+            pStoreFloat->reserve(buf.datalen()/4);
             break;
          }
          case 3: {
-            fStoreDouble.clear();
-            if (fStoreDouble.capacity() < buf.datalen()/4)
-               fStoreDouble.resize(buf.datalen()/4);
+            hadaq::TdcSubEventDouble* subevnt = new hadaq::TdcSubEventDouble;
+            mgr()->AddToTrigEvent(GetName(), subevnt);
+            pStoreDouble = subevnt->vect_ptr();
+            // strange effect when capacity too low - it corrupts data in the buffer??
+            pStoreDouble->reserve(buf.datalen()/4);
             break;
          }
 
@@ -931,15 +939,14 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                if (dostore)
                   switch(GetStoreKind()) {
                      case 1:
-                        if (trig_subevnt)
-                           trig_subevnt->AddMsg(hadaq::TdcMessageExt(msg, (chid>0) ? localtm : ch0time));
+                        pStoreVect->push_back(hadaq::TdcMessageExt(msg, (chid>0) ? localtm : ch0time));
                         break;
                      case 2:
                         if (chid>0)
-                           fStoreFloat.push_back(hadaq::MessageFloat(chid, isrising, localtm*1e9));
+                           pStoreFloat->push_back(hadaq::MessageFloat(chid, isrising, localtm*1e9));
                         break;
                      case 3:
-                        fStoreDouble.push_back(hadaq::MessageDouble(chid, isrising, ch0time + localtm));
+                        pStoreDouble->push_back(hadaq::MessageDouble(chid, isrising, ch0time + localtm));
                         break;
                      default: break;
                   }
@@ -957,8 +964,18 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             unsigned indx = TestHitTime(globaltm, true, false);
 
             if (indx < fGlobalMarks.size()) {
-               // printf("!!!!!!!!!!!!!!!!!!!!!! ADD %s message ch %u diff %12.9f !!!!!!!!!!!!!!!!\n", GetName(), chid, globaltm - fGlobalMarks.item(indx).globaltm);
-               AddMessage(indx, (hadaq::TdcSubEvent*) fGlobalMarks.item(indx).subev, hadaq::TdcMessageExt(msg, chid>0 ? globaltm : ch0time));
+               switch(GetStoreKind()) {
+                  case 1:
+                     AddMessage(indx, (hadaq::TdcSubEvent*) fGlobalMarks.item(indx).subev, hadaq::TdcMessageExt(msg, chid>0 ? globaltm : ch0time));
+                     break;
+                  case 2:
+                     if (chid>0)
+                        AddMessage(indx, (hadaq::TdcSubEventFloat*) fGlobalMarks.item(indx).subev, hadaq::MessageFloat(chid, isrising, (globaltm - ch0time)*1e9));
+                     break;
+                  case 3:
+                     AddMessage(indx, (hadaq::TdcSubEventDouble*) fGlobalMarks.item(indx).subev, hadaq::MessageDouble(chid, isrising, globaltm));
+                     break;
+               }
             }
          }
 
@@ -1001,11 +1018,6 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    }
 
    if (first_scan) {
-
-      if (trig_subevnt!=0) {
-         // put event back to the trigger event
-         mgr()->AddToTrigEvent(GetName(), trig_subevnt);
-      }
 
       // if we use trigger as time marker
       if (fUseNativeTrigger && (ch0time!=0)) {
@@ -1375,18 +1387,30 @@ void hadaq::TdcProcessor::CreateBranch(TTree*)
 
 void hadaq::TdcProcessor::Store(base::Event* ev)
 {
-   if ((GetStoreKind() == 1) && (ev!=0)) {
-      // only for stream analysis use special handling when many events could be produced at once
+   // in case of triggered analysis all pointers already set
+   if ((ev==0) || IsTriggeredAnalysis()) return;
 
-      fDummyVect.clear();
+   base::SubEvent* sub0 = ev ? ev->GetSubEvent(GetName()) : 0;
+   if (sub0==0) return;
 
-      hadaq::TdcSubEvent* sub =
-            dynamic_cast<hadaq::TdcSubEvent*> (ev->GetSubEvent(GetName()));
-
-      // when subevent exists, use directly pointer on messages vector
-      if (sub!=0)
-         pStoreVect = sub->vect_ptr();
-      else
-         pStoreVect = &fDummyVect;
+   switch (GetStoreKind()) {
+      case 1: {
+         hadaq::TdcSubEvent* sub = dynamic_cast<hadaq::TdcSubEvent*> (sub0);
+         // when subevent exists, use directly pointer on messages vector
+         pStoreVect = sub ? sub->vect_ptr() : &fDummyVect;
+         break;
+      }
+      case 2: {
+         hadaq::TdcSubEventFloat* sub = dynamic_cast<hadaq::TdcSubEventFloat*> (sub0);
+         // when subevent exists, use directly pointer on messages vector
+         pStoreFloat = sub ? sub->vect_ptr() : &fStoreFloat;
+         break;
+      }
+      case 3: {
+         hadaq::TdcSubEventDouble* sub = dynamic_cast<hadaq::TdcSubEventDouble*> (sub0);
+         // when subevent exists, use directly pointer on messages vector
+         pStoreDouble = sub ? sub->vect_ptr() : &fStoreDouble;
+         break;
+      }
    }
 }

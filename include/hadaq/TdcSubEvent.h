@@ -27,7 +27,13 @@ namespace hadaq {
          stamp(_stamp)
       {
       }
+
+      bool operator<(const MessageFloat &rhs) const
+         { return (stamp < rhs.stamp); }
+
    };
+
+   typedef base::SubEventEx<hadaq::MessageFloat> TdcSubEventFloat;
 
    struct MessageDouble {
       uint8_t ch;    // channel and edge
@@ -45,8 +51,11 @@ namespace hadaq {
          stamp(_stamp)
       {
       }
+      bool operator<(const MessageDouble &rhs) const
+         { return (stamp < rhs.stamp); }
    };
 
+   typedef base::SubEventEx<hadaq::MessageDouble> TdcSubEventDouble;
 
 }
 

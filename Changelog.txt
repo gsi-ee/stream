@@ -1,3 +1,8 @@
+17.11.2015
+1. Store TDC data always in subevent - this let use different formats with go4 
+   output event. One also can use second.C in same way with all store kinds. 
+ 
+
 16.11.2015
 1. Differentiate btween raw and raw-only analysis kind. In first case one could switch
    analysis to other kind, raw-only analysis remains so
