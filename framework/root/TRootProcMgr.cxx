@@ -3,6 +3,7 @@
 #include "TTree.h"
 #include "TFile.h"
 #include "TROOT.h"
+#include "TUrl.h"
 #include "TInterpreter.h"
 
 TRootProcMgr::TRootProcMgr() :
@@ -27,6 +28,15 @@ bool TRootProcMgr::StoreEvent()
 bool TRootProcMgr::CreateStore(const char* fname)
 {
    if (fTree) return true;
+   TUrl url(fname);
+
+   int maxsize = -1;
+
+   if (url.HasOption("maxsize")) {
+      maxsize = url.GetIntValueFromOptions("maxsize");
+      if (url.GetFile()!=0) fname = url.GetFile();
+   }
+   if (maxsize>0) TTree::SetMaxTreeSize(maxsize*1024*1024);
    TFile* f = TFile::Open(fname, "RECREATE","Store for stream events");
    if (f==0) return false;
    fTree = new TTree("T", "Tree with stream data");
