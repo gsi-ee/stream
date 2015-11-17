@@ -253,7 +253,7 @@ namespace hadaq {
          bool LoadCalibrations(const char* fileprefix, double koef = 1.);
 
          /** Central method to configure way how calibrations will be performed */
-         void ConfigureCalibration(const std::string& name, long period);
+         void ConfigureCalibration(const std::string& name, long period, unsigned trig = 0xFFFF);
 
          /** Set calibration trigger type for all TDCs */
          void SetCalibrTrigger(unsigned trig = 0xFFFF);

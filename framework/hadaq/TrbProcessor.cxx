@@ -212,8 +212,10 @@ bool hadaq::TrbProcessor::LoadCalibrations(const char* fileprefix, double koef)
    return res;
 }
 
-void hadaq::TrbProcessor::ConfigureCalibration(const std::string& name, long period)
+void hadaq::TrbProcessor::ConfigureCalibration(const std::string& name, long period, unsigned trig)
 {
+   SetCalibrTrigger(trig);
+
    if (period > 0) SetAutoCalibrations(period);
 
    if (name.length() > 0) {

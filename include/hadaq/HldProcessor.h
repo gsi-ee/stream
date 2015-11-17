@@ -75,6 +75,7 @@ namespace hadaq {
 
          std::string fCalibrName;    ///< name of calibration for (auto)created components
          long fCalibrPeriod;         ///< how often calibration should be performed
+         unsigned fCalibrTrigger;    ///< default ID for calibration trigger
 
          base::H1handle fEvType;     ///< HADAQ event type
          base::H1handle fEvSize;     ///< HADAQ event size
@@ -112,8 +113,9 @@ namespace hadaq {
 
          /** Configure calibration for all components
           *  \par name  file prefix for calibrations. Could include path. Will be extend for individual TDC
-          *  \par period how often automatic calibration will be performed. 0 - never, -1 - at the end of run */
-         void ConfigureCalibration(const std::string& name, long period);
+          *  \par period how often automatic calibration will be performed. 0 - never, -1 - at the end of run
+          *  \par trig specifies trigger type used for calibration (0xFFFF means all kind of triggers) */
+         void ConfigureCalibration(const std::string& name, long period, unsigned trig = 0xFFFF);
 
          /** Set event type, only used in the analysis */
          void SetEventTypeSelect(unsigned evid) { fEventTypeSelect = evid; }
