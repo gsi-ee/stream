@@ -1074,7 +1074,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       }
 
       if (temp!=0) {
-         fCurrentTemp = temp*0.1;
+         fCurrentTemp = temp/16.;
 
          if ((HistFillLevel() > 1) && (fTempDistr==0))  {
             int mid = round(fCurrentTemp);
