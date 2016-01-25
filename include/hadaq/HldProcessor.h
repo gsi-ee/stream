@@ -73,9 +73,9 @@ namespace hadaq {
          bool fAutoCreate;           ///< when true, TRB/TDC processors will be created automatically
          std::string fAfterFunc; ///< function called after new elements are created
 
-         std::string fCalibrName;    ///< name of calibration for (auto)created components
-         long fCalibrPeriod;         ///< how often calibration should be performed
-         unsigned fCalibrTrigger;    ///< default ID for calibration trigger
+         std::string fCalibrName;      ///< name of calibration for (auto)created components
+         long fCalibrPeriod;           ///< how often calibration should be performed
+         unsigned fCalibrTriggerMask;  ///< mask with enabled event ID, default all
 
          base::H1handle fEvType;     ///< HADAQ event type
          base::H1handle fEvSize;     ///< HADAQ event size

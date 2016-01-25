@@ -8,7 +8,7 @@
 namespace hadaq {
 
    enum TdcMessageKind {
-      tdckind_Reserved = 0x00000000,
+      tdckind_Trailer  = 0x00000000,
       tdckind_Header   = 0x20000000,
       tdckind_Debug    = 0x40000000,
       tdckind_Epoch    = 0x60000000,
@@ -57,7 +57,7 @@ namespace hadaq {
          inline bool isEpochMsg() const { return getKind() == tdckind_Epoch; }
          inline bool isDebugMsg() const { return getKind() == tdckind_Debug; }
          inline bool isHeaderMsg() const { return getKind() == tdckind_Header; }
-         inline bool isReservedMsg() const { return getKind() == tdckind_Reserved; }
+         inline bool isTrailerMsg() const { return getKind() == tdckind_Trailer; }
          inline bool isCalibrMsg() const { return getKind() == tdckind_Calibr; }
 
          // methods for epoch
@@ -105,6 +105,15 @@ namespace hadaq {
 
          /** Return reserved bits of header message */
          inline uint32_t getHeaderRes() const { return (fData >> 16) & 0x1FFF; }
+
+         // methods for debug message
+
+         /** Return error bits of header message */
+         inline uint32_t getDebugKind() const { return (fData >> 24) & 0xF; }
+
+         /** Return reserved bits of header message */
+         inline uint32_t getDebugValue() const { return fData  & 0xFFFFFF; }
+
 
          void print(double tm = -1.);
 

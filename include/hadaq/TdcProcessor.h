@@ -138,15 +138,21 @@ namespace hadaq {
          base::H2handle fFallingCalibr; //! histogram all rising calibrations
          base::H1handle fHitsRate;    //! histogram with data rate
          base::H1handle fTotShifts;  //! histogram with all tot shifts
+         base::H1handle fTempDistr;   //! temperature distribution
 
          unsigned                 fNumChannels; //! number of channels
          std::vector<ChannelRec>  fCh; //! histogram for individual channels
          float                    fCalibrTemp;  //! temperature when calibration was performed
-
-         unsigned                 fCalibrTrigger; //! kind of trigger used for calibration, default all
+         unsigned                 fCalibrTriggerMask; //! mask with enabled for trigger events ids, default all
 
          double fCalibrProgress;      //! progress of auto calibration
          std::string fCalibrStatus;   //! calibration status
+
+         float                    fCurrentTemp;  //! current measured temperature
+         unsigned                 fDesignId;     //! design ID, taken from status message
+         double                   fCalibrTempSum0; //! sum0 used to check temperature during calibration
+         double                   fCalibrTempSum1; //! sum1 used to check temperature during calibration
+         double                   fCalibrTempSum2; //! sum2 used to check temperature during calibration
 
          std::vector<hadaq::TdcMessageExt>  fDummyVect; //! dummy empty vector
          std::vector<hadaq::TdcMessageExt> *pStoreVect; //! pointer on store vector
@@ -283,8 +289,24 @@ namespace hadaq {
           * tdc->CreateHistograms( channels ); */
          void CreateHistograms(int *arr = 0);
 
-         /** Set calibration trigger type, default is 0xFFFF - all kinds of triggers */
-         void SetCalibrTrigger(unsigned trig = 0xFFFF) { fCalibrTrigger = trig; }
+         /** Set calibration trigger type(s)
+          * One could specify up-to 4 different trigger types, for instance 0x1 and 0xD
+          * First argument could be use to enable all triggers (0xFFFF, default)
+          * or none of the triggers (-1) */
+         void SetCalibrTrigger(int typ1 = 0xFFFF, unsigned typ2 = 0, unsigned typ3 = 0, unsigned typ4 = 0) {
+            fCalibrTriggerMask = 0;
+            if (typ1<0) return;
+            if (typ1 >= 0xFFFF) { fCalibrTriggerMask = 0xFFFF; return; }
+            if ((typ1>=0) && (typ1<=0xF)) fCalibrTriggerMask |= (1 << typ1);
+            if ((typ2>=0) && (typ2<=0xF)) fCalibrTriggerMask |= (1 << typ2);
+            if ((typ3>=0) && (typ3<=0xF)) fCalibrTriggerMask |= (1 << typ3);
+            if ((typ4>=0) && (typ4<=0xF)) fCalibrTriggerMask |= (1 << typ4);
+         }
+
+         /** Set calibration trigger mask directly, 1bit per each trigger type */
+         void SetCalibrTriggerMask(unsigned trigmask) {
+            fCalibrTriggerMask = trigmask;
+         }
 
          /** Disable calibration for specified channels */
          void DisableCalibrationFor(unsigned firstch, unsigned lastch = 0);

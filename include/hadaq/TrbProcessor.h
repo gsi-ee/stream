@@ -59,9 +59,9 @@ namespace hadaq {
          bool fCrossProcess;         ///< if true, cross-processing will be enabled
          int  fPrintErrCnt;          ///< number of error messages, which could be printed
 
-         unsigned fSyncTrigMask;     ///< mask which should be applied for trigger type
-         unsigned fSyncTrigValue;    ///< value from trigger type (after mask) which corresponds to sync message
-         unsigned fCalibrTrigger;    ///< trigger used for calibration
+         unsigned fSyncTrigMask;       ///< mask which should be applied for trigger type
+         unsigned fSyncTrigValue;      ///< value from trigger type (after mask) which corresponds to sync message
+         unsigned fCalibrTriggerMask;  ///< trigger mask used for calibration
 
          bool fUseTriggerAsSync;     ///< when true, trigger number used as sync message between TRBs
 
@@ -253,10 +253,10 @@ namespace hadaq {
          bool LoadCalibrations(const char* fileprefix, double koef = 1.);
 
          /** Central method to configure way how calibrations will be performed */
-         void ConfigureCalibration(const std::string& name, long period, unsigned trig = 0xFFFF);
+         void ConfigureCalibration(const std::string& name, long period, unsigned trigmask = 0xFFFF);
 
          /** Set calibration trigger type for all TDCs */
-         void SetCalibrTrigger(unsigned trig = 0xFFFF);
+         void SetCalibrTriggerMask(unsigned trigmask = 0xFFFF);
 
          /** Calibrate hits in subevent */
          unsigned TransformSubEvent(hadaqs::RawSubevent* sub, void* tgtbuf = 0, unsigned tgtlen = 0);

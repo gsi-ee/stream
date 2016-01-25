@@ -21,7 +21,7 @@ hadaq::HldProcessor::HldProcessor(bool auto_create, const char* after_func) :
    fAfterFunc(after_func),
    fCalibrName(),
    fCalibrPeriod(-111),
-   fCalibrTrigger(0xFFFF),
+   fCalibrTriggerMask(0xFFFF),
    fMsg(),
    pMsg(0)
 {
@@ -97,13 +97,13 @@ hadaq::TdcProcessor* hadaq::HldProcessor::GetTDC(unsigned indx) const
    return 0;
 }
 
-void hadaq::HldProcessor::ConfigureCalibration(const std::string& name, long period, unsigned trig)
+void hadaq::HldProcessor::ConfigureCalibration(const std::string& name, long period, unsigned trigmask)
 {
    fCalibrName = name;
    fCalibrPeriod = period;
-   fCalibrTrigger = trig;
+   fCalibrTriggerMask = trigmask;
    for (TrbProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
-      iter->second->ConfigureCalibration(name, period, trig);
+      iter->second->ConfigureCalibration(name, period, trigmask);
 }
 
 
@@ -202,7 +202,7 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
             // in auto mode only TDC processors should be created
             trb->ScanSubEvent(sub, ev->GetSeqNr());
 
-            trb->ConfigureCalibration(fCalibrName, fCalibrPeriod, fCalibrTrigger);
+            trb->ConfigureCalibration(fCalibrName, fCalibrPeriod, fCalibrTriggerMask);
 
             trb->SetAutoCreate(false); // do not create TDCs after first event
          }

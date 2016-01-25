@@ -18,15 +18,14 @@ void hadaq::TdcMessage::setAsHit1(uint32_t finebin)
 void hadaq::TdcMessage::print(double tm)
 {
    switch (getKind()) {
-      case tdckind_Reserved:
-         printf("     tdc reserv 0x%08x\n", (unsigned) fData);
+      case tdckind_Trailer:
+         printf("     tdc trailer 0x%08x\n", (unsigned) fData);
          break;
-
       case tdckind_Header:
          printf("     tdc head   0x%08x\n", (unsigned) fData);
          break;
       case tdckind_Debug:
-         printf("     tdc debug  0x%08x\n", (unsigned) fData);
+         printf("     tdc debug  kind: 0x%1x value:0x%06x\n", (unsigned) getDebugKind(), (unsigned) getDebugValue());
          break;
       case tdckind_Epoch:
          printf("     tdc epoch  0x%08x", (unsigned) fData);

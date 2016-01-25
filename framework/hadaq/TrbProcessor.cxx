@@ -60,7 +60,7 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc) :
 
    fSyncTrigMask = 0;
    fSyncTrigValue = 0;
-   fCalibrTrigger = 0xFFFF;
+   fCalibrTriggerMask = 0xFFFF;
 
    fUseTriggerAsSync = false;
    fCompensateEpochReset = false;
@@ -165,7 +165,7 @@ void hadaq::TrbProcessor::CreateTDC(unsigned id1, unsigned id2, unsigned id3, un
 
       hadaq::TdcProcessor *tdc = new hadaq::TdcProcessor(this, tdcid, gNumChannels, gEdgesMask);
 
-      tdc->SetCalibrTrigger(fCalibrTrigger);
+      tdc->SetCalibrTriggerMask(fCalibrTriggerMask);
    }
 }
 
@@ -212,9 +212,9 @@ bool hadaq::TrbProcessor::LoadCalibrations(const char* fileprefix, double koef)
    return res;
 }
 
-void hadaq::TrbProcessor::ConfigureCalibration(const std::string& name, long period, unsigned trig)
+void hadaq::TrbProcessor::ConfigureCalibration(const std::string& name, long period, unsigned trigmask)
 {
-   SetCalibrTrigger(trig);
+   SetCalibrTriggerMask(trigmask);
 
    if (period > 0) SetAutoCalibrations(period);
 
@@ -224,14 +224,14 @@ void hadaq::TrbProcessor::ConfigureCalibration(const std::string& name, long per
    }
 }
 
-void hadaq::TrbProcessor::SetCalibrTrigger(unsigned trig)
+void hadaq::TrbProcessor::SetCalibrTriggerMask(unsigned trigmask)
 {
-   fCalibrTrigger = trig;
+   fCalibrTriggerMask = trigmask;
 
    for (SubProcMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
       if (!iter->second->IsTDC()) continue;
       TdcProcessor* tdc = (TdcProcessor*) iter->second;
-      tdc->SetCalibrTrigger(fCalibrTrigger);
+      tdc->SetCalibrTriggerMask(fCalibrTriggerMask);
    }
 }
 
@@ -637,7 +637,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
                // here should be channel/edge/min/max selection based on TDC design ID
 
                TdcProcessor* tdcproc = new TdcProcessor(this, dataid, numch, edges);
-               tdcproc->SetCalibrTrigger(fCalibrTrigger);
+               tdcproc->SetCalibrTriggerMask(fCalibrTriggerMask);
                tdcproc->SetStoreKind(GetStoreKind());
 
                mgr()->UserPreLoop(tdcproc); // while loop already running, call it once again for new processor

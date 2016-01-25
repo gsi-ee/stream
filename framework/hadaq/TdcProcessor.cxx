@@ -36,9 +36,14 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fNumChannels(numchannels),
    fCh(),
    fCalibrTemp(30.),
-   fCalibrTrigger(0xFFFF),
+   fCalibrTriggerMask(0xFFFF),
    fCalibrProgress(0.),
    fCalibrStatus("Init"),
+   fCurrentTemp(-1.),
+   fDesignId(0),
+   fCalibrTempSum0(0),
+   fCalibrTempSum1(0),
+   fCalibrTempSum2(0),
    fDummyVect(),
    pStoreVect(0),
    fStoreFloat(),
@@ -76,6 +81,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fRisingCalibr = 0;
    fFallingCalibr = 0;
    fTotShifts = 0;
+   fTempDistr = 0;
    fHitsRate = 0;
    fRateCnt = 0;
    fLastRateTm = -1;
@@ -87,7 +93,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
       fErrors = MakeH1("Errors", "Errors in TDC channels", numchannels, 0, numchannels, "ch");
       fUndHits = MakeH1("UndetectedHits", "Undetected hits in TDC channels", numchannels, 0, numchannels, "ch");
 
-      fMsgsKind = MakeH1("MsgKind", "kind of messages", 8, 0, 8, "xbin:Reserved,Header,Debug,Epoch,Hit,-,-,Calibr;kind");
+      fMsgsKind = MakeH1("MsgKind", "kind of messages", 8, 0, 8, "xbin:Trailer,Header,Debug,Epoch,Hit,-,-,Calibr;kind");
 
       fAllFine = MakeH2("FineTm", "fine counter value", numchannels, 0, numchannels, (gNumFineBins==1000 ? 100 : gNumFineBins), 0, gNumFineBins, "ch;fine");
       fAllCoarse = MakeH2("CoarseTm", "coarse counter value", numchannels, 0, numchannels, 2048, 0, 2048, "ch;coarse");
@@ -241,6 +247,8 @@ void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned re
          if (fCh[ch].fFallingCoarseRef == 0)
             fCh[ch].fFallingCoarseRef = MakeH1("FallingCoarseRef", "Difference to falling coarse counter in ref channel", 4096, -2048, 2048, "coarse");
       }
+
+      SetSubPrefix();
    }
 }
 
@@ -269,8 +277,6 @@ bool hadaq::TdcProcessor::SetDoubleRefChannel(unsigned ch1, unsigned ch2,
    fCh[ch].doublerefch = refch;
    fCh[ch].doublereftdc = reftdc;
 
-   SetSubPrefix("Ch", ch);
-
    char sbuf[1024];
    char saxis[1024];
 
@@ -284,9 +290,13 @@ bool hadaq::TdcProcessor::SetDoubleRefChannel(unsigned ch1, unsigned ch2,
             sprintf(saxis, "ch%u-ch%u ns;tdc 0x%04x refch%u ns", ch, fCh[ch].refch, reftdc, refch);
          }
 
+         SetSubPrefix("Ch", ch);
          fCh[ch].fRisingDoubleRef = MakeH2("RisingDoubleRef", sbuf, npx, xmin, xmax, npy, ymin, ymax, saxis);
+         SetSubPrefix();
       }
    }
+
+
 
    return true;
 }
@@ -319,6 +329,8 @@ bool hadaq::TdcProcessor::EnableRefCondPrint(unsigned ch, double left, double ri
    fCh[ch].fRisingRefCond = MakeC1("RisingRefPrint", left, right, fCh[ch].fRisingRef);
    fCh[ch].rising_cond_prnt = numprint > 0 ? numprint : 100000000;
 
+   SetSubPrefix();
+
    return true;
 }
 
@@ -337,7 +349,7 @@ void hadaq::TdcProcessor::BeforeFill()
 void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
 {
    // when doing TOT calibration, use only last TOT value - before one could find other signals
-   if ((fCalibrTrigger == 0xD) && DoFallingEdge())
+   if ((fCalibrTriggerMask == (1 << 0xD)) && DoFallingEdge())
       for (unsigned ch=1;ch<NumChannels();ch++) {
          if (fCh[ch].hascalibr && (fCh[ch].last_tot >= TotLeft) && (fCh[ch].last_tot < TotRight)) {
             int bin = (int) ((fCh[ch].last_tot - TotLeft) / (TotRight - TotLeft) * TotBins);
@@ -483,7 +495,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
    int cnt(0), hitcnt(0), errcnt(0);
    unsigned tgtindx0(tgtindx), calibr_indx(0), calibr_num(0), epoch(0);
 
-   bool use_in_calibr = (fCalibrTrigger > 0xFF) || (fCalibrTrigger == sub->GetTrigTypeTrb3());
+   bool use_in_calibr = ((1 << sub->GetTrigTypeTrb3()) & fCalibrTriggerMask) != 0;
    bool is_0d_trig = sub->GetTrigTypeTrb3() == 0xD;
    bool do_tot = is_0d_trig && DoFallingEdge();
 
@@ -618,6 +630,12 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
    if (fHitsPerBrd) DefFillH1(*fHitsPerBrd, fSeqeunceId, hitcnt);
    if (fErrPerBrd && (errcnt>0)) DefFillH1(*fErrPerBrd, fSeqeunceId, errcnt);
 
+   if ((hitcnt>0) && use_in_calibr && (fCurrentTemp>0)) {
+      fCalibrTempSum0 += 1.;
+      fCalibrTempSum1 += fCurrentTemp;
+      fCalibrTempSum2 += fCurrentTemp*fCurrentTemp;
+   }
+
    if (do_tot)
       for (unsigned ch=1;ch<NumChannels();ch++) {
          ChannelRec& rec = fCh[ch];
@@ -653,7 +671,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    if (buf().format==0)
       memcpy(&syncid, buf.ptr(), 4);
 
-   bool use_for_calibr = (fCalibrTrigger > 0xFF) || (buf().kind == fCalibrTrigger);
+   bool use_for_calibr = ((1 << buf().kind) & fCalibrTriggerMask) != 0;
 
    unsigned cnt(0), hitcnt(0);
 
@@ -714,7 +732,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
    hadaq::TdcMessage& msg = iter.msg();
    hadaq::TdcMessage calibr;
-   unsigned ncalibr = 20; // clear indicate that no calibration data present
+   unsigned ncalibr(20), temp(0), lowid(0), highid(0); // clear indicate that no calibration data present
 
    while (iter.next()) {
 
@@ -985,7 +1003,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       // process other messages kinds
 
       switch (msg.getKind()) {
-        case tdckind_Reserved:
+        case tdckind_Trailer:
            break;
         case tdckind_Header: {
            unsigned errbits = msg.getHeaderErr();
@@ -997,8 +1015,15 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
            break;
         }
-        case tdckind_Debug:
+        case tdckind_Debug: {
+           switch (msg.getDebugKind()) {
+              case 0x0E: temp = msg.getDebugValue();  break;
+              case 0x10: lowid = msg.getDebugValue(); break;
+              case 0x11: highid = msg.getDebugValue(); break;
+           }
+
            break;
+        }
         case tdckind_Epoch:
            break;
         default:
@@ -1018,6 +1043,33 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    }
 
    if (first_scan) {
+
+      if (lowid || highid) {
+         unsigned id = (highid << 16) | lowid;
+
+         if ((fDesignId != 0) && (fDesignId != id))
+            if (CheckPrintError())
+                printf("%5s mismatch in design id before:0x%x now:0x%x\n", GetName(), fDesignId, id);
+
+         fDesignId = id;
+      }
+
+      if (temp!=0) {
+         fCurrentTemp = temp*0.1;
+
+         if ((HistFillLevel() > 1) && (fTempDistr==0))  {
+            int mid = round(fCurrentTemp);
+            SetSubPrefix();
+            fTempDistr = MakeH1("Temperature", "Temperature distribution", 600, mid-30, mid+30, "C");
+         }
+         FillH1(fTempDistr, fCurrentTemp);
+      }
+
+      if ((hitcnt>0) && use_for_calibr && (fCurrentTemp>0)) {
+         fCalibrTempSum0 += 1.;
+         fCalibrTempSum1 += fCurrentTemp;
+         fCalibrTempSum2 += fCurrentTemp*fCurrentTemp;
+      }
 
       // if we use trigger as time marker
       if (fUseNativeTrigger && (ch0time!=0)) {
@@ -1174,6 +1226,18 @@ void hadaq::TdcProcessor::CopyCalibration(float* calibr, base::H1handle hcalibr,
 void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat)
 {
    printf("%s produce channels calibrations\n", GetName());
+
+   if (fCalibrTempSum0 > 5) {
+      double mean = fCalibrTempSum1/fCalibrTempSum0;
+      double rms = fCalibrTempSum2 / fCalibrTempSum0 - mean*mean;
+      if (rms>0) rms = sqrt(rms); else rms = (rms >=-1e-8) ? 0 : -1;
+      printf("   temp %5.2f +- %3.2f during calibration\n", mean, rms);
+      if ((rms>0) && (rms<3)) fCalibrTemp = mean;
+   }
+
+   fCalibrTempSum0 = 0;
+   fCalibrTempSum1 = 0;
+   fCalibrTempSum2 = 0;
 
    ClearH2(fRisingCalibr);
    ClearH2(fFallingCalibr);

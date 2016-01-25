@@ -1,3 +1,8 @@
+25.01.2016
+1. Use trigger mask, when assign type of events for calibration.
+2. Use temperature, provided in status even. Calculate average temperature during calibration.
+
+
 17.11.2015
 1. Store TDC data always in subevent - this let use different formats with go4 
    output event. One also can use second.C in same way with all store kinds. 
