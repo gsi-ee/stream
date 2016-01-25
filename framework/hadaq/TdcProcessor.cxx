@@ -36,6 +36,8 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fNumChannels(numchannels),
    fCh(),
    fCalibrTemp(30.),
+   fCalibrTempCoef(0.),
+   fCalibrUseTemp(false),
    fCalibrTriggerMask(0xFFFF),
    fCalibrProgress(0.),
    fCalibrStatus("Init"),
@@ -487,6 +489,23 @@ bool hadaq::TdcProcessor::PerformAutoCalibrate()
    return true;
 }
 
+float hadaq::TdcProcessor::ExtractCalibr(float* func, unsigned bin)
+{
+   if (!fCalibrUseTemp || (fCalibrTemp <= 0) || (fCurrentTemp <= 0) || (fCalibrTempCoef<=0)) return func[bin];
+
+   float val = func[bin] * (1+fCalibrTempCoef)*(fCurrentTemp-fCalibrTemp);
+
+   if ((fCurrentTemp < fCalibrTemp) && (func[bin] >= hadaq::TdcMessage::CoarseUnit()*0.9999)) {
+      // special case - lower temperature and bin which was not observed during calibration
+      // just take linear extrapolation, using points bin-30 and bin-80
+
+      float val0 = func[bin-30] + (func[bin-30] - func[bin-80]) / 50 * 30;
+
+      val = val0 * (1+fCalibrTempCoef)*(fCurrentTemp-fCalibrTemp);
+   }
+
+   return val < hadaq::TdcMessage::CoarseUnit() ? val : hadaq::TdcMessage::CoarseUnit();
+}
 
 unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigned indx, unsigned datalen, hadaqs::RawSubevent* tgt, unsigned tgtindx)
 {
@@ -526,7 +545,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
 
       ChannelRec& rec = fCh[chid];
 
-      double corr = isrising ? rec.rising_calibr[fine] : rec.falling_calibr[fine];
+      double corr = ExtractCalibr(isrising ? rec.rising_calibr : rec.falling_calibr, fine);
 
       if (tgt==0) {
          if (isrising) {
@@ -840,7 +859,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                continue;
             }
 
-            corr = isrising ? rec.rising_calibr[fine] : rec.falling_calibr[fine] + rec.tot_shift*1e-9;
+            corr = ExtractCalibr(isrising ? rec.rising_calibr : rec.falling_calibr, fine) + rec.tot_shift*1e-9;
          }
 
          // apply correction

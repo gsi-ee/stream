@@ -1,6 +1,9 @@
 25.01.2016
 1. Use trigger mask, when assign type of events for calibration.
 2. Use temperature, provided in status even. Calculate average temperature during calibration.
+3. Let use measured temperature to adjust calibration function. Use scaling factor,
+   which should be defined separately.  
+ 
 
 
 17.11.2015

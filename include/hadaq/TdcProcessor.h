@@ -143,6 +143,8 @@ namespace hadaq {
          unsigned                 fNumChannels; //! number of channels
          std::vector<ChannelRec>  fCh; //! histogram for individual channels
          float                    fCalibrTemp;  //! temperature when calibration was performed
+         float                    fCalibrTempCoef; //! coefficient to scale calibration curve (real value -1)
+         bool                     fCalibrUseTemp;  //! when true, use temperature adjustemnt
          unsigned                 fCalibrTriggerMask; //! mask with enabled for trigger events ids, default all
 
          double fCalibrProgress;      //! progress of auto calibration
@@ -230,6 +232,9 @@ namespace hadaq {
 
          /** Perform automatic calibration of channels */
          bool PerformAutoCalibrate();
+
+         /** Extract calibration value */
+         float ExtractCalibr(float* func, unsigned bin);
 
          virtual void CreateBranch(TTree*);
 
