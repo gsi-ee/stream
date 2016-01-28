@@ -144,7 +144,7 @@ namespace hadaq {
          std::vector<ChannelRec>  fCh; //! histogram for individual channels
          float                    fCalibrTemp;  //! temperature when calibration was performed
          float                    fCalibrTempCoef; //! coefficient to scale calibration curve (real value -1)
-         bool                     fCalibrUseTemp;  //! when true, use temperature adjustemnt
+         bool                     fCalibrUseTemp;  //! when true, use temperature adjustment for calibration
          unsigned                 fCalibrTriggerMask; //! mask with enabled for trigger events ids, default all
 
          double fCalibrProgress;      //! progress of auto calibration

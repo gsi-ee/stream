@@ -493,7 +493,7 @@ float hadaq::TdcProcessor::ExtractCalibr(float* func, unsigned bin)
 {
    if (!fCalibrUseTemp || (fCalibrTemp <= 0) || (fCurrentTemp <= 0) || (fCalibrTempCoef<=0)) return func[bin];
 
-   float val = func[bin] * (1+fCalibrTempCoef)*(fCurrentTemp-fCalibrTemp);
+   float val = func[bin] * (1+fCalibrTempCoef*(fCurrentTemp-fCalibrTemp));
 
    if ((fCurrentTemp < fCalibrTemp) && (func[bin] >= hadaq::TdcMessage::CoarseUnit()*0.9999)) {
       // special case - lower temperature and bin which was not observed during calibration
@@ -501,7 +501,7 @@ float hadaq::TdcProcessor::ExtractCalibr(float* func, unsigned bin)
 
       float val0 = func[bin-30] + (func[bin-30] - func[bin-80]) / 50 * 30;
 
-      val = val0 * (1+fCalibrTempCoef)*(fCurrentTemp-fCalibrTemp);
+      val = val0 * (1+fCalibrTempCoef*(fCurrentTemp-fCalibrTemp));
    }
 
    return val < hadaq::TdcMessage::CoarseUnit() ? val : hadaq::TdcMessage::CoarseUnit();
