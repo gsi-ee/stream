@@ -62,6 +62,8 @@ namespace hadaq {
             double rising_ref_tm;
             unsigned rising_coarse;
             unsigned rising_fine;
+            unsigned last_rising_fine;
+            unsigned last_falling_fine;
             long all_rising_stat;
             long all_falling_stat;
             long rising_stat[FineCounterBins];
@@ -107,6 +109,8 @@ namespace hadaq {
                rising_ref_tm(0.),
                rising_coarse(0),
                rising_fine(0),
+               last_rising_fine(0),
+               last_falling_fine(0),
                all_rising_stat(0),
                all_falling_stat(0),
                last_tot(0.),

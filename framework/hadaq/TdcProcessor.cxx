@@ -679,8 +679,13 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    if (buf().format==0)
       memcpy(&syncid, buf.ptr(), 4);
 
-   bool use_for_calibr = first_scan && (((1 << buf().kind) & fCalibrTriggerMask) != 0);
-   bool use_for_tot = use_for_calibr && (buf().kind == 0xD) && DoFallingEdge();
+   // if data could be used for calibration
+   int use_for_calibr = first_scan && (((1 << buf().kind) & fCalibrTriggerMask) != 0) ? 1 : 0;
+
+   if ((use_for_calibr > 0) && (buf().kind == 0xD)) use_for_calibr = 2;
+
+   // if data could be used for TOT calibration
+   bool use_for_tot = (use_for_calibr>0) && (buf().kind == 0xD) && DoFallingEdge();
 
    unsigned cnt(0), hitcnt(0);
 
@@ -894,13 +899,20 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             DefFillH2(fAllCoarse, chid, coarse, 1.);
 
             if (isrising) {
-               if (raw_hit && use_for_calibr) {
-                  rec.rising_stat[fine]++;
-                  rec.all_rising_stat++;
+               if (raw_hit) {
+                  switch (use_for_calibr) {
+                     case 1:
+                        rec.rising_stat[fine]++;
+                        rec.all_rising_stat++;
+                        break;
+                     case 2:
+                        rec.last_rising_fine = fine;
+                        break;
+                  }
                }
 
                rec.rising_cnt++;
-               DefFastFillH1(rec.fRisingFine, fine);
+               if (raw_hit) DefFastFillH1(rec.fRisingFine, fine);
                DefFastFillH1(rec.fRisingCoarse, coarse);
 
                bool print_cond = false;
@@ -939,9 +951,16 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                }
 
             } else {
-               if (raw_hit && use_for_calibr) {
-                  rec.falling_stat[fine]++;
-                  rec.all_falling_stat++;
+               if (raw_hit) {
+                  switch (use_for_calibr) {
+                     case 1:
+                       rec.falling_stat[fine]++;
+                       rec.all_falling_stat++;
+                       break;
+                     case 2:
+                        rec.last_falling_fine = fine;
+                        break;
+                  }
                }
                rec.falling_cnt++;
 
@@ -1052,6 +1071,23 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    }
 
    if (first_scan) {
+
+      // special case for 0xD trigger - use only last hit messages for accumulating statistic
+      if (use_for_calibr == 2)
+         for (unsigned ch=1;ch<NumChannels();ch++) {
+            ChannelRec& rec = fCh[ch];
+            if (rec.last_rising_fine > 0) {
+               rec.rising_stat[rec.last_rising_fine]++;
+               rec.all_rising_stat++;
+               rec.last_rising_fine = 0;
+            }
+            if (rec.last_falling_fine > 0) {
+               rec.falling_stat[rec.last_falling_fine]++;
+               rec.all_falling_stat++;
+               rec.last_falling_fine = 0;
+            }
+         }
+
       // when doing TOT calibration, use only last TOT value - before one could find other signals
       if (use_for_tot)
          for (unsigned ch=1;ch<NumChannels();ch++) {
@@ -1084,7 +1120,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          FillH1(fTempDistr, fCurrentTemp);
       }
 
-      if ((hitcnt>0) && use_for_calibr && (fCurrentTemp>0)) {
+      if ((hitcnt>0) && (use_for_calibr>0) && (fCurrentTemp>0)) {
          fCalibrTempSum0 += 1.;
          fCalibrTempSum1 += fCurrentTemp;
          fCalibrTempSum2 += fCurrentTemp*fCurrentTemp;

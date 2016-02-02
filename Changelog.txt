@@ -1,5 +1,6 @@
 2.02.2016
 1. Fix small problems with TOT calibration
+2. When use 0xD trigger for calibration, take into account only last hit 
 
 
 25.01.2016
