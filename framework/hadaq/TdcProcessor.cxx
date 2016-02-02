@@ -36,7 +36,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fNumChannels(numchannels),
    fCh(),
    fCalibrTemp(30.),
-   fCalibrTempCoef(0.),
+   fCalibrTempCoef(0.004432),
    fCalibrUseTemp(false),
    fCalibrTriggerMask(0xFFFF),
    fCalibrProgress(0.),
@@ -505,7 +505,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
 
    bool use_in_calibr = ((1 << sub->GetTrigTypeTrb3()) & fCalibrTriggerMask) != 0;
    bool is_0d_trig = sub->GetTrigTypeTrb3() == 0xD;
-   bool do_tot = is_0d_trig && DoFallingEdge();
+   bool do_tot = use_in_calibr && is_0d_trig && DoFallingEdge();
 
    while (datalen-- > 0) {
       msg.assign(sub->Data(indx++));
@@ -685,7 +685,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    if ((use_for_calibr > 0) && (buf().kind == 0xD)) use_for_calibr = 2;
 
    // if data could be used for TOT calibration
-   bool use_for_tot = (use_for_calibr>0) && (buf().kind == 0xD) && DoFallingEdge();
+   bool do_tot = (use_for_calibr>0) && (buf().kind == 0xD) && DoFallingEdge();
 
    unsigned cnt(0), hitcnt(0);
 
@@ -974,7 +974,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                   rec.rising_new_value = false;
 
                   // use only raw hit
-                  if (raw_hit && use_for_tot) rec.last_tot = tot + rec.tot_shift;
+                  if (raw_hit && do_tot) rec.last_tot = tot + rec.tot_shift;
                }
             }
 
@@ -1089,7 +1089,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          }
 
       // when doing TOT calibration, use only last TOT value - before one could find other signals
-      if (use_for_tot)
+      if (do_tot)
          for (unsigned ch=1;ch<NumChannels();ch++) {
             if (fCh[ch].hascalibr && (fCh[ch].last_tot >= TotLeft) && (fCh[ch].last_tot < TotRight)) {
                int bin = (int) ((fCh[ch].last_tot - TotLeft) / (TotRight - TotLeft) * TotBins);
@@ -1386,14 +1386,15 @@ void hadaq::TdcProcessor::StoreCalibration(const std::string& fprefix)
    }
 
    // temperature
-   // fwrite(&fCalibrTemp, sizeof(fCalibrTemp), 1, f);
+   fwrite(&fCalibrTemp, sizeof(fCalibrTemp), 1, f);
+   fwrite(&fCalibrTempCoef, sizeof(fCalibrTempCoef), 1, f);
 
    fclose(f);
 
    printf("%s storing calibration in %s\n", GetName(), fname);
 }
 
-bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix, double koef)
+bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
 {
    if (fprefix.empty()) return false;
 
@@ -1428,19 +1429,8 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix, double koe
      }
 
      fCh[ch].hascalibr =
-        (fread(fCh[ch].rising_calibr, sizeof(fCh[ch].rising_calibr), 1, f) ==1) &&
+        (fread(fCh[ch].rising_calibr, sizeof(fCh[ch].rising_calibr), 1, f) == 1) &&
         (fread(fCh[ch].falling_calibr, sizeof(fCh[ch].falling_calibr), 1, f) == 1);
-
-     if ((koef!=1.) && fCh[ch].hascalibr)
-        for (unsigned n=0;n<FineCounterBins;n++) {
-           fCh[ch].rising_calibr[n] *= koef;
-           fCh[ch].falling_calibr[n] *= koef;
-           if (fCh[ch].rising_calibr[n] > hadaq::TdcMessage::CoarseUnit())
-              fCh[ch].rising_calibr[n] = hadaq::TdcMessage::CoarseUnit();
-
-           if (fCh[ch].falling_calibr[n] > hadaq::TdcMessage::CoarseUnit())
-              fCh[ch].falling_calibr[n] = hadaq::TdcMessage::CoarseUnit();
-        }
 
      CopyCalibration(fCh[ch].rising_calibr, fCh[ch].fRisingCalibr, ch, fRisingCalibr);
 
@@ -1457,7 +1447,10 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix, double koe
          DefFillH1(fTotShifts, ch, fCh[ch].tot_shift);
       }
 
-      // fread(&fCalibrTemp, sizeof(fCalibrTemp), 1, f);
+      if (!feof(f)) {
+         fread(&fCalibrTemp, sizeof(fCalibrTemp), 1, f);
+         fread(&fCalibrTempCoef, sizeof(fCalibrTempCoef), 1, f);
+      }
    }
 
    fclose(f);

@@ -1,6 +1,8 @@
 2.02.2016
 1. Fix small problems with TOT calibration
 2. When use 0xD trigger for calibration, take into account only last hit 
+3. When configuring triggers mask one could enable temperature correction,
+   setting 0x80000000 bit in the mask. 
 
 
 25.01.2016

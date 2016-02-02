@@ -76,7 +76,6 @@ namespace hadaq {
             float tot_shift;
             int rising_cond_prnt;
 
-
             ChannelRec() :
                refch(0xffffff),
                reftdc(0xffffffff),
@@ -312,9 +311,11 @@ namespace hadaq {
             if ((typ4>=0) && (typ4<=0xF)) fCalibrTriggerMask |= (1 << typ4);
          }
 
-         /** Set calibration trigger mask directly, 1bit per each trigger type */
+         /** Set calibration trigger mask directly, 1bit per each trigger type
+          * if bit 0x80000000 configured, calibration will use temperature correction */
          void SetCalibrTriggerMask(unsigned trigmask) {
-            fCalibrTriggerMask = trigmask;
+            fCalibrTriggerMask = trigmask & 0x3FFF;
+            fCalibrUseTemp = (trigmask & 0x80000000) != 0;
          }
 
          /** Disable calibration for specified channels */
@@ -356,7 +357,7 @@ namespace hadaq {
 
          void SetAutoCalibration(long cnt = 100000) { fAutoCalibration = cnt; }
 
-         bool LoadCalibration(const std::string& fprefix, double koef = 1.);
+         bool LoadCalibration(const std::string& fprefix);
 
          /** When specified, calibration will be written to the file
           * If every_time == true, when every time when automatic calibration performed, otherwise only at the end */

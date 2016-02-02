@@ -250,7 +250,7 @@ namespace hadaq {
 
          /** Load TDC calibrations, as argument file prefix (without TDC id) should be specified
           * One also could specify coefficient to scale calibration (koef >= 1) */
-         bool LoadCalibrations(const char* fileprefix, double koef = 1.);
+         bool LoadCalibrations(const char* fileprefix);
 
          /** Central method to configure way how calibrations will be performed */
          void ConfigureCalibration(const std::string& name, long period, unsigned trigmask = 0xFFFF);

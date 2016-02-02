@@ -199,14 +199,14 @@ void hadaq::TrbProcessor::SetWriteCalibrations(const char* fileprefix, bool ever
 }
 
 
-bool hadaq::TrbProcessor::LoadCalibrations(const char* fileprefix, double koef)
+bool hadaq::TrbProcessor::LoadCalibrations(const char* fileprefix)
 {
    bool res = true;
 
    for (SubProcMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
       if (!iter->second->IsTDC()) continue;
       TdcProcessor* tdc = (TdcProcessor*) iter->second;
-      if (!tdc->LoadCalibration(fileprefix, koef)) res = false;
+      if (!tdc->LoadCalibration(fileprefix)) res = false;
    }
 
    return res;

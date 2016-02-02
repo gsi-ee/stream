@@ -32,9 +32,10 @@ void first()
    //    -1 - accumulate data and store calibrations only at the end
    //    >0 - automatic calibration after N hits in each active channel
    // third parameter is trigger type mask used for calibration
-   //   (1 >> 0xD) - special 0XD trigger with internal pulser, used also for TOT calibration
-   //  0xFFFF - all kind of trigger types will be used for calibration, no TOT calibration
-   hld->ConfigureCalibration("", 100000, (1 >> 0xD));
+   //   (1 << 0xD) - special 0XD trigger with internal pulser, used also for TOT calibration
+   //    0x3FFF - all kinds of trigger types will be used for calibration (excluding 0xE and 0xF)
+   //   0x80000000 in mask enables usage of temperature correction
+   hld->ConfigureCalibration("", 100000, (1 << 0xD));
 
    // only accept trigger type 0x1 when storing file
    // new hadaq::HldFilter(0x1);
