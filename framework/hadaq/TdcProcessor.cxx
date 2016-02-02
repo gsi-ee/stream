@@ -145,7 +145,7 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
       fCh[ch].fRisingFine = MakeH1("RisingFine", "Rising fine counter", gNumFineBins, 0, gNumFineBins, "fine");
       fCh[ch].fRisingCoarse = MakeH1("RisingCoarse", "Rising coarse counter", 2048, 0, 2048, "coarse");
       fCh[ch].fRisingMult = MakeH1("RisingMult", "Rising event multiplicity", 128, 0, 128, "nhits");
-      fCh[ch].fRisingCalibr = MakeH1("RisingCalibr", "Rising calibration function", FineCounterBins, 0, FineCounterBins, "fine");
+      fCh[ch].fRisingCalibr = MakeH1("RisingCalibr", "Rising calibration function", FineCounterBins, 0, FineCounterBins, "fine;kind:F");
       // copy calibration only when histogram created
       CopyCalibration(fCh[ch].rising_calibr, fCh[ch].fRisingCalibr, ch, fRisingCalibr);
    }
@@ -154,7 +154,7 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
       fCh[ch].fFallingFine = MakeH1("FallingFine", "Falling fine counter", gNumFineBins, 0, gNumFineBins, "fine");
       fCh[ch].fFallingCoarse = MakeH1("FallingCoarse", "Falling coarse counter", 2048, 0, 2048, "coarse");
       fCh[ch].fFallingMult = MakeH1("FallingMult", "Falling event multiplicity", 128, 0, 128, "nhits");
-      fCh[ch].fFallingCalibr = MakeH1("FallingCalibr", "Falling calibration function", FineCounterBins, 0, FineCounterBins, "fine");
+      fCh[ch].fFallingCalibr = MakeH1("FallingCalibr", "Falling calibration function", FineCounterBins, 0, FineCounterBins, "fine;kind:F");
       fCh[ch].fTot = MakeH1("Tot", "Time over threshold", gTotRange*100, 0, gTotRange, "ns");
       fCh[ch].fTot0D = MakeH1("Tot0D", "Time over threshold with 0xD trigger", TotBins, TotLeft, TotRight, "ns");
       // copy calibration only when histogram created
@@ -344,22 +344,11 @@ void hadaq::TdcProcessor::BeforeFill()
       fCh[ch].rising_last_tm = 0;
       fCh[ch].rising_ref_tm = 0.;
       fCh[ch].rising_new_value = false;
-      fCh[ch].last_tot = 0.;
    }
 }
 
 void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
 {
-   // when doing TOT calibration, use only last TOT value - before one could find other signals
-   if ((fCalibrTriggerMask == (1 << 0xD)) && DoFallingEdge())
-      for (unsigned ch=1;ch<NumChannels();ch++) {
-         if (fCh[ch].hascalibr && (fCh[ch].last_tot >= TotLeft) && (fCh[ch].last_tot < TotRight)) {
-            int bin = (int) ((fCh[ch].last_tot - TotLeft) / (TotRight - TotLeft) * TotBins);
-            fCh[ch].tot0d_hist[bin]++;
-            fCh[ch].tot0d_cnt++;
-         }
-      }
-
    // complete logic only when hist level is specified
    if (HistFillLevel()>=4)
    for (unsigned ch=0;ch<NumChannels();ch++) {
@@ -690,7 +679,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    if (buf().format==0)
       memcpy(&syncid, buf.ptr(), 4);
 
-   bool use_for_calibr = ((1 << buf().kind) & fCalibrTriggerMask) != 0;
+   bool use_for_calibr = first_scan && (((1 << buf().kind) & fCalibrTriggerMask) != 0);
+   bool use_for_tot = use_for_calibr && (buf().kind == 0xD) && DoFallingEdge();
 
    unsigned cnt(0), hitcnt(0);
 
@@ -846,7 +836,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             }
             raw_hit = false;
          } else
-         if (ncalibr<2) {
+         if (ncalibr < 2) {
             // use correction from special message
             corr = calibr.getCalibrFine(ncalibr++)*5e-9/0x3ffe;
             if (!isrising) corr *= 10.; // range for falling edge is 50 ns.
@@ -965,7 +955,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                   rec.rising_new_value = false;
 
                   // use only raw hit
-                  if (raw_hit && (ncalibr<3) && (buf().kind == 0xD)) rec.last_tot = tot + rec.tot_shift;
+                  if (raw_hit && use_for_tot) rec.last_tot = tot + rec.tot_shift;
                }
             }
 
@@ -1062,6 +1052,16 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    }
 
    if (first_scan) {
+      // when doing TOT calibration, use only last TOT value - before one could find other signals
+      if (use_for_tot)
+         for (unsigned ch=1;ch<NumChannels();ch++) {
+            if (fCh[ch].hascalibr && (fCh[ch].last_tot >= TotLeft) && (fCh[ch].last_tot < TotRight)) {
+               int bin = (int) ((fCh[ch].last_tot - TotLeft) / (TotRight - TotLeft) * TotBins);
+               fCh[ch].tot0d_hist[bin]++;
+               fCh[ch].tot0d_cnt++;
+            }
+            fCh[ch].last_tot = 0.;
+         }
 
       if (lowid || highid) {
          unsigned id = (highid << 16) | lowid;

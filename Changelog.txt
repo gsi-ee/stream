@@ -1,10 +1,13 @@
+2.02.2016
+1. Fix small problems with TOT calibration
+
+
 25.01.2016
 1. Use trigger mask, when assign type of events for calibration.
 2. Use temperature, provided in status even. Calculate average temperature during calibration.
 3. Let use measured temperature to adjust calibration function. Use scaling factor,
    which should be defined separately.  
  
-
 
 17.11.2015
 1. Store TDC data always in subevent - this let use different formats with go4 
