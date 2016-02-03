@@ -690,6 +690,9 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    // if data could be used for TOT calibration
    bool do_tot = (use_for_calibr>0) && (buf().kind == 0xD) && DoFallingEdge();
 
+   // use temperature compensation only when temperature available
+   bool do_temp_comp = fCalibrUseTemp && (fCurrentTemp > 0) && (fCalibrTemp > 0) && (fabs(fCurrentTemp - fCalibrTemp) < 30.);
+
    unsigned cnt(0), hitcnt(0);
 
    bool iserr(false), isfirstepoch(false), rawprint(false), missinghit(false), dostore(false);
@@ -857,7 +860,11 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                continue;
             }
 
-            corr = ExtractCalibr(isrising ? rec.rising_calibr : rec.falling_calibr, fine) + rec.tot_shift*1e-9;
+            corr = ExtractCalibr(isrising ? rec.rising_calibr : rec.falling_calibr, fine);
+            if (!isrising) corr += rec.tot_shift*1e-9;
+
+            // negative while value should be add to the stamp
+            if (do_temp_comp) corr -= (fCurrentTemp - fCalibrTemp) * rec.time_shift_per_grad * 1e-9;
          }
 
          // apply correction
@@ -1392,6 +1399,11 @@ void hadaq::TdcProcessor::StoreCalibration(const std::string& fprefix)
    fwrite(&fCalibrTemp, sizeof(fCalibrTemp), 1, f);
    fwrite(&fCalibrTempCoef, sizeof(fCalibrTempCoef), 1, f);
 
+   for (unsigned ch=0;ch<NumChannels();ch++) {
+      fwrite(&(fCh[ch].time_shift_per_grad), sizeof(fCh[ch].time_shift_per_grad), 1, f);
+      fwrite(&(fCh[ch].trig0d_coef), sizeof(fCh[ch].trig0d_coef), 1, f);
+   }
+
    fclose(f);
 
    printf("%s storing calibration in %s\n", GetName(), fname);
@@ -1453,6 +1465,13 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
       if (!feof(f)) {
          fread(&fCalibrTemp, sizeof(fCalibrTemp), 1, f);
          fread(&fCalibrTempCoef, sizeof(fCalibrTempCoef), 1, f);
+
+
+         for (unsigned ch=0;ch<NumChannels();ch++)
+            if (!feof(f)) {
+               fwrite(&(fCh[ch].time_shift_per_grad), sizeof(fCh[ch].time_shift_per_grad), 1, f);
+               fwrite(&(fCh[ch].trig0d_coef), sizeof(fCh[ch].trig0d_coef), 1, f);
+            }
       }
    }
 

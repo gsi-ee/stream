@@ -1,5 +1,11 @@
 3.02.2016
 1. When filling RisingRf histogram, do not use special calibration trigger 0xD 
+2. Introduce time shift compensation for each channel depending from temperature.
+   From current measurements about 5..30 ps/C could be observed. 
+   Problem of such compensation - there is no clear 0 point. Therefore channels inside
+   single FPGA could be consistently shifted, but that to do with channels from different FPGA?
+   Let use following agreement - maximal compensation for some channel is 5 times
+   bigger then compensation of minimal channel. Any better idea?  
 
 
 2.02.2016

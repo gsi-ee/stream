@@ -73,7 +73,9 @@ namespace hadaq {
             float last_tot;
             long tot0d_cnt;                 //! counter of tot0d statistic for calibration
             long tot0d_hist[TotBins];       //! histogram for TOT calibration
-            float tot_shift;
+            float tot_shift;                //! calibrated tot shift
+            float time_shift_per_grad;      //! delay in channel (ns/C), caused by temperature change
+            float trig0d_coef;              //! scaling coefficient, applied when build calibration from 0xD trigger (reserved)
             int rising_cond_prnt;
 
             ChannelRec() :
@@ -115,6 +117,8 @@ namespace hadaq {
                last_tot(0.),
                tot0d_cnt(0),
                tot_shift(0.),
+               time_shift_per_grad(0.),
+               trig0d_coef(0.),
                rising_cond_prnt(-1)
             {
                for (unsigned n=0;n<FineCounterBins;n++) {
@@ -316,6 +320,17 @@ namespace hadaq {
          void SetCalibrTriggerMask(unsigned trigmask) {
             fCalibrTriggerMask = trigmask & 0x3FFF;
             fCalibrUseTemp = (trigmask & 0x80000000) != 0;
+         }
+
+         /** Set temperature coefficient, which is applied to calibration curves
+          * Typical value is about 0.0044 */
+         void SetCalibrTempCoef(float coef) {
+            fCalibrTempCoef = coef;
+         }
+
+         /** Set shift for the channel time stamp, which is added with temperature change */
+         void SetChannelTempShift(unsigned ch, float shift_per_grad) {
+            if (ch < fCh.size()) fCh[ch].time_shift_per_grad = shift_per_grad;
          }
 
          /** Disable calibration for specified channels */
