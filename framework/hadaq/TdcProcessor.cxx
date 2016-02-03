@@ -389,7 +389,7 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
             double diff = fCh[ch].rising_ref_tm*1e9;
 
             // when refch is 0 on same board, histogram already filled
-            if ((ref!=0) || (refproc!=this)) DefFillH1(fCh[ch].fRisingRef, diff, 1.);
+            if ((ref!=0) || (refproc != this)) DefFillH1(fCh[ch].fRisingRef, diff, 1.);
 
             double coarse_diff = 0. + fCh[ch].rising_coarse - refproc->fCh[ref].rising_coarse;
             DefFillH1(fCh[ch].fRisingCoarseRef, coarse_diff, 1.);
@@ -682,6 +682,9 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    // if data could be used for calibration
    int use_for_calibr = first_scan && (((1 << buf().kind) & fCalibrTriggerMask) != 0) ? 1 : 0;
 
+   // use in ref calculations only physical trigger, exclude 0xD or 0xE
+   bool use_for_ref = buf().kind < 0xD;
+
    if ((use_for_calibr > 0) && (buf().kind == 0xD)) use_for_calibr = 2;
 
    // if data could be used for TOT calibration
@@ -920,12 +923,12 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                rec.rising_last_tm = localtm;
                rec.rising_new_value = true;
 
-               if ((rec.rising_hit_tm == 0.) || fUseLastHit) {
+               if (use_for_ref && ((rec.rising_hit_tm == 0.) || fUseLastHit)) {
                   rec.rising_hit_tm = localtm;
                   rec.rising_coarse = coarse;
                   rec.rising_fine = fine;
 
-                  if ((rec.rising_cond_prnt>0) && (rec.reftdc == GetID()) &&
+                  if ((rec.rising_cond_prnt > 0) && (rec.reftdc == GetID()) &&
                       (rec.refch < NumChannels()) && (fCh[rec.refch].rising_hit_tm!=0)) {
                      double diff = (localtm - fCh[rec.refch].rising_hit_tm) * 1e9;
                      if (TestC1(rec.fRisingRefCond, diff) == 0) {
