@@ -97,7 +97,7 @@ namespace hadaq {
 
       public:
 
-         HldProcessor(bool auto_create = false, const char* after_func = 0);
+         HldProcessor(bool auto_create = false, const char* after_func = "");
          virtual ~HldProcessor();
 
          /** Search for specified TDC in all subprocessors */

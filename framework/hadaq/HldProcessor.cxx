@@ -18,7 +18,7 @@ hadaq::HldProcessor::HldProcessor(bool auto_create, const char* after_func) :
    fEventTypeSelect(0xfffff),
    fPrintRawData(false),
    fAutoCreate(auto_create),
-   fAfterFunc(after_func),
+   fAfterFunc(after_func==0 ? "" : after_func),
    fCalibrName(),
    fCalibrPeriod(-111),
    fCalibrTriggerMask(0xFFFF),
