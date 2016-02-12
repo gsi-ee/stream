@@ -144,7 +144,7 @@ namespace hadaq {
          base::H2handle fRisingCalibr;//! histogram with all rising calibrations
          base::H2handle fFallingCalibr; //! histogram all rising calibrations
          base::H1handle fHitsRate;    //! histogram with data rate
-         base::H1handle fTotShifts;  //! histogram with all tot shifts
+         base::H1handle fTotShifts;  //! histogram with all TOT shifts
          base::H1handle fTempDistr;   //! temperature distribution
 
          unsigned                 fNumChannels; //! number of channels
@@ -157,8 +157,9 @@ namespace hadaq {
          double fCalibrProgress;      //! progress of auto calibration
          std::string fCalibrStatus;   //! calibration status
 
-         float                    fCurrentTemp;  //! current measured temperature
-         unsigned                 fDesignId;     //! design ID, taken from status message
+         float                    fTempCorrection; //! correction for temperature sensor
+         float                    fCurrentTemp;    //! current measured temperature
+         unsigned                 fDesignId;       //! design ID, taken from status message
          double                   fCalibrTempSum0; //! sum0 used to check temperature during calibration
          double                   fCalibrTempSum1; //! sum1 used to check temperature during calibration
          double                   fCalibrTempSum2; //! sum2 used to check temperature during calibration
@@ -208,7 +209,7 @@ namespace hadaq {
 
          static unsigned gNumFineBins;  //! default value for number of bins in histograms for fine bins
          static unsigned gTotRange;  //! default range for TOT histogram
-         static bool gAllHistos;     //! when true, all histos for all channels created simultaneosely
+         static bool gAllHistos;     //! when true, all histos for all channels created simultaneously
 
          /** Method will be called by TRB processor if SYNC message was found
           * One should change 4 first bytes in the last buffer in the queue */
@@ -419,8 +420,13 @@ namespace hadaq {
          /** For expert use - artificially produce calibration */
          void ProduceCalibration(bool clear_stat = true);
 
+         /** Access value of temperature during calibration.
+          * Used to adjust all kind of calibrations afterwards */
+         float GetCalibrTemp() const { return fCalibrTemp; }
+         void SetCalibrTemp(float v) { fCalibrTemp = v; }
+
          /** For expert use - store calibration in the file */
-         void StoreCalibration(const std::string& fname);
+         void StoreCalibration(const std::string& fname, unsigned fileid = 0);
 
          virtual void Store(base::Event*);
 

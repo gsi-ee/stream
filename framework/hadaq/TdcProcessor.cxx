@@ -41,6 +41,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fCalibrTriggerMask(0xFFFF),
    fCalibrProgress(0.),
    fCalibrStatus("Init"),
+   fTempCorrection(0.),
    fCurrentTemp(-1.),
    fDesignId(0),
    fCalibrTempSum0(0),
@@ -482,15 +483,17 @@ float hadaq::TdcProcessor::ExtractCalibr(float* func, unsigned bin)
 {
    if (!fCalibrUseTemp || (fCalibrTemp <= 0) || (fCurrentTemp <= 0) || (fCalibrTempCoef<=0)) return func[bin];
 
-   float val = func[bin] * (1+fCalibrTempCoef*(fCurrentTemp-fCalibrTemp));
+   float temp = fCurrentTemp + fTempCorrection;
 
-   if ((fCurrentTemp < fCalibrTemp) && (func[bin] >= hadaq::TdcMessage::CoarseUnit()*0.9999)) {
+   float val = func[bin] * (1+fCalibrTempCoef*(temp-fCalibrTemp));
+
+   if ((temp < fCalibrTemp) && (func[bin] >= hadaq::TdcMessage::CoarseUnit()*0.9999)) {
       // special case - lower temperature and bin which was not observed during calibration
       // just take linear extrapolation, using points bin-30 and bin-80
 
       float val0 = func[bin-30] + (func[bin-30] - func[bin-80]) / 50 * 30;
 
-      val = val0 * (1+fCalibrTempCoef*(fCurrentTemp-fCalibrTemp));
+      val = val0 * (1+fCalibrTempCoef*(temp-fCalibrTemp));
    }
 
    return val < hadaq::TdcMessage::CoarseUnit() ? val : hadaq::TdcMessage::CoarseUnit();
@@ -860,11 +863,14 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                continue;
             }
 
+            // main calibration for fine counter
             corr = ExtractCalibr(isrising ? rec.rising_calibr : rec.falling_calibr, fine);
+
+            // apply TOT shift for falling edge (should it be also temp dependent)?
             if (!isrising) corr += rec.tot_shift*1e-9;
 
             // negative while value should be add to the stamp
-            if (do_temp_comp) corr -= (fCurrentTemp - fCalibrTemp) * rec.time_shift_per_grad * 1e-9;
+            if (do_temp_comp) corr -= (fCurrentTemp + fTempCorrection - fCalibrTemp) * rec.time_shift_per_grad * 1e-9;
          }
 
          // apply correction
@@ -1119,10 +1125,12 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          fDesignId = id;
       }
 
-      if (temp!=0) {
+      if ((temp!=0) && (temp < 2400)) {
          fCurrentTemp = temp/16.;
 
-         if ((HistFillLevel() > 1) && (fTempDistr==0))  {
+         if ((HistFillLevel() > 1) && (fTempDistr == 0))  {
+            printf("%s FirstTemp:%5.2f CalibrTemp:%5.2f UseTemp:%d\n", GetName(), fCurrentTemp, fCalibrTemp, fCalibrUseTemp);
+
             int mid = round(fCurrentTemp);
             SetSubPrefix();
             fTempDistr = MakeH1("Temperature", "Temperature distribution", 600, mid-30, mid+30, "C");
@@ -1367,12 +1375,13 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat)
    fCalibrStatus = "Ready";
 }
 
-void hadaq::TdcProcessor::StoreCalibration(const std::string& fprefix)
+void hadaq::TdcProcessor::StoreCalibration(const std::string& fprefix, unsigned fileid)
 {
    if (fprefix.empty()) return;
 
+   if (fileid == 0) fileid = GetID();
    char fname[1024];
-   snprintf(fname, sizeof(fname), "%s%04x.cal", fprefix.c_str(), GetID());
+   snprintf(fname, sizeof(fname), "%s%04x.cal", fprefix.c_str(), fileid);
 
    FILE* f = fopen(fname,"w");
    if (f==0) {
@@ -1466,18 +1475,26 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
          fread(&fCalibrTemp, sizeof(fCalibrTemp), 1, f);
          fread(&fCalibrTempCoef, sizeof(fCalibrTempCoef), 1, f);
 
-
          for (unsigned ch=0;ch<NumChannels();ch++)
             if (!feof(f)) {
-               fwrite(&(fCh[ch].time_shift_per_grad), sizeof(fCh[ch].time_shift_per_grad), 1, f);
-               fwrite(&(fCh[ch].trig0d_coef), sizeof(fCh[ch].trig0d_coef), 1, f);
+               fread(&(fCh[ch].time_shift_per_grad), sizeof(fCh[ch].time_shift_per_grad), 1, f);
+               fread(&(fCh[ch].trig0d_coef), sizeof(fCh[ch].trig0d_coef), 1, f);
             }
       }
    }
 
    fclose(f);
 
-   printf("%s reading calibration from %s done\n", GetName(), fname);
+   // workaround for testing, remove later !!!
+/*   if (strstr(fname, "cal/global_")!=0)
+      switch (GetID()) {
+         case 0x941: fTempCorrection = -0.2; break;
+         case 0x942: fTempCorrection = -2.3; break;
+         case 0x943: fTempCorrection = -2.0; break;
+         default: fTempCorrection = 0; break;
+      } */
+
+   printf("%s reading calibration from %s, tcorr:%5.1f uset:%d done\n", GetName(), fname, fTempCorrection, fCalibrUseTemp);
 
    fCalibrStatus = std::string("File ") + fname;
 
