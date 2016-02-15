@@ -144,7 +144,6 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
 
    if (DoRisingEdge()) {
       fCh[ch].fRisingFine = MakeH1("RisingFine", "Rising fine counter", gNumFineBins, 0, gNumFineBins, "fine");
-      fCh[ch].fRisingCoarse = MakeH1("RisingCoarse", "Rising coarse counter", 2048, 0, 2048, "coarse");
       fCh[ch].fRisingMult = MakeH1("RisingMult", "Rising event multiplicity", 128, 0, 128, "nhits");
       fCh[ch].fRisingCalibr = MakeH1("RisingCalibr", "Rising calibration function", FineCounterBins, 0, FineCounterBins, "fine;kind:F");
       // copy calibration only when histogram created
@@ -153,7 +152,6 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
 
    if (DoFallingEdge()) {
       fCh[ch].fFallingFine = MakeH1("FallingFine", "Falling fine counter", gNumFineBins, 0, gNumFineBins, "fine");
-      fCh[ch].fFallingCoarse = MakeH1("FallingCoarse", "Falling coarse counter", 2048, 0, 2048, "coarse");
       fCh[ch].fFallingMult = MakeH1("FallingMult", "Falling event multiplicity", 128, 0, 128, "nhits");
       fCh[ch].fFallingCalibr = MakeH1("FallingCalibr", "Falling calibration function", FineCounterBins, 0, FineCounterBins, "fine;kind:F");
       fCh[ch].fTot = MakeH1("Tot", "Time over threshold", gTotRange*100, 0, gTotRange, "ns");
@@ -236,19 +234,11 @@ void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned re
             fCh[ch].fRisingRef = MakeH1("RisingRef", sbuf, npoints, left, right, saxis);
          }
 
-         if (fCh[ch].fRisingCoarseRef == 0)
-            fCh[ch].fRisingCoarseRef = MakeH1("RisingCoarseRef", "Difference to rising coarse counter in ref channel", 4096, -2048, 2048, "coarse");
-
          if (twodim && (fCh[ch].fRisingRef2D==0)) {
             sprintf(sbuf, "corr diff %s and fine counter", refname);
             sprintf(saxis, "Ch%u - %s, ns;fine counter", ch, refname);
             fCh[ch].fRisingRef2D = MakeH2("RisingRef2D", sbuf, 500, left, right, 100, 0, 500, saxis);
          }
-      }
-
-      if (DoFallingEdge()) {
-         if (fCh[ch].fFallingCoarseRef == 0)
-            fCh[ch].fFallingCoarseRef = MakeH1("FallingCoarseRef", "Difference to falling coarse counter in ref channel", 4096, -2048, 2048, "coarse");
       }
 
       SetSubPrefix();
@@ -264,7 +254,7 @@ bool hadaq::TdcProcessor::SetDoubleRefChannel(unsigned ch1, unsigned ch2,
    if ((ch1>=NumChannels()) || (fCh[ch1].refch>=NumChannels()))  return false;
 
    unsigned reftdc = 0xffff;
-   if (ch2 > 1000) { reftdc = (ch2-1000) / 1000; ch2 = ch2 % 1000; }
+   if (ch2 > 0xffff) { reftdc = ch2 >> 16; ch2 = ch2 & 0xFFFF; }
    if (reftdc >= 0xffff) reftdc = GetID();
 
    unsigned ch = ch1, refch = ch2;
@@ -273,8 +263,9 @@ bool hadaq::TdcProcessor::SetDoubleRefChannel(unsigned ch1, unsigned ch2,
       if ((ch2>=NumChannels()) || (fCh[ch2].refch>=NumChannels()))  return false;
       if (ch1<ch2) { ch = ch2; refch = ch1; }
    } else {
-      if (reftdc > GetID())
-         printf("WARNING - double ref channel from TDC with higher ID %u > %u\n", reftdc, GetID());
+      //if (reftdc > GetID())
+      //   printf("WARNING - double ref channel from TDC with higher ID %u > %u\n", reftdc, GetID());
+      if (fTrb) fTrb->SetCrossProcess(true);
    }
 
    fCh[ch].doublerefch = refch;
@@ -284,7 +275,23 @@ bool hadaq::TdcProcessor::SetDoubleRefChannel(unsigned ch1, unsigned ch2,
    char saxis[1024];
 
    if (DoRisingEdge()) {
-      if (fCh[ch].fRisingDoubleRef == 0) {
+
+      if ((fCh[ch].fRisingRefRef == 0) && (npy == 0)) {
+         if (reftdc == GetID()) {
+            sprintf(sbuf, "double reference with Ch%u", refch);
+            sprintf(saxis, "(ch%u-ch%u) - (refch%u) ns", ch, fCh[ch].refch, refch);
+         } else {
+            sprintf(sbuf, "double reference with TDC 0x%04x Ch%u", reftdc, refch);
+            sprintf(saxis, "(ch%u-ch%u)  - (tdc 0x%04x refch%u) ns", ch, fCh[ch].refch, reftdc, refch);
+         }
+
+         SetSubPrefix("Ch", ch);
+         fCh[ch].fRisingRefRef = MakeH1("RisingRefRef", sbuf, npx, xmin, xmax, saxis);
+         SetSubPrefix();
+      }
+
+
+      if ((fCh[ch].fRisingDoubleRef == 0) && (npy>0)) {
          if (reftdc == GetID()) {
             sprintf(sbuf, "double correlation to Ch%u", refch);
             sprintf(saxis, "ch%u-ch%u ns;ch%u-ch%u ns", ch, fCh[ch].refch, refch, fCh[refch].refch);
@@ -392,8 +399,6 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
             // when refch is 0 on same board, histogram already filled
             if ((ref!=0) || (refproc != this)) DefFillH1(fCh[ch].fRisingRef, diff, 1.);
 
-            double coarse_diff = 0. + fCh[ch].rising_coarse - refproc->fCh[ref].rising_coarse;
-            DefFillH1(fCh[ch].fRisingCoarseRef, coarse_diff, 1.);
             DefFillH2(fCh[ch].fRisingRef2D, diff, fCh[ch].rising_fine, 1.);
             DefFillH2(fCh[ch].fRisingRef2D, (diff-1.), refproc->fCh[ref].rising_fine, 1.);
             DefFillH2(fCh[ch].fRisingRef2D, (diff-2.), fCh[ch].rising_coarse/4, 1.);
@@ -413,7 +418,8 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
       }
 
       // fill double-reference histogram, using data from any reference TDC
-      if ((fCh[ch].doublerefch < NumChannels()) && (fCh[ch].fRisingDoubleRef!=0)) {
+      if ((fCh[ch].doublerefch < NumChannels()) && ((fCh[ch].fRisingDoubleRef!=0) || (fCh[ch].fRisingRefRef!=0))) {
+
          ref = fCh[ch].doublerefch;
          reftdc = fCh[ch].doublereftdc;
          if (reftdc>=0xffff) reftdc = GetID();
@@ -428,8 +434,10 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
          }
 
          if ((refproc!=0) && (ref<refproc->NumChannels()) && ((ref!=ch) || (refproc!=this))) {
-            if ((fCh[ch].rising_ref_tm != 0) && (refproc->fCh[ref].rising_ref_tm != 0))
+            if ((fCh[ch].rising_ref_tm != 0) && (refproc->fCh[ref].rising_ref_tm != 0)) {
+               DefFillH1(fCh[ch].fRisingRefRef, (fCh[ch].rising_ref_tm - refproc->fCh[ref].rising_ref_tm)*1e9, 1.);
                DefFillH2(fCh[ch].fRisingDoubleRef, fCh[ch].rising_ref_tm*1e9, refproc->fCh[ref].rising_ref_tm*1e9, 1.);
+            }
          }
       }
    }
@@ -629,10 +637,8 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
 
       if (isrising) {
          DefFastFillH1(rec.fRisingFine, fine);
-         DefFastFillH1(rec.fRisingCoarse, coarse);
       } else {
          DefFastFillH1(rec.fFallingFine, fine);
-         DefFastFillH1(rec.fFallingCoarse, coarse);
       }
    }
 
@@ -929,7 +935,6 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
                rec.rising_cnt++;
                if (raw_hit) DefFastFillH1(rec.fRisingFine, fine);
-               DefFastFillH1(rec.fRisingCoarse, coarse);
 
                bool print_cond = false;
 
@@ -954,7 +959,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                if (print_cond) rawprint = true;
 
                // special case - when ref channel defined as 0, fill all hits
-               if ((chid!=0) && (rec.refch==0) && (rec.reftdc == GetID())) {
+               if ((chid!=0) && (rec.refch==0) && (rec.reftdc == GetID()) && use_for_ref) {
+                  rec.rising_ref_tm = localtm - fCh[0].rising_hit_tm;
 
                   DefFillH1(rec.fRisingRef, ((localtm - fCh[0].rising_hit_tm)*1e9), 1.);
 
@@ -981,7 +987,6 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                rec.falling_cnt++;
 
                if (raw_hit) DefFastFillH1(rec.fFallingFine, fine);
-               DefFastFillH1(rec.fFallingCoarse, coarse);
 
                if (rec.rising_new_value && (rec.rising_last_tm!=0)) {
                   double tot = (localtm - rec.rising_last_tm)*1e9;
@@ -1090,7 +1095,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
       // special case for 0xD trigger - use only last hit messages for accumulating statistic
       if (use_for_calibr == 2)
-         for (unsigned ch=1;ch<NumChannels();ch++) {
+         for (unsigned ch=0;ch<NumChannels();ch++) {
             ChannelRec& rec = fCh[ch];
             if (rec.last_rising_fine > 0) {
                rec.rising_stat[rec.last_rising_fine]++;
@@ -1486,13 +1491,13 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
    fclose(f);
 
    // workaround for testing, remove later !!!
-/*   if (strstr(fname, "cal/global_")!=0)
+   if (strstr(fname, "cal/global_")!=0)
       switch (GetID()) {
-         case 0x941: fTempCorrection = -0.2; break;
-         case 0x942: fTempCorrection = -2.3; break;
-         case 0x943: fTempCorrection = -2.0; break;
+         case 0x941: fTempCorrection = -1.58; break;
+         case 0x942: fTempCorrection = -1.68; break;
+         case 0x943: fTempCorrection = -1.32; break;
          default: fTempCorrection = 0; break;
-      } */
+      }
 
    printf("%s reading calibration from %s, tcorr:%5.1f uset:%d done\n", GetName(), fname, fTempCorrection, fCalibrUseTemp);
 

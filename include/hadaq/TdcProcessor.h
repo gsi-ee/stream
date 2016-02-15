@@ -39,20 +39,17 @@ namespace hadaq {
             bool docalibr;                 //! if false, simple calibration will be used
             bool hascalibr;                //! indicate if channel has valid calibration (not simple linear)
             base::H1handle fRisingFine;    //! histogram of all fine counters
-            base::H1handle fRisingCoarse;  //! histogram of all coarse counters
             base::H1handle fRisingMult;    //! number of hits per event
             base::H1handle fRisingRef;     //! histogram of all coarse counters
             base::C1handle fRisingRefCond; //! condition to print raw events
-            base::H1handle fRisingCoarseRef; //! histogram
             base::H1handle fRisingCalibr;  //! histogram of channel calibration function
             base::H2handle fRisingRef2D;   //! histogram
-            base::H2handle fRisingDoubleRef; //! correlation with dif time from other channel
+            base::H1handle fRisingRefRef;  //! difference of two ref times, connected with double ref
+            base::H2handle fRisingDoubleRef; //! correlation with diff time from other channel
             base::H1handle fFallingFine;   //! histogram of all fine counters
-            base::H1handle fFallingCoarse; //! histogram of all coarse counters
             base::H1handle fFallingMult;   //! number of hits per event
             base::H1handle fTot;           //! histogram of time-over-threshold measurement
             base::H1handle fTot0D;         //! TOT from 0xD trigger (used for shift calibration)
-            base::H1handle fFallingCoarseRef; //! histogram
             base::H1handle fFallingCalibr; //! histogram of channel calibration function
             int rising_cnt;                //! number of rising hits in last event
             int falling_cnt;               //! number of falling hits in last event
@@ -87,20 +84,17 @@ namespace hadaq {
                docalibr(true),
                hascalibr(false),
                fRisingFine(0),
-               fRisingCoarse(0),
                fRisingMult(0),
                fRisingRef(0),
                fRisingRefCond(0),
-               fRisingCoarseRef(0),
                fRisingCalibr(0),
                fRisingRef2D(0),
+               fRisingRefRef(0),
                fRisingDoubleRef(0),
                fFallingFine(0),
-               fFallingCoarse(0),
                fFallingMult(0),
                fTot(0),
                fTot0D(0),
-               fFallingCoarseRef(0),
                fFallingCalibr(0),
                rising_cnt(0),
                falling_cnt(0),
@@ -284,10 +278,10 @@ namespace hadaq {
             if (ch>=NumChannels()) return 0;
             switch (k) {
                case 0: return fCh[ch].fRisingFine;
-               case 1: return fCh[ch].fRisingCoarse;
+               case 1: return 0;
                case 2: return fCh[ch].fRisingRef;
                case 3: return fCh[ch].fFallingFine;
-               case 4: return fCh[ch].fFallingCoarse;
+               case 4: return 0;
                case 5: return fCh[ch].fTot;
                case 6: return fCh[ch].fRisingMult;
                case 7: return fCh[ch].fFallingMult;
