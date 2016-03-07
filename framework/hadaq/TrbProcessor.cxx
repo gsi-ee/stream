@@ -385,6 +385,12 @@ void hadaq::TrbProcessor::AddBufferToTDC(hadaqs::RawSubevent* sub,
                                          hadaq::SubProcessor* tdcproc,
                                          unsigned ix, unsigned datalen)
 {
+   if (datalen==0) {
+      // if (CheckPrintError())
+         printf("Try to add empty buffer to %s\n", tdcproc->GetName());
+      return;
+   }
+
    base::Buffer buf;
 
    if (gIgnoreSync && (sub->Alignment()==4)) {
