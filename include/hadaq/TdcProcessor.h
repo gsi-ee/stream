@@ -74,6 +74,12 @@ namespace hadaq {
             float time_shift_per_grad;      //! delay in channel (ns/C), caused by temperature change
             float trig0d_coef;              //! scaling coefficient, applied when build calibration from 0xD trigger (reserved)
             int rising_cond_prnt;
+            base::H1handle fBubbleRising;      //! position of rising edge in bubble (only correct)
+            base::H1handle fBubbleFalling;     //! position of falling edge in bubble (only correct)
+            base::H1handle fBubbleRisingErr;   //! position of rising edge error 1101000
+            base::H1handle fBubbleFallingErr;  //! position of falling edge error 00001011
+            base::H1handle fBubbleRisingAll;   //! all other errors
+            base::H1handle fBubbleFallingAll;  //! all other errors
 
             ChannelRec() :
                refch(0xffffff),
@@ -113,7 +119,13 @@ namespace hadaq {
                tot_shift(0.),
                time_shift_per_grad(0.),
                trig0d_coef(0.),
-               rising_cond_prnt(-1)
+               rising_cond_prnt(-1),
+               fBubbleRising(0),
+               fBubbleFalling(0),
+               fBubbleRisingErr(0),
+               fBubbleFallingErr(0),
+               fBubbleRisingAll(0),
+               fBubbleFallingAll(0)
             {
                for (unsigned n=0;n<FineCounterBins;n++) {
                   falling_stat[n] = rising_stat[n] = 0;
@@ -122,6 +134,7 @@ namespace hadaq {
                for (unsigned n=0;n<TotBins;n++) {
                   tot0d_hist[n] = 0;
                }
+
             }
          };
 
@@ -204,6 +217,7 @@ namespace hadaq {
          static unsigned gNumFineBins;  //! default value for number of bins in histograms for fine bins
          static unsigned gTotRange;  //! default range for TOT histogram
          static bool gAllHistos;     //! when true, all histos for all channels created simultaneously
+         static bool gBubbleMode;     //! when true, all data processed as bubble
 
          /** Method will be called by TRB processor if SYNC message was found
           * One should change 4 first bytes in the last buffer in the queue */
@@ -215,6 +229,9 @@ namespace hadaq {
 
          /** Scan all messages, find reference signals */
          bool DoBufferScan(const base::Buffer& buf, bool isfirst);
+
+         /** Scan all bubble data */
+         bool DoBubbleScan(const base::Buffer& buf, bool isfirst);
 
          /** These methods used to fill different raw histograms during first scan */
          virtual void BeforeFill();
@@ -250,6 +267,8 @@ namespace hadaq {
          static void SetDefaults(unsigned numfinebins=600, unsigned totrange = 100);
 
          static void SetAllHistos(bool on = true);
+
+         static void SetBubbleMode(bool on = true);
 
          inline unsigned NumChannels() const { return fNumChannels; }
          inline bool DoRisingEdge() const { return true; }

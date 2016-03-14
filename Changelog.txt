@@ -1,3 +1,8 @@
+14.03.2016
+1. Support of raw chain data from TDC. In such case original chain is readout and send
+   in HLD subevents. Primiary analysis of bubbles and other errors are implemented 
+ 
+
 3.02.2016
 1. When filling RisingRf histogram, do not use special calibration trigger 0xD 
 2. Introduce time shift compensation for each channel depending from temperature.
