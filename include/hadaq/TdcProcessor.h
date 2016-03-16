@@ -80,6 +80,8 @@ namespace hadaq {
             base::H1handle fBubbleFallingErr;  //! position of falling edge error 00001011
             base::H1handle fBubbleRisingAll;   //! all other errors
             base::H1handle fBubbleFallingAll;  //! all other errors
+            double sum0,sumx1,sumx2,sumy1,sumxy;
+            float bubble_a, bubble_b; // bubble edges: rising = a + b * falling a=9, b=1.16
 
             ChannelRec() :
                refch(0xffffff),
@@ -125,7 +127,9 @@ namespace hadaq {
                fBubbleRisingErr(0),
                fBubbleFallingErr(0),
                fBubbleRisingAll(0),
-               fBubbleFallingAll(0)
+               fBubbleFallingAll(0),
+               sum0(0),sumx1(0),sumx2(0),sumy1(0),sumxy(0),
+               bubble_a(9.8), bubble_b(1.155)
             {
                for (unsigned n=0;n<FineCounterBins;n++) {
                   falling_stat[n] = rising_stat[n] = 0;

@@ -152,34 +152,34 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
 
    SetSubPrefix("Ch", ch);
 
-   if (gBubbleMode) {
-      if (fCh[ch].fBubbleRising == 0) {
-         fCh[ch].fBubbleRising = MakeH1("BRising", "Bubble rising edge", BUBBLE_BITS, 0, BUBBLE_BITS, "bubble");
-         fCh[ch].fBubbleFalling = MakeH1("BFalling", "Bubble falling edge", BUBBLE_BITS, 0, BUBBLE_BITS, "bubble");
-         fCh[ch].fBubbleRisingErr = MakeH1("BErrRising", "Bubble rising edge simple error", BUBBLE_BITS, 0, BUBBLE_BITS, "bubble");
-         fCh[ch].fBubbleFallingErr = MakeH1("BErrFalling", "Bubble falling edge simple error", BUBBLE_BITS, 0, BUBBLE_BITS, "bubble");
-         fCh[ch].fBubbleRisingAll = MakeH1("BRestRising", "All other hits with rising edge", BUBBLE_BITS, 0, BUBBLE_BITS, "bubble");
-         fCh[ch].fBubbleFallingAll = MakeH1("BRestFalling", "All other hits with falling edge", BUBBLE_BITS, 0, BUBBLE_BITS, "bubble");
-      }
-   } else {
+   if (gBubbleMode && (fCh[ch].fBubbleRising == 0)) {
+      fCh[ch].fBubbleRising = MakeH1("BRising", "Bubble rising edge", BUBBLE_BITS, 0, BUBBLE_BITS, "bubble");
+      fCh[ch].fBubbleFalling = MakeH1("BFalling", "Bubble falling edge", BUBBLE_BITS, 0, BUBBLE_BITS, "bubble");
+      fCh[ch].fBubbleRisingErr = MakeH1("BErrRising", "Bubble rising edge simple error", BUBBLE_BITS, 0, BUBBLE_BITS, "bubble");
+      fCh[ch].fBubbleFallingErr = MakeH1("BErrFalling", "Bubble falling edge simple error", BUBBLE_BITS, 0, BUBBLE_BITS, "bubble");
+      fCh[ch].fBubbleRisingAll = MakeH1("BRestRising", "All other hits with rising edge", BUBBLE_BITS, 0, BUBBLE_BITS, "bubble");
+      fCh[ch].fBubbleFallingAll = MakeH1("BRestFalling", "All other hits with falling edge", BUBBLE_BITS, 0, BUBBLE_BITS, "bubble");
+   }
 
-      if (DoRisingEdge() && (fCh[ch].fRisingFine==0)) {
-         fCh[ch].fRisingFine = MakeH1("RisingFine", "Rising fine counter", gNumFineBins, 0, gNumFineBins, "fine");
+   if (DoRisingEdge() && (fCh[ch].fRisingFine==0)) {
+      fCh[ch].fRisingFine = MakeH1("RisingFine", "Rising fine counter", gNumFineBins, 0, gNumFineBins, "fine");
+      if (!gBubbleMode)
          fCh[ch].fRisingMult = MakeH1("RisingMult", "Rising event multiplicity", 128, 0, 128, "nhits");
-         fCh[ch].fRisingCalibr = MakeH1("RisingCalibr", "Rising calibration function", FineCounterBins, 0, FineCounterBins, "fine;kind:F");
-         // copy calibration only when histogram created
-         CopyCalibration(fCh[ch].rising_calibr, fCh[ch].fRisingCalibr, ch, fRisingCalibr);
-      }
+      fCh[ch].fRisingCalibr = MakeH1("RisingCalibr", "Rising calibration function", FineCounterBins, 0, FineCounterBins, "fine;kind:F");
+      // copy calibration only when histogram created
+      CopyCalibration(fCh[ch].rising_calibr, fCh[ch].fRisingCalibr, ch, fRisingCalibr);
+   }
 
-      if (DoFallingEdge() && (fCh[ch].fFallingFine==0)) {
-         fCh[ch].fFallingFine = MakeH1("FallingFine", "Falling fine counter", gNumFineBins, 0, gNumFineBins, "fine");
+   if (DoFallingEdge() && (fCh[ch].fFallingFine==0)) {
+      fCh[ch].fFallingFine = MakeH1("FallingFine", "Falling fine counter", gNumFineBins, 0, gNumFineBins, "fine");
+      fCh[ch].fFallingCalibr = MakeH1("FallingCalibr", "Falling calibration function", FineCounterBins, 0, FineCounterBins, "fine;kind:F");
+      if (!gBubbleMode) {
          fCh[ch].fFallingMult = MakeH1("FallingMult", "Falling event multiplicity", 128, 0, 128, "nhits");
-         fCh[ch].fFallingCalibr = MakeH1("FallingCalibr", "Falling calibration function", FineCounterBins, 0, FineCounterBins, "fine;kind:F");
          fCh[ch].fTot = MakeH1("Tot", "Time over threshold", gTotRange*100, 0, gTotRange, "ns");
          fCh[ch].fTot0D = MakeH1("Tot0D", "Time over threshold with 0xD trigger", TotBins, TotLeft, TotRight, "ns");
-         // copy calibration only when histogram created
-         CopyCalibration(fCh[ch].falling_calibr, fCh[ch].fFallingCalibr, ch, fFallingCalibr);
       }
+      // copy calibration only when histogram created
+      CopyCalibration(fCh[ch].falling_calibr, fCh[ch].fFallingCalibr, ch, fFallingCalibr);
    }
 
    SetSubPrefix();
@@ -766,7 +766,6 @@ unsigned BubbleCheck(unsigned* bubble, int &p1, int &p2) {
          // check for simple bubble at the end 00001011 or 0xD0 in swapped order
          if ((data & 0xFF) == 0xD0) b2 = pos+5;
 
-
          last = (data & 1);
          data = data >> 1;
          pos++;
@@ -783,11 +782,18 @@ unsigned BubbleCheck(unsigned* bubble, int &p1, int &p2) {
 
    // up to here was simple errors, now we should do more complex analysis
 
-   if (p1 < p2-10) {
+   if (p1 < p2 - 8) {
       // take flip count at the middle and check how many transitions was in between
       int mid = (p2+p1)/2;
-      if (fliparr[mid] + 1 == fliparr[p2]) return 0x20; // hard error in the beginning
-      if (fliparr[p1] == fliparr[mid]) return 0x02; // hard error at the end
+      // hard error in the beginning
+      if (fliparr[mid] + 1 == fliparr[p2]) return 0x20;
+      // hard error in begin, bubble at the end
+      if ((fliparr[mid] + 3 == fliparr[p2]) && (b2>0)) { p2 = b2; return 0x21; }
+
+      // hard error at the end
+      if (fliparr[p1] == fliparr[mid]) return 0x02;
+      // hard error at the end, bubble at the begin
+      if ((fliparr[p1] + 2 == fliparr[mid]) && (b1>0)) { p1 = b1; return 0x12; }
    }
 
    return 0x22; // mark both as errors, should analyze better
@@ -808,6 +814,7 @@ bool hadaq::TdcProcessor::DoBubbleScan(const base::Buffer& buf, bool first_scan)
    unsigned lastch = 0xFFFF;
    unsigned bubble[(BUBBLE_SIZE*5)]; // use more memory for safety
    unsigned bcnt = 0, chid = 0;
+   double localtm = 0;
 
    while (iter.next()) {
 
@@ -827,35 +834,78 @@ bool hadaq::TdcProcessor::DoBubbleScan(const base::Buffer& buf, bool first_scan)
 
             unsigned res = BubbleCheck(bubble, p1, p2);
 
+            if ((res & 0xF0) == 0x00) p1 -= 1; // artificial shift
+
             switch (res & 0xF0) {
-               case 0x00: DefFillH1(rec.fBubbleFalling, p1, 1.); break;
-               case 0x10: DefFillH1(rec.fBubbleFallingErr, p1, 1.); break;
-               default: DefFillH1(rec.fBubbleFallingAll, p1, 1.); break;
+               case 0x00: DefFastFillH1(rec.fBubbleFalling, p1); break;
+               case 0x10: DefFastFillH1(rec.fBubbleFallingErr, p1); break;
+               default: DefFastFillH1(rec.fBubbleFallingAll, p1); break;
             }
 
             switch (res & 0x0F) {
-               case 0x00: DefFillH1(rec.fBubbleRising, p2, 1.); break;
-               case 0x01: DefFillH1(rec.fBubbleRisingErr, p2, 1); break;
-               default: DefFillH1(rec.fBubbleRisingAll, p2, 1); break;
+               case 0x00: DefFastFillH1(rec.fBubbleRising, p2); break;
+               case 0x01: DefFastFillH1(rec.fBubbleRisingErr, p2); break;
+               default: DefFastFillH1(rec.fBubbleRisingAll, p2); break;
             }
 
 
-            if (false)
-            if (((res & 0xF0) == 0x20) || ((res & 0x0F) == 0x02)) {
+            if (res == 0x22) {
                printf("%s ch:%2u ", GetName(), lastch);
                PrintBubble(bubble);
-
                printf("  ");
                PrintBubbleBinary(bubble, p1-2, p2+1);
                printf("\n");
             }
+
+            rec.rising_hit_tm = 0;
+
+            unsigned fine = p1 + p2;
+
+            // artificial compensation for hits around errors
+
+            if (res == 0x22) {
+               fine = 0;
+            } else
+            if ((res & 0x0F) == 0x02) { p2 = round(rec.bubble_a + p1*rec.bubble_b); fine = p1 + p2; } else
+            if ((res & 0xF0) == 0x20) { p1 = round((p2 - rec.bubble_a) / rec.bubble_b); fine = p1 + p2; }
+
+            if ((p2 < 16) || (p1 < 3)) fine = 0;
+
+            // measure linear coefficients between leading and trailing edge
+            if ((p2>15) && (p1 > 2) && ((res & 0x0F) < 0x02) && ((res & 0xF0) < 0x20)) {
+               rec.sum0 += 1;
+               rec.sumx1 += p1;
+               rec.sumx2 += p1*p1;
+               rec.sumy1 += p2;
+               rec.sumxy += p1*p2;
+            }
+
+            // take only simple data
+            if (fine > 0) {
+               rec.rising_stat[fine]++;
+               rec.all_rising_stat++;
+               rec.rising_cnt++;
+               DefFastFillH1(rec.fRisingFine, fine);
+               localtm = -rec.rising_calibr[fine];
+
+//               if ((p2>18) && (p2<204) && (p1>10) && (p1<200)) {
+                  rec.rising_last_tm = localtm;
+                  rec.rising_new_value = true;
+                  rec.rising_hit_tm = localtm;
+                  rec.rising_coarse = 0;
+                  rec.rising_fine = fine;
+//               }
+            }
          }
+
          lastch = chid; bcnt = 0;
       }
 
       bubble[bcnt++] = msg.getData() & 0xFFFF;
       lastch = chid;
    }
+
+   if (first_scan) AfterFill();
 
    return true;
 }
@@ -1510,6 +1560,22 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat)
    ClearH1(fTotShifts);
 
    for (unsigned ch=0;ch<NumChannels();ch++) {
+
+      if (gBubbleMode && (fCh[ch].sum0 > 100)) {
+         ChannelRec& rec = fCh[ch];
+
+         double meanx = rec.sumx1/rec.sum0;
+         double meany = rec.sumy1/rec.sum0;
+
+         double b = (rec.sumxy/rec.sum0 - meanx*meany)/ (rec.sumx2/rec.sum0 - meanx * meanx);
+         double a = meany - b* meanx;
+
+         printf("Ch:%2d B:%6.4f A:%4.2f\n", ch, b, a);
+
+         rec.bubble_a = a;
+         rec.bubble_b = b;
+      }
+
       if (fCh[ch].docalibr) {
 
          // special case - use common statistic
@@ -1604,6 +1670,8 @@ void hadaq::TdcProcessor::StoreCalibration(const std::string& fprefix, unsigned 
    for (unsigned ch=0;ch<NumChannels();ch++) {
       fwrite(&(fCh[ch].time_shift_per_grad), sizeof(fCh[ch].time_shift_per_grad), 1, f);
       fwrite(&(fCh[ch].trig0d_coef), sizeof(fCh[ch].trig0d_coef), 1, f);
+      fwrite(&(fCh[ch].bubble_a), sizeof(fCh[ch].bubble_a), 1, f);
+      fwrite(&(fCh[ch].bubble_b), sizeof(fCh[ch].bubble_b), 1, f);
    }
 
    fclose(f);
@@ -1672,6 +1740,8 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
             if (!feof(f)) {
                fread(&(fCh[ch].time_shift_per_grad), sizeof(fCh[ch].time_shift_per_grad), 1, f);
                fread(&(fCh[ch].trig0d_coef), sizeof(fCh[ch].trig0d_coef), 1, f);
+               fread(&(fCh[ch].bubble_a), sizeof(fCh[ch].bubble_a), 1, f);
+               fread(&(fCh[ch].bubble_b), sizeof(fCh[ch].bubble_b), 1, f);
             }
       }
    }
