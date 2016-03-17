@@ -98,6 +98,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fHitsRate = 0;
    fRateCnt = 0;
    fLastRateTm = -1;
+   fBubbleErrDistr = 0;
 
 
 
@@ -120,6 +121,9 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
          fFallingCalibr = MakeH2("FallingCalibr", "falling edge calibration", numchannels, 0, numchannels, FineCounterBins, 0, FineCounterBins, "ch;fine");
          fTotShifts = MakeH1("TotShifts", "Calibrated time shift for falling edge", numchannels, 0, numchannels, "kind:F;ch;ns");
       }
+
+      if (gBubbleMode)
+         fBubbleErrDistr = MakeH1("AllBubbleErrors", "All bubble errors from all channels", BUBBLE_BITS, 0, BUBBLE_BITS, "bubble");
    }
 
    for (unsigned ch=0;ch<numchannels;ch++) {
@@ -760,11 +764,30 @@ unsigned BubbleCheck(unsigned* bubble, int &p1, int &p2) {
 
          fliparr[pos] = nflip; // remember flip counts to analyze them later
 
-         // check for simple bubble at the beginning 1101000 or 0xB in swapped order
-         if ((data & 0xFF) == 0x0B) b1 = pos+2;
+         // check for simple bubble at the beginning 1101000 or 0x0B in swapped order
+         // set position on last 1 ? Expecting following sequence
+         //  1110000 - here pos=4
+         //     ^
+         //  1110100 - here pos=5
+         //      ^
+         //  1111100 - here pos=6
+         //       ^
+         if ((data & 0xFF) == 0x0B) b1 = pos+3;
 
          // check for simple bubble at the end 00001011 or 0xD0 in swapped order
+         // set position of 0 in bubble, expecting such sequence
+         //  0001111 - here pos=4
+         //     ^
+         //  0001011 - here pos=5
+         //      ^
+         //  0000011 - here pos=6
+         //       ^
          if ((data & 0xFF) == 0xD0) b2 = pos+5;
+
+         // simple bubble at very end 00000101 or 0xA0 in swapped order
+         // here not enough space for two bits
+         if (((pos == BUBBLE_BITS - 8)) && (b2 == 0) && ((data & 0xFF) == 0xA0))
+            b2 = pos + 6;
 
          last = (data & 1);
          data = data >> 1;
@@ -834,7 +857,17 @@ bool hadaq::TdcProcessor::DoBubbleScan(const base::Buffer& buf, bool first_scan)
 
             unsigned res = BubbleCheck(bubble, p1, p2);
 
-            if ((res & 0xF0) == 0x00) p1 -= 1; // artificial shift
+
+            if ((res == 0x22) || (((res & 0x0F) == 0x02) && ((p2<195) || (p2>225))) || (((res & 0xF0) == 0x20) && ((p1<195) || (p1>220)))) {
+               printf("%s ch:%2u ", GetName(), lastch);
+               PrintBubble(bubble);
+               printf(" p1:%3d  p2:%3d ", p1, p2);
+               PrintBubbleBinary(bubble, p1-2, p2+1);
+               printf("\n");
+            }
+
+
+            // if ((res & 0xF0) == 0x00) p1 -= 1;
 
             switch (res & 0xF0) {
                case 0x00: DefFastFillH1(rec.fBubbleFalling, p1); break;
@@ -849,14 +882,6 @@ bool hadaq::TdcProcessor::DoBubbleScan(const base::Buffer& buf, bool first_scan)
             }
 
 
-            if (res == 0x22) {
-               printf("%s ch:%2u ", GetName(), lastch);
-               PrintBubble(bubble);
-               printf("  ");
-               PrintBubbleBinary(bubble, p1-2, p2+1);
-               printf("\n");
-            }
-
             rec.rising_hit_tm = 0;
 
             unsigned fine = p1 + p2;
@@ -869,10 +894,15 @@ bool hadaq::TdcProcessor::DoBubbleScan(const base::Buffer& buf, bool first_scan)
             if ((res & 0x0F) == 0x02) { p2 = round(rec.bubble_a + p1*rec.bubble_b); fine = p1 + p2; } else
             if ((res & 0xF0) == 0x20) { p1 = round((p2 - rec.bubble_a) / rec.bubble_b); fine = p1 + p2; }
 
-            if ((p2 < 16) || (p1 < 3)) fine = 0;
+            if (res != 0x22) {
+               if ((res & 0x0F) == 0x02) DefFastFillH1(fBubbleErrDistr, p2);
+               if ((res & 0xF0) == 0x20) DefFastFillH1(fBubbleErrDistr, p1);
+            }
+
+            if ((p2 < 16) || (p1 < 4)) fine = 0;
 
             // measure linear coefficients between leading and trailing edge
-            if ((p2>15) && (p1 > 2) && ((res & 0x0F) < 0x02) && ((res & 0xF0) < 0x20)) {
+            if ((p2>15) && (p1 > 3) && ((res & 0x0F) < 0x02) && ((res & 0xF0) < 0x20)) {
                rec.sum0 += 1;
                rec.sumx1 += p1;
                rec.sumx2 += p1*p1;

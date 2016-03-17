@@ -157,6 +157,7 @@ namespace hadaq {
          base::H1handle fHitsRate;    //! histogram with data rate
          base::H1handle fTotShifts;  //! histogram with all TOT shifts
          base::H1handle fTempDistr;   //! temperature distribution
+         base::H1handle fBubbleErrDistr; //! distribution of place with errors
 
          unsigned                 fNumChannels; //! number of channels
          std::vector<ChannelRec>  fCh; //! histogram for individual channels
