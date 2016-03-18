@@ -273,7 +273,7 @@ namespace hadaq {
 
          static void SetAllHistos(bool on = true);
 
-         static void SetBubbleMode(bool on = true);
+         static void SetBubbleMode(bool on = true, unsigned sz = 19);
 
          inline unsigned NumChannels() const { return fNumChannels; }
          inline bool DoRisingEdge() const { return true; }

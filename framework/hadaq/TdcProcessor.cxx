@@ -19,8 +19,7 @@ unsigned hadaq::TdcProcessor::gTotRange = 100;
 bool hadaq::TdcProcessor::gAllHistos = false;
 bool hadaq::TdcProcessor::gBubbleMode = false;
 
-#define BUBBLE_SIZE 19
-#define BUBBLE_BITS 304  // 19*16
+unsigned BUBBLE_SIZE = 19;
 
 
 void hadaq::TdcProcessor::SetDefaults(unsigned numfinebins, unsigned totrange)
@@ -34,9 +33,10 @@ void hadaq::TdcProcessor::SetAllHistos(bool on)
    gAllHistos = on;
 }
 
-void hadaq::TdcProcessor::SetBubbleMode(bool on)
+void hadaq::TdcProcessor::SetBubbleMode(bool on, unsigned sz)
 {
    gBubbleMode = true;
+   BUBBLE_SIZE = sz;
 }
 
 hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels, unsigned edge_mask) :
@@ -101,7 +101,6 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fBubbleErrDistr = 0;
 
 
-
    if (HistFillLevel() > 1) {
       fChannels = MakeH1("Channels", "Messages per TDC channels", numchannels, 0, numchannels, "ch");
       if (DoFallingEdge() && DoRisingEdge())
@@ -123,7 +122,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
       }
 
       if (gBubbleMode)
-         fBubbleErrDistr = MakeH1("AllBubbleErrors", "All bubble errors from all channels", BUBBLE_BITS, 0, BUBBLE_BITS, "bubble");
+         fBubbleErrDistr = MakeH1("AllBubbleErrors", "All bubble errors from all channels", BUBBLE_SIZE*16, 0, BUBBLE_SIZE*16, "bubble");
    }
 
    for (unsigned ch=0;ch<numchannels;ch++) {
@@ -157,12 +156,12 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
    SetSubPrefix("Ch", ch);
 
    if (gBubbleMode && (fCh[ch].fBubbleRising == 0)) {
-      fCh[ch].fBubbleRising = MakeH1("BRising", "Bubble rising edge", BUBBLE_BITS, 0, BUBBLE_BITS, "bubble");
-      fCh[ch].fBubbleFalling = MakeH1("BFalling", "Bubble falling edge", BUBBLE_BITS, 0, BUBBLE_BITS, "bubble");
-      fCh[ch].fBubbleRisingErr = MakeH1("BErrRising", "Bubble rising edge simple error", BUBBLE_BITS, 0, BUBBLE_BITS, "bubble");
-      fCh[ch].fBubbleFallingErr = MakeH1("BErrFalling", "Bubble falling edge simple error", BUBBLE_BITS, 0, BUBBLE_BITS, "bubble");
-      fCh[ch].fBubbleRisingAll = MakeH1("BRestRising", "All other hits with rising edge", BUBBLE_BITS, 0, BUBBLE_BITS, "bubble");
-      fCh[ch].fBubbleFallingAll = MakeH1("BRestFalling", "All other hits with falling edge", BUBBLE_BITS, 0, BUBBLE_BITS, "bubble");
+      fCh[ch].fBubbleRising = MakeH1("BRising", "Bubble rising edge", BUBBLE_SIZE*16, 0, BUBBLE_SIZE*16, "bubble");
+      fCh[ch].fBubbleFalling = MakeH1("BFalling", "Bubble falling edge", BUBBLE_SIZE*16, 0, BUBBLE_SIZE*16, "bubble");
+      fCh[ch].fBubbleRisingErr = MakeH1("BErrRising", "Bubble rising edge simple error", BUBBLE_SIZE*16, 0, BUBBLE_SIZE*16, "bubble");
+      fCh[ch].fBubbleFallingErr = MakeH1("BErrFalling", "Bubble falling edge simple error", BUBBLE_SIZE*16, 0, BUBBLE_SIZE*16, "bubble");
+      fCh[ch].fBubbleRisingAll = MakeH1("BRestRising", "All other hits with rising edge", BUBBLE_SIZE*16, 0, BUBBLE_SIZE*16, "bubble");
+      fCh[ch].fBubbleFallingAll = MakeH1("BRestFalling", "All other hits with falling edge", BUBBLE_SIZE*16, 0, BUBBLE_SIZE*16, "bubble");
    }
 
    if (DoRisingEdge() && (fCh[ch].fRisingFine==0)) {
@@ -786,7 +785,7 @@ unsigned BubbleCheck(unsigned* bubble, int &p1, int &p2) {
 
          // simple bubble at very end 00000101 or 0xA0 in swapped order
          // here not enough space for two bits
-         if (((pos == BUBBLE_BITS - 8)) && (b2 == 0) && ((data & 0xFF) == 0xA0))
+         if (((pos == BUBBLE_SIZE*16 - 8)) && (b2 == 0) && ((data & 0xFF) == 0xA0))
             b2 = pos + 6;
 
          last = (data & 1);
@@ -857,7 +856,7 @@ bool hadaq::TdcProcessor::DoBubbleScan(const base::Buffer& buf, bool first_scan)
 
             unsigned res = BubbleCheck(bubble, p1, p2);
 
-
+            if (false)
             if ((res == 0x22) || (((res & 0x0F) == 0x02) && ((p2<195) || (p2>225))) || (((res & 0xF0) == 0x20) && ((p1<195) || (p1>220)))) {
                printf("%s ch:%2u ", GetName(), lastch);
                PrintBubble(bubble);
@@ -865,7 +864,6 @@ bool hadaq::TdcProcessor::DoBubbleScan(const base::Buffer& buf, bool first_scan)
                PrintBubbleBinary(bubble, p1-2, p2+1);
                printf("\n");
             }
-
 
             // if ((res & 0xF0) == 0x00) p1 -= 1;
 
