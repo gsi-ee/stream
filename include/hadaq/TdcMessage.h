@@ -104,7 +104,10 @@ namespace hadaq {
          inline uint32_t getHeaderErr() const { return fData & 0xFFFF; }
 
          /** Return reserved bits of header message */
-         inline uint32_t getHeaderRes() const { return (fData >> 16) & 0x1FFF; }
+         inline uint32_t getHeaderRes() const { return (fData >> 16) & 0xFF; }
+
+         /** Return data format: 0 - normal, 1 - double edges for each hit */
+         inline uint32_t getHeaderFmt() const { return (fData >> 24) & 0xF; }
 
          // methods for debug message
 

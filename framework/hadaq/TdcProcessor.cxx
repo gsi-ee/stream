@@ -1026,8 +1026,9 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    double localtm(0.), minimtm(0), ch0time(0);
 
    hadaq::TdcMessage& msg = iter.msg();
-   hadaq::TdcMessage calibr;
-   unsigned ncalibr(20), temp(0), lowid(0), highid(0); // clear indicate that no calibration data present
+   hadaq::TdcMessage calibr, first_double_msg(0);
+   unsigned ncalibr(20), temp(0), lowid(0), highid(0), fine1(0), fine0(0); // clear indicate that no calibration data present
+   bool double_edges = false;
 
    while (iter.next()) {
 
@@ -1043,7 +1044,11 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             iserr = true;
             if (CheckPrintError())
                printf("%5s Missing header message\n", GetName());
+         } else {
+            // printf("%s format %x\n", GetName(), msg.getHeaderFmt());
+            double_edges = (msg.getHeaderFmt() == 1);
          }
+
          continue;
       }
 
@@ -1077,6 +1082,32 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          bool isrising = msg.isHitRisingEdge();
          localtm = iter.getMsgTimeCoarse();
 
+         if (double_edges) {
+            if (first_double_msg.getData() == 0) {
+               // do not analyze, just go further
+               first_double_msg.assign(msg.getData());
+               fine0 = 0; fine1 = 0;
+               continue;
+            }
+
+            fine0 = first_double_msg.getHitTmFine();
+            fine1 = fine;
+
+            if ((chid != first_double_msg.getHitChannel()) ||
+                (coarse != first_double_msg.getHitTmCoarse()) ||
+                (isrising != first_double_msg.isHitRisingEdge())) {
+               if (CheckPrintError())
+                  printf("%5s Mismatch in double edges readout from channel %u\n", GetName(), chid);
+               first_double_msg.assign(0);
+               continue;
+            }
+
+            first_double_msg.assign(0);
+
+            // we just want to went through several checks
+            if ((fine0==0x3FF) && (fine1=0x3FF)) fine = 0x3FF; else fine = 0;
+         }
+
          if (!iter.isCurEpoch()) {
             // one expects epoch before each hit message, if not data are corrupted and we can ignore it
             if (CheckPrintError())
@@ -1109,6 +1140,37 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          }
 
          ChannelRec& rec = fCh[chid];
+
+         if (double_edges) {
+            // try to reconstruct edges if some missing
+
+            fine = fine0 + fine1;
+
+            if (fine0 == 0x3FF) {
+               fine = fine1 + round(fine1 * rec.bubble_a + rec.bubble_b);
+            } else
+            if (fine1 == 0x3FF) {
+               fine = fine0 + round((fine0 - rec.bubble_b) / rec.bubble_a );
+            } else {
+               rec.sum0 += 1;
+               rec.sumx1 += fine1;
+               rec.sumx2 += fine1*fine1;
+               rec.sumy1 += fine0;
+               rec.sumxy += fine1*fine0;
+
+               if (rec.sum0 > 1000) {
+                  double meanx = rec.sumx1/rec.sum0;
+                  double meany = rec.sumy1/rec.sum0;
+                  double b = (rec.sumxy/rec.sum0 - meanx*meany)/ (rec.sumx2/rec.sum0 - meanx * meanx);
+                  double a = meany - b* meanx;
+                  // printf("Ch:%2d B:%6.4f A:%4.2f\n", chid, b, a);
+                  rec.bubble_a = a;
+                  rec.bubble_b = b;
+                  rec.sum0 = rec.sumx1 = rec.sumx2 = rec.sumy1 = rec.sumxy = 0;
+               }
+            }
+         }
+
 
          double corr(0.);
          bool raw_hit(true);
@@ -1200,7 +1262,13 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                }
 
                rec.rising_cnt++;
-               if (raw_hit) DefFastFillH1(rec.fRisingFine, fine);
+               if (raw_hit) {
+                  DefFastFillH1(rec.fRisingFine, fine);
+                  if (double_edges) {
+                     if (fine0!=0x3FF) DefFillH1(rec.fBubbleRising, fine0, 1.);
+                     if (fine1!=0x3FF) DefFillH1(rec.fBubbleFalling, fine1, 1.);
+                  }
+               }
 
                bool print_cond = false;
 
