@@ -17,7 +17,7 @@
 unsigned hadaq::TdcProcessor::gNumFineBins = FineCounterBins;
 unsigned hadaq::TdcProcessor::gTotRange = 100;
 bool hadaq::TdcProcessor::gAllHistos = false;
-bool hadaq::TdcProcessor::gBubbleMode = false;
+int hadaq::TdcProcessor::gBubbleMode = 0;
 
 unsigned BUBBLE_SIZE = 19;
 
@@ -33,9 +33,9 @@ void hadaq::TdcProcessor::SetAllHistos(bool on)
    gAllHistos = on;
 }
 
-void hadaq::TdcProcessor::SetBubbleMode(bool on, unsigned sz)
+void hadaq::TdcProcessor::SetBubbleMode(int on, unsigned sz)
 {
-   gBubbleMode = true;
+   gBubbleMode = on;
    BUBBLE_SIZE = sz;
 }
 
@@ -100,7 +100,6 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fLastRateTm = -1;
    fBubbleErrDistr = 0;
 
-
    if (HistFillLevel() > 1) {
       fChannels = MakeH1("Channels", "Messages per TDC channels", numchannels, 0, numchannels, "ch");
       if (DoFallingEdge() && DoRisingEdge())
@@ -121,7 +120,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
          fTotShifts = MakeH1("TotShifts", "Calibrated time shift for falling edge", numchannels, 0, numchannels, "kind:F;ch;ns");
       }
 
-      if (gBubbleMode)
+      if (gBubbleMode > 1)
          fBubbleErrDistr = MakeH1("AllBubbleErrors", "All bubble errors from all channels", BUBBLE_SIZE*16, 0, BUBBLE_SIZE*16, "bubble");
    }
 
@@ -155,7 +154,7 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
 
    SetSubPrefix("Ch", ch);
 
-   if (gBubbleMode && (fCh[ch].fBubbleRising == 0)) {
+   if ((gBubbleMode>1) && (fCh[ch].fBubbleRising == 0)) {
       fCh[ch].fBubbleRising = MakeH1("BRising", "Bubble rising edge", BUBBLE_SIZE*16, 0, BUBBLE_SIZE*16, "bubble");
       fCh[ch].fBubbleFalling = MakeH1("BFalling", "Bubble falling edge", BUBBLE_SIZE*16, 0, BUBBLE_SIZE*16, "bubble");
       fCh[ch].fBubbleRisingErr = MakeH1("BErrRising", "Bubble rising edge simple error", BUBBLE_SIZE*16, 0, BUBBLE_SIZE*16, "bubble");
@@ -164,9 +163,14 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
       fCh[ch].fBubbleFallingAll = MakeH1("BRestFalling", "All other hits with falling edge", BUBBLE_SIZE*16, 0, BUBBLE_SIZE*16, "bubble");
    }
 
+   if ((fCh[ch].fBubbleRising == 0) && (gBubbleMode==1)) {
+      fCh[ch].fBubbleRising = MakeH1("BRising", "Bubble rising edge", BUBBLE_SIZE*16, 0, BUBBLE_SIZE*16, "bubble");
+      fCh[ch].fBubbleFalling = MakeH1("BFalling", "Bubble falling edge", BUBBLE_SIZE*16, 0, BUBBLE_SIZE*16, "bubble");
+   }
+
    if (DoRisingEdge() && (fCh[ch].fRisingFine==0)) {
       fCh[ch].fRisingFine = MakeH1("RisingFine", "Rising fine counter", gNumFineBins, 0, gNumFineBins, "fine");
-      if (!gBubbleMode)
+      if (gBubbleMode < 2)
          fCh[ch].fRisingMult = MakeH1("RisingMult", "Rising event multiplicity", 128, 0, 128, "nhits");
       fCh[ch].fRisingCalibr = MakeH1("RisingCalibr", "Rising calibration function", FineCounterBins, 0, FineCounterBins, "fine;kind:F");
       // copy calibration only when histogram created
@@ -176,7 +180,7 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
    if (DoFallingEdge() && (fCh[ch].fFallingFine==0)) {
       fCh[ch].fFallingFine = MakeH1("FallingFine", "Falling fine counter", gNumFineBins, 0, gNumFineBins, "fine");
       fCh[ch].fFallingCalibr = MakeH1("FallingCalibr", "Falling calibration function", FineCounterBins, 0, FineCounterBins, "fine;kind:F");
-      if (!gBubbleMode) {
+      if (gBubbleMode < 2) {
          fCh[ch].fFallingMult = MakeH1("FallingMult", "Falling event multiplicity", 128, 0, 128, "nhits");
          fCh[ch].fTot = MakeH1("Tot", "Time over threshold", gTotRange*100, 0, gTotRange, "ns");
          fCh[ch].fTot0D = MakeH1("Tot0D", "Time over threshold with 0xD trigger", TotBins, TotLeft, TotRight, "ns");
@@ -946,7 +950,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       return false;
    }
 
-   if (gBubbleMode)
+   if (gBubbleMode > 1)
       return DoBubbleScan(buf, first_scan);
 
    uint32_t syncid(0xffffffff);
@@ -1657,7 +1661,7 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat)
 
    for (unsigned ch=0;ch<NumChannels();ch++) {
 
-      if (gBubbleMode && (fCh[ch].sum0 > 100)) {
+      if ((gBubbleMode>1) && (fCh[ch].sum0 > 100)) {
          ChannelRec& rec = fCh[ch];
 
          double meanx = rec.sumx1/rec.sum0;

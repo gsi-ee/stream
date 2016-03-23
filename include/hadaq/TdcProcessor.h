@@ -222,7 +222,7 @@ namespace hadaq {
          static unsigned gNumFineBins;  //! default value for number of bins in histograms for fine bins
          static unsigned gTotRange;  //! default range for TOT histogram
          static bool gAllHistos;     //! when true, all histos for all channels created simultaneously
-         static bool gBubbleMode;     //! when true, all data processed as bubble
+         static int gBubbleMode;     //! 0-off, 1-two edges, 2 - raw bubbles
 
          /** Method will be called by TRB processor if SYNC message was found
           * One should change 4 first bytes in the last buffer in the queue */
@@ -273,7 +273,8 @@ namespace hadaq {
 
          static void SetAllHistos(bool on = true);
 
-         static void SetBubbleMode(bool on = true, unsigned sz = 19);
+         /** mode 0-off, 1-two edges, 2 - raw bubbles, sz is length of bubble in 16bit words */
+         static void SetBubbleMode(int on = 2, unsigned sz = 19);
 
          inline unsigned NumChannels() const { return fNumChannels; }
          inline bool DoRisingEdge() const { return true; }
