@@ -1109,7 +1109,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             first_double_msg.assign(0);
 
             // we just want to went through several checks
-            if ((fine0==0x3FF) && (fine1=0x3FF)) fine = 0x3FF; else fine = 0;
+            if ((fine0==0x3FF) && (fine1==0x3FF)) fine = 0x3FF; else fine = 0;
          }
 
          if (!iter.isCurEpoch()) {
@@ -1151,10 +1151,12 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             fine = fine0 + fine1;
 
             if (fine0 == 0x3FF) {
-               fine = fine1 + round(fine1 * rec.bubble_a + rec.bubble_b);
+               fine = fine1 + round(fine1 * rec.bubble_b + rec.bubble_a);
+               //printf("Got0 fine0:%03x fine1:%03x fine:%03x a:%6.4f b:%6.4f \n", fine0, fine1, fine,rec.bubble_a,rec.bubble_b);
             } else
             if (fine1 == 0x3FF) {
-               fine = fine0 + round((fine0 - rec.bubble_b) / rec.bubble_a );
+               fine = fine0 + round((fine0 - rec.bubble_a) / rec.bubble_b );
+               //printf("Got1 fine0:%03x fine1:%03x fine:%03x a:%6.4f b:%6.4f \n", fine0, fine1, fine,rec.bubble_a,rec.bubble_b);
             } else {
                rec.sum0 += 1;
                rec.sumx1 += fine1;
@@ -1269,8 +1271,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                if (raw_hit) {
                   DefFastFillH1(rec.fRisingFine, fine);
                   if (double_edges) {
-                     if (fine0!=0x3FF) DefFillH1(rec.fBubbleRising, fine0, 1.);
-                     if (fine1!=0x3FF) DefFillH1(rec.fBubbleFalling, fine1, 1.);
+                     DefFillH1(rec.fBubbleRising, fine0!=0x3ff ? fine0 : BUBBLE_SIZE*16 - 1 , 1.);
+                     DefFillH1(rec.fBubbleFalling, fine1!=0x3ff ? fine1 : BUBBLE_SIZE*16 - 1, 1.);
                   }
                }
 
