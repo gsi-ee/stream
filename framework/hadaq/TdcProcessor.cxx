@@ -1050,7 +1050,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                printf("%5s Missing header message\n", GetName());
          } else {
             // printf("%s format %x\n", GetName(), msg.getHeaderFmt());
-            double_edges = (msg.getHeaderFmt() == 1);
+            // double_edges = (msg.getHeaderFmt() == 1);
          }
 
          continue;
