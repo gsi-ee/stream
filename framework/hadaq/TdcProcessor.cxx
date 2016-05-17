@@ -477,7 +477,7 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
 
 double hadaq::TdcProcessor::TestCanCalibrate()
 {
-   if (fAutoCalibration<=0) return 0.;
+   if (fAutoCalibration<=10) return 0.;
 
    bool isany = false;
    double min = 1000.;
@@ -492,12 +492,12 @@ double hadaq::TdcProcessor::TestCanCalibrate()
             case edge_CommonStatistic: stat1 += fCh[ch].all_falling_stat; break;
             default: break;
          }
-         if (stat1>0) {
+         if (stat1>100) {
             isany = true;
             double val = 1.*stat1/fAutoCalibration;
             if (val<min) min = val;
          }
-         if (stat2>0) {
+         if (stat2>100) {
             isany = true;
             double val = 1.*stat2/fAutoCalibration;
             if (val<min) min = val;
