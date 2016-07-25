@@ -626,6 +626,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
       }  // end of if SUB header
 
       if (fAutoCreate) {
+         printf("%s: Saw ID 0x%04x in autocreate mode\n", GetName(), dataid);
          if ((dataid >= gHUBMin) && (dataid <= gHUBMax)) {
             // suppose this is HUB
             AddHadaqHUBId(dataid);
