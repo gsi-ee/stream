@@ -1,3 +1,8 @@
+25.07.2016
+1. Add protection for wrong data inside HUB subevent.
+   If length of such data exceed HUB sub-sub event size, it will be cutted
+
+
 14.03.2016
 1. Support of raw chain data from TDC. In such case original chain is readout and send
    in HLD subevents. Primiary analysis of bubbles and other errors are implemented 

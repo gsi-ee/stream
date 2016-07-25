@@ -436,6 +436,8 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
 
    bool did_create_tdc = false;
 
+   unsigned maxhublen = 0, lasthubid = 0; // if saw HUB subsubevents, control size of data inside
+
 //   RAWPRINT("Scan TRB3 raw event 4-bytes size %u\n", trbSubEvSize);
 
    while (ix < trbSubEvSize) {
@@ -444,6 +446,14 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
 
       unsigned datalen = (data >> 16) & 0xFFFF;
       unsigned dataid = data & 0xFFFF;
+
+      if (maxhublen>0) {
+         if (datalen >= maxhublen) {
+            if (CheckPrintError()) printf("error: sub-sub event %04x inside HUB %04x exceed size limit\n", dataid, lasthubid);
+            datalen = maxhublen-1;
+         }
+         maxhublen -= (datalen+1);
+      }
 
 //      RAWPRINT("Subevent id 0x%04x len %u\n", (data & 0xFFFF), datalen);
 
@@ -456,9 +466,12 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
 //         continue;
 //      }
 
-      if (std::find(fHadaqHUBId.begin(), fHadaqHUBId.end(), dataid) != fHadaqHUBId.end()) {
+      if ((maxhublen==0) && std::find(fHadaqHUBId.begin(), fHadaqHUBId.end(), dataid) != fHadaqHUBId.end()) {
          RAWPRINT ("   HUB header: 0x%08x, hub=%u, size=%u (ignore)\n", (unsigned) data, (unsigned) data & 0xFF, datalen);
 
+         maxhublen = datalen;
+
+         lasthubid = dataid;
          // ix+=datalen;  // WORKAROUND !!!
 
          // TODO: formally we should analyze HUB subevent as real subevent but
@@ -626,11 +639,13 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
       }  // end of if SUB header
 
       if (fAutoCreate) {
-         printf("%s: Saw ID 0x%04x in autocreate mode\n", GetName(), dataid);
          if ((dataid >= gHUBMin) && (dataid <= gHUBMax)) {
             // suppose this is HUB
             AddHadaqHUBId(dataid);
             printf("%s: Assign HUB 0x%04x\n", GetName(), dataid);
+
+            maxhublen = datalen;
+            lasthubid = dataid;
 
             // continue processing
             continue;
@@ -660,6 +675,8 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
             } else {
                if (CheckPrintError()) printf("sub-sub-event data with id 0x%04x does not belong to TDC\n", dataid);
             }
+         } else {
+            printf("%s: Saw ID 0x%04x in autocreate mode\n", GetName(), dataid);
          }
       }
 
