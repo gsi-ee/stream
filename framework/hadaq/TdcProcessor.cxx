@@ -847,12 +847,40 @@ bool hadaq::TdcProcessor::DoBubbleScan(const base::Buffer& buf, bool first_scan)
       if (first_scan)
          DefFastFillH1(fMsgsKind, (msg.getKind() >> 29));
 
-      if (!msg.isHitMsg()) continue;
+      chid = 0xFFFF;
 
-      chid = (msg.getData() >> 22) & 0x7F;
+      switch (gBubbleMode) {
+         case 2:
+            if (!msg.isHitMsg()) continue;
+            chid = (msg.getData() >> 22) & 0x7F;
+            break;
+         case 3: {
+            if (msg.isHeaderMsg() && (msg.getHeaderFmt() != 0xF) && CheckPrintError())
+               printf("Bubble 3 should be marked with 0xF, but seen 0x%x\n", msg.getHeaderFmt());
+
+            if (msg.isHeaderMsg()) continue;
+
+            if (msg.getKind() == 0xe0000000) {
+               chid = (msg.getData() >> 22) & 0x7F;
+            } else
+            if (msg.isTrailerMsg()) {
+               chid = 0xFFFF; // artificially complete analysis of previous chain
+            } else {
+               if (CheckPrintError())
+                  printf("Bubble 3 should have 0xe0000000 message but seen 0x%x\n", msg.getKind());
+               continue;
+            }
+
+            break;
+         }
+      }
+
+
 
       if (chid != lastch) {
          if ((lastch != 0xFFFF) && (lastch < NumChannels()) && (bcnt==BUBBLE_SIZE)) {
+
+            DefFillH1(fChannels, lastch, BUBBLE_SIZE);
 
             ChannelRec& rec = fCh[lastch];
 

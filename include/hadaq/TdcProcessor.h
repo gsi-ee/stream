@@ -273,7 +273,12 @@ namespace hadaq {
 
          static void SetAllHistos(bool on = true);
 
-         /** mode 0-off, 1-two edges, 2 - raw bubbles, sz is length of bubble in 16bit words */
+         /** Configure bubble mode
+          * 0  - off,
+          * 1  - two edges,
+          * 2  - raw bubbles coded with hit message,
+          * 3  - raw bubbles with 0xF in header message, coded with 0xe message (calibr)
+          * sz is length of bubble in 16bit words */
          static void SetBubbleMode(int on = 2, unsigned sz = 19);
 
          inline unsigned NumChannels() const { return fNumChannels; }
