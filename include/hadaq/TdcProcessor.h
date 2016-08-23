@@ -129,7 +129,7 @@ namespace hadaq {
                fBubbleRisingAll(0),
                fBubbleFallingAll(0),
                sum0(0),sumx1(0),sumx2(0),sumy1(0),sumxy(0),
-               bubble_a(9.8), bubble_b(1.155)
+               bubble_a(20), bubble_b(1.06)
             {
                for (unsigned n=0;n<FineCounterBins;n++) {
                   falling_stat[n] = rising_stat[n] = 0;

@@ -888,8 +888,11 @@ bool hadaq::TdcProcessor::DoBubbleScan(const base::Buffer& buf, bool first_scan)
 
             unsigned res = BubbleCheck(bubble, p1, p2);
 
+//            if (false)
+//            if ((res == 0x22) || (((res & 0x0F) == 0x02) && ((p2<195) || (p2>225))) || (((res & 0xF0) == 0x20) && ((p1<195) || (p1>220)))) {
+
             if (false)
-            if ((res == 0x22) || (((res & 0x0F) == 0x02) && ((p2<195) || (p2>225))) || (((res & 0xF0) == 0x20) && ((p1<195) || (p1>220)))) {
+            if ((res & 0xF0) == 0x20) {
                printf("%s ch:%2u ", GetName(), lastch);
                PrintBubble(bubble);
                printf(" p1:%3d  p2:%3d ", p1, p2);
