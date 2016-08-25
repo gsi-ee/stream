@@ -825,6 +825,112 @@ unsigned BubbleCheck(unsigned* bubble, int &p1, int &p2) {
    return 0x22; // mark both as errors, should analyze better
 }
 
+
+unsigned* rom_encoder_rising = 0;
+unsigned rom_encoder_rising_cnt = 0;
+unsigned* rom_encoder_falling = 0;
+unsigned rom_encoder_falling_cnt = 0;
+
+// this is how it used in the FPGA, table provided by Cahit
+
+unsigned BubbleCheckCahit(unsigned* bubble, int &p1, int &p2) {
+
+   if (rom_encoder_rising == 0) {
+
+      rom_encoder_rising = new unsigned[200];
+      rom_encoder_falling = new unsigned[200];
+
+      const char* fname = "rom_encoder_bin.mem";
+
+      FILE* f = fopen(fname, "r");
+      if (!f) return -1;
+
+      char sbuf[1000], ddd[100], *res;
+      unsigned  *tgt = 0, *tgtcnt = 0;
+
+      unsigned mask, code;
+      int num;
+
+      while ((res = fgets(sbuf, sizeof(sbuf)-1, f)) != 0) {
+         if (strlen(res) < 5) continue;
+         if (strstr(res,"Rising")) { tgt = rom_encoder_rising; tgtcnt = &rom_encoder_rising_cnt; continue; }
+         if (strstr(res,"Falling")) { tgt = rom_encoder_falling; tgtcnt = &rom_encoder_falling_cnt; continue; }
+         if (strstr(res,"#")) continue;
+
+         num = sscanf(res,"%x %s : %u", &mask, ddd, &code);
+
+         if ((num!=3) || (tgt==0)) continue;
+
+         unsigned swap = 0;
+         for (unsigned k=0;k<9;++k)
+            if (mask & (1<<k)) swap = swap | (1<<(8-k));
+
+         // printf("read: 0x%03x 0x%03x %u   %s  ", mask, swap, code, res);
+
+         tgt[(*tgtcnt)++] = mask;
+         tgt[(*tgtcnt)++] = code;
+
+         if (*tgtcnt >= 200) { printf("TOO MANY ENTRIES!!!\n"); exit(43); }
+      }
+
+      printf("READ %u rising %u falling entries from %s\n", rom_encoder_rising_cnt, rom_encoder_falling_cnt, fname);
+
+      fclose(f);
+   }
+
+   if ((rom_encoder_rising_cnt == 0) || (rom_encoder_falling_cnt == 0)) return 0x22;
+
+   int pos = 0;
+   unsigned data = 0xFFFF0000;
+
+   p1 = 0; p2 = 0;
+
+   for (unsigned n=0;n<BUBBLE_SIZE+2; n++) {
+
+      if (n<BUBBLE_SIZE) {
+         unsigned origin = bubble[n], swap = 0;
+         for (unsigned dd = 0;dd<16;++dd) {
+            swap = (swap << 1) | (origin & 1);
+            origin = origin >> 1;
+         }
+         data = data | swap;
+      } else {
+         data = data | 0xFFFF;
+      }
+
+      for (int half=0;half<2;half++) {
+
+         // second byte should be FF, looking for rising, used 10 bits
+         if (((data & 0xFF00) == 0xFF00) && ((data & 0xFFFF0000) != 0xFFFF0000)) {
+            unsigned search = (data & 0x3FF0000) >> 16;
+            for (unsigned k=0;k<rom_encoder_rising_cnt;k+=2)
+               if (rom_encoder_rising[k] == search) {
+                  if (p2==0) p2 = pos - rom_encoder_rising[k+1] - 1;
+                  // printf("rising  pos:%3u data %08x found 0x%03x shift: %u p2: %d\n", pos, data, search, rom_encoder_rising[k+1], p2);
+               }
+         }
+
+         // looking for the falling edge 10 bits are used
+         if (((data & 0xFF000000) == 0xFF000000) && ((data & 0xFFFF00) != 0xFFFF00)) {
+            unsigned search = (data & 0xFFC000) >> 14;
+            for (unsigned k=0;k<rom_encoder_falling_cnt;k+=2)
+               if (rom_encoder_falling[k] == search) {
+                  if (p1==0) p1 = pos - rom_encoder_falling[k+1] - 1;
+                  // printf("falling pos:%3u data %08x found 0x%03x shift: %u p1: %d\n", pos, data, search, rom_encoder_falling[k+1], p1);
+               }
+         }
+
+         pos += 8;
+         data = data << 8;
+      }
+   }
+
+
+   return ((p1>0) ? 0x00 : 0x20) | ((p2>0) ? 0x00 : 0x02);
+}
+
+
+
 bool hadaq::TdcProcessor::DoBubbleScan(const base::Buffer& buf, bool first_scan)
 {
 
@@ -886,17 +992,20 @@ bool hadaq::TdcProcessor::DoBubbleScan(const base::Buffer& buf, bool first_scan)
 
             int p1, p2;
 
-            unsigned res = BubbleCheck(bubble, p1, p2);
+
+            // unsigned res = BubbleCheck(bubble, p1, p2);
+
+            unsigned res = BubbleCheckCahit(bubble, p1, p2);
 
 //            if (false)
 //            if ((res == 0x22) || (((res & 0x0F) == 0x02) && ((p2<195) || (p2>225))) || (((res & 0xF0) == 0x20) && ((p1<195) || (p1>220)))) {
 
-            if (false)
-            if ((res & 0xF0) == 0x20) {
+            if (false) {
+            // if ((res & 0xF0) == 0x20) {
                printf("%s ch:%2u ", GetName(), lastch);
                PrintBubble(bubble);
                printf(" p1:%3d  p2:%3d ", p1, p2);
-               PrintBubbleBinary(bubble, p1-2, p2+1);
+               PrintBubbleBinary(bubble, p1-3, p2+3);
                printf("\n");
             }
 
