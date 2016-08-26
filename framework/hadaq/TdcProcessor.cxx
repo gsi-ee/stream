@@ -833,7 +833,7 @@ unsigned rom_encoder_falling_cnt = 0;
 
 // this is how it used in the FPGA, table provided by Cahit
 
-unsigned BubbleCheckCahit(unsigned* bubble, int &p1, int &p2) {
+unsigned BubbleCheckCahit(unsigned* bubble, int &p1, int &p2, bool debug = false) {
 
    if (rom_encoder_rising == 0) {
 
@@ -900,9 +900,30 @@ unsigned BubbleCheckCahit(unsigned* bubble, int &p1, int &p2) {
 
       for (int half=0;half<2;half++) {
 
-         // second byte should be FF, looking for rising, used 10 bits
+         unsigned search = (data & 0x3FF0000) >> 16;
+
+         if ((search != 0) && (search != 0x3FF)) {
+
+            if (debug) printf("search %04x pos %03d\n", search, pos);
+
+            for (unsigned k=0;k<rom_encoder_rising_cnt;k+=2)
+               if (rom_encoder_rising[k] == search) {
+                  if (p2==0) p2 = pos - rom_encoder_rising[k+1] - 1;
+                  // printf("rising  pos:%3u data %08x found 0x%03x shift: %u p2: %d\n", pos, data, search, rom_encoder_rising[k+1], p2);
+               }
+
+            for (unsigned k=0;k<rom_encoder_falling_cnt;k+=2)
+               if (rom_encoder_falling[k] == search) {
+                  if (p1==0) p1 = pos - rom_encoder_falling[k+1] - 1;
+                  // printf("falling pos:%3u data %08x found 0x%03x shift: %u p1: %d\n", pos, data, search, rom_encoder_falling[k+1], p1);
+               }
+         }
+
+
+/*         // second byte should be FF, looking for rising, used 10 bits
          if (((data & 0xFF00) == 0xFF00) && ((data & 0xFFFF0000) != 0xFFFF0000)) {
             unsigned search = (data & 0x3FF0000) >> 16;
+            if (debug) printf("rising search %04x pos %03d\n", search, pos);
             for (unsigned k=0;k<rom_encoder_rising_cnt;k+=2)
                if (rom_encoder_rising[k] == search) {
                   if (p2==0) p2 = pos - rom_encoder_rising[k+1] - 1;
@@ -913,12 +934,14 @@ unsigned BubbleCheckCahit(unsigned* bubble, int &p1, int &p2) {
          // looking for the falling edge 10 bits are used
          if (((data & 0xFF000000) == 0xFF000000) && ((data & 0xFFFF00) != 0xFFFF00)) {
             unsigned search = (data & 0xFFC000) >> 14;
+            if (debug) printf("falling search %04x pos %03d\n", search, pos);
             for (unsigned k=0;k<rom_encoder_falling_cnt;k+=2)
                if (rom_encoder_falling[k] == search) {
                   if (p1==0) p1 = pos - rom_encoder_falling[k+1] - 1;
                   // printf("falling pos:%3u data %08x found 0x%03x shift: %u p1: %d\n", pos, data, search, rom_encoder_falling[k+1], p1);
                }
          }
+*/
 
          pos += 8;
          data = data << 8;
@@ -990,23 +1013,29 @@ bool hadaq::TdcProcessor::DoBubbleScan(const base::Buffer& buf, bool first_scan)
 
             ChannelRec& rec = fCh[lastch];
 
-            int p1, p2;
+            int p1, p2, pp1, pp2;
 
-
-            // unsigned res = BubbleCheck(bubble, p1, p2);
 
             unsigned res = BubbleCheckCahit(bubble, p1, p2);
 
 //            if (false)
 //            if ((res == 0x22) || (((res & 0x0F) == 0x02) && ((p2<195) || (p2>225))) || (((res & 0xF0) == 0x20) && ((p1<195) || (p1>220)))) {
 
-            if (false) {
-            // if ((res & 0xF0) == 0x20) {
+            //if (res != 0)  {
+            if (res) {
+
+               //int pp1, pp2;
+               //BubbleCheck(bubble, pp1, pp2);
+
+               unsigned res0 = BubbleCheck(bubble, pp1, pp2);
+
                printf("%s ch:%2u ", GetName(), lastch);
                PrintBubble(bubble);
-               printf(" p1:%3d  p2:%3d ", p1, p2);
-               PrintBubbleBinary(bubble, p1-3, p2+3);
+               printf(" p1:%3d %2d  p2:%3d %2d  ", pp1,  (p1-pp1), pp2, (p2-pp2));
+               PrintBubbleBinary(bubble, pp1-3, pp2+3);
                printf("\n");
+
+               // BubbleCheckCahit(bubble, p1, p2, true);
             }
 
             // if ((res & 0xF0) == 0x00) p1 -= 1;
