@@ -1022,12 +1022,13 @@ bool hadaq::TdcProcessor::DoBubbleScan(const base::Buffer& buf, bool first_scan)
 //            if ((res == 0x22) || (((res & 0x0F) == 0x02) && ((p2<195) || (p2>225))) || (((res & 0xF0) == 0x20) && ((p1<195) || (p1>220)))) {
 
             //if (res != 0)  {
-            if (res) {
+            if (res && CheckPrintError()) {
 
                //int pp1, pp2;
                //BubbleCheck(bubble, pp1, pp2);
 
-               unsigned res0 = BubbleCheck(bubble, pp1, pp2);
+               // only to detect limits for printout
+               BubbleCheck(bubble, pp1, pp2);
 
                printf("%s ch:%2u ", GetName(), lastch);
                PrintBubble(bubble);
