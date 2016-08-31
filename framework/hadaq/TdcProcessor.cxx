@@ -18,6 +18,9 @@ unsigned hadaq::TdcProcessor::gNumFineBins = FineCounterBins;
 unsigned hadaq::TdcProcessor::gTotRange = 100;
 bool hadaq::TdcProcessor::gAllHistos = false;
 int hadaq::TdcProcessor::gBubbleMode = 0;
+int hadaq::TdcProcessor::gBubbleMask = 0;
+int hadaq::TdcProcessor::gBubbleShift = 0;
+
 
 unsigned BUBBLE_SIZE = 19;
 
@@ -33,10 +36,12 @@ void hadaq::TdcProcessor::SetAllHistos(bool on)
    gAllHistos = on;
 }
 
-void hadaq::TdcProcessor::SetBubbleMode(int on, unsigned sz)
+void hadaq::TdcProcessor::SetBubbleMode(int on, unsigned sz, int maskid, int shift)
 {
    gBubbleMode = on;
    BUBBLE_SIZE = sz;
+   gBubbleMask = maskid;
+   gBubbleShift = shift;
 }
 
 hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels, unsigned edge_mask) :
@@ -833,12 +838,12 @@ unsigned rom_encoder_falling_cnt = 0;
 
 // this is how it used in the FPGA, table provided by Cahit
 
-unsigned BubbleCheckCahit(unsigned* bubble, int &p1, int &p2, bool debug = false) {
+unsigned BubbleCheckCahit(unsigned* bubble, int &p1, int &p2, bool debug = false, int maskid = 0, int shift = 0, bool = false) {
 
    if (rom_encoder_rising == 0) {
 
-      rom_encoder_rising = new unsigned[200];
-      rom_encoder_falling = new unsigned[200];
+      rom_encoder_rising = new unsigned[400];
+      rom_encoder_falling = new unsigned[400];
 
       const char* fname = "rom_encoder_bin.mem";
 
@@ -849,31 +854,38 @@ unsigned BubbleCheckCahit(unsigned* bubble, int &p1, int &p2, bool debug = false
       unsigned  *tgt = 0, *tgtcnt = 0;
 
       unsigned mask, code;
-      int num;
+      int num, dcnt = 1;
 
       while ((res = fgets(sbuf, sizeof(sbuf)-1, f)) != 0) {
          if (strlen(res) < 5) continue;
          if (strstr(res,"Rising")) { tgt = rom_encoder_rising; tgtcnt = &rom_encoder_rising_cnt; continue; }
          if (strstr(res,"Falling")) { tgt = rom_encoder_falling; tgtcnt = &rom_encoder_falling_cnt; continue; }
-         if (strstr(res,"#")) continue;
+         const char* comment = strstr(res,"#");
+         if (comment && ((comment-res)<5)) continue;
 
          num = sscanf(res,"%x %s : %u", &mask, ddd, &code);
 
          if ((num!=3) || (tgt==0)) continue;
 
-         unsigned swap = 0;
-         for (unsigned k=0;k<9;++k)
-            if (mask & (1<<k)) swap = swap | (1<<(8-k));
-
+         //unsigned swap = 0;
+         //for (unsigned k=0;k<9;++k)
+         //   if (mask & (1<<k)) swap = swap | (1<<(8-k));
          // printf("read: 0x%03x 0x%03x %u   %s  ", mask, swap, code, res);
+
+
+         if (maskid == dcnt) {
+            printf("SHIFT MASK %03x : %u + %d\n", mask, code, shift);
+            if ((int)code + shift >= 0) code += shift;
+         }
 
          tgt[(*tgtcnt)++] = mask;
          tgt[(*tgtcnt)++] = code;
+         dcnt++;
 
-         if (*tgtcnt >= 200) { printf("TOO MANY ENTRIES!!!\n"); exit(43); }
+         if (*tgtcnt >= 400) { printf("TOO MANY ENTRIES!!!\n"); exit(43); }
       }
 
-      printf("READ %u rising %u falling entries from %s\n", rom_encoder_rising_cnt, rom_encoder_falling_cnt, fname);
+      printf("READ %u rising %u falling %d dcnt entries from %s\n", rom_encoder_rising_cnt, rom_encoder_falling_cnt, dcnt, fname);
 
       fclose(f);
    }
@@ -882,6 +894,18 @@ unsigned BubbleCheckCahit(unsigned* bubble, int &p1, int &p2, bool debug = false
 
    int pos = 0;
    unsigned data = 0xFFFF0000;
+   //unsigned selmask = 0;
+   //bool seen_selected = false;
+
+   //static int mcnt = 0;
+
+   /*
+   if (maskid>0) {
+      if (maskid <= (int) rom_encoder_rising_cnt/2) selmask = rom_encoder_rising[(maskid-1)*2]; else
+      if (maskid <= (int) (rom_encoder_rising_cnt + rom_encoder_falling_cnt)/2) selmask = rom_encoder_falling[(maskid-1)*2 - rom_encoder_rising_cnt];
+      //if (mcnt++ < 5) printf("SELMASK 0x%x\n", selmask);
+   }
+   */
 
    p1 = 0; p2 = 0;
 
@@ -904,6 +928,8 @@ unsigned BubbleCheckCahit(unsigned* bubble, int &p1, int &p2, bool debug = false
 
          if ((search != 0) && (search != 0x3FF)) {
 
+//            if (search == selmask) seen_selected = true;
+
             if (debug) printf("search %04x pos %03d\n", search, pos);
 
             for (unsigned k=0;k<rom_encoder_rising_cnt;k+=2)
@@ -919,45 +945,23 @@ unsigned BubbleCheckCahit(unsigned* bubble, int &p1, int &p2, bool debug = false
                }
          }
 
-
-/*         // second byte should be FF, looking for rising, used 10 bits
-         if (((data & 0xFF00) == 0xFF00) && ((data & 0xFFFF0000) != 0xFFFF0000)) {
-            unsigned search = (data & 0x3FF0000) >> 16;
-            if (debug) printf("rising search %04x pos %03d\n", search, pos);
-            for (unsigned k=0;k<rom_encoder_rising_cnt;k+=2)
-               if (rom_encoder_rising[k] == search) {
-                  if (p2==0) p2 = pos - rom_encoder_rising[k+1] - 1;
-                  // printf("rising  pos:%3u data %08x found 0x%03x shift: %u p2: %d\n", pos, data, search, rom_encoder_rising[k+1], p2);
-               }
-         }
-
-         // looking for the falling edge 10 bits are used
-         if (((data & 0xFF000000) == 0xFF000000) && ((data & 0xFFFF00) != 0xFFFF00)) {
-            unsigned search = (data & 0xFFC000) >> 14;
-            if (debug) printf("falling search %04x pos %03d\n", search, pos);
-            for (unsigned k=0;k<rom_encoder_falling_cnt;k+=2)
-               if (rom_encoder_falling[k] == search) {
-                  if (p1==0) p1 = pos - rom_encoder_falling[k+1] - 1;
-                  // printf("falling pos:%3u data %08x found 0x%03x shift: %u p1: %d\n", pos, data, search, rom_encoder_falling[k+1], p1);
-               }
-         }
-*/
-
          pos += 8;
          data = data << 8;
       }
    }
 
+   // if (selmask && !seen_selected && useselmask) return 0x22; // ignore all messages if we do not see selected mask
 
    return ((p1>0) ? 0x00 : 0x20) | ((p2>0) ? 0x00 : 0x02);
 }
-
 
 
 bool hadaq::TdcProcessor::DoBubbleScan(const base::Buffer& buf, bool first_scan)
 {
 
    TdcIterator& iter = first_scan ? fIter1 : fIter2;
+
+   if (buf.datalen() < 4) { printf("ZERO\n"); exit(4); }
 
    if (buf().format==0)
       iter.assign((uint32_t*) buf.ptr(4), buf.datalen()/4-1, false);
@@ -973,8 +977,11 @@ bool hadaq::TdcProcessor::DoBubbleScan(const base::Buffer& buf, bool first_scan)
 
    while (iter.next()) {
 
-      if (first_scan)
+      if (first_scan) {
+         if (!fMsgsKind || (msg.getKind() >> 29) >= 8) { printf("ERRRRRRRR\n"); exit(4); }
+
          DefFastFillH1(fMsgsKind, (msg.getKind() >> 29));
+      }
 
       chid = 0xFFFF;
 
@@ -1004,8 +1011,6 @@ bool hadaq::TdcProcessor::DoBubbleScan(const base::Buffer& buf, bool first_scan)
          }
       }
 
-
-
       if (chid != lastch) {
          if ((lastch != 0xFFFF) && (lastch < NumChannels()) && (bcnt==BUBBLE_SIZE)) {
 
@@ -1015,14 +1020,15 @@ bool hadaq::TdcProcessor::DoBubbleScan(const base::Buffer& buf, bool first_scan)
 
             int p1, p2, pp1, pp2;
 
+            // only channel 2 signals selects special fine-counter values, all other works as before
 
-            unsigned res = BubbleCheckCahit(bubble, p1, p2);
+            unsigned res = BubbleCheckCahit(bubble, p1, p2, false, gBubbleMask, gBubbleShift, (lastch==2));
 
 //            if (false)
 //            if ((res == 0x22) || (((res & 0x0F) == 0x02) && ((p2<195) || (p2>225))) || (((res & 0xF0) == 0x20) && ((p1<195) || (p1>220)))) {
 
             //if (res != 0)  {
-            if (res && CheckPrintError()) {
+            if (res && ((gBubbleMask==0) || (lastch!=2)) && CheckPrintError() ) {
 
                //int pp1, pp2;
                //BubbleCheck(bubble, pp1, pp2);
@@ -1052,7 +1058,6 @@ bool hadaq::TdcProcessor::DoBubbleScan(const base::Buffer& buf, bool first_scan)
                case 0x01: DefFastFillH1(rec.fBubbleRisingErr, p2); break;
                default: DefFastFillH1(rec.fBubbleRisingAll, p2); break;
             }
-
 
             rec.rising_hit_tm = 0;
 
@@ -1091,11 +1096,11 @@ bool hadaq::TdcProcessor::DoBubbleScan(const base::Buffer& buf, bool first_scan)
                localtm = -rec.rising_calibr[fine];
 
 //               if ((p2>18) && (p2<204) && (p1>10) && (p1<200)) {
-                  rec.rising_last_tm = localtm;
-                  rec.rising_new_value = true;
-                  rec.rising_hit_tm = localtm;
-                  rec.rising_coarse = 0;
-                  rec.rising_fine = fine;
+               rec.rising_last_tm = localtm;
+               rec.rising_new_value = true;
+               rec.rising_hit_tm = 1e-8 + localtm; // artificially shift all values on 10 ns to allow histogram filling
+               rec.rising_coarse = 0;
+               rec.rising_fine = fine;
 //               }
             }
          }
@@ -1103,6 +1108,10 @@ bool hadaq::TdcProcessor::DoBubbleScan(const base::Buffer& buf, bool first_scan)
          lastch = chid; bcnt = 0;
       }
 
+      if (bcnt >= BUBBLE_SIZE*5) {
+         printf("Too long BUBBLE %u\n", bcnt);
+         return true;
+      }
       bubble[bcnt++] = msg.getData() & 0xFFFF;
       lastch = chid;
    }
@@ -1111,6 +1120,7 @@ bool hadaq::TdcProcessor::DoBubbleScan(const base::Buffer& buf, bool first_scan)
 
    return true;
 }
+
 
 
 bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
@@ -1472,7 +1482,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                if ((chid!=0) && (rec.refch==0) && (rec.reftdc == GetID()) && use_for_ref) {
                   rec.rising_ref_tm = localtm - fCh[0].rising_hit_tm;
 
-                  DefFillH1(rec.fRisingRef, ((localtm - fCh[0].rising_hit_tm)*1e9), 1.);
+                   DefFillH1(rec.fRisingRef, ((localtm - fCh[0].rising_hit_tm)*1e9), 1.);
 
                   if (IsPrintRawData() || print_cond)
                   printf("Difference rising %04x:%02u\t %04x:%02u\t %12.3f\t %12.3f\t %7.3f  coarse %03x - %03x = %4d  fine %03x %03x \n",

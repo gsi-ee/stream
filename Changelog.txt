@@ -1,3 +1,8 @@
+31.08.2016
+1. Provide new method of bubbles decoding. It uses same lookup table as FPGA code.
+2. Also try to optimize such lookup table    
+
+
 25.07.2016
 1. Add protection for wrong data inside HUB subevent.
    If length of such data exceed HUB sub-sub event size, it will be cutted

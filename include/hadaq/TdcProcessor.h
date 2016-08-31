@@ -40,7 +40,7 @@ namespace hadaq {
             bool hascalibr;                //! indicate if channel has valid calibration (not simple linear)
             base::H1handle fRisingFine;    //! histogram of all fine counters
             base::H1handle fRisingMult;    //! number of hits per event
-            base::H1handle fRisingRef;     //! histogram of all coarse counters
+            base::H1handle fRisingRef;     //! histogram of time diff to ref channel
             base::C1handle fRisingRefCond; //! condition to print raw events
             base::H1handle fRisingCalibr;  //! histogram of channel calibration function
             base::H2handle fRisingRef2D;   //! histogram
@@ -223,6 +223,8 @@ namespace hadaq {
          static unsigned gTotRange;  //! default range for TOT histogram
          static bool gAllHistos;     //! when true, all histos for all channels created simultaneously
          static int gBubbleMode;     //! 0-off, 1-two edges, 2 - raw bubbles
+         static int gBubbleMask;  //! bubble mask id (starts from 1), which is interesting for the evaluation
+         static int gBubbleShift;      //! shift of lookup table for specified mask
 
          /** Method will be called by TRB processor if SYNC message was found
           * One should change 4 first bytes in the last buffer in the queue */
@@ -278,8 +280,9 @@ namespace hadaq {
           * 1  - two edges,
           * 2  - raw bubbles coded with hit message,
           * 3  - raw bubbles with 0xF in header message, coded with 0xe message (calibr)
-          * sz is length of bubble in 16bit words */
-         static void SetBubbleMode(int on = 2, unsigned sz = 19);
+          * sz is length of bubble in 16bit words
+          * maskid and shift - replacement for code assigned with BUBBLE maskid from lookup table */
+         static void SetBubbleMode(int on = 2, unsigned sz = 19, int maskid = 0, int shift = 0);
 
          inline unsigned NumChannels() const { return fNumChannels; }
          inline bool DoRisingEdge() const { return true; }
