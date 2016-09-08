@@ -337,10 +337,10 @@ namespace hadaq {
             fCalibrTriggerMask = 0;
             if (typ1<0) return;
             if (typ1 >= 0xFFFF) { fCalibrTriggerMask = 0xFFFF; return; }
-            if ((typ1>=0) && (typ1<=0xF)) fCalibrTriggerMask |= (1 << typ1);
-            if ((typ2>=0) && (typ2<=0xF)) fCalibrTriggerMask |= (1 << typ2);
-            if ((typ3>=0) && (typ3<=0xF)) fCalibrTriggerMask |= (1 << typ3);
-            if ((typ4>=0) && (typ4<=0xF)) fCalibrTriggerMask |= (1 << typ4);
+            if (typ1 && (typ1<=0xF)) fCalibrTriggerMask |= (1 << typ1);
+            if (typ2 && (typ2<=0xF)) fCalibrTriggerMask |= (1 << typ2);
+            if (typ3 && (typ3<=0xF)) fCalibrTriggerMask |= (1 << typ3);
+            if (typ4 && (typ4<=0xF)) fCalibrTriggerMask |= (1 << typ4);
          }
 
          /** Set calibration trigger mask directly, 1bit per each trigger type
