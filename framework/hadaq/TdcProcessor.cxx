@@ -78,7 +78,8 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fCompensateEpochReset(false),
    fCompensateEpochCounter(0),
    fCh0Enabled(false),
-   fLastTdcHeader()
+   fLastTdcHeader(),
+   fLastTdcTrailer()
 {
    fIsTDC = true;
 
@@ -994,12 +995,13 @@ bool hadaq::TdcProcessor::DoBubbleScan(const base::Buffer& buf, bool first_scan)
             if (msg.isHeaderMsg() && (msg.getHeaderFmt() != 0xF) && CheckPrintError())
                printf("Bubble 3 should be marked with 0xF, but seen 0x%x\n", msg.getHeaderFmt());
 
-            if (msg.isHeaderMsg()) continue;
+            if (msg.isHeaderMsg()) { fLastTdcHeader = msg; continue; }
 
             if (msg.getKind() == 0xe0000000) {
                chid = (msg.getData() >> 22) & 0x7F;
             } else
             if (msg.isTrailerMsg()) {
+               fLastTdcTrailer = msg;
                chid = 0xFFFF; // artificially complete analysis of previous chain
             } else {
                if (CheckPrintError())
@@ -1229,12 +1231,20 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             if (CheckPrintError())
                printf("%5s Missing header message\n", GetName());
          } else {
+
+            if (first_scan) fLastTdcHeader = msg;
+            //unsigned errbits = msg.getHeaderErr();
+            //if (errbits && first_scan)
+            //   if (CheckPrintError()) printf("%5s found error bits: 0x%x\n", GetName(), errbits);
+
             // printf("%s format %x\n", GetName(), msg.getHeaderFmt());
             // double_edges = (msg.getHeaderFmt() == 1);
          }
 
          continue;
       }
+
+
 
       if (msg.isEpochMsg()) {
 
@@ -1573,14 +1583,17 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
       switch (msg.getKind()) {
         case tdckind_Trailer:
+           if (first_scan) fLastTdcTrailer = msg;
            break;
         case tdckind_Header: {
-           unsigned errbits = msg.getHeaderErr();
+           // never come here - handle in very begin
            if (first_scan) fLastTdcHeader = msg;
+           /*unsigned errbits = msg.getHeaderErr();
            if (errbits && first_scan) {
               if (CheckPrintError())
                  printf("%5s found error bits: 0x%x\n", GetName(), errbits);
            }
+           */
 
            break;
         }

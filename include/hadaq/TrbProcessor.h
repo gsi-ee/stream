@@ -72,6 +72,8 @@ namespace hadaq {
          TrbMessage  fMsg;            ///< used for TTree store
          TrbMessage* pMsg;            ///< used for TTree store
 
+         hadaqs::RawSubevent   fLastSubevHdr; //! copy of last subevent header (without data)
+
          static unsigned gNumChannels;     ///< default number of channels
          static unsigned gEdgesMask;       ///< default edges mask
          static bool gIgnoreSync;          ///< ignore sync in analysis, very rare used for sync with other data sources
@@ -260,6 +262,8 @@ namespace hadaq {
 
          /** Calibrate hits in subevent */
          unsigned TransformSubEvent(hadaqs::RawSubevent* sub, void* tgtbuf = 0, unsigned tgtlen = 0);
+
+         hadaqs::RawSubevent& GetLastSubeventHdr() { return fLastSubevHdr; }
    };
 }
 

@@ -23,7 +23,8 @@ hadaq::HldProcessor::HldProcessor(bool auto_create, const char* after_func) :
    fCalibrPeriod(-111),
    fCalibrTriggerMask(0xFFFF),
    fMsg(),
-   pMsg(0)
+   pMsg(0),
+   fLastEvHdr()
 {
    mgr()->RegisterProc(this, base::proc_TRBEvent, 0);
 
@@ -161,6 +162,8 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
       evcnt++;
 
       DefFillH1(fEvType, (ev->GetId() & 0xf), 1.);
+
+      memcpy(&fLastEvHdr, ev, sizeof(fLastEvHdr));
 
       fMsg.trig_type = ev->GetId() & 0xf;
 

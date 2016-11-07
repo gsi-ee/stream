@@ -1,3 +1,13 @@
+7.11.2016
+1. Provide access to HLD event/subevent headers (without data). Like:
+     hadaq::HldProcessor* hld = dynamic_cast<hadaq::HldProcessor*> (base::ProcMgr::instance()->FindProc("HLD"));
+     hadaq::TrbProcessor* trb = hld ? hld->FindTRB(0x8000) : 0;
+     hadaq::TdcProcessor* tdc = hld ? hld->FindTDC(0x1340) : 0;
+     if (hld) printf("HLD event header %u\n", hld->GetLastEventHdr().GetSeqNr());
+     if (trb) printf("TRB subevent header trig:%x decoding:%x\n", trb->GetLastSubeventHdr().GetTrigNr(), trb->GetLastSubeventHdr().GetDecoding());
+     if (tdc) printf("TDC header/trailer messages raw %x %x\n", tdc->GetLastTdcHeader().getData(), tdc->GetLastTdcTrailer().getData());
+
+
 31.08.2016
 1. Provide new method of bubbles decoding. It uses same lookup table as FPGA code.
 2. Also try to optimize such lookup table    

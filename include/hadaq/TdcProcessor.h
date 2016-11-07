@@ -211,6 +211,7 @@ namespace hadaq {
          bool      fCh0Enabled;           //! when true, channel 0 stored in output event
 
          TdcMessage fLastTdcHeader;      //! copy of last TDC header
+         TdcMessage fLastTdcTrailer;      //! copy of last TDC trailer
 
          long      fRateCnt;             //! counter used for rate calculation
          double    fLastRateTm;          //! last ch0 time when rate was calculated
@@ -416,6 +417,9 @@ namespace hadaq {
 
          /** Return last TDC header, seen by the processor */
          const TdcMessage& GetLastTdcHeader() const { return fLastTdcHeader; }
+
+         /** Return last TDC header, seen by the processor */
+         const TdcMessage& GetLastTdcTrailer() const { return fLastTdcTrailer; }
 
          virtual void UserPostLoop();
 

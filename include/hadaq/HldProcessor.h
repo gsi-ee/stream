@@ -84,6 +84,8 @@ namespace hadaq {
          HldMessage     fMsg;        ///< used for TTree store
          HldMessage    *pMsg;        ///< used for TTree store
 
+         hadaqs::RawEvent  fLastEvHdr;    //! copy of last event header (without data)
+
          /** Returns true when processor used to select trigger signal
           * TRB3 not yet able to perform trigger selection */
          virtual bool doTriggerSelection() const { return false; }
@@ -138,6 +140,8 @@ namespace hadaq {
          unsigned TransformEvent(void* src, unsigned len, void* tgt = 0, unsigned tgtlen = 0);
 
          virtual void UserPreLoop();
+
+         hadaqs::RawEvent& GetLastEventHdr() { return fLastEvHdr; }
    };
 
 

@@ -419,6 +419,8 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
    // our task is statistic over all messages we will found
    // also for trigger-type 1 we should add SYNC message to each processor
 
+   memcpy(&fLastSubevHdr, sub, sizeof(fLastSubevHdr));
+
    DefFillH1(fTrigType, sub->GetTrigTypeTrb3(), 1.);
 
    DefFillH1(fSubevSize, sub->GetSize(), 1.);
