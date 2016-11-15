@@ -236,18 +236,23 @@ void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned re
                                         int npoints, double left, double right, bool twodim)
 {
    if ((ch>=NumChannels()) || (HistFillLevel()<4)) return;
-   fCh[ch].refch = refch;
 
-   if (((reftdc == 0xffff) || (reftdc>0xfffff)) && ((reftdc & 0xf0000) != 0x70000)) {
-      fCh[ch].reftdc = GetID();
-   } else {
-      fCh[ch].reftdc = reftdc & 0xffff;
-      fCh[ch].refabs = ((reftdc & 0xf0000) == 0x70000);
+   if (((reftdc == 0xffff) || (reftdc>0xfffff)) && ((reftdc & 0xf0000) != 0x70000)) reftdc = GetID();
 
-      // if other TDC configured as ref channel, enable cross processing
-      if (fTrb) fTrb->SetCrossProcess(true);
+   // ignore invalid settings
+   if ((ch==refch) && ((reftdc & 0xffff) == GetID())) return;
 
+   if ((refch==0) && (ch!=0) && ((reftdc & 0xffff) != GetID())) {
+      printf("%s cannot set reference to zero channel from other TDC\n", GetName());
+      return;
    }
+
+   fCh[ch].refch = refch;
+   fCh[ch].reftdc = reftdc & 0xffff;
+   fCh[ch].refabs = ((reftdc & 0xf0000) == 0x70000);
+
+   // if other TDC configured as ref channel, enable cross processing
+   if (fTrb) fTrb->SetCrossProcess(true);
 
    CreateChannelHistograms(ch);
    if (fCh[ch].reftdc == GetID()) CreateChannelHistograms(refch);
@@ -416,6 +421,8 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
       }
 
       // RAWPRINT("TDC%u Ch:%u Try to use as ref TDC%u %u proc:%p\n", GetID(), ch, reftdc, ref, refproc);
+
+      // printf("TDC %s %d %d same %d %p %p  %f %f \n", GetName(), ch, ref, (this==refproc), this, refproc, fCh[ch].rising_hit_tm, refproc->fCh[ref].rising_hit_tm);
 
       if ((refproc!=0) && ((ref>0) || (refproc!=this)) && (ref<refproc->NumChannels()) && ((ref!=ch) || (refproc!=this))) {
          if (DoRisingEdge() && (fCh[ch].rising_hit_tm != 0) && (refproc->fCh[ref].rising_hit_tm != 0)) {
@@ -1472,7 +1479,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                rec.rising_new_value = true;
 
                if (use_for_ref && ((rec.rising_hit_tm == 0.) || fUseLastHit)) {
-                  rec.rising_hit_tm = localtm;
+                  rec.rising_hit_tm = (chid > 0) ? localtm : ch0time;
                   rec.rising_coarse = coarse;
                   rec.rising_fine = fine;
 
@@ -1490,14 +1497,14 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
                // special case - when ref channel defined as 0, fill all hits
                if ((chid!=0) && (rec.refch==0) && (rec.reftdc == GetID()) && use_for_ref) {
-                  rec.rising_ref_tm = localtm - fCh[0].rising_hit_tm;
+                  rec.rising_ref_tm = localtm;
 
-                   DefFillH1(rec.fRisingRef, ((localtm - fCh[0].rising_hit_tm)*1e9), 1.);
+                  DefFillH1(rec.fRisingRef, (localtm*1e9), 1.);
 
                   if (IsPrintRawData() || print_cond)
                   printf("Difference rising %04x:%02u\t %04x:%02u\t %12.3f\t %12.3f\t %7.3f  coarse %03x - %03x = %4d  fine %03x %03x \n",
                           GetID(), chid, rec.reftdc, rec.refch,
-                          localtm*1e9,  fCh[0].rising_hit_tm*1e9, (localtm - fCh[0].rising_hit_tm)*1e9,
+                          localtm*1e9,  fCh[0].rising_hit_tm*1e9, localtm*1e9,
                           coarse, fCh[0].rising_coarse, (int) (coarse - fCh[0].rising_coarse),
                           fine, fCh[0].rising_fine);
                }
@@ -1811,7 +1818,7 @@ bool hadaq::TdcProcessor::CalibrateTot(unsigned nch, long* hist, float& tot_shif
    }
    rms = sqrt(rms);
 
-   if (rms > 0.1) {
+   if (rms > 0.15) {
       printf("%s Ch:%u TOT failed - RMS %5.3f too high\n", GetName(), nch, rms);
       return false;
    }
