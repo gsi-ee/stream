@@ -53,7 +53,9 @@ void hadaqs::RawSubevent::Dump(bool print_raw_data)
 
    for (unsigned ix=0; ix < size; ix++)
    {
-      if (ix % 8 == 0) printf("  "); newline = false;
+      if (ix % 8 == 0) printf("  ");
+
+      newline = false;
 
       printf("  [%*u] %08x", width, ix, (unsigned) Data(ix));
 
