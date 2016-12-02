@@ -399,6 +399,8 @@ namespace hadaq {
          void SetEveryEpoch(bool on) { fEveryEpoch = on; }
          bool IsEveryEpoch() const { return fEveryEpoch; }
 
+         void SetLinearCalibration(unsigned nch, unsigned finemin=30, unsigned finemax=500);
+
          void SetAutoCalibration(long cnt = 100000) { fAutoCalibration = cnt; }
 
          bool LoadCalibration(const std::string& fprefix);

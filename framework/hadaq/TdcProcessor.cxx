@@ -1754,6 +1754,21 @@ void hadaq::TdcProcessor::AppendTrbSync(uint32_t syncid)
    memcpy(fQueue.back().ptr(), &syncid, 4);
 }
 
+void hadaq::TdcProcessor::SetLinearCalibration(unsigned nch, unsigned finemin, unsigned finemax)
+{
+   if (nch>=NumChannels()) return;
+
+   for (unsigned fine=0;fine<FineCounterBins;++fine) {
+      float value = 0;
+      if (fine<=finemin) value = 0; else
+      if (fine>=finemax) value = hadaq::TdcMessage::CoarseUnit(); else
+      value = hadaq::TdcMessage::CoarseUnit() * (fine - finemin) / (0. + finemax - finemin);
+      fCh[nch].rising_calibr[fine] = value;
+      fCh[nch].falling_calibr[fine] = value;
+   }
+}
+
+
 bool hadaq::TdcProcessor::CalibrateChannel(unsigned nch, long* statistic, float* calibr)
 {
    double sum(0.);
