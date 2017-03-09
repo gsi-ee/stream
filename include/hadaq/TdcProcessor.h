@@ -194,6 +194,7 @@ namespace hadaq {
           * 4   - falling edge enabled and common statistic is used for calibration */
          unsigned    fEdgeMask;       //! which channels to analyze, analyzes trailing edges when more than 1
          long        fAutoCalibration;//! indicates minimal number of counts in each channel required to produce calibration
+         bool        fAutoCalibrOnce; //! when true, auto calibration will be executed once
 
          std::string fWriteCalibr;    //! file which should be written at the end of data processing
          bool fWriteEveryTime;        //! write calibration every time automatic calibration performed
@@ -401,7 +402,7 @@ namespace hadaq {
 
          void SetLinearCalibration(unsigned nch, unsigned finemin=30, unsigned finemax=500);
 
-         void SetAutoCalibration(long cnt = 100000) { fAutoCalibration = cnt; }
+         void SetAutoCalibration(long cnt = 100000) { fAutoCalibration = cnt % 1000000000L; fAutoCalibrOnce = (cnt>1000000000L); }
 
          bool LoadCalibration(const std::string& fprefix);
 

@@ -70,6 +70,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    pStoreDouble(0),
    fEdgeMask(edge_mask),
    fAutoCalibration(0),
+   fAutoCalibrOnce(false),
    fWriteCalibr(),
    fWriteEveryTime(false),
    fEveryEpoch(false),
@@ -526,6 +527,11 @@ bool hadaq::TdcProcessor::PerformAutoCalibrate()
    ProduceCalibration(true);
    if (!fWriteCalibr.empty() && fWriteEveryTime)
       StoreCalibration(fWriteCalibr);
+   if (fAutoCalibrOnce && (fAutoCalibration>0)) {
+      fAutoCalibrOnce = false;
+      fAutoCalibration = -10;
+   }
+
    return true;
 }
 

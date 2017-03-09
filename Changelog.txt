@@ -1,3 +1,8 @@
+9.03.2017
+When configure autocalibration, one can specify value > 1e9. 
+In such case calibration will be executed only once.
+For instance, when specify 1000100000, calibration will be produced once after 100000 hits 
+
 7.11.2016
 1. Provide access to HLD event/subevent headers (without data). Like:
      hadaq::HldProcessor* hld = dynamic_cast<hadaq::HldProcessor*> (base::ProcMgr::instance()->FindProc("HLD"));
