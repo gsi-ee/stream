@@ -49,6 +49,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fIter1(),
    fIter2(),
    fNumChannels(numchannels),
+   fNumFineBins(gNumFineBins),
    fCh(),
    fCalibrTemp(30.),
    fCalibrTempCoef(0.004432),
@@ -84,6 +85,8 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
 {
    fIsTDC = true;
 
+   if (fNumFineBins==0) fNumFineBins = FineCounterBins;
+
    if (trb) {
       // when normal trigger is used as sync points, than use trigger time on right side to calculate global time
       if (trb->IsUseTriggerAsSync()) SetSynchronisationKind(sync_Right);
@@ -116,14 +119,14 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
 
       fMsgsKind = MakeH1("MsgKind", "kind of messages", 8, 0, 8, "xbin:Trailer,Header,Debug,Epoch,Hit,-,-,Calibr;kind");
 
-      fAllFine = MakeH2("FineTm", "fine counter value", numchannels, 0, numchannels, (gNumFineBins==1000 ? 100 : gNumFineBins), 0, gNumFineBins, "ch;fine");
+      fAllFine = MakeH2("FineTm", "fine counter value", numchannels, 0, numchannels, (fNumFineBins==1000 ? 100 : fNumFineBins), 0, fNumFineBins, "ch;fine");
       fAllCoarse = MakeH2("CoarseTm", "coarse counter value", numchannels, 0, numchannels, 2048, 0, 2048, "ch;coarse");
 
       if (DoRisingEdge())
-         fRisingCalibr  = MakeH2("RisingCalibr",  "rising edge calibration", numchannels, 0, numchannels, FineCounterBins, 0, FineCounterBins, "ch;fine");
+         fRisingCalibr  = MakeH2("RisingCalibr",  "rising edge calibration", numchannels, 0, numchannels, fNumFineBins, 0, fNumFineBins, "ch;fine");
 
       if (DoFallingEdge()) {
-         fFallingCalibr = MakeH2("FallingCalibr", "falling edge calibration", numchannels, 0, numchannels, FineCounterBins, 0, FineCounterBins, "ch;fine");
+         fFallingCalibr = MakeH2("FallingCalibr", "falling edge calibration", numchannels, 0, numchannels, fNumFineBins, 0, fNumFineBins, "ch;fine");
          fTotShifts = MakeH1("TotShifts", "Calibrated time shift for falling edge", numchannels, 0, numchannels, "kind:F;ch;ns");
       }
 
@@ -131,8 +134,11 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
          fBubbleErrDistr = MakeH1("AllBubbleErrors", "All bubble errors from all channels", BUBBLE_SIZE*16, 0, BUBBLE_SIZE*16, "bubble");
    }
 
-   for (unsigned ch=0;ch<numchannels;ch++) {
+   for (unsigned ch=0;ch<numchannels;ch++)
       fCh.push_back(ChannelRec());
+
+   for (unsigned ch=0;ch<numchannels;ch++) {
+      fCh[ch].CreateCalibr(fNumFineBins);
    }
 
    // always create histograms for channel 0
@@ -148,6 +154,8 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
 
 hadaq::TdcProcessor::~TdcProcessor()
 {
+   for (unsigned ch=0;ch<NumChannels();ch++)
+      fCh[ch].ReleaseCalibr();
 }
 
 bool hadaq::TdcProcessor::CheckPrintError()
@@ -176,17 +184,17 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
    }
 
    if (DoRisingEdge() && (fCh[ch].fRisingFine==0)) {
-      fCh[ch].fRisingFine = MakeH1("RisingFine", "Rising fine counter", gNumFineBins, 0, gNumFineBins, "fine");
+      fCh[ch].fRisingFine = MakeH1("RisingFine", "Rising fine counter", fNumFineBins, 0, fNumFineBins, "fine");
       if (gBubbleMode < 2)
          fCh[ch].fRisingMult = MakeH1("RisingMult", "Rising event multiplicity", 128, 0, 128, "nhits");
-      fCh[ch].fRisingCalibr = MakeH1("RisingCalibr", "Rising calibration function", FineCounterBins, 0, FineCounterBins, "fine;kind:F");
+      fCh[ch].fRisingCalibr = MakeH1("RisingCalibr", "Rising calibration function", fNumFineBins, 0, fNumFineBins, "fine;kind:F");
       // copy calibration only when histogram created
       CopyCalibration(fCh[ch].rising_calibr, fCh[ch].fRisingCalibr, ch, fRisingCalibr);
    }
 
    if (DoFallingEdge() && (fCh[ch].fFallingFine==0)) {
-      fCh[ch].fFallingFine = MakeH1("FallingFine", "Falling fine counter", gNumFineBins, 0, gNumFineBins, "fine");
-      fCh[ch].fFallingCalibr = MakeH1("FallingCalibr", "Falling calibration function", FineCounterBins, 0, FineCounterBins, "fine;kind:F");
+      fCh[ch].fFallingFine = MakeH1("FallingFine", "Falling fine counter", fNumFineBins, 0, fNumFineBins, "fine");
+      fCh[ch].fFallingCalibr = MakeH1("FallingCalibr", "Falling calibration function", fNumFineBins, 0, fNumFineBins, "fine;kind:F");
       if (gBubbleMode < 2) {
          fCh[ch].fFallingMult = MakeH1("FallingMult", "Falling event multiplicity", 128, 0, 128, "nhits");
          fCh[ch].fTot = MakeH1("Tot", "Time over threshold", gTotRange*100, 0, gTotRange, "ns");
@@ -584,7 +592,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
       unsigned coarse = msg.getHitTmCoarse();
       bool isrising = msg.isHitRisingEdge();
 
-      if ((chid >= NumChannels()) || (fine >= FineCounterBins)) {
+      if ((chid >= NumChannels()) || (fine >= fNumFineBins)) {
          msg.setAsHit1(0x3ff);
          sub->SetData(indx-1, msg.getData());
          errcnt++;
@@ -1398,10 +1406,10 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             corr = calibr.getCalibrFine(ncalibr++)*5e-9/0x3ffe;
             if (!isrising) corr *= 10.; // range for falling edge is 50 ns.
          } else {
-            if (fine >= FineCounterBins) {
+            if (fine >= fNumFineBins) {
                DefFastFillH1(fErrors, chid);
                if (CheckPrintError())
-                  printf("%5s Fine counter %u out of allowed range 0..%u in channel %u\n", GetName(), fine, FineCounterBins, chid);
+                  printf("%5s Fine counter %u out of allowed range 0..%u in channel %u\n", GetName(), fine, fNumFineBins, chid);
                iserr = true;
                continue;
             }
@@ -1764,7 +1772,7 @@ void hadaq::TdcProcessor::SetLinearCalibration(unsigned nch, unsigned finemin, u
 {
    if (nch>=NumChannels()) return;
 
-   for (unsigned fine=0;fine<FineCounterBins;++fine) {
+   for (unsigned fine=0;fine<fNumFineBins;++fine) {
       float value = 0;
       if (fine<=finemin) value = 0; else
       if (fine>=finemax) value = hadaq::TdcMessage::CoarseUnit(); else
@@ -1778,7 +1786,7 @@ void hadaq::TdcProcessor::SetLinearCalibration(unsigned nch, unsigned finemin, u
 bool hadaq::TdcProcessor::CalibrateChannel(unsigned nch, long* statistic, float* calibr)
 {
    double sum(0.);
-   for (int n=0;n<FineCounterBins;n++) {
+   for (unsigned n=0;n<fNumFineBins;n++) {
       sum+=statistic[n];
       calibr[n] = sum;
    }
@@ -1790,7 +1798,7 @@ bool hadaq::TdcProcessor::CalibrateChannel(unsigned nch, long* statistic, float*
       printf("%s Ch:%u Cnts: %7.0f produce calibration\n", GetName(), nch, sum);
    }
 
-   for (unsigned n=0;n<FineCounterBins;n++) {
+   for (unsigned n=0;n<fNumFineBins;n++) {
       if (sum<=1000)
          calibr[n] = hadaq::TdcMessage::SimpleFineCalibr(n);
       else
@@ -1856,7 +1864,7 @@ void hadaq::TdcProcessor::CopyCalibration(float* calibr, base::H1handle hcalibr,
 {
    ClearH1(hcalibr);
 
-   for (unsigned n=0;n<FineCounterBins;n++) {
+   for (unsigned n=0;n<fNumFineBins;n++) {
       DefFillH1(hcalibr, n, calibr[n]*1e12);
       DefFillH2(h2calibr, ch, n, calibr[n]*1e12);
    }
@@ -1905,7 +1913,7 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat)
          if (fEdgeMask == edge_CommonStatistic) {
             fCh[ch].all_rising_stat += fCh[ch].all_falling_stat;
             fCh[ch].all_falling_stat = 0;
-            for (unsigned n=0;n<FineCounterBins;n++) {
+            for (unsigned n=0;n<fNumFineBins;n++) {
                fCh[ch].rising_stat[n] += fCh[ch].falling_stat[n];
                fCh[ch].falling_stat[n] = 0;
             }
@@ -1930,11 +1938,11 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat)
          fCh[ch].hascalibr = res;
 
          if ((fEdgeMask == edge_CommonStatistic) || (fEdgeMask == edge_ForceRising))
-            for (unsigned n=0;n<FineCounterBins;n++)
+            for (unsigned n=0;n<fNumFineBins;n++)
                fCh[ch].falling_calibr[n] = fCh[ch].rising_calibr[n];
 
          if (clear_stat) {
-            for (unsigned n=0;n<FineCounterBins;n++) {
+            for (unsigned n=0;n<fNumFineBins;n++) {
                fCh[ch].falling_stat[n] = 0;
                fCh[ch].rising_stat[n] = 0;
             }
@@ -1977,8 +1985,8 @@ void hadaq::TdcProcessor::StoreCalibration(const std::string& fprefix, unsigned 
 
    // calibration curves
    for (unsigned ch=0;ch<NumChannels();ch++) {
-      fwrite(fCh[ch].rising_calibr, sizeof(fCh[ch].rising_calibr), 1, f);
-      fwrite(fCh[ch].falling_calibr, sizeof(fCh[ch].falling_calibr), 1, f);
+      fwrite(fCh[ch].rising_calibr, sizeof(float)*fNumFineBins, 1, f);
+      fwrite(fCh[ch].falling_calibr, sizeof(float)*fNumFineBins, 1, f);
    }
 
    // tot shifts
@@ -2032,13 +2040,13 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
      fCh[ch].hascalibr = false;
 
      if (ch>=NumChannels()) {
-        fseek(f, sizeof(fCh[0].rising_calibr) + sizeof(fCh[0].rising_calibr), SEEK_CUR);
+        fseek(f, 2*sizeof(float)*fNumFineBins, SEEK_CUR);
         continue;
      }
 
      fCh[ch].hascalibr =
-        (fread(fCh[ch].rising_calibr, sizeof(fCh[ch].rising_calibr), 1, f) == 1) &&
-        (fread(fCh[ch].falling_calibr, sizeof(fCh[ch].falling_calibr), 1, f) == 1);
+        (fread(fCh[ch].rising_calibr, sizeof(float)*fNumFineBins, 1, f) == 1) &&
+        (fread(fCh[ch].falling_calibr, sizeof(float)*fNumFineBins, 1, f) == 1);
 
      CopyCalibration(fCh[ch].rising_calibr, fCh[ch].fRisingCalibr, ch, fRisingCalibr);
 
@@ -2089,7 +2097,7 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
 
 void hadaq::TdcProcessor::IncCalibration(unsigned ch, bool rising, unsigned fine, unsigned value)
 {
-   if ((ch>=NumChannels()) || (fine>=FineCounterBins)) return;
+   if ((ch>=NumChannels()) || (fine>=fNumFineBins)) return;
 
    if (rising && DoRisingEdge()) {
       fCh[ch].rising_stat[fine] += value;

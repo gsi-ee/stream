@@ -63,10 +63,10 @@ namespace hadaq {
             unsigned last_falling_fine;
             long all_rising_stat;
             long all_falling_stat;
-            long rising_stat[FineCounterBins];
-            float rising_calibr[FineCounterBins];
-            long falling_stat[FineCounterBins];
-            float falling_calibr[FineCounterBins];
+            long* rising_stat;
+            float* rising_calibr;
+            long* falling_stat;
+            float* falling_calibr;
             float last_tot;
             long tot0d_cnt;                 //! counter of tot0d statistic for calibration
             long tot0d_hist[TotBins];       //! histogram for TOT calibration
@@ -116,6 +116,10 @@ namespace hadaq {
                last_falling_fine(0),
                all_rising_stat(0),
                all_falling_stat(0),
+               rising_stat(0),
+               rising_calibr(0),
+               falling_stat(0),
+               falling_calibr(0),
                last_tot(0.),
                tot0d_cnt(0),
                tot_shift(0.),
@@ -131,14 +135,27 @@ namespace hadaq {
                sum0(0),sumx1(0),sumx2(0),sumy1(0),sumxy(0),
                bubble_a(20), bubble_b(1.06)
             {
-               for (unsigned n=0;n<FineCounterBins;n++) {
-                  falling_stat[n] = rising_stat[n] = 0;
-                  falling_calibr[n] = rising_calibr[n] = hadaq::TdcMessage::SimpleFineCalibr(n);
-               }
                for (unsigned n=0;n<TotBins;n++) {
                   tot0d_hist[n] = 0;
                }
+            }
 
+            void CreateCalibr(unsigned numfine) {
+               rising_stat = new long[numfine];
+               rising_calibr = new float[numfine];
+               falling_stat = new long[numfine];
+               falling_calibr = new float[numfine];
+               for (unsigned n=0;n<numfine;n++) {
+                  falling_stat[n] = rising_stat[n] = 0;
+                  falling_calibr[n] = rising_calibr[n] = hadaq::TdcMessage::SimpleFineCalibr(n);
+               }
+            }
+
+            void ReleaseCalibr() {
+               if (rising_stat) { delete [] rising_stat; rising_stat = 0; }
+               if (rising_calibr) { delete [] rising_calibr; rising_calibr = 0; }
+               if (falling_stat) { delete [] falling_stat; falling_stat = 0; }
+               if (falling_calibr) { delete [] falling_calibr; falling_calibr = 0; }
             }
          };
 
@@ -160,6 +177,7 @@ namespace hadaq {
          base::H1handle fBubbleErrDistr; //! distribution of place with errors
 
          unsigned                 fNumChannels; //! number of channels
+         unsigned                 fNumFineBins; //! number of fine-counter bins
          std::vector<ChannelRec>  fCh; //! histogram for individual channels
          float                    fCalibrTemp;  //! temperature when calibration was performed
          float                    fCalibrTempCoef; //! coefficient to scale calibration curve (real value -1)
@@ -273,7 +291,7 @@ namespace hadaq {
 
          static void SetMaxBoardId(unsigned) { }
 
-         static void SetDefaults(unsigned numfinebins=600, unsigned totrange = 100);
+         static void SetDefaults(unsigned numfinebins = 600, unsigned totrange = 100);
 
          static void SetAllHistos(bool on = true);
 

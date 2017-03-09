@@ -1,7 +1,10 @@
 9.03.2017
-When configure autocalibration, one can specify value > 1e9. 
-In such case calibration will be executed only once.
-For instance, when specify 1000100000, calibration will be produced once after 100000 hits 
+1. When configure autocalibration, one can specify value > 1e9. 
+   In such case calibration will be executed only once.
+   For instance, when specify 1000100000, calibration will be produced once after 100000 hits
+2. One can change number of fine-counter bins via hadaq::TdcProcessor::SetDefaults(550).
+   This should be done before creating any TDC processor and loading calibration files.
+    
 
 7.11.2016
 1. Provide access to HLD event/subevent headers (without data). Like:
