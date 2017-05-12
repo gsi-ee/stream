@@ -71,6 +71,8 @@ namespace base {
           * GetSubEvent("ROC",2) is same as GetSubEvent("ROC2") */
          base::SubEvent* GetSubEvent(const std::string& name, unsigned subindx) const;
 
+         /** Return events map */
+         EventsMap &GetEventsMap() { return fMap; }
    };
 
 }
