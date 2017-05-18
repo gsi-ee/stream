@@ -1297,6 +1297,13 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          bool isrising = msg.isHitRisingEdge();
          localtm = iter.getMsgTimeCoarse();
 
+         if (chid >= NumChannels()) {
+            if (CheckPrintError())
+               printf("%5s Channel number %u bigger than configured %u\n", GetName(), chid, NumChannels());
+            iserr = true;
+            continue;
+         }
+
          if (double_edges) {
             if (first_double_msg.getData() == 0) {
                // do not analyze, just go further
@@ -1333,13 +1340,6 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
          if (IsEveryEpoch())
             iter.clearCurEpoch();
-
-         if (chid >= NumChannels()) {
-            if (CheckPrintError())
-               printf("%5s Channel number %u bigger than configured %u\n", GetName(), chid, NumChannels());
-            iserr = true;
-            continue;
-         }
 
          if (fine == 0x3FF) {
             if (first_scan) {
@@ -1400,11 +1400,6 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                if (fine & 0x200) corr += 0x800 * 5e-9; // complete epoch should be subtracted
             }
             raw_hit = false;
-         } else
-         if (ncalibr < 2) {
-            // use correction from special message
-            corr = calibr.getCalibrFine(ncalibr++)*5e-9/0x3ffe;
-            if (!isrising) corr *= 10.; // range for falling edge is 50 ns.
          } else {
             if (fine >= fNumFineBins) {
                DefFastFillH1(fErrors, chid);
@@ -1414,14 +1409,21 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                continue;
             }
 
-            // main calibration for fine counter
-            corr = ExtractCalibr(isrising ? rec.rising_calibr : rec.falling_calibr, fine);
+            if (ncalibr < 2) {
+               // use correction from special message
+               corr = calibr.getCalibrFine(ncalibr++)*5e-9/0x3ffe;
+               if (!isrising) corr *= 10.; // range for falling edge is 50 ns.
+            } else {
 
-            // apply TOT shift for falling edge (should it be also temp dependent)?
-            if (!isrising) corr += rec.tot_shift*1e-9;
+               // main calibration for fine counter
+               corr = ExtractCalibr(isrising ? rec.rising_calibr : rec.falling_calibr, fine);
 
-            // negative while value should be add to the stamp
-            if (do_temp_comp) corr -= (fCurrentTemp + fTempCorrection - fCalibrTemp) * rec.time_shift_per_grad * 1e-9;
+               // apply TOT shift for falling edge (should it be also temp dependent)?
+               if (!isrising) corr += rec.tot_shift*1e-9;
+
+               // negative while value should be add to the stamp
+               if (do_temp_comp) corr -= (fCurrentTemp + fTempCorrection - fCalibrTemp) * rec.time_shift_per_grad * 1e-9;
+            }
          }
 
          // apply correction
@@ -1462,7 +1464,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
             DefFastFillH1(fChannels, chid);
             DefFillH1(fHits, (chid + (isrising ? 0.25 : 0.75)), 1.);
-            DefFillH2(fAllFine, chid, fine, 1.);
+            if (raw_hit) DefFillH2(fAllFine, chid, fine, 1.);
             DefFillH2(fAllCoarse, chid, coarse, 1.);
 
             if (isrising) {

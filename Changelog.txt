@@ -1,3 +1,8 @@
+18.05.2017
+1. Bugfix - corrupted value of fine counter leads to analysis crash. Now checked.
+2. Bugfix - also check earlier if channel id is invalid 
+
+
 9.03.2017
 1. When configure autocalibration, one can specify value > 1e9. 
    In such case calibration will be executed only once.
