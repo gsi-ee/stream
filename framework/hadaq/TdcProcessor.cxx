@@ -1183,26 +1183,21 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       dostore = true;
       switch (GetStoreKind()) {
          case 1: {
-            hadaq::TdcSubEvent* subevnt = new hadaq::TdcSubEvent;
+            hadaq::TdcSubEvent* subevnt = new hadaq::TdcSubEvent(buf.datalen()/6);
             mgr()->AddToTrigEvent(GetName(), subevnt);
             pStoreVect = subevnt->vect_ptr();
-            pStoreVect->reserve(buf.datalen()/4);
             break;
          }
          case 2: {
-            hadaq::TdcSubEventFloat* subevnt = new hadaq::TdcSubEventFloat;
+            hadaq::TdcSubEventFloat* subevnt = new hadaq::TdcSubEventFloat(buf.datalen()/6);
             mgr()->AddToTrigEvent(GetName(), subevnt);
             pStoreFloat = subevnt->vect_ptr();
-            // strange effect when capacity too low - it corrupts data in the buffer??
-            pStoreFloat->reserve(buf.datalen()/4);
             break;
          }
          case 3: {
-            hadaq::TdcSubEventDouble* subevnt = new hadaq::TdcSubEventDouble;
+            hadaq::TdcSubEventDouble* subevnt = new hadaq::TdcSubEventDouble(buf.datalen()/6);
             mgr()->AddToTrigEvent(GetName(), subevnt);
             pStoreDouble = subevnt->vect_ptr();
-            // strange effect when capacity too low - it corrupts data in the buffer??
-            pStoreDouble->reserve(buf.datalen()/4);
             break;
          }
 

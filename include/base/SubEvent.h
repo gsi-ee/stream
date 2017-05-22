@@ -83,7 +83,7 @@ namespace base {
 
       public:
 
-         SubEventEx() : base::SubEvent(), fExtMessages()  {}
+         SubEventEx(unsigned capacity = 0) : base::SubEvent(), fExtMessages(capacity)  {}
 
          ~SubEventEx() {}
 
