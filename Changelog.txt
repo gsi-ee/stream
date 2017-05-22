@@ -1,3 +1,9 @@
+22.05.2017
+1. Bugfix - wrong memory assignment when analyzing events. 
+   Memoru buffer was released before starting analysis. 
+   In most cases worked, but sometime memory was reallocated and overwritten
+
+
 18.05.2017
 1. Bugfix - corrupted value of fine counter leads to analysis crash. Now checked.
 2. Bugfix - also check earlier if channel id is invalid 

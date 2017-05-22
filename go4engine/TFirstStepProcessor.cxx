@@ -118,7 +118,7 @@ Bool_t TFirstStepProcessor::BuildEvent(TGo4EventElement* outevnt)
 
          base::Buffer buf;
 
-         buf.makecopyof(psubevt->GetDataField(), psubevt->GetByteLen());
+         buf.makereferenceof(psubevt->GetDataField(), psubevt->GetByteLen());
 
          buf().kind = psubevt->GetProcid();
          buf().boardid = psubevt->GetSubcrate();
