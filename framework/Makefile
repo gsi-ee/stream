@@ -1,7 +1,14 @@
 #use minimum options set
 
-ifneq ($(shell root-config --version 2>/dev/null),)
+
+ROOT_VERSION = $(shell root-config --version 2>/dev/null)
+
+
+ifneq ($(ROOT_VERSION),)
 IS_ROOT=true
+ifneq ($(firstword $(subst ., ,$(ROOT_VERSION))),5)
+IS_ROOT6 = true
+endif
 endif
 
 CXXOPT       += -O2 -fPIC -Wall $(INCLUDES:%=-I%) $(DEFINITIONS:%=-D%) 
@@ -38,9 +45,9 @@ NEWLIBROOT_OBJS    = $(patsubst %.cxx, %.o, $(NEWLIBROOT_SRCS))
 NEWLIBROOT_DEPS    = $(patsubst %.cxx, %.d, $(NEWLIBROOT_SRCS))
 
 
-NEWLIBDICT_LIBNAME = $(STREAMSYS)/lib/libStreamDict
-NEWLIBDICT_LIB = $(NEWLIBDICT_LIBNAME).so
-NEWLIBDICT_MAP = $(NEWLIBDICT_LIBNAME).rootmap
+NEWLIBDICT_LIBNAME = libStreamDict
+NEWLIBDICT_LIB = $(STREAMSYS)/lib/$(NEWLIBDICT_LIBNAME).so
+NEWLIBDICT_MAP = $(STREAMSYS)/lib/$(NEWLIBDICT_LIBNAME).rootmap
 
 NEWLIBDICT_LINKDEF = LinkDef.h
 NEWLIBDICT_NAME = G__Stream
@@ -58,10 +65,13 @@ clean:
 
 ifdef IS_ROOT
 
-
 $(NEWLIBDICT_MAP): $(NEWLIBDICT_LIB)
 	@echo 'Building: $@'
+ifdef IS_ROOT6
+	@rootcling -r $(NEWLIBDICT_SRC) -rml $(NEWLIBDICT_LIBNAME).so -rmf $(NEWLIBDICT_MAP) -s $(NEWLIBDICT_LIB) $(CXXOPT) $(NEWLIBROOT_HEADERS) $(NEWLIBDICT_LINKDEF)
+else
 	@rlibmap -o $@ -l $(NEWLIBDICT_LIB) -d $(NEWLIB) -c $(NEWLIBDICT_LINKDEF)
+endif
 
 $(NEWLIBDICT_SRC): $(NEWLIBDICT_LINKDEF) $(NEWLIB_HEADERS) $(NEWLIBROOT_HEADERS)
 	@rootcint -f $@ -c -p -I../include $(NEWLIB_HEADERS) $(NEWLIBROOT_HEADERS) $(NEWLIBDICT_LINKDEF)

@@ -63,7 +63,7 @@ dict:
 	echo "Dictionary done"
 
 $(NEWGO4_LIB):  $(NEWGO4_O) $(NEWGO4_DO)
-	@$(MakeLibrary) $(NEWGO4_LIBNAME) "$(NEWGO4_O) $(NEWGO4_DO)" $(STREAMSYS)/lib $(NEWGO4_LINKDEF) "$(NEWGO4_LIB_DEP)" 
+	@$(MakeLibrary) $(NEWGO4_LIBNAME) "$(NEWGO4_O) $(NEWGO4_DO)" $(STREAMSYS)/lib $(NEWGO4_LINKDEF) "$(NEWGO4_LIB_DEP)" $(NEWGO4_DS) "$(NEWGO4_H)"
 
 $(NEWGO4_LIB): LDFLAGS+=-Wl,-rpath,$(STREAMSYS)/lib -L$(STREAMSYS)/lib -lStream -lStreamDict 
 

@@ -1,6 +1,10 @@
+3.08.2017
+1. Add preliminary support for ROOT6
+
+
 22.05.2017
-1. Bugfix - wrong memory assignment when analyzing events. 
-   Memoru buffer was released before starting analysis. 
+1. Bugfix - wrong memory assignment when analyzing events.
+   Memoru buffer was released before starting analysis.
    In most cases worked, but sometime memory was reallocated and overwritten
 2. Preallocate memory in output event already in constructor
 
