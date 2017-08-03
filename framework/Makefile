@@ -60,7 +60,7 @@ all: lib dict
 lib: $(NEWLIB)
 
 clean:
-	rm -f $(NEWLIB) $(NEWLIB_OBJS) $(NEWLIB_DEPS) $(NEWLIBROOT_OBJS) $(NEWLIBROOT_DEPS) $(NEWLIBDICT_MAP) $(NEWLIBDICT_NAME).*
+	rm -f $(NEWLIB) $(NEWLIB_OBJS) $(NEWLIB_DEPS) $(NEWLIBROOT_OBJS) $(NEWLIBROOT_DEPS) $(NEWLIBDICT_MAP) $(NEWLIBDICT_NAME).* $(NEWLIBDICT_LIBNAME)_rdict.pcm
 
 
 ifdef IS_ROOT
@@ -68,7 +68,7 @@ ifdef IS_ROOT
 $(NEWLIBDICT_MAP): $(NEWLIBDICT_LIB)
 	@echo 'Building: $@'
 ifdef IS_ROOT6
-	@rootcling -r $(NEWLIBDICT_SRC) -rml $(NEWLIBDICT_LIBNAME).so -rmf $(NEWLIBDICT_MAP) -s $(NEWLIBDICT_LIB) $(CXXOPT) $(NEWLIBROOT_HEADERS) $(NEWLIBDICT_LINKDEF)
+	@rootcling -v2 -f $(NEWLIBDICT_SRC) -s $(NEWLIBDICT_LIB) -m $(NEWLIBDICT_LIBNAME)_rdict.pcm -excludePath $(STREAMSYS) -rml $(NEWLIBDICT_LIBNAME).so -rmf $(NEWLIBDICT_MAP) -I$(STREAMSYS)/include $(NEWLIB_HEADERS) $(NEWLIBROOT_HEADERS) $(NEWLIBDICT_LINKDEF)
 else
 	@rlibmap -o $@ -l $(NEWLIBDICT_LIB) -d $(NEWLIB) -c $(NEWLIBDICT_LINKDEF)
 endif
@@ -87,7 +87,7 @@ $(NEWLIBDICT_OBJ): INCLUDES += $(STREAMSYS)/include
 
 $(NEWLIBDICT_LIB): $(NEWLIBDICT_OBJ) $(NEWLIBROOT_OBJS) $(NEWLIBDICT_LINKDEF)
 	@echo 'Building: $@'
-	@$(LD) -o $@ -shared -O $(NEWLIBDICT_OBJ) $(NEWLIBROOT_OBJS)
+	@$(LD) -o $@ -shared -O $(NEWLIBDICT_OBJ) $(NEWLIBROOT_OBJS) -L$(STREAMSYS)/lib -lStream -Wl,-rpath,$(STREAMSYS)/lib
 
 dict: $(NEWLIBDICT_LIB) $(NEWLIBDICT_MAP)
 
@@ -102,7 +102,7 @@ endif
 
 $(NEWLIB) : $(NEWLIB_OBJS)
 	@echo 'Building: $@'
-	$(LD) -shared -Wl,--as-needed -O $(NEWLIB_OBJS) -o $@ 
+	$(LD) -shared -Wl,--as-needed -O $(NEWLIB_OBJS) -o $@
 
 
 # rules	
