@@ -1463,6 +1463,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             DefFillH2(fAllCoarse, chid, coarse, 1.);
 
             if (isrising) {
+               // processing of rising edge
                if (raw_hit) {
                   switch (use_for_calibr) {
                      case 1:
@@ -1521,6 +1522,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                }
 
             } else {
+               // processing of falling edge
                if (raw_hit) {
                   switch (use_for_calibr) {
                      case 1:

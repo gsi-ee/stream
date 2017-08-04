@@ -1,3 +1,10 @@
+4.08.2017.
+1. Implement hadaq::TdcProcessor::SetChannelTotShift
+   It allows to directly set shifts for each channel (in nanoseconds).
+   Can be used if automatically ToT calibration does not work. 
+   This shift applied in the histograms and in data, stored in output event
+
+
 3.08.2017
 1. Add preliminary support for ROOT6
 

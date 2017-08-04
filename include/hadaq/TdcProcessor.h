@@ -381,6 +381,11 @@ namespace hadaq {
             if (ch < fCh.size()) fCh[ch].time_shift_per_grad = shift_per_grad;
          }
 
+         /** Set channel TOT shift in nano-seconds, typical value is around 30 ns */
+         void SetChannelTotShift(unsigned ch, float tot_shift) {
+            if (ch < fCh.size()) fCh[ch].tot_shift = tot_shift;
+         }
+
          /** Disable calibration for specified channels */
          void DisableCalibrationFor(unsigned firstch, unsigned lastch = 0);
 
