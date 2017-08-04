@@ -64,4 +64,5 @@ $(LOGINFILE):
 	@echo "echo Configure stream v0.9.1 at $(STREAMSYS)" >> $@
 	@echo "" >> $@
 	@echo 'export STREAMSYS=$(STREAMSYS)' >> $@
+	@echo 'export GO4EXTRAINCLUDE=$(STREAMSYS)/include' >> $@
 	@echo 'export LD_LIBRARY_PATH=.:$$STREAMSYS/lib:$$LD_LIBRARY_PATH' >> $@

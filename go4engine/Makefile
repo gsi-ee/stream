@@ -12,7 +12,7 @@ endif
 
 -include $(GO4SYS)/Makefile.config
 
-INCLUDES += -I$(STREAMSYS)/include  
+INCLUDES += -I$(STREAMSYS)/include
 #DEFINITIONS += $(ROC_GO4DEFINITIONS) 
 
 ## normally should be like this for every module, but can be specific
@@ -69,7 +69,6 @@ $(NEWGO4_LIB): LDFLAGS+=-Wl,-rpath,$(STREAMSYS)/lib -L$(STREAMSYS)/lib -lStream 
 
 $(NEWGO4_DS): $(NEWGO4_H) $(NEWGO4_LINKDEF)
 	@$(ROOTCINTGO4) $(NEWGO4_H) $(NEWGO4_LINKDEF)
-
 
 clean: 
 	@rm -f $(NEWGO4_O) $(NEWGO4_DO) 

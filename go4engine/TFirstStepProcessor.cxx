@@ -365,3 +365,30 @@ bool TFirstStepProcessor::RegisterObject(TObject* tobj, const char* subfolder)
 
    return false;
 }
+
+// =============================================================================
+
+/*
+
+// unfortunately, this does not work
+// one should configure include path BEFORE loading user library
+
+class StreamLoadHandler {
+public:
+   StreamLoadHandler()
+   {
+      const char *stream_sys = gSystem->Getenv("STREAMSYS");
+      if (stream_sys && *stream_sys) {
+         TString path = stream_sys;
+         if (path[path.Length()-1]!='/') path.Append("/");
+         path.Append("include/");
+         printf("ADD INCLUDE PATH %s\n",path.Data());
+         gInterpreter->AddIncludePath(path.Data());
+      }
+   }
+};
+
+static StreamLoadHandler load_handler;
+
+
+*/
