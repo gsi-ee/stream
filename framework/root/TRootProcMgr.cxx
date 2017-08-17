@@ -74,13 +74,32 @@ bool TRootProcMgr::CallFunc(const char* funcname, void* arg)
 {
    if (funcname==0) return false;
 
+   typedef void (*myfunc)(void*);
+
+   void *symbol = gInterpreter->FindSym(funcname);
+
+   if (symbol) {
+
+      printf("direct func call %s\n", funcname);
+
+      myfunc func = (myfunc) symbol;
+
+      func(arg);
+
+      return true;
+
+   }
+
    TString callargs;
-   callargs.Form("%p", arg);
+   callargs.Form("%s((void*)%p);", funcname, arg);
 
    int err = 0;
-   gInterpreter->Execute(funcname, callargs.Data(), &err);
 
-   printf("CINT: call %s(%s) err = %d\n", funcname,callargs.Data(), err);
+   gROOT->ProcessLine(callargs.Data(), &err);
+
+   // gInterpreter->Execute(funcname, callargs.Data(), &err);
+
+   printf("ProcessLine: %s err = %d\n", callargs.Data(), err);
 
    return err == 0;
 }
