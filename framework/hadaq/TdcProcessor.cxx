@@ -1167,7 +1167,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    // use in ref calculations only physical trigger, exclude 0xD or 0xE
    bool use_for_ref = buf().kind < 0xD;
 
-   if ((use_for_calibr > 0) && (buf().kind == 0xD)) use_for_calibr = 2;
+   // disable taking last hit for trigger DD
+   // if ((use_for_calibr > 0) && (buf().kind == 0xD)) use_for_calibr = 2;
 
    // if data could be used for TOT calibration
    bool do_tot = (use_for_calibr>0) && (buf().kind == 0xD) && DoFallingEdge();
