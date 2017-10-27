@@ -449,14 +449,6 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
       unsigned datalen = (data >> 16) & 0xFFFF;
       unsigned dataid = data & 0xFFFF;
 
-      if (maxhublen>0) {
-         if (datalen >= maxhublen) {
-            if (CheckPrintError()) printf("error: sub-sub event %04x inside HUB %04x exceed size limit\n", dataid, lasthubid);
-            datalen = maxhublen-1;
-         }
-         maxhublen -= (datalen+1);
-      }
-
 //      RAWPRINT("Subevent id 0x%04x len %u\n", (data & 0xFFFF), datalen);
 
       // ===========  this is header for TDC, build inside the TRB3 =================
@@ -469,16 +461,12 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
 //      }
 
       if (std::find(fHadaqHUBId.begin(), fHadaqHUBId.end(), dataid) != fHadaqHUBId.end()) {
-         RAWPRINT ("   HUB header: 0x%08x, hub=%u, size=%u (ignore)\n", (unsigned) data, (unsigned) data & 0xFF, datalen);
+         RAWPRINT ("   HUB header: 0x%08x, hub=0x%04x, size=%u (ignore)\n", (unsigned) data, (unsigned) dataid, datalen);
 
          if (maxhublen==0) {
             maxhublen = datalen;
          } else {
         	 maxhublen--; // just decrement
-        	 if (datalen >= maxhublen) {
-        		 if (CheckPrintError()) printf(" subHUB %04x wrong format, want size %u max %u\n", dataid, datalen, maxhublen);
-        	     datalen = maxhublen-1;
-        	 }
          }
 
          lasthubid = dataid;
@@ -487,6 +475,14 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
          // TODO: formally we should analyze HUB subevent as real subevent but
          // we just skip header and continue to analyze data
          continue;
+      }
+
+      if (maxhublen>0) {
+         if (datalen >= maxhublen) {
+            if (CheckPrintError()) printf("error: sub-sub event %04x inside HUB %04x exceed size limit\n", dataid, lasthubid);
+            datalen = maxhublen-1;
+         }
+         maxhublen -= (datalen+1);
       }
 
       //! ==================== CTS header and inside ================
