@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#ifndef __CINT__
+
 /*
 //Description of the Event Structure
 //
@@ -465,5 +467,7 @@ namespace hadaqs {
 }
 
 #pragma pack(pop)
+
+#endif //  __CINT__
 
 #endif
