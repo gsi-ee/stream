@@ -239,12 +239,13 @@ namespace hadaq {
           * TDC not yet able to perform trigger selection */
          virtual bool doTriggerSelection() const { return false; }
 
-         static unsigned gNumFineBins;  //! default value for number of bins in histograms for fine bins
-         static unsigned gTotRange;  //! default range for TOT histogram
-         static bool gAllHistos;     //! when true, all histos for all channels created simultaneously
-         static int gBubbleMode;     //! 0-off, 1-two edges, 2 - raw bubbles
-         static int gBubbleMask;  //! bubble mask id (starts from 1), which is interesting for the evaluation
-         static int gBubbleShift;      //! shift of lookup table for specified mask
+         static unsigned gNumFineBins;   //! default value for number of bins in histograms for fine bins
+         static unsigned gTotRange;      //! default range for TOT histogram
+         static bool gAllHistos;         //! when true, all histos for all channels created simultaneously
+         static int gBubbleMode;         //! 0-off, 1-two edges, 2 - raw bubbles
+         static int gBubbleMask;         //! bubble mask id (starts from 1), which is interesting for the evaluation
+         static int gBubbleShift;        //! shift of lookup table for specified mask
+         static bool gDRICHReapir;       //! when true, try to repair bogus DRICH readout
 
          /** Method will be called by TRB processor if SYNC message was found
           * One should change 4 first bytes in the last buffer in the queue */
@@ -303,6 +304,9 @@ namespace hadaq {
           * sz is length of bubble in 16bit words
           * maskid and shift - replacement for code assigned with BUBBLE maskid from lookup table */
          static void SetBubbleMode(int on = 2, unsigned sz = 19, int maskid = 0, int shift = 0);
+
+         static void SetDRICHReapir(bool on = true);
+         static bool IsDRICHReapir();
 
          inline unsigned NumChannels() const { return fNumChannels; }
          inline bool DoRisingEdge() const { return true; }

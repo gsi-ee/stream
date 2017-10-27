@@ -20,6 +20,7 @@ bool hadaq::TdcProcessor::gAllHistos = false;
 int hadaq::TdcProcessor::gBubbleMode = 0;
 int hadaq::TdcProcessor::gBubbleMask = 0;
 int hadaq::TdcProcessor::gBubbleShift = 0;
+bool hadaq::TdcProcessor::gDRICHReapir = true;
 
 
 unsigned BUBBLE_SIZE = 19;
@@ -43,6 +44,17 @@ void hadaq::TdcProcessor::SetBubbleMode(int on, unsigned sz, int maskid, int shi
    gBubbleMask = maskid;
    gBubbleShift = shift;
 }
+
+void hadaq::TdcProcessor::SetDRICHReapir(bool on)
+{
+   gDRICHReapir = on;
+}
+
+bool hadaq::TdcProcessor::IsDRICHReapir()
+{
+   return gDRICHReapir;
+}
+
 
 hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels, unsigned edge_mask) :
    SubProcessor(trb, "TDC_%04X", tdcid),
@@ -1231,7 +1243,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    hadaq::TdcMessage& msg = iter.msg();
    hadaq::TdcMessage calibr, first_double_msg(0);
    unsigned ncalibr(20), temp(0), lowid(0), highid(0), fine1(0), fine0(0); // clear indicate that no calibration data present
-   bool double_edges = false;
+   bool double_edges(false), accept_next_falling(true);
 
    while (iter.next()) {
 
@@ -1244,9 +1256,11 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
       if (cnt==1) {
          if (!msg.isHeaderMsg()) {
-            iserr = true;
-            if (CheckPrintError())
-               printf("%5s Missing header message\n", GetName());
+            if (!gDRICHReapir) {
+               iserr = true;
+               if (CheckPrintError())
+                  printf("%5s Missing header message\n", GetName());
+            }
          } else {
 
             if (first_scan) fLastTdcHeader = msg;
@@ -1260,8 +1274,6 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
          continue;
       }
-
-
 
       if (msg.isEpochMsg()) {
 
@@ -1291,6 +1303,32 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          unsigned fine = msg.getHitTmFine();
          unsigned coarse = msg.getHitTmCoarse();
          bool isrising = msg.isHitRisingEdge();
+
+         if (gDRICHReapir && (chid!=0)) {
+            // try to filter out rising/falling hits in interval [25-35] ns
+            if (!isrising) {
+               if (!accept_next_falling) continue;
+               accept_next_falling = false; // only single falling is accepted
+            } else {
+               accept_next_falling = false;
+               hadaq::TdcMessage msg2;
+               if (!iter.lookForwardMsg(msg2)) continue;
+               if (!msg2.isHitMsg() || msg2.isHitRisingEdge() || (chid!=msg2.getHitChannel())) continue;
+               if ((fine == 0x3ff) || (msg2.getHitTmFine() == 0x3fff)) continue;
+
+               double tm1 = coarse * hadaq::TdcMessage::CoarseUnit() + hadaq::TdcMessage::SimpleFineCalibr(fine);
+               double tm2 = msg2.getHitTmCoarse() * hadaq::TdcMessage::CoarseUnit() + hadaq::TdcMessage::SimpleFineCalibr(msg2.getHitTmFine());
+
+               //double tm1 =  hadaq::TdcMessage::SimpleFineCalibr(fine);
+               //double tm2 = hadaq::TdcMessage::SimpleFineCalibr(msg2.getHitTmFine());
+
+               // printf("Ch: %u tm1 %g tm2 %g diff %5.2f\n", chid, tm1, tm2, (tm2-tm1)*1e9);
+
+               if ((tm2-tm1<25e-9) || (tm2-tm1>40e-9)) continue;
+               accept_next_falling = true;
+            }
+         }
+
          localtm = iter.getMsgTimeCoarse();
 
          if (chid >= NumChannels()) {

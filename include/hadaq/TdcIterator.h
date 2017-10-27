@@ -81,6 +81,16 @@ namespace hadaq {
             return true;
          }
 
+         bool lookForwardMsg(TdcMessage &msg)
+         {
+            if (fBuf==0) return false;
+            if (fSwapped)
+               msg.assign((((uint8_t *) fBuf)[0] << 24) | (((uint8_t *) fBuf)[1] << 16) | (((uint8_t *) fBuf)[2] << 8) | (((uint8_t *) fBuf)[3]));
+            else
+               msg.assign(*fBuf);
+            return true;
+         }
+
          /** Returns 39-bit value, which combines epoch and coarse counter.
           * Time bin is 5 ns  */
          uint64_t getMsgStamp() const

@@ -220,7 +220,11 @@ namespace hadaq {
 
          /** Set defaults for the next creation of TDC processors.
           * One provides number of channels and edges.
-          * Also one can enable usage of sync message - by default sync messages are ignored. */
+          * Also one can enable usage of sync message - by default sync messages are ignored.
+          * 1 - use only rising edge, falling edge is ignore
+          * 2 - falling edge enabled and fully independent from rising edge
+          * 3 - falling edge enabled and uses calibration from rising edge
+          * 4 - falling edge enabled and common statistic is used for calibration */
          static void SetDefaults(unsigned numch=65, unsigned edges=0x1, bool ignore_sync = true);
 
          static void SetTDCRange(unsigned min, unsigned max)

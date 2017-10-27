@@ -656,7 +656,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
             // suppose this is TDC data, first word should be TDC header
             TdcMessage msg(sub->Data(ix));
 
-            if (msg.isHeaderMsg()) {
+            if (msg.isHeaderMsg() || hadaq::TdcProcessor::IsDRICHReapir()) {
                unsigned numch = gNumChannels, edges = gEdgesMask;
                // here should be channel/edge/min/max selection based on TDC design ID
 
