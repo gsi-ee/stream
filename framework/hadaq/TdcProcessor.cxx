@@ -1319,12 +1319,13 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                double tm1 = coarse * hadaq::TdcMessage::CoarseUnit() + hadaq::TdcMessage::SimpleFineCalibr(fine);
                double tm2 = msg2.getHitTmCoarse() * hadaq::TdcMessage::CoarseUnit() + hadaq::TdcMessage::SimpleFineCalibr(msg2.getHitTmFine());
 
-               //double tm1 =  hadaq::TdcMessage::SimpleFineCalibr(fine);
-               //double tm2 = hadaq::TdcMessage::SimpleFineCalibr(msg2.getHitTmFine());
-
                // printf("Ch: %u tm1 %g tm2 %g diff %5.2f\n", chid, tm1, tm2, (tm2-tm1)*1e9);
 
-               if ((tm2-tm1<25e-9) || (tm2-tm1>40e-9)) continue;
+               if (((tm2-tm1)<25e-9) || ((tm2-tm1)>40e-9)) {
+                  if (CheckPrintError())
+                      printf("%s Reject Ch: %u tm1 %g tm2 %g diff %5.2f\n", GetName(), chid, tm1, tm2, (tm2-tm1)*1e9);
+                  continue;
+               }
                accept_next_falling = true;
             }
          }
