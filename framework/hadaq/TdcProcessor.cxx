@@ -20,7 +20,7 @@ bool hadaq::TdcProcessor::gAllHistos = false;
 int hadaq::TdcProcessor::gBubbleMode = 0;
 int hadaq::TdcProcessor::gBubbleMask = 0;
 int hadaq::TdcProcessor::gBubbleShift = 0;
-bool hadaq::TdcProcessor::gDRICHReapir = true;
+bool hadaq::TdcProcessor::gDRICHReapir = false;
 
 
 unsigned BUBBLE_SIZE = 19;
