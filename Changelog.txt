@@ -1,4 +1,9 @@
-4.08.2017.
+27.10.2017
+1. Try to repair data of 0xD trigger from DRICH.
+2. Let analyze sub-sub hubs.
+
+
+4.08.2017
 1. Implement hadaq::TdcProcessor::SetChannelTotShift
    It allows to directly set shifts for each channel (in nanoseconds).
    Can be used if automatically ToT calibration does not work. 

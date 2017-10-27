@@ -386,7 +386,7 @@ void hadaq::TrbProcessor::AddBufferToTDC(hadaqs::RawSubevent* sub,
                                          unsigned ix, unsigned datalen)
 {
    if (datalen==0) {
-      // if (CheckPrintError())
+      if (CheckPrintError())
          printf("Try to add empty buffer to %s\n", tdcproc->GetName());
       return;
    }
@@ -468,10 +468,18 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
 //         continue;
 //      }
 
-      if ((maxhublen==0) && std::find(fHadaqHUBId.begin(), fHadaqHUBId.end(), dataid) != fHadaqHUBId.end()) {
+      if (std::find(fHadaqHUBId.begin(), fHadaqHUBId.end(), dataid) != fHadaqHUBId.end()) {
          RAWPRINT ("   HUB header: 0x%08x, hub=%u, size=%u (ignore)\n", (unsigned) data, (unsigned) data & 0xFF, datalen);
 
-         maxhublen = datalen;
+         if (maxhublen==0) {
+            maxhublen = datalen;
+         } else {
+        	 maxhublen--; // just decrement
+        	 if (datalen >= maxhublen) {
+        		 if (CheckPrintError()) printf(" subHUB %04x wrong format, want size %u max %u\n", dataid, datalen, maxhublen);
+        	     datalen = maxhublen-1;
+        	 }
+         }
 
          lasthubid = dataid;
          // ix+=datalen;  // WORKAROUND !!!
