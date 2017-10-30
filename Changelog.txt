@@ -1,3 +1,8 @@
+30.10.2017
+1. Let configure window for 0xD trigger hits, which should be accepted for calibrations.
+   Like hadaq::TdcProcessor::SetTriggerDWindow(-10, 40); 
+
+
 27.10.2017
 1. Try to repair data of 0xD trigger from DRICH.
 2. Let analyze sub-sub hubs.

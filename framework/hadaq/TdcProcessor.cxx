@@ -21,6 +21,8 @@ int hadaq::TdcProcessor::gBubbleMode = 0;
 int hadaq::TdcProcessor::gBubbleMask = 0;
 int hadaq::TdcProcessor::gBubbleShift = 0;
 bool hadaq::TdcProcessor::gDRICHReapir = false;
+double hadaq::TdcProcessor::gTrigDWindowLow = 0;
+double hadaq::TdcProcessor::gTrigDWindowHigh = 0;
 
 
 unsigned BUBBLE_SIZE = 19;
@@ -55,6 +57,11 @@ bool hadaq::TdcProcessor::IsDRICHReapir()
    return gDRICHReapir;
 }
 
+void hadaq::TdcProcessor::SetTriggerDWindow(double low, double high)
+{
+   gTrigDWindowLow = low;
+   gTrigDWindowHigh = high;
+}
 
 hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels, unsigned edge_mask) :
    SubProcessor(trb, "TDC_%04X", tdcid),
@@ -1180,7 +1187,11 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    bool use_for_ref = buf().kind < 0xD;
 
    // disable taking last hit for trigger DD
-   // if ((use_for_calibr > 0) && (buf().kind == 0xD)) use_for_calibr = 2;
+   if ((use_for_calibr > 0) && (buf().kind == 0xD)) {
+      if (IsTriggeredAnalysis() &&  (gTrigDWindowLow < gTrigDWindowHigh)) use_for_calibr = 3; // accept time stamps only for inside window
+      // use_for_calibr = 2; // always use only last hit
+   }
+
 
    // if data could be used for TOT calibration
    bool do_tot = (use_for_calibr>0) && (buf().kind == 0xD) && DoFallingEdge();
@@ -1513,6 +1524,12 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                      case 2:
                         rec.last_rising_fine = fine;
                         break;
+                     case 3:
+                        if ((gTrigDWindowLow <= localtm*1e9) && (localtm*1e9 <= gTrigDWindowHigh)) {
+                           rec.rising_stat[fine]++;
+                           rec.all_rising_stat++;
+                        }
+                        break;
                   }
                }
 
@@ -1571,6 +1588,12 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                        break;
                      case 2:
                         rec.last_falling_fine = fine;
+                        break;
+                     case 3:
+                        if ((gTrigDWindowLow <= localtm*1e9) && (localtm*1e9 <= gTrigDWindowHigh)) {
+                           rec.falling_stat[fine]++;
+                           rec.all_falling_stat++;
+                        }
                         break;
                   }
                }

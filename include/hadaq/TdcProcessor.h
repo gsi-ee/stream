@@ -246,6 +246,8 @@ namespace hadaq {
          static int gBubbleMask;         //! bubble mask id (starts from 1), which is interesting for the evaluation
          static int gBubbleShift;        //! shift of lookup table for specified mask
          static bool gDRICHReapir;       //! when true, try to repair bogus DRICH readout
+         static double gTrigDWindowLow;  //! low limit of time stamps for 0xD trigger used for calibration
+         static double gTrigDWindowHigh; //! high limit of time stamps for 0xD trigger used for calibration
 
          /** Method will be called by TRB processor if SYNC message was found
           * One should change 4 first bytes in the last buffer in the queue */
@@ -307,6 +309,9 @@ namespace hadaq {
 
          static void SetDRICHReapir(bool on = true);
          static bool IsDRICHReapir();
+
+         /** Configure window (in nanoseconds), where time stamps from 0xD trigger will be accepted for calibration */
+         static void SetTriggerDWindow(double low = -25, double high = 50);
 
          inline unsigned NumChannels() const { return fNumChannels; }
          inline bool DoRisingEdge() const { return true; }
