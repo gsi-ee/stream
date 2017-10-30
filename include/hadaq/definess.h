@@ -3,8 +3,6 @@
 
 #include <stdint.h>
 
-#ifndef __CINT__
-
 /*
 //Description of the Event Structure
 //
@@ -92,7 +90,9 @@
 //    * evtPad - padding: Makes the event header a multiple of 64 bits long.
 */
 
+#ifndef __CINT__
 #pragma pack(push, 1)
+#endif
 
 // use another namespace to avoid duplication with DABC/HYDRA
 namespace hadaqs {
@@ -466,8 +466,8 @@ namespace hadaqs {
 
 }
 
+#ifndef __CINT__
 #pragma pack(pop)
-
-#endif //  __CINT__
+#endif
 
 #endif
