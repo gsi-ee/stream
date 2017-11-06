@@ -1509,9 +1509,14 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             if ((HistFillLevel()>2) && (rec.fRisingFine == 0))
                CreateChannelHistograms(chid);
 
+            bool use_fine_for_stat = true;
+
+            if (use_for_calibr == 3)
+               use_fine_for_stat = (gTrigDWindowLow <= localtm*1e9) && (localtm*1e9 <= gTrigDWindowHigh);
+
             DefFastFillH1(fChannels, chid);
             DefFillH1(fHits, (chid + (isrising ? 0.25 : 0.75)), 1.);
-            if (raw_hit) DefFillH2(fAllFine, chid, fine, 1.);
+            if (raw_hit && use_fine_for_stat) DefFillH2(fAllFine, chid, fine, 1.);
             DefFillH2(fAllCoarse, chid, coarse, 1.);
 
             if (isrising) {
@@ -1519,24 +1524,21 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                if (raw_hit) {
                   switch (use_for_calibr) {
                      case 1:
-                        rec.rising_stat[fine]++;
-                        rec.all_rising_stat++;
-                        break;
-                     case 2:
-                        rec.last_rising_fine = fine;
-                        break;
                      case 3:
-                        if ((gTrigDWindowLow <= localtm*1e9) && (localtm*1e9 <= gTrigDWindowHigh)) {
+                        if (use_fine_for_stat) {
                            rec.rising_stat[fine]++;
                            rec.all_rising_stat++;
                         }
+                        break;
+                     case 2:
+                        rec.last_rising_fine = fine;
                         break;
                   }
                }
 
                rec.rising_cnt++;
                if (raw_hit) {
-                  DefFastFillH1(rec.fRisingFine, fine);
+                  if (use_fine_for_stat) DefFastFillH1(rec.fRisingFine, fine);
                   if (double_edges) {
                      DefFillH1(rec.fBubbleRising, fine0!=0x3ff ? fine0 : BUBBLE_SIZE*16 - 1 , 1.);
                      DefFillH1(rec.fBubbleFalling, fine1!=0x3ff ? fine1 : BUBBLE_SIZE*16 - 1, 1.);
@@ -1584,23 +1586,19 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                if (raw_hit) {
                   switch (use_for_calibr) {
                      case 1:
-                       rec.falling_stat[fine]++;
-                       rec.all_falling_stat++;
-                       break;
-                     case 2:
-                        rec.last_falling_fine = fine;
-                        break;
-                     case 3:
-                        if ((gTrigDWindowLow <= localtm*1e9) && (localtm*1e9 <= gTrigDWindowHigh)) {
+                        if (use_fine_for_stat) {
                            rec.falling_stat[fine]++;
                            rec.all_falling_stat++;
                         }
+                        break;
+                     case 2:
+                        rec.last_falling_fine = fine;
                         break;
                   }
                }
                rec.falling_cnt++;
 
-               if (raw_hit) DefFastFillH1(rec.fFallingFine, fine);
+               if (raw_hit && use_fine_for_stat) DefFastFillH1(rec.fFallingFine, fine);
 
                if (rec.rising_new_value && (rec.rising_last_tm!=0)) {
                   double tot = (localtm - rec.rising_last_tm)*1e9;

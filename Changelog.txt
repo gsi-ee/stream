@@ -3,6 +3,8 @@
    ends with 77 like 10077 or 500077.
 2. Linear calibration also can be actiavted if calibration mode equal to -77 - this produces linear
    calibration at the end of file processing
+3. When SetTriggerDWindow configured, also all fine-time histograms for appropriate triggers 
+   (not only 0xD) will be accumulated under specified condition    
       
 
 30.10.2017
