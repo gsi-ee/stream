@@ -252,7 +252,7 @@ namespace hadaq {
          void SetAutoCalibrations(long cnt = 100000);
 
          /** Specify to produce and write calibrations at the end of data processing */
-         void SetWriteCalibrations(const char* fileprefix, bool every_time = false);
+         void SetWriteCalibrations(const char* fileprefix, bool every_time = false, bool use_linear = false);
 
          /** Load TDC calibrations, as argument file prefix (without TDC id) should be specified
           * One also could specify coefficient to scale calibration (koef >= 1) */

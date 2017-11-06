@@ -188,13 +188,13 @@ void hadaq::TrbProcessor::DisableCalibrationFor(unsigned firstch, unsigned lastc
 }
 
 
-void hadaq::TrbProcessor::SetWriteCalibrations(const char* fileprefix, bool every_time)
+void hadaq::TrbProcessor::SetWriteCalibrations(const char* fileprefix, bool every_time, bool use_linear)
 {
    for (SubProcMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
       if (!iter->second->IsTDC()) continue;
       TdcProcessor* tdc = (TdcProcessor*) iter->second;
 
-      tdc->SetWriteCalibration(fileprefix, every_time);
+      tdc->SetWriteCalibration(fileprefix, every_time, use_linear);
    }
 }
 
@@ -220,7 +220,7 @@ void hadaq::TrbProcessor::ConfigureCalibration(const std::string& name, long per
 
    if (name.length() > 0) {
       LoadCalibrations(name.c_str());
-      if (period == -1) SetWriteCalibrations(name.c_str());
+      if ((period == -1) || (period == -77)) SetWriteCalibrations(name.c_str(), false, (period == -77));
    }
 }
 

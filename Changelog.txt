@@ -1,3 +1,10 @@
+6.11.2017
+1. Add support of simple linear calibration. Can be actiavted if events count for calibration
+   ends with 77 like 10077 or 500077.
+2. Linear calibration also can be actiavted if calibration mode equal to -77 - this produces linear
+   calibration at the end of file processing
+      
+
 30.10.2017
 1. Let configure window for 0xD trigger hits, which should be accepted for calibrations.
    Like hadaq::TdcProcessor::SetTriggerDWindow(-10, 40); 

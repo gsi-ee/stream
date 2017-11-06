@@ -93,6 +93,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fAutoCalibrOnce(false),
    fWriteCalibr(),
    fWriteEveryTime(false),
+   fWriteLinear(false),
    fEveryEpoch(false),
    fUseLastHit(false),
    fUseNativeTrigger(false),
@@ -243,7 +244,7 @@ void hadaq::TdcProcessor::UserPostLoop()
 //   printf("************************* hadaq::TdcProcessor postloop *******************\n");
 
    if (!fWriteCalibr.empty()) {
-      if (fAutoCalibration == 0) ProduceCalibration(true);
+      if (fAutoCalibration == 0) ProduceCalibration(true, fWriteLinear);
       StoreCalibration(fWriteCalibr);
    }
 }
@@ -551,7 +552,7 @@ double hadaq::TdcProcessor::TestCanCalibrate()
 
 bool hadaq::TdcProcessor::PerformAutoCalibrate()
 {
-   ProduceCalibration(true);
+   ProduceCalibration(true, fWriteLinear || ((fAutoCalibration>0) && (fAutoCalibration % 10000 == 77)));
    if (!fWriteCalibr.empty() && fWriteEveryTime)
       StoreCalibration(fWriteCalibr);
    if (fAutoCalibrOnce && (fAutoCalibration>0)) {
@@ -1845,29 +1846,39 @@ void hadaq::TdcProcessor::SetLinearCalibration(unsigned nch, unsigned finemin, u
 }
 
 
-bool hadaq::TdcProcessor::CalibrateChannel(unsigned nch, long* statistic, float* calibr)
+bool hadaq::TdcProcessor::CalibrateChannel(unsigned nch, long* statistic, float* calibr, bool use_linear)
 {
-   double sum(0.);
+   double sum(0.), limits(use_linear ? 100 : 1000);
+   unsigned finemin(0), finemax(0);
    for (unsigned n=0;n<fNumFineBins;n++) {
-      sum+=statistic[n];
+      if (statistic[n]) {
+         if (sum == 0.) finemin = n; else finemax = n;
+      }
+
+      sum += statistic[n];
       calibr[n] = sum;
    }
 
-   if (sum<=1000) {
+   if (sum <= limits) {
       if (sum>0)
-         printf("%s Ch:%u Too few counts %5.0f for calibration of fine counter, use linear\n", GetName(), nch, sum);
+         printf("%s Ch:%u Too few counts %5.0f for calibration of fine counter, use predefined\n", GetName(), nch, sum);
    } else {
-      printf("%s Ch:%u Cnts: %7.0f produce calibration\n", GetName(), nch, sum);
+      printf("%s Ch:%u Cnts: %7.0f produce %s calibration min:%u max:%u\n", GetName(), nch, sum, (use_linear ? "linear" : "normal"),  finemin, finemax);
    }
 
    for (unsigned n=0;n<fNumFineBins;n++) {
-      if (sum<=1000)
+      if (sum <= limits) {
          calibr[n] = hadaq::TdcMessage::SimpleFineCalibr(n);
-      else
+      } else if (use_linear) {
+         if (n<=finemin) calibr[n] = 0; else
+         if (n>=finemax) calibr[n] = hadaq::TdcMessage::CoarseUnit(); else
+         calibr[n] = hadaq::TdcMessage::CoarseUnit() * (n - finemin) / (0. + finemax - finemin);
+      } else {
          calibr[n] = (calibr[n]-statistic[n]/2) / sum * hadaq::TdcMessage::CoarseUnit();
+      }
    }
 
-   return sum > 1000;
+   return sum > limits;
 }
 
 bool hadaq::TdcProcessor::CalibrateTot(unsigned nch, long* hist, float& tot_shift, float cut)
@@ -1932,9 +1943,9 @@ void hadaq::TdcProcessor::CopyCalibration(float* calibr, base::H1handle hcalibr,
    }
 }
 
-void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat)
+void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear)
 {
-   printf("%s produce channels calibrations\n", GetName());
+   printf("%s produce %s calibrations \n", GetName(), (use_linear ? "linear" : "normal"));
 
    if (fCalibrTempSum0 > 5) {
       double mean = fCalibrTempSum1/fCalibrTempSum0;
@@ -1984,10 +1995,10 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat)
          bool res = false;
 
          if (DoRisingEdge() && (fCh[ch].all_rising_stat>0))
-            res = CalibrateChannel(ch, fCh[ch].rising_stat, fCh[ch].rising_calibr);
+            res = CalibrateChannel(ch, fCh[ch].rising_stat, fCh[ch].rising_calibr, use_linear);
 
          if (DoFallingEdge() && (fCh[ch].all_falling_stat>0) && (fEdgeMask == edge_BothIndepend))
-            if (!CalibrateChannel(ch, fCh[ch].falling_stat, fCh[ch].falling_calibr)) res = false;
+            if (!CalibrateChannel(ch, fCh[ch].falling_stat, fCh[ch].falling_calibr, use_linear)) res = false;
 
          if (DoFallingEdge() && (fCh[ch].tot0d_cnt > 100)) {
             CalibrateTot(ch, fCh[ch].tot0d_hist, fCh[ch].tot_shift, 0.05);

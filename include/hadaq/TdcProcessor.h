@@ -215,7 +215,8 @@ namespace hadaq {
          bool        fAutoCalibrOnce; //! when true, auto calibration will be executed once
 
          std::string fWriteCalibr;    //! file which should be written at the end of data processing
-         bool fWriteEveryTime;        //! write calibration every time automatic calibration performed
+         bool        fWriteEveryTime; //! write calibration every time automatic calibration performed
+         bool        fWriteLinear;    //! write calibration every time automatic calibration performed
 
          bool      fEveryEpoch;       //! if true, each hit must be supplied with epoch
 
@@ -267,7 +268,7 @@ namespace hadaq {
          virtual void BeforeFill();
          virtual void AfterFill(SubProcMap* = 0);
 
-         bool CalibrateChannel(unsigned nch, long* statistic, float* calibr);
+         bool CalibrateChannel(unsigned nch, long* statistic, float* calibr, bool use_linear = false);
          void CopyCalibration(float* calibr, base::H1handle hcalibr, unsigned ch = 0, base::H2handle h2calibr = 0);
 
          bool CalibrateTot(unsigned ch, long* hist, float& tot_shift, float cut = 0.);
@@ -439,9 +440,9 @@ namespace hadaq {
          bool LoadCalibration(const std::string& fprefix);
 
          /** When specified, calibration will be written to the file
-          * If every_time == true, when every time when automatic calibration performed, otherwise only at the end */
-         void SetWriteCalibration(const std::string& fprefix, bool every_time = false)
-            { fWriteCalibr = fprefix; fWriteEveryTime = every_time; }
+          * If every_time == true, write every time when automatic calibration performed, otherwise only at the end */
+         void SetWriteCalibration(const std::string& fprefix, bool every_time = false, bool use_linear = false)
+            { fWriteCalibr = fprefix; fWriteEveryTime = every_time; fWriteLinear = use_linear; }
 
          /** When enabled, last hit time in the channel used for reference time calculations
           * By default, first hit time is used
@@ -484,7 +485,7 @@ namespace hadaq {
          void IncCalibration(unsigned ch, bool rising, unsigned fine, unsigned value);
 
          /** For expert use - artificially produce calibration */
-         void ProduceCalibration(bool clear_stat = true);
+         void ProduceCalibration(bool clear_stat = true, bool use_linear = false);
 
          /** Access value of temperature during calibration.
           * Used to adjust all kind of calibrations afterwards */
