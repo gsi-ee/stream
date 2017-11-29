@@ -166,6 +166,8 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
       memcpy(&fLastEvHdr, ev, sizeof(fLastEvHdr));
 
       fMsg.trig_type = ev->GetId() & 0xf;
+      fMsg.seq_nr = ev->GetSeqNr();
+      fMsg.run_nr = ev->GetRunNr();
 
       if ((fEventTypeSelect <= 0xf) && ((ev->GetId() & 0xf) != fEventTypeSelect)) continue;
 

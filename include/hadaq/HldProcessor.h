@@ -18,10 +18,12 @@ namespace hadaq {
    typedef std::map<unsigned,TrbProcessor*> TrbProcMap;
 
    struct HldMessage {
-      uint8_t trig_type;
+      uint8_t trig_type; // trigger type
+      uint32_t seq_nr;   // event sequence number
+      uint32_t run_nr;   // run number
 
-      HldMessage() : trig_type(0) {}
-      HldMessage(const HldMessage& src) : trig_type(src.trig_type) {}
+      HldMessage() : trig_type(0), seq_nr(0), run_nr(0) {}
+      HldMessage(const HldMessage& src) : trig_type(src.trig_type), seq_nr(src.seq_nr), run_nr(src.run_nr) {}
    };
 
    class HldSubEvent : public base::SubEvent {
@@ -143,8 +145,6 @@ namespace hadaq {
 
          hadaqs::RawEvent& GetLastEventHdr() { return fLastEvHdr; }
    };
-
-
 
 }
 

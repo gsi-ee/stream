@@ -1,3 +1,7 @@
+29.11
+1. Add event sequence number and run id into HDL subevent, which can be used in second.C
+
+
 6.11.2017
 1. Add support of simple linear calibration. Can be actiavted if events count for calibration
    ends with 77 like 10077 or 500077.
