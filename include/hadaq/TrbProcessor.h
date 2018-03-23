@@ -20,6 +20,19 @@ namespace hadaq {
       bool fTrigSyncIdFound;
       unsigned fTrigSyncId;
       unsigned fTrigSyncIdStatus;
+      uint64_t fTrigTm;
+      unsigned fSyncPulsePeriod;
+      unsigned fSyncPulseLength;
+
+      void Reset()
+      {
+         fTrigSyncIdFound = false;
+         fTrigSyncId = 0;
+         fTrigTm = 0;
+         fTrigSyncIdStatus = 0;
+         fSyncPulsePeriod = 0;
+         fSyncPulseLength = 0;
+      }
    };
 
    /** This is generic processor for data, coming from TRB board

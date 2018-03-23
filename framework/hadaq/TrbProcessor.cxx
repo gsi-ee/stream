@@ -536,11 +536,23 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
             fMsg.fTrigSyncIdFound = true;
             //printf("EventId=%d\n",fMsg.fTrigSyncId);
          } else if(nExtTrigFlag==0x0) {
-            fMsg.fTrigSyncId = 0;
-            fMsg.fTrigSyncIdStatus = 0;
-            fMsg.fTrigSyncIdFound = false;
+
+            fMsg.Reset();
 
             if (sub->Data(ix) == 0xabad1dea) {
+               // [1]: D[31:16] -> sync pulse number
+               //      D[15:0]  -> absolute time D[47:32]
+               // [2]: D[31:0]  -> absolute time D[31:0]
+               // [3]: D[31:0]  -> period of sync pulse, in 10ns units
+               // [4]: D[31:0]  -> length of sync pulse, in 10ns units
+
+               fMsg.fTrigSyncIdFound = true;
+               fMsg.fTrigSyncId = sub->Data(ix+1) >> 16;
+               fMsg.fTrigSyncIdStatus = 0;
+               fMsg.fTrigTm = ((uint64_t) (sub->Data(ix+1) & 0xffff) << 32) | sub->Data(ix+2);
+               fMsg.fSyncPulsePeriod = sub->Data(ix+3);
+               fMsg.fSyncPulseLength = sub->Data(ix+4);
+
                ix += 5;
                datalen -= 5;
             } else {
