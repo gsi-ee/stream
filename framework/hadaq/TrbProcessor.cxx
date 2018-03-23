@@ -547,9 +547,9 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
                // [4]: D[31:0]  -> length of sync pulse, in 10ns units
 
                fMsg.fTrigSyncIdFound = true;
-               fMsg.fTrigSyncId = sub->Data(ix+1) >> 16;
+               fMsg.fTrigSyncId = (sub->Data(ix+1) >> 16) & 0xffff;
                fMsg.fTrigSyncIdStatus = 0;
-               fMsg.fTrigTm = ((uint64_t) (sub->Data(ix+1) & 0xffff) << 32) | sub->Data(ix+2);
+               fMsg.fTrigTm = (((uint64_t) (sub->Data(ix+1) & 0xffff)) << 32) | sub->Data(ix+2);
                fMsg.fSyncPulsePeriod = sub->Data(ix+3);
                fMsg.fSyncPulseLength = sub->Data(ix+4);
 

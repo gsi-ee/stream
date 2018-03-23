@@ -1,4 +1,8 @@
-29.11
+23.03.2018
+1. Extract special data from CTS header, keep support of TDC inside  
+
+
+29.11.2017
 1. Add event sequence number and run id into HDL subevent, which can be used in second.C
 
 
