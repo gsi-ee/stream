@@ -504,7 +504,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
          unsigned nCTSwords = nInputs*2 + nTrigChannels*2 +
                               bIncludeLastIdle*2 + bIncludeCounters*3 + bIncludeTimestamp*1;
 
-         RAWPRINT("     CTS trigtype: 0x%04x, datalen=%u nCTSwords=%u\n", trigtype, datalen, nCTSwords);
+         RAWPRINT("     CTS trigtype: 0x%04x, nExtTrigFlag: 0x%02x, datalen: %u, nCTSwords: %u\n", trigtype, nExtTrigFlag, datalen, nCTSwords);
 
          // we skip all the information from the CTS right now,
          // we don't need it
@@ -522,8 +522,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
             fMsg.fTrigSyncIdStatus = data >> 24; // untested
             fMsg.fTrigSyncIdFound = true;
 	         // TODO: evaluate the upper 8 bits in data for status/error
-         }
-         else if(nExtTrigFlag==0x2) {
+         } else if(nExtTrigFlag==0x2) {
 	         // ETM sends four words, is probably a Mainz A2 recv
 	         data = sub->Data(ix++); datalen--;
 	         fMsg.fTrigSyncId = data; // full 32bits is trigger number
@@ -536,8 +535,18 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
             // success
             fMsg.fTrigSyncIdFound = true;
             //printf("EventId=%d\n",fMsg.fTrigSyncId);
-         }
-         else {
+         } else if(nExtTrigFlag==0x0) {
+            fMsg.fTrigSyncId = 0;
+            fMsg.fTrigSyncIdStatus = 0;
+            fMsg.fTrigSyncIdFound = false;
+
+            if (sub->Data(ix) == 0xabad1dea) {
+               ix += 5;
+               datalen -= 5;
+            } else {
+               RAWPRINT("Error: Unknown value in CTS header found: %x\n", sub->Data(ix));
+            }
+         } else {
 	         RAWPRINT("Error: Unknown ETM in CTS header found: %x\n", nExtTrigFlag);
 	         // TODO: try to do some proper error recovery here...
          }
