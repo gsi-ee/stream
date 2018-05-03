@@ -728,6 +728,48 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
    }
 }
 
+bool hadaq::TrbProcessor::CreateMissingTDC(hadaqs::RawSubevent *sub, unsigned mintdc, unsigned maxtdc, int numch, int edges)
+{
+   bool isany = false;
+
+   unsigned ix(0); // cursor
+
+   unsigned trbSubEvSize = (sub->GetSize() - sizeof(hadaqs::RawSubevent)) / 4;
+
+   while (ix < trbSubEvSize) {
+      //! Extract data portion from the whole packet (in a loop)
+      uint32_t data = sub->Data(ix++);
+
+      uint32_t dataid = data & 0xFFFF;
+
+      uint32_t datalen = (data >> 16) & 0xFFFF;
+
+      if (std::find(fHadaqHUBId.begin(), fHadaqHUBId.end(), dataid) != fHadaqHUBId.end()) {
+         // TODO: formally we should analyze HUB subevent as real subevent but
+         // we just skip header and continue to analyze data
+         continue;
+      }
+
+      //! ================= FPGA TDC header ========================
+      TdcProcessor* subproc = GetTDC(dataid, true);
+
+      if (!subproc && (dataid>=mintdc) && (dataid<maxtdc)) {
+         subproc = new hadaq::TdcProcessor(this, dataid, numch, edges);
+
+         subproc->SetCalibrTriggerMask(fCalibrTriggerMask);
+
+         isany = true;
+
+      }  // end of if TDC header
+
+      // all other blocks are ignored
+      ix+=datalen;
+   }
+
+   return isany;
+}
+
+
 
 unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub, void* tgtbuf, unsigned tgtlen)
 {
@@ -767,7 +809,7 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub, void* 
 
       //! ================= FPGA TDC header ========================
       TdcProcessor* subproc = GetTDC(data & 0xFFFF, true);
-      if (subproc != 0) {
+      if (subproc) {
          unsigned newlen = subproc->TransformTdcData(sub, ix, datalen, tgt, tgtix+1);
          if (tgt!=0) {
             tgt->SetData(tgtix++, (data & 0xFFFF) | ((newlen & 0xffff) << 16));
