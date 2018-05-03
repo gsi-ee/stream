@@ -93,7 +93,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fAutoCalibrOnce(false),
    fWriteCalibr(),
    fWriteEveryTime(false),
-   fWriteLinear(false),
+   fUseLinear(false),
    fEveryEpoch(false),
    fUseLastHit(false),
    fUseNativeTrigger(false),
@@ -244,7 +244,7 @@ void hadaq::TdcProcessor::UserPostLoop()
 //   printf("************************* hadaq::TdcProcessor postloop *******************\n");
 
    if (!fWriteCalibr.empty()) {
-      if (fAutoCalibration == 0) ProduceCalibration(true, fWriteLinear);
+      if (fAutoCalibration == 0) ProduceCalibration(true, fUseLinear);
       StoreCalibration(fWriteCalibr);
    }
 }
@@ -552,7 +552,7 @@ double hadaq::TdcProcessor::TestCanCalibrate()
 
 bool hadaq::TdcProcessor::PerformAutoCalibrate()
 {
-   ProduceCalibration(true, fWriteLinear || ((fAutoCalibration>0) && (fAutoCalibration % 10000 == 77)));
+   ProduceCalibration(true, fUseLinear || ((fAutoCalibration>0) && (fAutoCalibration % 10000 == 77)));
    if (!fWriteCalibr.empty() && fWriteEveryTime)
       StoreCalibration(fWriteCalibr);
    if (fAutoCalibrOnce && (fAutoCalibration>0)) {

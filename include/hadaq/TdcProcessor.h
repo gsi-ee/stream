@@ -216,7 +216,7 @@ namespace hadaq {
 
          std::string fWriteCalibr;    //! file which should be written at the end of data processing
          bool        fWriteEveryTime; //! write calibration every time automatic calibration performed
-         bool        fWriteLinear;    //! write calibration every time automatic calibration performed
+         bool        fUseLinear;      //! create linear calibrations for the channel
 
          bool      fEveryEpoch;       //! if true, each hit must be supplied with epoch
 
@@ -441,8 +441,18 @@ namespace hadaq {
 
          /** When specified, calibration will be written to the file
           * If every_time == true, write every time when automatic calibration performed, otherwise only at the end */
-         void SetWriteCalibration(const std::string& fprefix, bool every_time = false, bool use_linear = false)
-            { fWriteCalibr = fprefix; fWriteEveryTime = every_time; fWriteLinear = use_linear; }
+         void SetWriteCalibration(const std::string &fprefix, bool every_time = false, bool use_linear = false)
+         {
+            fWriteCalibr = fprefix;
+            fWriteEveryTime = every_time;
+            fUseLinear = use_linear;
+         }
+
+         /** Enable linear calibrations */
+         void SetUseLinear(bool on = true) { fUseLinear = on; }
+
+         /** Returns true is linear calibrations are configured */
+         bool IsUseLinear() const { return fUseLinear; }
 
          /** When enabled, last hit time in the channel used for reference time calculations
           * By default, first hit time is used
