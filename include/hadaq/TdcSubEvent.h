@@ -23,7 +23,7 @@ namespace hadaq {
       MessageFloat() : ch(0), stamp(0.) {}
       MessageFloat(const MessageFloat& src) : ch(src.ch), stamp(src.stamp) {}
       MessageFloat(unsigned _ch, bool _rising, float _stamp) :
-         ch(_ch | (_rising ? 0 : 0x80)),
+         ch(_ch | (_rising ? 0x00 : 0x80)),
          stamp(_stamp)
       {
       }
@@ -47,7 +47,7 @@ namespace hadaq {
       MessageDouble() : ch(0), stamp(0.) {}
       MessageDouble(const MessageDouble& src) : ch(src.ch), stamp(src.stamp) {}
       MessageDouble(unsigned _ch, bool _rising, double _stamp) :
-         ch(_ch | (_rising ? 0 : 0x80)),
+         ch(_ch | (_rising ? 0x00 : 0x80)),
          stamp(_stamp)
       {
       }

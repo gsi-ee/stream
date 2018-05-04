@@ -2210,10 +2210,10 @@ void hadaq::TdcProcessor::CreateBranch(TTree*)
 void hadaq::TdcProcessor::Store(base::Event* ev)
 {
    // in case of triggered analysis all pointers already set
-   if ((ev==0) || IsTriggeredAnalysis()) return;
+   if (!ev || IsTriggeredAnalysis()) return;
 
-   base::SubEvent* sub0 = ev ? ev->GetSubEvent(GetName()) : 0;
-   if (sub0==0) return;
+   base::SubEvent* sub0 = ev->GetSubEvent(GetName());
+   if (!sub0) return;
 
    switch (GetStoreKind()) {
       case 1: {

@@ -83,7 +83,7 @@ namespace base {
 
       public:
 
-         SubEventEx(unsigned capacity = 0) : base::SubEvent(), fExtMessages(capacity)  {}
+         SubEventEx(unsigned capacity = 0) : base::SubEvent(), fExtMessages()  { fExtMessages.reserve(capacity); }
 
          ~SubEventEx() {}
 
