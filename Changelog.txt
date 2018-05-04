@@ -1,3 +1,7 @@
+4.05.2018.
+1. Provide hadaq::TdcProcessor::SetUseDTrigForRef() to allow use D 
+   trigger in ref calculations
+
 23.03.2018
 1. Extract special data from CTS header, keep support of TDC inside  
 

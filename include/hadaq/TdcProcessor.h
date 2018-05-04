@@ -249,6 +249,7 @@ namespace hadaq {
          static bool gDRICHReapir;       //! when true, try to repair bogus DRICH readout
          static double gTrigDWindowLow;  //! low limit of time stamps for 0xD trigger used for calibration
          static double gTrigDWindowHigh; //! high limit of time stamps for 0xD trigger used for calibration
+         static bool gUseDTrigForRef;    //! when true, use special triggers for ref calculations
 
          /** Method will be called by TRB processor if SYNC message was found
           * One should change 4 first bytes in the last buffer in the queue */
@@ -310,6 +311,8 @@ namespace hadaq {
 
          static void SetDRICHReapir(bool on = true);
          static bool IsDRICHReapir();
+
+         static void SetUseDTrigForRef(bool on = true);
 
          /** Configure window (in nanoseconds), where time stamps from 0xD trigger will be accepted for calibration */
          static void SetTriggerDWindow(double low = -25, double high = 50);

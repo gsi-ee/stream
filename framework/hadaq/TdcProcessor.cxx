@@ -23,7 +23,7 @@ int hadaq::TdcProcessor::gBubbleShift = 0;
 bool hadaq::TdcProcessor::gDRICHReapir = false;
 double hadaq::TdcProcessor::gTrigDWindowLow = 0;
 double hadaq::TdcProcessor::gTrigDWindowHigh = 0;
-
+bool hadaq::TdcProcessor::gUseDTrigForRef = false;
 
 unsigned BUBBLE_SIZE = 19;
 
@@ -62,6 +62,12 @@ void hadaq::TdcProcessor::SetTriggerDWindow(double low, double high)
    gTrigDWindowLow = low;
    gTrigDWindowHigh = high;
 }
+
+void hadaq::TdcProcessor::SetUseDTrigForRef(bool on)
+{
+   gUseDTrigForRef = on;
+}
+
 
 hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels, unsigned edge_mask) :
    SubProcessor(trb, "TDC_%04X", tdcid),
@@ -1185,7 +1191,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    int use_for_calibr = first_scan && (((1 << buf().kind) & fCalibrTriggerMask) != 0) ? 1 : 0;
 
    // use in ref calculations only physical trigger, exclude 0xD or 0xE
-   bool use_for_ref = buf().kind < 0xD;
+   bool use_for_ref = buf().kind < (gUseDTrigForRef ? 0xE : 0xD);
 
    // disable taking last hit for trigger DD
    if ((use_for_calibr > 0) && (buf().kind == 0xD)) {
@@ -2230,3 +2236,4 @@ void hadaq::TdcProcessor::Store(base::Event* ev)
       }
    }
 }
+
