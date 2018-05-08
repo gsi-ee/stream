@@ -134,9 +134,11 @@ bool hadaq::TrbProcessor::CheckPrintError()
    return true;
 }
 
-void hadaq::TrbProcessor::CreateTDC(unsigned id1, unsigned id2, unsigned id3, unsigned id4)
+int hadaq::TrbProcessor::CreateTDC(unsigned id1, unsigned id2, unsigned id3, unsigned id4)
 {
    // overwrite default value in the beginning
+
+   int num = 0;
 
    for (unsigned cnt=0;cnt<4;cnt++) {
       unsigned tdcid = id1;
@@ -166,7 +168,11 @@ void hadaq::TrbProcessor::CreateTDC(unsigned id1, unsigned id2, unsigned id3, un
       hadaq::TdcProcessor *tdc = new hadaq::TdcProcessor(this, tdcid, gNumChannels, gEdgesMask);
 
       tdc->SetCalibrTriggerMask(fCalibrTriggerMask);
+
+      num++;
    }
+
+   return num;
 }
 
 
