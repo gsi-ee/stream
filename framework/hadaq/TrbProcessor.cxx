@@ -472,7 +472,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
          if (maxhublen==0) {
             maxhublen = datalen;
          } else {
-        	 maxhublen--; // just decrement
+            maxhublen--; // just decrement
          }
 
          lasthubid = dataid;
@@ -521,23 +521,23 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
 
          // handle the ETM module and extract syncNumber
          if(nExtTrigFlag==0x1) {
-	         // ETM sends one word, is probably MBS Vulom Recv
-	         // this is not really tested
-	         data = sub->Data(ix++); datalen--;
-	         fMsg.fTrigSyncId = (data & 0xFFFFFF);
+            // ETM sends one word, is probably MBS Vulom Recv
+            // this is not really tested
+            data = sub->Data(ix++); datalen--;
+            fMsg.fTrigSyncId = (data & 0xFFFFFF);
             fMsg.fTrigSyncIdStatus = data >> 24; // untested
             fMsg.fTrigSyncIdFound = true;
-	         // TODO: evaluate the upper 8 bits in data for status/error
+            // TODO: evaluate the upper 8 bits in data for status/error
          } else if(nExtTrigFlag==0x2) {
-	         // ETM sends four words, is probably a Mainz A2 recv
-	         data = sub->Data(ix++); datalen--;
-	         fMsg.fTrigSyncId = data; // full 32bits is trigger number
+            // ETM sends four words, is probably a Mainz A2 recv
+            data = sub->Data(ix++); datalen--;
+            fMsg.fTrigSyncId = data; // full 32bits is trigger number
             // get status word
-	         data = sub->Data(ix++); datalen--;
-	         fMsg.fTrigSyncIdStatus = data;
+            data = sub->Data(ix++); datalen--;
+            fMsg.fTrigSyncIdStatus = data;
             // word 3+4 are 0xdeadbeef i.e. not used at the moment, so skip it
-	         ix += 2;
-	         datalen -= 2;
+            ix += 2;
+            datalen -= 2;
             // success
             fMsg.fTrigSyncIdFound = true;
             //printf("EventId=%d\n",fMsg.fTrigSyncId);
@@ -565,12 +565,12 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
                RAWPRINT("Error: Unknown value in CTS header found: %x\n", sub->Data(ix));
             }
          } else {
-	         RAWPRINT("Error: Unknown ETM in CTS header found: %x\n", nExtTrigFlag);
-	         // TODO: try to do some proper error recovery here...
+            RAWPRINT("Error: Unknown ETM in CTS header found: %x\n", nExtTrigFlag);
+            // TODO: try to do some proper error recovery here...
          }
 
          if(fMsg.fTrigSyncIdFound)
-	         RAWPRINT("     Find SYNC %u\n", (unsigned) fMsg.fTrigSyncId);
+            RAWPRINT("     Find SYNC %u\n", (unsigned) fMsg.fTrigSyncId);
 
          // now ix should point to the first TDC word if datalen>0
          // if not, there is no TDC present
