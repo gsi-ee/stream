@@ -21,6 +21,7 @@ namespace hadaq {
          base::H1handle fSpill;      ///< SPILL histogram
          int fSpillCnt;
          int fSpillSize;
+         unsigned fTotalCnt;
 
          unsigned fTdcMin;   // minimal TDC id
          unsigned fTdcMax;   // maximal TDC id

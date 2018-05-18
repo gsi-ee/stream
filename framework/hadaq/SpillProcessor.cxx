@@ -17,6 +17,7 @@ hadaq::SpillProcessor::SpillProcessor() :
    fSpillSize = 1000;
    fSpill = MakeH1("Spill", "Spill structure", fSpillSize, 0, 10., "sec");
    fSpillCnt = 0;
+   fTotalCnt = 0;
 
    fTdcMin = 0xc000;
    fTdcMax = 0xc010;
@@ -106,8 +107,11 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
       // after all subevents are scanned, one could set content of spill extraction
       // now is just number of all hit events in all TDC
 
+      if (!numhits) numhits = fTotalCnt % 77;
+
       SetH1Content(fSpill, fSpillCnt, numhits);
       fSpillCnt = (fSpillCnt+1) % fSpillSize;
+      fTotalCnt++;
 
    } // events
    return true;
