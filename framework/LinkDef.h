@@ -80,6 +80,7 @@
 #pragma link C++ class hadaq::HldSubEvent+;
 #pragma link C++ class hadaq::HldFilter+;
 #pragma link C++ class hadaq::HldProcessor+;
+#pragma link C++ class hadaq::SpillProcessor+;
 #pragma link C++ struct hadaq::MessageFloat+;
 #pragma link C++ class std::vector<hadaq::MessageFloat>+;
 #pragma link C++ struct hadaq::MessageDouble+;
