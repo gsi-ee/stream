@@ -44,7 +44,6 @@ NEWLIBROOT_SRCS    = $(wildcard root/*.cxx)
 NEWLIBROOT_OBJS    = $(patsubst %.cxx, %.o, $(NEWLIBROOT_SRCS))
 NEWLIBROOT_DEPS    = $(patsubst %.cxx, %.d, $(NEWLIBROOT_SRCS))
 
-
 NEWLIBDICT_LIBNAME = libStreamDict
 NEWLIBDICT_LIB = $(STREAMSYS)/lib/$(NEWLIBDICT_LIBNAME).so
 NEWLIBDICT_MAP = $(STREAMSYS)/lib/$(NEWLIBDICT_LIBNAME).rootmap
@@ -55,9 +54,15 @@ NEWLIBDICT_HDR = $(NEWLIBDICT_NAME).h
 NEWLIBDICT_SRC = $(NEWLIBDICT_NAME).cxx
 NEWLIBDICT_OBJ = $(NEWLIBDICT_NAME).o
 
-all: lib dict
+LIBTGTS = $(NEWLIB)
 
-lib: $(NEWLIB)
+ifdef IS_ROOT
+LIBTGTS += $(NEWLIBDICT_LIB) $(NEWLIBDICT_MAP)
+endif
+
+all: $(LIBTGTS)
+
+lib: $(LIBTGTS)
 
 clean:
 	rm -f $(NEWLIB) $(NEWLIB_OBJS) $(NEWLIB_DEPS) $(NEWLIBROOT_OBJS) $(NEWLIBROOT_DEPS) $(NEWLIBDICT_MAP) $(NEWLIBDICT_NAME).* $(NEWLIBDICT_LIBNAME)_rdict.pcm
@@ -89,14 +94,7 @@ $(NEWLIBDICT_LIB): $(NEWLIBDICT_OBJ) $(NEWLIBROOT_OBJS) $(NEWLIBDICT_LINKDEF)
 	@echo 'Building: $@'
 	@$(LD) -o $@ -shared -O $(NEWLIBDICT_OBJ) $(NEWLIBROOT_OBJS) -L$(STREAMSYS)/lib -lStream -Wl,-rpath,$(STREAMSYS)/lib
 
-dict: $(NEWLIBDICT_LIB) $(NEWLIBDICT_MAP)
-
 $(NEWLIBROOT_OBJS) $(NEWLIBROOT_DEPS) : CXXOPT += $(shell root-config --cflags)
-
-else
-
-dict:
-	@echo "ROOT not available, dictionary for $(NEWLIB) cannot be generated"
 
 endif
 
