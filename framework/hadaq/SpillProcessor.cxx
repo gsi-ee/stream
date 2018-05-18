@@ -13,6 +13,13 @@ hadaq::SpillProcessor::SpillProcessor() :
    fEvType = MakeH1("EvType", "Event type", 16, 0, 16, "id");
    fEvSize = MakeH1("EvSize", "Event size", 500, 0, 50000, "bytes");
    fSubevSize = MakeH1("SubevSize", "Subevent size", 500, 0, 5000, "bytes");
+
+   fSpillSize = 1000;
+   fSpill = MakeH1("Spill", "Spill structure", fSpillSize, 0, 10., "sec");
+   fSpillCnt = 0;
+
+   fTdcMin = 0xc000;
+   fTdcMax = 0xc010;
 }
 
 hadaq::SpillProcessor::~SpillProcessor()
@@ -46,6 +53,8 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
 
       unsigned hubid = 0x7654;
 
+      int numhits = 0;
+
       hadaqs::RawSubevent* sub = 0;
 
       while ((sub = iter.nextSubevent()) != 0) {
@@ -64,7 +73,7 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
             // ignore HUB HEADER
             if (dataid == hubid) continue;
 
-            bool istdc = (dataid>0x1000) && (dataid<0x2000);
+            bool istdc = (dataid>=fTdcMin) && (dataid<fTdcMax);
 
             if (istdc) {
 
@@ -75,21 +84,32 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
 
                while (iter.next()) {
                   if (msg.isHitMsg()) {
-                     unsigned chid = msg.getHitChannel();
-                     unsigned fine = msg.getHitTmFine();
-                     unsigned coarse = msg.getHitTmCoarse();
-                     bool isrising = msg.isHitRisingEdge();
+                     //unsigned chid = msg.getHitChannel();
+                     //unsigned fine = msg.getHitTmFine();
+                     //unsigned coarse = msg.getHitTmCoarse();
+                     //bool isrising = msg.isHitRisingEdge();
+
+                     numhits++;
+
                   } else if (msg.isEpochMsg()) {
-                     uint32_t ep = iter.getCurEpoch();
+                     // uint32_t ep = iter.getCurEpoch();
                   }
                }
             }
 
             ix+=datalen;
-         }
-      }
+         } // while (ix < trbSubEvSize)
 
-   }
+      } // subevents
+
+
+      // after all subevents are scanned, one could set content of spill extraction
+      // now is just number of all hit events in all TDC
+
+      SetH1Content(fSpill, fSpillCnt, numhits);
+      fSpillCnt = (fSpillCnt+1) % fSpillSize;
+
+   } // events
    return true;
 
 }

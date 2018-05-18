@@ -270,6 +270,14 @@ double TFirstStepProcessor::GetH1Content(base::H1handle h1, int nbin)
    return histo1->GetBinContent(nbin+1);
 }
 
+void TFirstStepProcessor::SetH1Content(base::H1handle h1, int nbin, double v)
+{
+   TH1* histo1 = (TH1*) h1;
+
+   if (histo1) histo1->SetBinContent(nbin+1, v);
+}
+
+
 void TFirstStepProcessor::ClearH1(base::H1handle h1)
 {
    if (h1==0) return;

@@ -92,10 +92,14 @@ namespace base {
          inline void FastFillH1(H1handle h1, int x)
             { DefFastFillH1(h1,x); }
 
-
          inline double GetH1Content(H1handle h1, int nbin)
          {
             return h1 ? mgr()->GetH1Content(h1, nbin) : 0.;
+         }
+
+         inline void SetH1Content(H1handle h1, int nbin, double v = 0.)
+         {
+            if (h1) mgr()->SetH1Content(h1, nbin, v);
          }
 
          inline void ClearH1(base::H1handle h1)

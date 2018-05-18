@@ -91,6 +91,7 @@ namespace base {
          virtual H1handle MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle = 0);
          virtual void FillH1(H1handle h1, double x, double weight = 1.);
          virtual double GetH1Content(H1handle h1, int nbin);
+         virtual void SetH1Content(H1handle h1, int bin, double v = 0.);
          virtual void ClearH1(base::H1handle h1);
 
          virtual H2handle MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options = 0);

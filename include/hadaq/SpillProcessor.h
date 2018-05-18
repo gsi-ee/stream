@@ -18,6 +18,13 @@ namespace hadaq {
          base::H1handle fEvSize;     ///< HADAQ event size
          base::H1handle fSubevSize;  ///< HADAQ sub-event size
 
+         base::H1handle fSpill;      ///< SPILL histogram
+         int fSpillCnt;
+         int fSpillSize;
+
+         unsigned fTdcMin;   // minimal TDC id
+         unsigned fTdcMax;   // maximal TDC id
+
       public:
 
          SpillProcessor();
@@ -25,6 +32,12 @@ namespace hadaq {
 
          /** Scan all messages, find reference signals */
          virtual bool FirstBufferScan(const base::Buffer& buf);
+
+         void SetTdcRange(unsigned min, unsigned max)
+         {
+            fTdcMin = min;
+            fTdcMax = max;
+         }
    };
 
 }

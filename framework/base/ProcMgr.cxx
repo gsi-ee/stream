@@ -116,6 +116,19 @@ double base::ProcMgr::GetH1Content(H1handle h1, int bin)
    return arr[4+bin];
 }
 
+void base::ProcMgr::SetH1Content(H1handle h1, int bin, double v)
+{
+   // put code here, but it should be called already performed in processor
+   if (!InternalHistFormat() || !h1) return;
+
+   double* arr = (double*) h1;
+   int nbin = (int) arr[0];
+   if (bin<0) arr[3] = v;
+   else if (bin>=nbin) arr[4+nbin] = v;
+   else arr[4+bin] = v;
+}
+
+
 void base::ProcMgr::ClearH1(base::H1handle h1)
 {
    // put code here, but it should be called already performed in processor
