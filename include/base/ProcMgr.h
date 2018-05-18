@@ -93,6 +93,8 @@ namespace base {
          virtual double GetH1Content(H1handle h1, int nbin);
          virtual void SetH1Content(H1handle h1, int bin, double v = 0.);
          virtual void ClearH1(H1handle h1);
+         virtual void CopyH1(H1handle tgt, H1handle src);
+
 
          virtual H2handle MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options = 0);
          virtual void FillH2(H1handle h2, double x, double y, double weight = 1.);

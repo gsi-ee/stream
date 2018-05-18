@@ -1,6 +1,12 @@
-4.05.2018.
+18.05.2018
+1. Introduce hadaq::SpillProcessor to provide analysis of spill structures 
+   Done independent from normal TDC processors to speedup the code.
+
+
+4.05.2018
 1. Provide hadaq::TdcProcessor::SetUseDTrigForRef() to allow use D 
    trigger in ref calculations
+
 
 23.03.2018
 1. Extract special data from CTS header, keep support of TDC inside  

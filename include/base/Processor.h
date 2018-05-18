@@ -102,10 +102,16 @@ namespace base {
             if (h1) mgr()->SetH1Content(h1, nbin, v);
          }
 
-         inline void ClearH1(base::H1handle h1)
+         inline void ClearH1(H1handle h1)
          {
             if (h1) mgr()->ClearH1(h1);
          }
+
+         inline void CopyH1(H1handle tgt, H1handle src)
+         {
+            mgr()->CopyH1(tgt, src);
+         }
+
 
          H2handle MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options = 0);
 

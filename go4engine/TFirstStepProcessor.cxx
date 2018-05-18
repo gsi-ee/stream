@@ -280,11 +280,24 @@ void TFirstStepProcessor::SetH1Content(base::H1handle h1, int nbin, double v)
 
 void TFirstStepProcessor::ClearH1(base::H1handle h1)
 {
-   if (h1==0) return;
+   if (!h1) return;
 
    TH1* histo1 = (TH1*) h1;
    histo1->Reset();
 }
+
+
+void TFirstStepProcessor::CopyH1(base::H1handle tgt, base::H1handle src)
+{
+   if (!tgt || !src) return;
+
+   TH1 *htgt = (TH1*) tgt;
+   TH1 *hsrc = (TH1*) src;
+   htgt->Reset();
+   htgt->Add(hsrc);
+
+}
+
 
 
 void TFirstStepProcessor::FillH2(base::H1handle h2, double x, double y, double weight)

@@ -140,6 +140,17 @@ void base::ProcMgr::ClearH1(base::H1handle h1)
 }
 
 
+void base::ProcMgr::CopyH1(H1handle tgt, H1handle src)
+{
+   if (!InternalHistFormat() || !tgt || !src) return;
+
+   double *atgt = (double*) tgt;
+   double *asrc = (double*) src;
+   if (atgt[0] == asrc[0])
+      for (int n=0;n<atgt[0]+2;n++) atgt[n+3] = asrc[n+3];
+}
+
+
 base::H2handle base::ProcMgr::MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options)
 {
    if (!InternalHistFormat()) return 0;

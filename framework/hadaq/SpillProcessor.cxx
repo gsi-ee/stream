@@ -15,7 +15,8 @@ hadaq::SpillProcessor::SpillProcessor() :
    fSubevSize = MakeH1("SubevSize", "Subevent size", 500, 0, 5000, "bytes");
 
    fSpillSize = 1000;
-   fSpill = MakeH1("Spill", "Spill structure", fSpillSize, 0, 10., "sec");
+   fSpill = MakeH1("Spill", "Spill structure", fSpillSize, 0., 10., "sec");
+   fLastSpill = MakeH1("Last", "Last spill structure", fSpillSize, 0., 10., "sec");
    fSpillCnt = 0;
    fTotalCnt = 0;
 
@@ -110,8 +111,14 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
       if (!numhits) numhits = fTotalCnt % 77;
 
       SetH1Content(fSpill, fSpillCnt, numhits);
-      fSpillCnt = (fSpillCnt+1) % fSpillSize;
+      fSpillCnt++;
       fTotalCnt++;
+
+      if (fSpillCnt>=fSpillSize) {
+         fSpillCnt = 0;
+         CopyH1(fLastSpill, fSpill);
+         ClearH1(fSpill);
+      }
 
    } // events
    return true;

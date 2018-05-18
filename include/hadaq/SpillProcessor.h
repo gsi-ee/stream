@@ -18,7 +18,8 @@ namespace hadaq {
          base::H1handle fEvSize;     ///< HADAQ event size
          base::H1handle fSubevSize;  ///< HADAQ sub-event size
 
-         base::H1handle fSpill;      ///< SPILL histogram
+         base::H1handle fSpill;      ///< Current SPILL histogram
+         base::H1handle fLastSpill;  ///< Last SPILL histogram
          int fSpillCnt;
          int fSpillSize;
          unsigned fTotalCnt;
