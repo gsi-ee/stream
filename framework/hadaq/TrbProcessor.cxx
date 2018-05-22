@@ -28,7 +28,7 @@ void hadaq::TrbProcessor::SetDefaults(unsigned numch, unsigned edges, bool ignor
 }
 
 
-hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc) :
+hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc, int hfill) :
    base::StreamProc("TRB_%04X", brdid, false),
    fHldProc(hldproc),
    fMap(),
@@ -40,6 +40,8 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc) :
       hldproc->AddTrb(this, brdid);
       if ((mgr()==0) && (hldproc->mgr()!=0)) hldproc->mgr()->AddProcessor(this);
    }
+
+   if (hfill >= 0) SetHistFilling(hfill);
 
    // printf("Create TrbProcessor %s\n", GetName());
 
