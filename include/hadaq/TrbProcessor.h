@@ -281,7 +281,7 @@ namespace hadaq {
          unsigned TransformSubEvent(hadaqs::RawSubevent *sub, void *tgtbuf = 0, unsigned tgtlen = 0);
 
          /** Create TDCs using IDs from subevent */
-         bool CreateMissingTDC(hadaqs::RawSubevent *sub, unsigned mintdc, unsigned maxtdc, int numch, int edges, bool use_linear = false);
+         bool CreateMissingTDC(hadaqs::RawSubevent *sub, unsigned mintdc, unsigned maxtdc, int numch, int edges);
 
          hadaqs::RawSubevent& GetLastSubeventHdr() { return fLastSubevHdr; }
    };
