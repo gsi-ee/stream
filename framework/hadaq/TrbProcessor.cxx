@@ -734,7 +734,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
    }
 }
 
-bool hadaq::TrbProcessor::CreateMissingTDC(hadaqs::RawSubevent *sub, unsigned mintdc, unsigned maxtdc, int numch, int edges)
+bool hadaq::TrbProcessor::CreateMissingTDC(hadaqs::RawSubevent *sub, unsigned mintdc, unsigned maxtdc, int numch, int edges, bool use_linear)
 {
    bool isany = false;
 
@@ -763,6 +763,8 @@ bool hadaq::TrbProcessor::CreateMissingTDC(hadaqs::RawSubevent *sub, unsigned mi
          subproc = new hadaq::TdcProcessor(this, dataid, numch, edges);
 
          subproc->SetCalibrTriggerMask(fCalibrTriggerMask);
+
+         if (use_linear) subproc->SetUseLinear(); // force linear
 
          isany = true;
 
