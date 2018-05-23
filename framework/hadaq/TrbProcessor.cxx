@@ -736,7 +736,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
    }
 }
 
-bool hadaq::TrbProcessor::CreateMissingTDC(hadaqs::RawSubevent *sub, unsigned mintdc, unsigned maxtdc, int numch, int edges)
+bool hadaq::TrbProcessor::CreateMissingTDC(hadaqs::RawSubevent *sub, const std::vector<uint64_t> &mintdc, const std::vector<uint64_t> &maxtdc, int numch, int edges)
 {
    bool isany = false;
 
@@ -761,13 +761,14 @@ bool hadaq::TrbProcessor::CreateMissingTDC(hadaqs::RawSubevent *sub, unsigned mi
       //! ================= FPGA TDC header ========================
       TdcProcessor* subproc = GetTDC(dataid, true);
 
-      if (!subproc && (dataid>=mintdc) && (dataid<maxtdc)) {
+      bool match = false;
+
+      for (unsigned n=0;n<mintdc.size();++n)
+         if ((dataid>=mintdc[n]) && (dataid<maxtdc[n])) match = true;
+
+      if (!subproc && match && (dataid != 0x5555)) {
          subproc = new hadaq::TdcProcessor(this, dataid, numch, edges);
-
-         subproc->SetCalibrTriggerMask(fCalibrTriggerMask);
-
          isany = true;
-
       }  // end of if TDC header
 
       // all other blocks are ignored
