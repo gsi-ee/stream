@@ -52,6 +52,8 @@ namespace hadaq {
          void SetNewDataFlag(bool on) { fNewDataFlag = on; }
          bool IsNewDataFlag() const { return fNewDataFlag; }
 
+         void AssignPerBrdHistos(TrbProcessor *trb);
+
       public:
 
          virtual ~SubProcessor() {}

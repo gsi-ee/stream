@@ -724,10 +724,10 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
       }
    }
 
-   if (fMsgPerBrd) DefFillH1(*fMsgPerBrd, fSeqeunceId, cnt);
+   if (cnt && fMsgPerBrd) DefFillH1(*fMsgPerBrd, fSeqeunceId, cnt);
    // fill number of "good" hits
-   if (fHitsPerBrd) DefFillH1(*fHitsPerBrd, fSeqeunceId, hitcnt);
-   if (fErrPerBrd && (errcnt>0)) DefFillH1(*fErrPerBrd, fSeqeunceId, errcnt);
+   if (hitcnt && fHitsPerBrd) DefFillH1(*fHitsPerBrd, fSeqeunceId, hitcnt);
+   if (errcnt && fErrPerBrd) DefFillH1(*fErrPerBrd, fSeqeunceId, errcnt);
 
    if ((hitcnt>0) && use_in_calibr && (fCurrentTemp>0)) {
       fCalibrTempSum0 += 1.;

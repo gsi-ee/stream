@@ -115,6 +115,10 @@ void hadaq::TrbProcessor::CreatePerTDCHistos()
       fErrPerBrd = MakeH1("ErrPerTDC", "Number of errors per TDC", numtdc, 0, numtdc, lbl.c_str());
    if (!fHitsPerBrd)
       fHitsPerBrd = MakeH1("HitsPerTDC", "Number of data hits per TDC", numtdc, 0, numtdc, lbl.c_str());
+
+   for (SubProcMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++)
+      iter->second->AssignPerBrdHistos(this);
+
 }
 
 void hadaq::TrbProcessor::UserPreLoop()
