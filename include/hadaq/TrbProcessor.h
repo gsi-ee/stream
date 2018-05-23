@@ -115,8 +115,6 @@ namespace hadaq {
 
          void AfterEventScan();
 
-         void CreatePerTDCHistos();
-
          virtual void CreateBranch(TTree* t);
 
       public:
@@ -282,6 +280,9 @@ namespace hadaq {
 
          /** Create TDCs using IDs from subevent */
          bool CreateMissingTDC(hadaqs::RawSubevent *sub, const std::vector<uint64_t> &mintdc, const std::vector<uint64_t> &maxtdc, int numch, int edges);
+
+         /** Create TDC-specific histograms */
+         void CreatePerTDCHistos();
 
          hadaqs::RawSubevent& GetLastSubeventHdr() { return fLastSubevHdr; }
    };
