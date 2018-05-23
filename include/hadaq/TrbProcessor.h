@@ -121,7 +121,7 @@ namespace hadaq {
 
       public:
 
-         TrbProcessor(unsigned brdid = 0, HldProcessor* hld = nullptr, int hfill = -1);
+         TrbProcessor(unsigned brdid = 0, HldProcessor* hld = 0, int hfill = -1);
          virtual ~TrbProcessor();
 
          void SetHadaqCTSId(unsigned id) { fHadaqCTSId = id; }
