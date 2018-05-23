@@ -779,9 +779,15 @@ bool hadaq::TrbProcessor::CreateMissingTDC(hadaqs::RawSubevent *sub, const std::
 }
 
 
-
-unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub, void* tgtbuf, unsigned tgtlen)
+unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub, void* tgtbuf, unsigned tgtlen, bool only_hist)
 {
+   DefFillH1(fTrigType, sub->GetTrigTypeTrb3(), 1.);
+
+   DefFillH1(fSubevSize, sub->GetSize(), 1.);
+
+   // only fill histograms
+   if (only_hist) return 0;
+
    hadaqs::RawSubevent* tgt = (hadaqs::RawSubevent*) tgtbuf;
    // copy complete header first
    if (tgt!=0) {

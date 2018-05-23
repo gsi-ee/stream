@@ -278,7 +278,7 @@ namespace hadaq {
          void SetCalibrTriggerMask(unsigned trigmask = 0xFFFF);
 
          /** Calibrate hits in subevent */
-         unsigned TransformSubEvent(hadaqs::RawSubevent *sub, void *tgtbuf = 0, unsigned tgtlen = 0);
+         unsigned TransformSubEvent(hadaqs::RawSubevent *sub, void *tgtbuf = 0, unsigned tgtlen = 0, bool only_hist = false);
 
          /** Create TDCs using IDs from subevent */
          bool CreateMissingTDC(hadaqs::RawSubevent *sub, const std::vector<uint64_t> &mintdc, const std::vector<uint64_t> &maxtdc, int numch, int edges);
