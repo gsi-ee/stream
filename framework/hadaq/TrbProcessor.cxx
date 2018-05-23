@@ -116,8 +116,9 @@ void hadaq::TrbProcessor::CreatePerTDCHistos()
    if (!fHitsPerBrd)
       fHitsPerBrd = MakeH1("HitsPerTDC", "Number of data hits per TDC", numtdc, 0, numtdc, lbl.c_str());
 
+   cnt = 0;
    for (SubProcMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++)
-      iter->second->AssignPerBrdHistos(this);
+      iter->second->AssignPerBrdHistos(this, cnt++);
 
 }
 

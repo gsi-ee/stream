@@ -52,7 +52,7 @@ namespace hadaq {
          void SetNewDataFlag(bool on) { fNewDataFlag = on; }
          bool IsNewDataFlag() const { return fNewDataFlag; }
 
-         void AssignPerBrdHistos(TrbProcessor *trb);
+         void AssignPerBrdHistos(TrbProcessor *trb, unsigned seqid);
 
       public:
 

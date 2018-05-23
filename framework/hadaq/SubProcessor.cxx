@@ -20,14 +20,16 @@ hadaq::SubProcessor::SubProcessor(TrbProcessor *trb, const char* nameprefix, uns
       fPrintRawData = trb->IsPrintRawData();
       fCrossProcess = trb->IsCrossProcess();
 
-      AssignPerBrdHistos(trb);
+      AssignPerBrdHistos(trb, 0);
    }
 
 }
 
-void hadaq::SubProcessor::AssignPerBrdHistos(TrbProcessor* trb)
+void hadaq::SubProcessor::AssignPerBrdHistos(TrbProcessor* trb, unsigned seqid)
 {
    if (!trb) return;
+
+   fSeqeunceId = seqid;
 
    SetHistFilling(trb->HistFillLevel());
 
