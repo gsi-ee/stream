@@ -786,7 +786,19 @@ bool hadaq::TrbProcessor::CreateMissingTDC(hadaqs::RawSubevent *sub, const std::
 
 unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub, void* tgtbuf, unsigned tgtlen, bool only_hist)
 {
-   DefFillH1(fTrigType, sub->GetTrigTypeTrb3(), 1.);
+
+   unsigned trig_type = sub->GetTrigTypeTrb3();
+
+   if (only_hist && (GetID() == 0x8800)) {
+      unsigned wordNr = 2;
+      uint32_t bitmask = 0xff000000; /* extended mask to contain spill on/off bit*/
+      uint32_t bitshift = 24;
+      // above from args.c defaults
+      uint32_t val = sub->Data(wordNr - 1);
+      trig_type = (val & bitmask) >> bitshift;
+   }
+
+   DefFillH1(fTrigType, trig_type, 1.);
 
    DefFillH1(fSubevSize, sub->GetSize(), 1.);
 
