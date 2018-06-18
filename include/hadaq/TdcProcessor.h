@@ -30,6 +30,8 @@ namespace hadaq {
 
          enum { rising_edge = 1, falling_edge = 2 };
 
+         enum { edge_None = 0, edge_Rising = 1, edge_BothIndepend = 2, edge_ForceRising  = 3, edge_CommonStatistic = 4 };
+
          struct ChannelRec {
             unsigned refch;                //! reference channel for specified
             unsigned reftdc;               //! tdc of reference channel
@@ -38,6 +40,7 @@ namespace hadaq {
             unsigned doublereftdc;         //! tdc of double reference channel
             bool docalibr;                 //! if false, simple calibration will be used
             bool hascalibr;                //! indicate if channel has valid calibration (not simple linear)
+            bool check_calibr;             //! flag used to indicate that calibration was checked
             base::H1handle fRisingFine;    //! histogram of all fine counters
             base::H1handle fRisingMult;    //! number of hits per event
             base::H1handle fRisingRef;     //! histogram of time diff to ref channel
@@ -91,6 +94,7 @@ namespace hadaq {
                doublereftdc(0xffffff),
                docalibr(true),
                hascalibr(false),
+               check_calibr(false),
                fRisingFine(0),
                fRisingMult(0),
                fRisingRef(0),
@@ -157,6 +161,14 @@ namespace hadaq {
                if (falling_stat) { delete [] falling_stat; falling_stat = 0; }
                if (falling_calibr) { delete [] falling_calibr; falling_calibr = 0; }
             }
+
+            long GetCalibrStat(unsigned edgesMask) {
+               if (!docalibr) return 0;
+               long stat = all_rising_stat;
+               if (edgesMask==edge_CommonStatistic) stat += all_falling_stat; else
+               if ((edgesMask==edge_BothIndepend) && (all_falling_stat < stat)) stat = all_falling_stat;
+               return stat;
+            }
          };
 
          TdcIterator fIter1;         //! iterator for the first scan
@@ -184,7 +196,7 @@ namespace hadaq {
          bool                     fCalibrUseTemp;  //! when true, use temperature adjustment for calibration
          unsigned                 fCalibrTriggerMask; //! mask with enabled for trigger events ids, default all
 
-         double fCalibrProgress;      //! progress of auto calibration
+         double fCalibrProgress;      //! current progress in calibration
          std::string fCalibrStatus;   //! calibration status
 
          float                    fTempCorrection; //! correction for temperature sensor
@@ -202,8 +214,6 @@ namespace hadaq {
 
          std::vector<hadaq::MessageDouble> fStoreDouble;  //! vector with compact messages
          std::vector<hadaq::MessageDouble> *pStoreDouble; //! pointer on store vector
-
-         enum { edge_None = 0, edge_Rising = 1, edge_BothIndepend = 2, edge_ForceRising  = 3, edge_CommonStatistic = 4 };
 
          /** EdgeMask defines how TDC calibration for falling edge is performed
           * 0,1 - use only rising edge, falling edge is ignore

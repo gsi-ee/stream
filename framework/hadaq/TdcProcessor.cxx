@@ -80,7 +80,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fCalibrTempCoef(0.004432),
    fCalibrUseTemp(false),
    fCalibrTriggerMask(0xFFFF),
-   fCalibrProgress(0.),
+   fCalibrProgress(0),
    fCalibrStatus("Init"),
    fTempCorrection(0.),
    fCurrentTemp(-1.),
@@ -292,11 +292,11 @@ void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned re
    CreateChannelHistograms(ch);
    if (fCh[ch].reftdc == GetID()) CreateChannelHistograms(refch);
 
-   char sbuf[1024], saxis[1024], refname[1024];
+   char sbuf[1024], saxis[1024], refname[512];
    if (fCh[ch].reftdc == GetID()) {
-      sprintf(refname, "Ch%u", fCh[ch].refch);
+      snprintf(refname, sizeof(refname), "Ch%u", fCh[ch].refch);
    } else {
-      sprintf(refname, "TDC 0x%04x Ch%u", fCh[ch].reftdc, fCh[ch].refch);
+      snprintf(refname, sizeof(refname), "TDC 0x%04x Ch%u", fCh[ch].reftdc, fCh[ch].refch);
    }
 
    if ((left < right) && (npoints>1)) {
@@ -304,14 +304,14 @@ void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned re
       if (DoRisingEdge()) {
 
          if (fCh[ch].fRisingRef == 0) {
-            sprintf(sbuf, "difference to %s", refname);
-            sprintf(saxis, "Ch%u - %s, ns", ch, refname);
+            snprintf(sbuf, sizeof(sbuf), "difference to %s", refname);
+            snprintf(saxis, sizeof(saxis), "Ch%u - %s, ns", ch, refname);
             fCh[ch].fRisingRef = MakeH1("RisingRef", sbuf, npoints, left, right, saxis);
          }
 
          if (twodim && (fCh[ch].fRisingRef2D==0)) {
-            sprintf(sbuf, "corr diff %s and fine counter", refname);
-            sprintf(saxis, "Ch%u - %s, ns;fine counter", ch, refname);
+            snprintf(sbuf, sizeof(sbuf), "corr diff %s and fine counter", refname);
+            snprintf(saxis, sizeof(saxis), "Ch%u - %s, ns;fine counter", ch, refname);
             fCh[ch].fRisingRef2D = MakeH2("RisingRef2D", sbuf, 500, left, right, 100, 0, 500, saxis);
          }
       }
@@ -381,8 +381,6 @@ bool hadaq::TdcProcessor::SetDoubleRefChannel(unsigned ch1, unsigned ch2,
       }
    }
 
-
-
    return true;
 }
 
@@ -391,8 +389,6 @@ void hadaq::TdcProcessor::CreateRateHisto(int np, double xmin, double xmax)
    SetSubPrefix();
    fHitsRate = MakeH1("HitsRate", "Hits rate", np, xmin, xmax, "hits/sec");
 }
-
-
 
 bool hadaq::TdcProcessor::EnableRefCondPrint(unsigned ch, double left, double right, int numprint)
 {
@@ -528,32 +524,21 @@ double hadaq::TdcProcessor::TestCanCalibrate()
    if (fAutoCalibration<=10) return 0.;
 
    bool isany = false;
-   double min = 1000.;
+   long min = 1000000000L;
+   unsigned numch = NumChannels();
 
-   for (unsigned ch=0;ch<NumChannels();ch++) {
-      if (fCh[ch].docalibr) {
-         long stat1(fCh[ch].all_rising_stat), stat2(0);
-
-         switch (fEdgeMask) {
-            case edge_BothIndepend: stat2 = fCh[ch].all_falling_stat; break;
-            case edge_ForceRising: break;
-            case edge_CommonStatistic: stat1 += fCh[ch].all_falling_stat; break;
-            default: break;
-         }
-         if (stat1>100) {
+   for (unsigned ch=0;ch<numch;ch++) {
+      ChannelRec &rec = fCh[ch];
+      if (rec.docalibr) {
+         long stat = rec.GetCalibrStat(fEdgeMask);
+         if (stat>100) {
             isany = true;
-            double val = 1.*stat1/fAutoCalibration;
-            if (val<min) min = val;
-         }
-         if (stat2>100) {
-            isany = true;
-            double val = 1.*stat2/fAutoCalibration;
-            if (val<min) min = val;
+            if (stat<min) min = stat;
          }
       }
    }
 
-   return isany ? min : 0.;
+   return isany ? 1.*min/fAutoCalibration : 0.;
 }
 
 bool hadaq::TdcProcessor::PerformAutoCalibrate()
@@ -597,18 +582,51 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
    unsigned tgtindx0(tgtindx), calibr_indx(0), calibr_num(0), epoch(0);
 
    bool use_in_calibr = ((1 << sub->GetTrigTypeTrb3()) & fCalibrTriggerMask) != 0;
-   bool is_0d_trig = sub->GetTrigTypeTrb3() == 0xD;
+   bool is_0d_trig = (sub->GetTrigTypeTrb3() == 0xD);
    bool do_tot = use_in_calibr && is_0d_trig && DoFallingEdge();
+   bool check_calibr = false;
+
+   uint32_t *src_data = nullptr, *tgt_data = nullptr, src_value;
+
+   // use fast access to the data, when perform copying and swapped two-bytes access
+   bool fast_access = tgt && sub->IsSwapped() && (sub->Alignment()==4);
+
+   // fast_access = false;
+
+   if (fast_access) {
+      src_data = (uint32_t *) ((char*) (sub) + sizeof(hadaqs::RawSubevent)) + indx;
+      tgt_data = (uint32_t *) ((char*) (tgt) + sizeof(hadaqs::RawSubevent)) + tgtindx;
+   }
 
    while (datalen-- > 0) {
-      msg.assign(sub->Data(indx++));
+
+      if (fast_access) {
+         src_value = *src_data++;
+         msg.assign(__builtin_bswap32(src_value));
+         indx++;
+      } else {
+         msg.assign(sub->Data(indx++));
+      }
 
       cnt++;
+
+      // ONLY FOR DEBUG PURPOSES - check performance
+      //if (tgt) {
+      //   tgt->SetData(tgtindx++, msg.getData());
+      //   continue;
+      //}
+
       if (fMsgsKind) DefFastFillH1(fMsgsKind, (msg.getKind() >> 29));
+
       if (!msg.isHit0Msg()) {
          if (msg.isEpochMsg()) { epoch = msg.getEpochValue(); } else
          if (msg.isCalibrMsg()) { calibr_indx = tgtindx; calibr_num = 0; }
-         if (tgt) tgt->SetData(tgtindx++, msg.getData());
+         if (fast_access) {
+            *tgt_data++ = src_value;
+            tgtindx++;
+         } else if (tgt) {
+            tgt->SetData(tgtindx++, msg.getData());
+         }
          continue;
       }
       hitcnt++;
@@ -625,7 +643,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
          continue;
       }
 
-      ChannelRec& rec = fCh[chid];
+      ChannelRec &rec = fCh[chid];
 
       double corr = ExtractCalibr(isrising ? rec.rising_calibr : rec.falling_calibr, fine);
 
@@ -708,6 +726,15 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
          }
       }
 
+      // trigger check of calibration only when enough statistic in that channel
+      // done only once for specified channel
+      if (!rec.check_calibr && (fAutoCalibration>10)) {
+         if (rec.GetCalibrStat(fEdgeMask) >= fAutoCalibration) {
+            rec.check_calibr = true;
+            check_calibr = true;
+         }
+      }
+
       if (HistFillLevel()<1) continue;
 
       DefFastFillH1(fChannels, chid);
@@ -749,8 +776,10 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
          rec.rising_new_value = false;
       }
 
-   fCalibrProgress = TestCanCalibrate();
-   if (fCalibrProgress>=1.) PerformAutoCalibrate();
+   if (check_calibr) {
+      fCalibrProgress = TestCanCalibrate();
+      if (fCalibrProgress>=1.) PerformAutoCalibrate();
+   }
 
    return tgt ? (tgtindx - tgtindx0) : cnt;
 }
@@ -1985,6 +2014,8 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear)
       }
 
       if (fCh[ch].docalibr) {
+
+         fCh[ch].check_calibr = false; // reset flag, used in auto calibration
 
          // special case - use common statistic
          if (fEdgeMask == edge_CommonStatistic) {

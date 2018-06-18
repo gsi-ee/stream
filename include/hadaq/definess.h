@@ -131,10 +131,11 @@ namespace hadaqs {
          ~HadTu() {}
 
          /** msb of decode word is always non zero...? */
-         inline bool IsSwapped() const  { return  tuDecoding > 0xffffff; }
+         inline bool IsSwapped() const  { return tuDecoding > 0xffffff; }
 
          inline uint32_t Value(const uint32_t *member) const
          {
+//            return IsSwapped() ? __builtin_bswap32 (*member) : *member;
             return IsSwapped() ? ((((uint8_t *) member)[0] << 24) |
                                   (((uint8_t *) member)[1] << 16) |
                                   (((uint8_t *) member)[2] << 8) |
@@ -144,11 +145,12 @@ namespace hadaqs {
          /** swap-save method to set value stolen from hadtu.h */
          inline void SetValue(uint32_t *member, uint32_t val)
          {
+//            *member = IsSwapped() ? __builtin_bswap32 (val) : val;
             *member = IsSwapped() ?
-                  ((((uint8_t *) &val)[0] << 24) |
-                  (((uint8_t *) &val)[1] << 16) |
-                  (((uint8_t *) &val)[2] << 8) |
-                  (((uint8_t *) &val)[3])) : val;
+                    ((((uint8_t *) &val)[0] << 24) |
+                    (((uint8_t *) &val)[1] << 16) |
+                    (((uint8_t *) &val)[2] << 8) |
+                    (((uint8_t *) &val)[3])) : val;
          }
 
 

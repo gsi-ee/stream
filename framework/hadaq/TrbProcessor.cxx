@@ -432,7 +432,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
    // our task is statistic over all messages we will found
    // also for trigger-type 1 we should add SYNC message to each processor
 
-   memcpy(&fLastSubevHdr, sub, sizeof(fLastSubevHdr));
+   memcpy((void *) &fLastSubevHdr, sub, sizeof(fLastSubevHdr));
 
    DefFillH1(fTrigType, sub->GetTrigTypeTrb3(), 1.);
 
@@ -805,11 +805,18 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub, void* 
    // only fill histograms
    if (only_hist) return 0;
 
+   // !!! DEBUG ONLY - just copy data
+   // if (tgtbuf && tgtlen) {
+   //   printf("SUBEVENT swap:%u len:%u\n", sub->IsSwapped(), sub->GetPaddedSize());
+   //   memcpy((void *) tgtbuf, (void *) sub, sub->GetPaddedSize());
+   //   return sub->GetPaddedSize();
+   // }
+
    hadaqs::RawSubevent* tgt = (hadaqs::RawSubevent*) tgtbuf;
    // copy complete header first
    if (tgt!=0) {
       // copy header
-      memcpy(tgt, sub, sizeof(hadaqs::RawSubevent));
+      memcpy((void *) tgt, sub, sizeof(hadaqs::RawSubevent));
       tgtlen = (tgtlen - sizeof(hadaqs::RawSubevent)) / 4; // how many 32-bit values can be used
    }
 
@@ -843,11 +850,11 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub, void* 
       TdcProcessor* subproc = GetTDC(data & 0xFFFF, true);
       if (subproc) {
          unsigned newlen = subproc->TransformTdcData(sub, ix, datalen, tgt, tgtix+1);
-         if (tgt!=0) {
+         if (tgt) {
             tgt->SetData(tgtix++, (data & 0xFFFF) | ((newlen & 0xffff) << 16));
-            tgtix+=newlen;
+            tgtix += newlen;
          }
-         ix+=datalen;
+         ix += datalen;
          continue; // go to next block
       }  // end of if TDC header
 

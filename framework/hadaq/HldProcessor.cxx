@@ -163,7 +163,7 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
 
       DefFillH1(fEvType, (ev->GetId() & 0xf), 1.);
 
-      memcpy(&fLastEvHdr, ev, sizeof(fLastEvHdr));
+      memcpy((void *)&fLastEvHdr, ev, sizeof(fLastEvHdr));
 
       fMsg.trig_type = ev->GetId() & 0xf;
       fMsg.seq_nr = ev->GetSeqNr();
