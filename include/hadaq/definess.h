@@ -136,21 +136,32 @@ namespace hadaqs {
          inline uint32_t Value(const uint32_t *member) const
          {
 //            return IsSwapped() ? __builtin_bswap32 (*member) : *member;
-            return IsSwapped() ? ((((uint8_t *) member)[0] << 24) |
-                                  (((uint8_t *) member)[1] << 16) |
-                                  (((uint8_t *) member)[2] << 8) |
-                                  (((uint8_t *) member)[3])) : *member;
+
+            return IsSwapped() ? ((*member & 0xFF) << 24) |
+                                 ((*member & 0xFF00) << 8) |
+                                 ((*member & 0xFF0000) >> 8) |
+                                 ((*member & 0xFF000000) >> 24) : *member;
+
+//            return IsSwapped() ? ((((uint8_t *) member)[0] << 24) |
+//                                  (((uint8_t *) member)[1] << 16) |
+//                                  (((uint8_t *) member)[2] << 8) |
+//                                  (((uint8_t *) member)[3])) : *member;
          }
 
          /** swap-save method to set value stolen from hadtu.h */
          inline void SetValue(uint32_t *member, uint32_t val)
          {
+            *member = IsSwapped() ? ((val & 0xFF) << 24) |
+                                    ((val & 0xFF00) << 8) |
+                                    ((val & 0xFF0000) >> 8) |
+                                    ((val & 0xFF000000) >> 24) : val;
+
 //            *member = IsSwapped() ? __builtin_bswap32 (val) : val;
-            *member = IsSwapped() ?
-                    ((((uint8_t *) &val)[0] << 24) |
-                    (((uint8_t *) &val)[1] << 16) |
-                    (((uint8_t *) &val)[2] << 8) |
-                    (((uint8_t *) &val)[3])) : val;
+//            *member = IsSwapped() ?
+//                    ((((uint8_t *) &val)[0] << 24) |
+//                    (((uint8_t *) &val)[1] << 16) |
+//                    (((uint8_t *) &val)[2] << 8) |
+//                    (((uint8_t *) &val)[3])) : val;
          }
 
 
