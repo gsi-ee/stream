@@ -586,9 +586,9 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
    bool do_tot = use_in_calibr && is_0d_trig && DoFallingEdge();
    bool check_calibr = false;
 
-   uint32_t *src_data = nullptr, *tgt_data = nullptr, src_value;
+   uint32_t *src_data = 0, *tgt_data = 0, src_value;
 
-   // use fast access to the data, when perform copying and swapped two-bytes access
+   // use fast access to the data, when perform copying and swapped four-bytes access
    bool fast_access = tgt && sub->IsSwapped() && (sub->Alignment()==4);
 
    // fast_access = false;
