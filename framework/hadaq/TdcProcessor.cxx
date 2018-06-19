@@ -95,8 +95,10 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fStoreDouble(),
    pStoreDouble(0),
    fEdgeMask(edge_mask),
-   fAutoCalibration(0),
+   fCalibrCounts(0),
+   fAutoCalibr(false),
    fAutoCalibrOnce(false),
+   fAllCalibr(false),
    fWriteCalibr(),
    fWriteEveryTime(false),
    fUseLinear(false),
@@ -249,8 +251,8 @@ void hadaq::TdcProcessor::UserPostLoop()
 {
 //   printf("************************* hadaq::TdcProcessor postloop *******************\n");
 
-   if (!fWriteCalibr.empty()) {
-      if (fAutoCalibration == 0) ProduceCalibration(true, fUseLinear);
+   if (!fWriteCalibr.empty() && fAutoCalibr) {
+      if (fCalibrCounts == 0) ProduceCalibration(true, fUseLinear);
       StoreCalibration(fWriteCalibr);
    }
 }
@@ -516,18 +518,17 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
    }
 
    fCalibrProgress = TestCanCalibrate();
-   if (fCalibrProgress>=1.) PerformAutoCalibrate();
+   if ((fCalibrProgress>=1.) && fAutoCalibr) PerformAutoCalibrate();
 }
 
 double hadaq::TdcProcessor::TestCanCalibrate()
 {
-   if (fAutoCalibration<=10) return 0.;
+   if (fCalibrCounts<=0) return 0.;
 
    bool isany = false;
    long min = 1000000000L;
-   unsigned numch = NumChannels();
 
-   for (unsigned ch=0;ch<numch;ch++) {
+   for (unsigned ch=0;ch<NumChannels();ch++) {
       ChannelRec &rec = fCh[ch];
       if (rec.docalibr) {
          long stat = rec.GetCalibrStat(fEdgeMask);
@@ -538,20 +539,30 @@ double hadaq::TdcProcessor::TestCanCalibrate()
       }
    }
 
-   return isany ? 1.*min/fAutoCalibration : 0.;
+   return isany ? 1.*min/fCalibrCounts : 0.;
 }
 
 bool hadaq::TdcProcessor::PerformAutoCalibrate()
 {
-   ProduceCalibration(true, fUseLinear || ((fAutoCalibration>0) && (fAutoCalibration % 10000 == 77)));
+   ProduceCalibration(true, fUseLinear || ((fCalibrCounts>0) && (fCalibrCounts % 10000 == 77)));
    if (!fWriteCalibr.empty() && fWriteEveryTime)
       StoreCalibration(fWriteCalibr);
-   if (fAutoCalibrOnce && (fAutoCalibration>0)) {
+   if (fAutoCalibrOnce && (fCalibrCounts>0)) {
       fAutoCalibrOnce = false;
-      fAutoCalibration = -10;
+      fAutoCalibr = false;
    }
 
    return true;
+}
+
+void hadaq::TdcProcessor::CompleteCalibration()
+{
+   if (!fAllCalibr) return;
+   fAllCalibr = false;
+   fCalibrCounts = 0;
+
+   ProduceCalibration(true, fUseLinear);
+   if (!fWriteCalibr.empty()) StoreCalibration(fWriteCalibr);
 }
 
 float hadaq::TdcProcessor::ExtractCalibr(float* func, unsigned bin)
@@ -584,7 +595,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
    bool use_in_calibr = ((1 << sub->GetTrigTypeTrb3()) & fCalibrTriggerMask) != 0;
    bool is_0d_trig = (sub->GetTrigTypeTrb3() == 0xD);
    bool do_tot = use_in_calibr && is_0d_trig && DoFallingEdge();
-   bool check_calibr = false;
+   bool check_calibr_progress = false;
 
    uint32_t *src_data = 0, *tgt_data = 0, src_value;
 
@@ -728,10 +739,10 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
 
       // trigger check of calibration only when enough statistic in that channel
       // done only once for specified channel
-      if (!rec.check_calibr && (fAutoCalibration>10)) {
-         if (rec.GetCalibrStat(fEdgeMask) >= fAutoCalibration) {
+      if (!rec.check_calibr && (fCalibrCounts > 0)) {
+         if (rec.GetCalibrStat(fEdgeMask) >= fCalibrCounts) {
             rec.check_calibr = true;
-            check_calibr = true;
+            check_calibr_progress = true;
          }
       }
 
@@ -776,9 +787,9 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
          rec.rising_new_value = false;
       }
 
-   if (check_calibr) {
+   if (check_calibr_progress) {
       fCalibrProgress = TestCanCalibrate();
-      if (fCalibrProgress>=1.) PerformAutoCalibrate();
+      if ((fCalibrProgress>=1.) && fAutoCalibr) PerformAutoCalibrate();
    }
 
    return tgt ? (tgtindx - tgtindx0) : cnt;

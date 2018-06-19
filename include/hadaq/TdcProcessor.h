@@ -221,8 +221,10 @@ namespace hadaq {
           * 3   - falling edge enabled and uses calibration from rising edge
           * 4   - falling edge enabled and common statistic is used for calibration */
          unsigned    fEdgeMask;       //! which channels to analyze, analyzes trailing edges when more than 1
-         long        fAutoCalibration;//! indicates minimal number of counts in each channel required to produce calibration
+         long        fCalibrCounts;   //! indicates minimal number of counts in each channel required to produce calibration
+         bool        fAutoCalibr;     //! when true, perform auto calibration
          bool        fAutoCalibrOnce; //! when true, auto calibration will be executed once
+         bool        fAllCalibr;      //! use all data for calibrations, used with DABC
 
          std::string fWriteCalibr;    //! file which should be written at the end of data processing
          bool        fWriteEveryTime; //! write calibration every time automatic calibration performed
@@ -448,7 +450,20 @@ namespace hadaq {
 
          void SetLinearCalibration(unsigned nch, unsigned finemin=30, unsigned finemax=500);
 
-         void SetAutoCalibration(long cnt = 100000) { fAutoCalibration = cnt % 1000000000L; fAutoCalibrOnce = (cnt>1000000000L); }
+         void SetAutoCalibration(long cnt = 100000) { fCalibrCounts = cnt % 1000000000L; fAutoCalibrOnce = (cnt>1000000000L); fAutoCalibr = (cnt >= 0); }
+
+         /** Start mode, when all data will be used for calibrations */
+         void BeginCalibration(long cnt)
+         {
+            fCalibrCounts = cnt;
+            fAutoCalibrOnce = false;
+            fAutoCalibr = false;
+            fAllCalibr = true;
+         }
+
+         /** Complete calibration mode, create calibration and calibration files */
+         void CompleteCalibration();
+
 
          bool LoadCalibration(const std::string& fprefix);
 
