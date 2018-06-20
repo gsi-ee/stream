@@ -576,8 +576,16 @@ void hadaq::TdcProcessor::CompleteCalibration(bool dummy)
    fCalibrCounts = 0;
 
    if (dummy) {
-      fCalibrStatus = "Ready";
-      fCalibrQuality = 1.;
+      if (fCalibrProgress >= 1) {
+         fCalibrStatus = "Ready";
+         fCalibrQuality = 1.;
+      } else if (fCalibrProgress >= 0.3) {
+         fCalibrStatus = "LowStat";
+         fCalibrQuality = 0.5;
+      } else {
+         fCalibrStatus = "NoStat";
+         fCalibrQuality = 0.2;
+      }
    } else {
       ProduceCalibration(true, fUseLinear);
       if (!fWriteCalibr.empty()) StoreCalibration(fWriteCalibr);
@@ -2114,9 +2122,16 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear)
       DefFillH1(fTotShifts, ch, fCh[ch].tot_shift);
    }
 
-   fCalibrStatus = "Ready";
-
-   fCalibrQuality = 1.;
+   if (fCalibrProgress >= 1) {
+      fCalibrStatus = "Ready";
+      fCalibrQuality = 1.;
+   } else if (fCalibrProgress >= 0.3) {
+      fCalibrStatus = "LowStat";
+      fCalibrQuality = 0.5;
+   } else {
+      fCalibrStatus = "NoStat";
+      fCalibrQuality = 0.2;
+   }
 }
 
 void hadaq::TdcProcessor::StoreCalibration(const std::string& fprefix, unsigned fileid)
