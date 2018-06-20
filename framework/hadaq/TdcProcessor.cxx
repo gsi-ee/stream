@@ -1951,19 +1951,58 @@ bool hadaq::TdcProcessor::CalibrateChannel(unsigned nch, long* statistic, float*
       printf("%s Ch:%u Cnts: %7.0f produce %s calibration min:%u max:%u\n", GetName(), nch, sum, (use_linear ? "linear" : "normal"),  finemin, finemax);
    }
 
-   for (unsigned n=0;n<fNumFineBins;n++) {
-      if (sum <= limits) {
+
+   if ((finemin>50) && (fCalibrQuality>0.4)) {
+      fCalibrStatus = "BadFineMin"; fCalibrStatus+=finemin;
+      fCalibrQuality = 0.4;
+   }
+
+   if ((finemax<400) && (fCalibrQuality>0.4)) {
+      fCalibrStatus = "BadFineMax"; fCalibrStatus+=finemax;
+      fCalibrQuality = 0.4;
+   }
+
+   if (sum <= limits) {
+
+      if (fCalibrQuality>0.15) {
+         fCalibrStatus = "LowStat";
+         fCalibrQuality = 0.15;
+      }
+
+      for (unsigned n=0;n<fNumFineBins;n++)
          calibr[n] = hadaq::TdcMessage::SimpleFineCalibr(n);
-      } else if (use_linear) {
-         if (n<=finemin) calibr[n] = 0; else
-         if (n>=finemax) calibr[n] = hadaq::TdcMessage::CoarseUnit(); else
-         calibr[n] = hadaq::TdcMessage::CoarseUnit() * (n - finemin) / (0. + finemax - finemin);
+
+      return false;
+   }
+
+   double sum1 = 0., sum2 = 0., linear = 0, exact = 0.;
+
+   for (unsigned n=0;n<fNumFineBins;n++) {
+      if (n<=finemin) linear = 0.; else
+         if (n>=finemax) linear = 1.; else linear = (n - finemin) / (0. + finemax - finemin);
+
+      sum1 += 1.;
+
+      if (use_linear) {
+         exact = linear;
       } else {
-         calibr[n] = (calibr[n]-statistic[n]/2) / sum * hadaq::TdcMessage::CoarseUnit();
+         exact = (calibr[n] - statistic[n]/2) / sum;
+         sum2 += (exact - linear) * (exact - linear);
+      }
+
+      calibr[n] = exact * hadaq::TdcMessage::CoarseUnit();
+   }
+
+
+   if ((fCalibrQuality>0.6) && !use_linear && (sum1>100)) {
+      double dev = sqrt(sum2/sum1); // average deviation
+      if (dev > 0.01) {
+         fCalibrStatus = "NonLinear";
+         fCalibrQuality = 0.6;
       }
    }
 
-   return sum > limits;
+   return true;
 }
 
 bool hadaq::TdcProcessor::CalibrateTot(unsigned nch, long* hist, float& tot_shift, float cut)
@@ -2048,6 +2087,17 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear)
    ClearH2(fFallingCalibr);
    ClearH1(fTotShifts);
 
+   if (fCalibrProgress >= 1) {
+      fCalibrStatus = "Ready";
+      fCalibrQuality = 1.;
+   } else if (fCalibrProgress >= 0.3) {
+      fCalibrStatus = "LowStat";
+      fCalibrQuality = 0.5;
+   } else {
+      fCalibrStatus = "NoStat";
+      fCalibrQuality = 0.2;
+   }
+
    for (unsigned ch=0;ch<NumChannels();ch++) {
 
       if ((gBubbleMode>1) && (fCh[ch].sum0 > 100)) {
@@ -2122,16 +2172,6 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear)
       DefFillH1(fTotShifts, ch, fCh[ch].tot_shift);
    }
 
-   if (fCalibrProgress >= 1) {
-      fCalibrStatus = "Ready";
-      fCalibrQuality = 1.;
-   } else if (fCalibrProgress >= 0.3) {
-      fCalibrStatus = "LowStat";
-      fCalibrQuality = 0.5;
-   } else {
-      fCalibrStatus = "NoStat";
-      fCalibrQuality = 0.2;
-   }
 }
 
 void hadaq::TdcProcessor::StoreCalibration(const std::string& fprefix, unsigned fileid)
