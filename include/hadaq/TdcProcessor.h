@@ -198,6 +198,14 @@ namespace hadaq {
 
          double fCalibrProgress;      //! current progress in calibration
          std::string fCalibrStatus;   //! calibration status
+         double fCalibrQuality;       //! calibration quality:
+                                      //  0 - not exists
+                                      //  0..0.3    - bad (red color)
+                                      //  0.3..0.8  - poor (yellow color)
+                                      //  0.8..1.0  - ok (green color)
+                                      //  2         - load from file
+                                      //  100..101  - accumulating statistic (blue)
+
 
          float                    fTempCorrection; //! correction for temperature sensor
          float                    fCurrentTemp;    //! current measured temperature
@@ -335,6 +343,7 @@ namespace hadaq {
 
          double GetCalibrProgress() const { return fCalibrProgress; }
          std::string GetCalibrStatus() const { return fCalibrStatus; }
+         double GetCalibrQuality() const { return fCalibrQuality; }
 
          int GetNumHist() const { return 8; }
 
@@ -452,23 +461,17 @@ namespace hadaq {
 
          void SetAutoCalibration(long cnt = 100000) { fCalibrCounts = cnt % 1000000000L; fAutoCalibrOnce = (cnt>1000000000L); fAutoCalibr = (cnt >= 0); }
 
-         /** Configure mode, when calibration should be start/stop explicitely */
-         void UseExplicitCalibration()
-         {
-            fAllCalibrMode = 0;
-         }
+         /** Configure mode, when calibration should be start/stop explicitly */
+         void UseExplicitCalibration() { fAllCalibrMode = 0; }
+
+         /** Return explicit calibr mode, -1 - off, 0 - normal data processing, 1 - accumulating calibration */
+         int GetExplicitCalibrationMode() { return fAllCalibrMode; }
 
          /** Start mode, when all data will be used for calibrations */
-         void BeginCalibration(long cnt)
-         {
-            fCalibrCounts = cnt;
-            fAutoCalibrOnce = false;
-            fAutoCalibr = false;
-            fAllCalibrMode = 1;
-         }
+         void BeginCalibration(long cnt);
 
          /** Complete calibration mode, create calibration and calibration files */
-         void CompleteCalibration();
+         void CompleteCalibration(bool dummy = false);
 
 
          bool LoadCalibration(const std::string& fprefix);
@@ -543,6 +546,9 @@ namespace hadaq {
 
          /** Method transform TDC data, if output specified, use it otherwise change original data */
          unsigned TransformTdcData(hadaqs::RawSubevent* sub, unsigned indx, unsigned datalen, hadaqs::RawSubevent* tgt = 0, unsigned tgtindx = 0);
+
+         /** Emulate transformation */
+         void EmulateTransform(int dummycnt);
    };
 
 }

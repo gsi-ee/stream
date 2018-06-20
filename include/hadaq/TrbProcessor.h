@@ -278,6 +278,9 @@ namespace hadaq {
          /** Calibrate hits in subevent */
          unsigned TransformSubEvent(hadaqs::RawSubevent *sub, void *tgtbuf = 0, unsigned tgtlen = 0, bool only_hist = false);
 
+         /** Just for emulation of TDC calibrations */
+         unsigned EmulateTransform(hadaqs::RawSubevent *sub, int dummycnt, bool only_hist = false);
+
          /** Create TDCs using IDs from subevent */
          bool CreateMissingTDC(hadaqs::RawSubevent *sub, const std::vector<uint64_t> &mintdc, const std::vector<uint64_t> &maxtdc, int numch, int edges);
 

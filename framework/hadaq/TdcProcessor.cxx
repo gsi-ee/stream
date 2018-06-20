@@ -82,6 +82,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fCalibrTriggerMask(0xFFFF),
    fCalibrProgress(0),
    fCalibrStatus("Init"),
+   fCalibrQuality(0.),
    fTempCorrection(0.),
    fCurrentTemp(-1.),
    fDesignId(0),
@@ -555,14 +556,32 @@ bool hadaq::TdcProcessor::PerformAutoCalibrate()
    return true;
 }
 
-void hadaq::TdcProcessor::CompleteCalibration()
+void hadaq::TdcProcessor::BeginCalibration(long cnt)
+{
+   fCalibrCounts = cnt;
+   fAutoCalibrOnce = false;
+   fAutoCalibr = false;
+   fAllCalibrMode = 1;
+
+   fCalibrStatus = "Accumulating";
+   fCalibrQuality = 100;
+   fCalibrProgress = 0.;
+}
+
+
+void hadaq::TdcProcessor::CompleteCalibration(bool dummy)
 {
    if (fAllCalibrMode<=0) return;
    fAllCalibrMode = 0;
    fCalibrCounts = 0;
 
-   ProduceCalibration(true, fUseLinear);
-   if (!fWriteCalibr.empty()) StoreCalibration(fWriteCalibr);
+   if (dummy) {
+      fCalibrStatus = "Ready";
+      fCalibrQuality = 1.;
+   } else {
+      ProduceCalibration(true, fUseLinear);
+      if (!fWriteCalibr.empty()) StoreCalibration(fWriteCalibr);
+   }
 }
 
 float hadaq::TdcProcessor::ExtractCalibr(float* func, unsigned bin)
@@ -793,11 +812,21 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
 
    if (check_calibr_progress) {
       fCalibrProgress = TestCanCalibrate();
+      fCalibrQuality = 100 + fCalibrProgress;
       if ((fCalibrProgress>=1.) && fAutoCalibr) PerformAutoCalibrate();
    }
 
    return tgt ? (tgtindx - tgtindx0) : cnt;
 }
+
+void hadaq::TdcProcessor::EmulateTransform(int dummycnt)
+{
+   if (fAllCalibrMode>0) {
+      fCalibrProgress = dummycnt*1e-3;
+      fCalibrQuality = 100 + fCalibrProgress;
+   }
+}
+
 
 void PrintBubble(unsigned* bubble) {
    // print in original order
@@ -2086,6 +2115,8 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear)
    }
 
    fCalibrStatus = "Ready";
+
+   fCalibrQuality = 1.;
 }
 
 void hadaq::TdcProcessor::StoreCalibration(const std::string& fprefix, unsigned fileid)
@@ -2214,6 +2245,8 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
    printf("%s reading calibration from %s, tcorr:%5.1f uset:%d done\n", GetName(), fname, fTempCorrection, fCalibrUseTemp);
 
    fCalibrStatus = std::string("File ") + fname;
+
+   fCalibrQuality = 2.;
 
    return true;
 }

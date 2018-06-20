@@ -877,3 +877,24 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub, void* 
 
    return 0;
 }
+
+
+unsigned hadaq::TrbProcessor::EmulateTransform(hadaqs::RawSubevent *sub, int dummycnt, bool only_hist)
+{
+   DefFillH1(fTrigType, 0x1, 1.);
+
+   DefFillH1(fSubevSize, sub->GetSize(), 1.);
+
+   // only fill histograms
+   if (only_hist) return 0;
+
+   for (unsigned indx=0;indx<NumberOfTDC();++indx) {
+      hadaq::TdcProcessor *tdc = GetTDCWithIndex(indx);
+
+      tdc->EmulateTransform(dummycnt);
+   }
+
+
+   return 0;
+}
+
