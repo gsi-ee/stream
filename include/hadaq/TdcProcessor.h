@@ -220,11 +220,11 @@ namespace hadaq {
           * 2   - falling edge enabled and fully independent from rising edge
           * 3   - falling edge enabled and uses calibration from rising edge
           * 4   - falling edge enabled and common statistic is used for calibration */
-         unsigned    fEdgeMask;       //! which channels to analyze, analyzes trailing edges when more than 1
-         long        fCalibrCounts;   //! indicates minimal number of counts in each channel required to produce calibration
-         bool        fAutoCalibr;     //! when true, perform auto calibration
-         bool        fAutoCalibrOnce; //! when true, auto calibration will be executed once
-         bool        fAllCalibr;      //! use all data for calibrations, used with DABC
+         unsigned    fEdgeMask;        //! which channels to analyze, analyzes trailing edges when more than 1
+         long        fCalibrCounts;    //! indicates minimal number of counts in each channel required to produce calibration
+         bool        fAutoCalibr;      //! when true, perform auto calibration
+         bool        fAutoCalibrOnce;  //! when true, auto calibration will be executed once
+         int         fAllCalibrMode;   //! use all data for calibrations, used with DABC
 
          std::string fWriteCalibr;    //! file which should be written at the end of data processing
          bool        fWriteEveryTime; //! write calibration every time automatic calibration performed
@@ -452,13 +452,19 @@ namespace hadaq {
 
          void SetAutoCalibration(long cnt = 100000) { fCalibrCounts = cnt % 1000000000L; fAutoCalibrOnce = (cnt>1000000000L); fAutoCalibr = (cnt >= 0); }
 
+         /** Configure mode, when calibration should be start/stop explicitely */
+         void UseExplicitCalibration()
+         {
+            fAllCalibrMode = 0;
+         }
+
          /** Start mode, when all data will be used for calibrations */
          void BeginCalibration(long cnt)
          {
             fCalibrCounts = cnt;
             fAutoCalibrOnce = false;
             fAutoCalibr = false;
-            fAllCalibr = true;
+            fAllCalibrMode = 1;
          }
 
          /** Complete calibration mode, create calibration and calibration files */

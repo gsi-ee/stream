@@ -98,7 +98,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fCalibrCounts(0),
    fAutoCalibr(false),
    fAutoCalibrOnce(false),
-   fAllCalibr(false),
+   fAllCalibrMode(-1),
    fWriteCalibr(),
    fWriteEveryTime(false),
    fUseLinear(false),
@@ -557,8 +557,8 @@ bool hadaq::TdcProcessor::PerformAutoCalibrate()
 
 void hadaq::TdcProcessor::CompleteCalibration()
 {
-   if (!fAllCalibr) return;
-   fAllCalibr = false;
+   if (fAllCalibrMode<=0) return;
+   fAllCalibrMode = 0;
    fCalibrCounts = 0;
 
    ProduceCalibration(true, fUseLinear);
@@ -594,6 +594,10 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
 
    bool use_in_calibr = ((1 << sub->GetTrigTypeTrb3()) & fCalibrTriggerMask) != 0;
    bool is_0d_trig = (sub->GetTrigTypeTrb3() == 0xD);
+
+   if (fAllCalibrMode==0) use_in_calibr = false; else
+   if (fAllCalibrMode>0) use_in_calibr = true;
+
    bool do_tot = use_in_calibr && is_0d_trig && DoFallingEdge();
    bool check_calibr_progress = false;
 

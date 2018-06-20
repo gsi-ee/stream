@@ -88,7 +88,7 @@ hadaq::TrbProcessor::~TrbProcessor()
 
 hadaq::TdcProcessor* hadaq::TrbProcessor::FindTDC(unsigned tdcid) const
 {
-   hadaq::TdcProcessor* res = GetTDC(tdcid, true);;
+   hadaq::TdcProcessor* res = GetTDC(tdcid, true);
    if ((res==0) && (fHldProc!=0)) res = fHldProc->FindTDC(tdcid);
    return res;
 }
