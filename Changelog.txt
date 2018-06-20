@@ -1,3 +1,8 @@
+20.06.2018
+1. Implement implicit calibration mode for DABC. In this case calibration is started by 
+   the command from the control GUI and all hits are accumulated for calibration. 
+
+
 18.05.2018
 1. Introduce hadaq::SpillProcessor to provide analysis of spill structures 
    Done independent from normal TDC processors to speedup the code.
