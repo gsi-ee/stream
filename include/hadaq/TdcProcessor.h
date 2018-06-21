@@ -470,7 +470,7 @@ namespace hadaq {
          void BeginCalibration(long cnt);
 
          /** Complete calibration mode, create calibration and calibration files */
-         void CompleteCalibration(bool dummy = false);
+         void CompleteCalibration(bool dummy = false, const std::string &filename = "", const std::string &subdir = "");
 
          bool LoadCalibration(const std::string& fprefix);
 

@@ -569,7 +569,7 @@ void hadaq::TdcProcessor::BeginCalibration(long cnt)
 }
 
 
-void hadaq::TdcProcessor::CompleteCalibration(bool dummy)
+void hadaq::TdcProcessor::CompleteCalibration(bool dummy, const std::string &filename, const std::string &subname)
 {
    if (fAllCalibrMode<=0) return;
    fAllCalibrMode = 0;
@@ -588,8 +588,11 @@ void hadaq::TdcProcessor::CompleteCalibration(bool dummy)
       }
    } else {
       ProduceCalibration(true, fUseLinear);
-      if (!fWriteCalibr.empty()) StoreCalibration(fWriteCalibr);
    }
+
+   if (!filename.empty()) StoreCalibration(filename);
+   if (!subname.empty()) StoreCalibration(subname);
+   // if (!fWriteCalibr.empty()) StoreCalibration(fWriteCalibr);
 }
 
 float hadaq::TdcProcessor::ExtractCalibr(float* func, unsigned bin)
