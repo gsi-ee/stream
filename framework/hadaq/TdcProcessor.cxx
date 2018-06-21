@@ -81,7 +81,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fCalibrUseTemp(false),
    fCalibrTriggerMask(0xFFFF),
    fCalibrProgress(0),
-   fCalibrStatus("Init"),
+   fCalibrStatus("NoCalibr"),
    fCalibrQuality(0.),
    fTempCorrection(0.),
    fCurrentTemp(-1.),
@@ -564,7 +564,7 @@ void hadaq::TdcProcessor::BeginCalibration(long cnt)
    fAllCalibrMode = 1;
 
    fCalibrStatus = "Accumulating";
-   fCalibrQuality = 100;
+   fCalibrQuality = 0.7;
    fCalibrProgress = 0.;
 }
 
@@ -820,7 +820,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
 
    if (check_calibr_progress) {
       fCalibrProgress = TestCanCalibrate();
-      fCalibrQuality = 100 + fCalibrProgress;
+      fCalibrQuality = (fCalibrProgress > 2) ? 0.9 : 0.7 + fCalibrProgress*0.1;
       if ((fCalibrProgress>=1.) && fAutoCalibr) PerformAutoCalibrate();
    }
 
@@ -831,7 +831,7 @@ void hadaq::TdcProcessor::EmulateTransform(int dummycnt)
 {
    if (fAllCalibrMode>0) {
       fCalibrProgress = dummycnt*1e-3;
-      fCalibrQuality = 100 + fCalibrProgress;
+      fCalibrQuality = (fCalibrProgress > 2) ? 0.9 : 0.7 + fCalibrProgress*0.1;
    }
 }
 
@@ -2094,7 +2094,7 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear)
       fCalibrStatus = "LowStat";
       fCalibrQuality = 0.5;
    } else {
-      fCalibrStatus = "NoStat";
+      fCalibrStatus = "BadStat";
       fCalibrQuality = 0.2;
    }
 
@@ -2299,9 +2299,9 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
 
    printf("%s reading calibration from %s, tcorr:%5.1f uset:%d done\n", GetName(), fname, fTempCorrection, fCalibrUseTemp);
 
-   fCalibrStatus = std::string("File ") + fname;
+   fCalibrStatus = "CalibrFile";
 
-   fCalibrQuality = 2.;
+   fCalibrQuality = 0.9;
 
    return true;
 }

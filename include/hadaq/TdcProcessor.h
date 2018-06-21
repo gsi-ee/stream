@@ -199,12 +199,11 @@ namespace hadaq {
          double fCalibrProgress;      //! current progress in calibration
          std::string fCalibrStatus;   //! calibration status
          double fCalibrQuality;       //! calibration quality:
-                                      //  0 - not exists
+                                      //  0         - not exists
                                       //  0..0.3    - bad (red color)
-                                      //  0.3..0.8  - poor (yellow color)
+                                      //  0.3..0.7  - poor (yellow color)
+                                      //  0.7..0.8  - accumulating (blue color)
                                       //  0.8..1.0  - ok (green color)
-                                      //  2         - load from file
-                                      //  100..101  - accumulating statistic (blue)
 
 
          float                    fTempCorrection; //! correction for temperature sensor
