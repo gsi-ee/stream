@@ -20,12 +20,20 @@ namespace hadaq {
 
          base::H1handle fSpill;      ///< Current SPILL histogram
          base::H1handle fLastSpill;  ///< Last SPILL histogram
+         base::H1handle fHitsData;       ///< Current SPILL histogram
          int fSpillCnt;
          int fSpillSize;
          unsigned fTotalCnt;
+         unsigned fLastEpBin;
+         bool fFirstEpoch;
 
          unsigned fTdcMin;   // minimal TDC id
          unsigned fTdcMax;   // maximal TDC id
+
+         /** returns -1 when leftbin<rightbin, taking into account overflow around 0x1000)
+          *          +1 when leftbin>rightbin
+          *          0  when leftbin==rightbin */
+         int CompareEpochBins(unsigned leftbin, unsigned rightbin);
 
       public:
 

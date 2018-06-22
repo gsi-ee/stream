@@ -5,6 +5,8 @@
 #include "hadaq/TdcIterator.h"
 
 
+#define NUMEPOCHBINS 0x1000
+
 hadaq::SpillProcessor::SpillProcessor() :
    base::StreamProc("HLD", 0, false)
 {
@@ -17,8 +19,14 @@ hadaq::SpillProcessor::SpillProcessor() :
    fSpillSize = 1000;
    fSpill = MakeH1("Spill", "Spill structure", fSpillSize, 0., 10., "sec");
    fLastSpill = MakeH1("Last", "Last spill structure", fSpillSize, 0., 10., "sec");
+
+   double binwidth = 5e-9*0x800*0x1000;
+
+   fHitsData = MakeH1("Hits", "Number of hits", 0x1000, 0., binwidth*NUMEPOCHBINS, "sec");
    fSpillCnt = 0;
    fTotalCnt = 0;
+   fLastEpBin = 0;
+   fFirstEpoch = true;
 
    fTdcMin = 0xc000;
    fTdcMax = 0xc010;
@@ -27,6 +35,20 @@ hadaq::SpillProcessor::SpillProcessor() :
 hadaq::SpillProcessor::~SpillProcessor()
 {
 }
+
+/** returns -1 when leftbin<rightbin, taking into account overflow around 0x1000)
+ *          +1 when leftbin>rightbin
+ *          0  when leftbin==rightbin */
+int hadaq::SpillProcessor::CompareEpochBins(unsigned leftbin, unsigned rightbin)
+{
+   if (leftbin == rightbin) return 0;
+
+   if (leftbin < rightbin)
+      return (rightbin - leftbin) < NUMEPOCHBINS/2 ? -1 : 1;
+
+   return (leftbin - rightbin) < NUMEPOCHBINS/2 ? 1 : -1;
+}
+
 
 bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
 {
@@ -77,6 +99,8 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
 
             bool istdc = (dataid>=fTdcMin) && (dataid<fTdcMax);
 
+            unsigned epbin = 0; // current bin number in histogram
+
             if (istdc) {
 
                TdcIterator iter;
@@ -93,8 +117,25 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
 
                      numhits++;
 
+                     FastFillH1(fHitsData, epbin);
+
                   } else if (msg.isEpochMsg()) {
-                     // uint32_t ep = iter.getCurEpoch();
+                     unsigned ep = iter.getCurEpoch();
+
+                     epbin = (ep >> 12) % NUMEPOCHBINS; // use only 12 bits, skipping lower 12 bits
+
+                     // clear all previous bins in-between
+
+                     if (fFirstEpoch) {
+                        fFirstEpoch = false;
+                        fLastEpBin = epbin;
+                     } else {
+                        while (CompareEpochBins(fLastEpBin, epbin) < 0) {
+                           fLastEpBin = (fLastEpBin+1) % NUMEPOCHBINS;
+                           SetH1Content(fHitsData, fLastEpBin, 0.);
+                        }
+                     }
+
                   }
                }
             }
