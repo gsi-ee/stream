@@ -18,14 +18,28 @@ namespace hadaq {
          base::H1handle fEvSize;     ///< HADAQ event size
          base::H1handle fSubevSize;  ///< HADAQ sub-event size
 
+         base::H1handle fHitsFast;   ///< Hits fast (with 20 us binning)
+         base::H1handle fHitsSlow;   ///< Hits slow (with 40 ms  binning)
+
          base::H1handle fSpill;      ///< Current SPILL histogram
          base::H1handle fLastSpill;  ///< Last SPILL histogram
-         base::H1handle fHitsData;       ///< Current SPILL histogram
-         int fSpillCnt;
-         int fSpillSize;
-         unsigned fTotalCnt;
-         unsigned fLastEpBin;
+
+         unsigned fLastBinFast;
+         unsigned fLastBinSlow;
+         unsigned fLastEpoch;
+         unsigned fLastSpillEpoch; ///< last epoch used to calculate spill quality
+         unsigned fLastSpillBin;   ///< last bin number filled in the histogram
+
          bool fFirstEpoch;
+
+         double fSpillOnLevel;  ///< number of hits in 40ms bin to detect spill on (at least N bins after each other over limit)
+         double fSpillOffLevel; ///< number of hits in 40ms bin to detect spill off (at least N bins below limit)
+         unsigned fSpillMinCnt;   ///< minimal number of counts to detect spill
+
+         unsigned fSpillStartEpoch; ///< epoch value which assumed to be spill start, 0 - off
+         unsigned fSpillEndEpoch; ///< epoch value when switch off spill
+
+         double fMaxSpillLength;  ///< maximal spill time in seconds
 
          unsigned fTdcMin;   // minimal TDC id
          unsigned fTdcMax;   // maximal TDC id
@@ -34,6 +48,9 @@ namespace hadaq {
           *          +1 when leftbin>rightbin
           *          0  when leftbin==rightbin */
          int CompareEpochBins(unsigned leftbin, unsigned rightbin);
+
+         /** Return time difference between epochs in seconds */
+         double EpochTmDiff(unsigned ep1, unsigned ep2);
 
       public:
 
@@ -48,6 +65,15 @@ namespace hadaq {
             fTdcMin = min;
             fTdcMax = max;
          }
+
+         void SetSpillDetect(double lvl_on, double lvl_off, unsigned cnt = 3)
+         {
+            fSpillOnLevel = lvl_on;
+            fSpillOffLevel = lvl_off;
+            fSpillMinCnt = cnt;
+         }
+
+         void SetMaxSpillLength(double tm = 10) { fMaxSpillLength = tm; }
    };
 
 }

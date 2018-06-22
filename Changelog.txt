@@ -1,3 +1,8 @@
+22.06.2018
+1. In hadaq::SpillProcessor introduce fast (20 us binning) and slow (40 ms binning) histogramming 
+   of hits counts. Fast histograms will be used to calculate quality 
+
+
 20.06.2018
 1. Implement implicit calibration mode for DABC. In this case calibration is started by 
    the command from the control GUI and all hits are accumulated for calibration. 
