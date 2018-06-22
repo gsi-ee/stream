@@ -5,13 +5,15 @@
 #include "hadaq/TdcIterator.h"
 
 
-const unsigned NUMEPOCHBINS = 0x1000;
+const unsigned NUMHISTBINS = 0x1000;
 const double EPOCHLEN = 5e-9*0x800;
-const double BINWIDTHFAST = EPOCHLEN*2;
-const double BINWIDTHSLOW = EPOCHLEN*0x1000;
+const unsigned FASTEPOCHS = 2;
+const double BINWIDTHFAST = EPOCHLEN*FASTEPOCHS;
+const unsigned SLOWEPOCHS = 0x1000;
+const double BINWIDTHSLOW = EPOCHLEN*SLOWEPOCHS;
 const unsigned NUMSTAT = 100; // use 100 bins for stat calculations
 const double BINWIDTHSTAT = BINWIDTHFAST * NUMSTAT;
-const unsigned NUMSTATBINS = 1000; // use 100 bins for stat calculations
+const unsigned NUMSTATBINS = 8000; // use 100 bins for stat calculations
 
 hadaq::SpillProcessor::SpillProcessor() :
    base::StreamProc("HLD", 0, false)
@@ -27,9 +29,9 @@ hadaq::SpillProcessor::SpillProcessor() :
 
    char title[200];
    snprintf(title, sizeof(title), "Fast hits distribution, %5.2f us bins", BINWIDTHFAST*1e6);
-   fHitsFast = MakeH1("HitsFast", title, NUMEPOCHBINS, 0., BINWIDTHFAST*NUMEPOCHBINS*1e3, "ms");
+   fHitsFast = MakeH1("HitsFast", title, NUMHISTBINS, 0., BINWIDTHFAST*NUMHISTBINS*1e3, "ms");
    snprintf(title, sizeof(title), "Slow hits distribution, %5.2f ms bins", BINWIDTHSLOW*1e3);
-   fHitsSlow = MakeH1("HitsSlow", title, NUMEPOCHBINS, 0., BINWIDTHSLOW*NUMEPOCHBINS, "sec");
+   fHitsSlow = MakeH1("HitsSlow", title, NUMHISTBINS, 0., BINWIDTHSLOW*NUMHISTBINS, "sec");
 
    fLastBinFast = 0;
    fLastBinSlow = 0;
@@ -62,19 +64,37 @@ int hadaq::SpillProcessor::CompareEpochBins(unsigned leftbin, unsigned rightbin)
    if (leftbin == rightbin) return 0;
 
    if (leftbin < rightbin)
-      return (rightbin - leftbin) < NUMEPOCHBINS/2 ? -1 : 1;
+      return (rightbin - leftbin) < NUMHISTBINS/2 ? -1 : 1;
 
-   return (leftbin - rightbin) < NUMEPOCHBINS/2 ? 1 : -1;
+   return (leftbin - rightbin) < NUMHISTBINS/2 ? 1 : -1;
 }
 
 /** Return time difference between epochs in seconds */
 double hadaq::SpillProcessor::EpochTmDiff(unsigned ep1, unsigned ep2)
 {
-   unsigned diff = ep2-ep1;
-   if (diff > 0xF0000000) diff += 0x10000000;
-   return diff * EPOCHLEN;
+   return EpochDiff(ep1, ep2) * EPOCHLEN;
 }
 
+void hadaq::SpillProcessor::StartSpill(unsigned epoch)
+{
+   fSpillStartEpoch = epoch;
+   fSpillEndEpoch = 0;
+   fLastSpillEpoch = epoch & ~(FASTEPOCHS-1); // mask not used bins
+   fLastSpillBin = 0;
+   ClearH1(fSpill);
+   printf("SPILL ON  0x%08x tm  %6.2f s\n", epoch, EpochTmDiff(0, epoch));
+}
+
+void hadaq::SpillProcessor::StopSpill(unsigned epoch)
+{
+   printf("SPILL OFF 0x%08x len %6.2f s\n", epoch, EpochTmDiff(fSpillStartEpoch, epoch));
+
+   fSpillStartEpoch = 0;
+   fSpillEndEpoch = epoch;
+   fLastSpillEpoch = 0;
+   fLastSpillBin = 0;
+   CopyH1(fLastSpill, fSpill);
+}
 
 bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
 {
@@ -151,8 +171,8 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
                   } else if (msg.isEpochMsg()) {
                      fLastEpoch = iter.getCurEpoch();
 
-                     fastbin = (fLastEpoch >> 1) % NUMEPOCHBINS; // use lower bits from epoch
-                     slowbin = (fLastEpoch >> 12) % NUMEPOCHBINS; // use only 12 bits, skipping lower 12 bits
+                     fastbin = (fLastEpoch >> 1) % NUMHISTBINS; // use lower bits from epoch
+                     slowbin = (fLastEpoch >> 12) % NUMHISTBINS; // use only 12 bits, skipping lower 12 bits
 
                      if (fFirstEpoch) {
                         fFirstEpoch = false;
@@ -161,11 +181,11 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
                      } else {
                         // clear all previous bins in-between
                         while (CompareEpochBins(fLastBinSlow, slowbin) < 0) {
-                           fLastBinSlow = (fLastBinSlow+1) % NUMEPOCHBINS;
+                           fLastBinSlow = (fLastBinSlow+1) % NUMHISTBINS;
                            SetH1Content(fHitsSlow, fLastBinSlow, 0.);
                         }
                         while (CompareEpochBins(fLastBinFast, fastbin) < 0) {
-                           fLastBinFast = (fLastBinFast+1) % NUMEPOCHBINS;
+                           fLastBinFast = (fLastBinFast+1) % NUMHISTBINS;
                            SetH1Content(fHitsFast, fLastBinFast, 0.);
                         }
                      }
@@ -190,37 +210,69 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
 
          for (unsigned bin=(fLastBinSlow-fSpillMinCnt); (bin<fLastBinSlow) && all_over; ++bin)
             if (GetH1Content(fHitsSlow, bin) < fSpillOnLevel) all_over = false;
-         if (all_over) {
-            fSpillStartEpoch = fLastEpoch;
-            fSpillEndEpoch = 0;
-            fLastSpillEpoch = fSpillStartEpoch & 0xFFFFFFFE; // mask last bin
-            fLastSpillBin = 0;
-            ClearH1(fSpill);
-         }
+
+         if (all_over) StartSpill(fLastEpoch);
+
       } else if (!fSpillStartEpoch && (fLastBinSlow>=fSpillMinCnt)) {
          // detecting spill OFF
          bool all_below = true;
+
          for (unsigned bin=(fLastBinSlow-fSpillMinCnt); (bin<fLastBinSlow) && all_below; ++bin)
             if (GetH1Content(fHitsSlow, bin) > fSpillOffLevel) all_below = false;
-         if (all_below) {
-            fSpillEndEpoch = fLastEpoch;
-            fSpillStartEpoch = 0;
-            fLastSpillEpoch = 0;
-            fLastSpillBin = 0;
-            CopyH1(fLastSpill, fSpill);
-         }
+
+         if (all_below) StopSpill(fLastEpoch);
       }
 
       // check length of the current spill
-      if (fSpillStartEpoch && (EpochTmDiff(fSpillStartEpoch, fLastEpoch) > fMaxSpillLength)) {
-         fSpillStartEpoch = 0;
-         fSpillEndEpoch = fLastEpoch;
-         fLastSpillEpoch = 0; // mask last bin
-         fLastSpillBin = 0;
-         CopyH1(fLastSpill, fSpill);
+      if (fSpillStartEpoch && (EpochTmDiff(fSpillStartEpoch, fLastEpoch) > fMaxSpillLength))
+         StopSpill(fLastEpoch);
+
+      if (fLastSpillEpoch) {
+
+         // check when last bin in spill statistic was caclualted
+         unsigned diff = EpochDiff(fLastSpillEpoch, fLastEpoch);
+         if (diff > 0.8*FASTEPOCHS*NUMHISTBINS) {
+            // too large different jump in epoch value - skip most of them
+
+            unsigned jump = diff / FASTEPOCHS*NUMSTAT;
+            if (jump>1) jump--;
+
+            fLastSpillBin += jump;
+            fLastSpillEpoch += jump*FASTEPOCHS*NUMSTAT;
+
+            diff = EpochDiff(fLastSpillEpoch, fLastEpoch);
+         }
+
+
+         // calculate statistic for all following bins
+         while ((diff > 1.5*FASTEPOCHS*NUMSTAT) && (fLastSpillBin < NUMSTATBINS)) {
+
+            // first bin for statistic
+            unsigned fastbin = (fLastEpoch >> 1) % NUMHISTBINS;
+
+            double sum = 0, max = 0;
+
+            for (unsigned n=0;n<NUMSTAT;++n) {
+               double cont = GetH1Content(fHitsFast, fastbin++);
+               sum+=cont;
+               if (cont>max) max = cont;
+               if (fastbin >= NUMHISTBINS) fastbin = 0;
+            }
+
+            sum = sum/NUMSTAT;
+
+            SetH1Content(fSpill, fLastSpillBin, sum>0 ? max/sum : 0.);
+
+            fLastSpillBin++;
+            fLastSpillEpoch += FASTEPOCHS*NUMSTAT;
+
+            diff = EpochDiff(fLastSpillEpoch, fLastEpoch);
+         }
+
+
+         if (fLastSpillBin >= NUMSTATBINS) StopSpill(fLastEpoch);
+
       }
-
-
 
    } // events
    return true;
