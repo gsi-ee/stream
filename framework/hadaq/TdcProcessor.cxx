@@ -2281,7 +2281,7 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
 
    fCalibrStatus = "CalibrFile";
 
-   fCalibrQuality = 0.9;
+   fCalibrQuality = 0.99;
 
    return true;
 }
