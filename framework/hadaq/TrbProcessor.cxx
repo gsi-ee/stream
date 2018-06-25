@@ -798,7 +798,7 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub, void* 
       trig_type = (val & bitmask) >> bitshift;
    }
 
-   DefFillH1(fTrigType, trig_type, 1.);
+   DefFastFillH1(fTrigType, trig_type & 0xF, 1.);
 
    DefFillH1(fSubevSize, sub->GetSize(), 1.);
 

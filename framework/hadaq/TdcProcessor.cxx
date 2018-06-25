@@ -643,7 +643,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
       //   continue;
       //}
 
-      if (fMsgsKind) DefFastFillH1(fMsgsKind, (msg.getKind() >> 29));
+      DefFastFillH1(fMsgsKind, (msg.getKind() >> 29), 1.);
 
       if (!msg.isHit0Msg()) {
          if (msg.isEpochMsg()) { epoch = msg.getEpochValue(); } else
@@ -757,26 +757,26 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
          }
       }
 
-      if (HistFillLevel()<1) continue;
+      if (HistFillLevel()<2) continue;
 
-      DefFastFillH1(fChannels, chid);
-      DefFastFillH1(fHits, (chid*2 + (isrising ? 0 : 1)));
+      DefFastFillH1(fChannels, chid, 1.);
+      DefFastFillH1(fHits, (chid*2 + (isrising ? 0 : 1)), 1.);
       DefFastFillH2(fAllFine, chid, fine);
       DefFastFillH2(fAllCoarse, chid, coarse);
       if ((HistFillLevel()>2) && ((rec.fRisingFine==0) || (rec.fFallingFine==0)))
          CreateChannelHistograms(chid);
 
       if (isrising) {
-         DefFastFillH1(rec.fRisingFine, fine);
+         DefFastFillH1(rec.fRisingFine, fine, 1.);
       } else {
-         DefFastFillH1(rec.fFallingFine, fine);
+         DefFastFillH1(rec.fFallingFine, fine, 1.);
       }
    }
 
-   if (cnt && fMsgPerBrd) DefFillH1(*fMsgPerBrd, fSeqeunceId, cnt);
+   if (cnt && fMsgPerBrd) DefFastFillH1(*fMsgPerBrd, fSeqeunceId, cnt);
    // fill number of "good" hits
-   if (hitcnt && fHitsPerBrd) DefFillH1(*fHitsPerBrd, fSeqeunceId, hitcnt);
-   if (errcnt && fErrPerBrd) DefFillH1(*fErrPerBrd, fSeqeunceId, errcnt);
+   if (hitcnt && fHitsPerBrd) DefFastFillH1(*fHitsPerBrd, fSeqeunceId, hitcnt);
+   if (errcnt && fErrPerBrd) DefFastFillH1(*fErrPerBrd, fSeqeunceId, errcnt);
 
    if ((hitcnt>0) && use_in_calibr && (fCurrentTemp>0)) {
       fCalibrTempSum0 += 1.;
@@ -1089,7 +1089,7 @@ bool hadaq::TdcProcessor::DoBubbleScan(const base::Buffer& buf, bool first_scan)
       if (first_scan) {
          if (!fMsgsKind || (msg.getKind() >> 29) >= 8) { printf("ERRRRRRRR\n"); exit(4); }
 
-         DefFastFillH1(fMsgsKind, (msg.getKind() >> 29));
+         DefFastFillH1(fMsgsKind, (msg.getKind() >> 29), 1.);
       }
 
       chid = 0xFFFF;
@@ -1158,15 +1158,15 @@ bool hadaq::TdcProcessor::DoBubbleScan(const base::Buffer& buf, bool first_scan)
             // if ((res & 0xF0) == 0x00) p1 -= 1;
 
             switch (res & 0xF0) {
-               case 0x00: DefFastFillH1(rec.fBubbleFalling, p1); break;
-               case 0x10: DefFastFillH1(rec.fBubbleFallingErr, p1); break;
-               default: DefFastFillH1(rec.fBubbleFallingAll, p1); break;
+               case 0x00: DefFastFillH1(rec.fBubbleFalling, p1, 1.); break;
+               case 0x10: DefFastFillH1(rec.fBubbleFallingErr, p1, 1.); break;
+               default: DefFastFillH1(rec.fBubbleFallingAll, p1, 1.); break;
             }
 
             switch (res & 0x0F) {
-               case 0x00: DefFastFillH1(rec.fBubbleRising, p2); break;
-               case 0x01: DefFastFillH1(rec.fBubbleRisingErr, p2); break;
-               default: DefFastFillH1(rec.fBubbleRisingAll, p2); break;
+               case 0x00: DefFastFillH1(rec.fBubbleRising, p2, 1.); break;
+               case 0x01: DefFastFillH1(rec.fBubbleRisingErr, p2, 1.); break;
+               default: DefFastFillH1(rec.fBubbleRisingAll, p2, 1.); break;
             }
 
             rec.rising_hit_tm = 0;
@@ -1182,8 +1182,8 @@ bool hadaq::TdcProcessor::DoBubbleScan(const base::Buffer& buf, bool first_scan)
             if ((res & 0xF0) == 0x20) { p1 = round((p2 - rec.bubble_a) / rec.bubble_b); fine = p1 + p2; }
 
             if (res != 0x22) {
-               if ((res & 0x0F) == 0x02) DefFastFillH1(fBubbleErrDistr, p2);
-               if ((res & 0xF0) == 0x20) DefFastFillH1(fBubbleErrDistr, p1);
+               if ((res & 0x0F) == 0x02) DefFastFillH1(fBubbleErrDistr, p2, 1.);
+               if ((res & 0xF0) == 0x20) DefFastFillH1(fBubbleErrDistr, p1, 1.);
             }
 
             if ((p2 < 16) || (p1 < 4)) fine = 0;
@@ -1202,7 +1202,7 @@ bool hadaq::TdcProcessor::DoBubbleScan(const base::Buffer& buf, bool first_scan)
                rec.rising_stat[fine]++;
                rec.all_rising_stat++;
                rec.rising_cnt++;
-               DefFastFillH1(rec.fRisingFine, fine);
+               DefFastFillH1(rec.fRisingFine, fine, 1.);
                localtm = -rec.rising_calibr[fine];
 
 //               if ((p2>18) && (p2<204) && (p1>10) && (p1<200)) {
@@ -1331,7 +1331,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       cnt++;
 
       if (first_scan)
-         DefFastFillH1(fMsgsKind, (msg.getKind() >> 29));
+         DefFastFillH1(fMsgsKind, (msg.getKind() >> 29), 1.);
 
       if (cnt==1) {
          if (!msg.isHeaderMsg()) {
@@ -1462,8 +1462,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                   printf("%5s Missing hit in channel %u fine counter is %x\n", GetName(), chid, fine);
 
                missinghit = true;
-               DefFastFillH1(fChannels, chid);
-               DefFastFillH1(fUndHits, chid);
+               DefFastFillH1(fChannels, chid, 1.);
+               DefFastFillH1(fUndHits, chid, 1.);
             }
             continue;
          }
@@ -1516,7 +1516,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             raw_hit = false;
          } else {
             if (fine >= fNumFineBins) {
-               DefFastFillH1(fErrors, chid);
+               DefFastFillH1(fErrors, chid, 1.);
                if (CheckPrintError())
                   printf("%5s Fine counter %u out of allowed range 0..%u in channel %u\n", GetName(), fine, fNumFineBins, chid);
                iserr = true;
@@ -1581,7 +1581,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             if (use_for_calibr == 3)
                use_fine_for_stat = (gTrigDWindowLow <= localtm*1e9) && (localtm*1e9 <= gTrigDWindowHigh);
 
-            DefFastFillH1(fChannels, chid);
+            DefFastFillH1(fChannels, chid, 1.);
             DefFillH1(fHits, (chid + (isrising ? 0.25 : 0.75)), 1.);
             if (raw_hit && use_fine_for_stat) DefFillH2(fAllFine, chid, fine, 1.);
             DefFillH2(fAllCoarse, chid, coarse, 1.);
@@ -1605,7 +1605,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
                rec.rising_cnt++;
                if (raw_hit) {
-                  if (use_fine_for_stat) DefFastFillH1(rec.fRisingFine, fine);
+                  if (use_fine_for_stat) DefFastFillH1(rec.fRisingFine, fine, 1.);
                   if (double_edges) {
                      DefFillH1(rec.fBubbleRising, fine0!=0x3ff ? fine0 : BUBBLE_SIZE*16 - 1 , 1.);
                      DefFillH1(rec.fBubbleFalling, fine1!=0x3ff ? fine1 : BUBBLE_SIZE*16 - 1, 1.);
@@ -1665,7 +1665,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                }
                rec.falling_cnt++;
 
-               if (raw_hit && use_fine_for_stat) DefFastFillH1(rec.fFallingFine, fine);
+               if (raw_hit && use_fine_for_stat) DefFastFillH1(rec.fFallingFine, fine, 1.);
 
                if (rec.rising_new_value && (rec.rising_last_tm!=0)) {
                   double tot = (localtm - rec.rising_last_tm)*1e9;

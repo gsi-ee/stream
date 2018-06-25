@@ -17,11 +17,13 @@
   }                                                                  \
 }
 
-#define DefFastFillH1(h1,x) {                          \
-    if (h1 && fIntHistFormat)                          \
-      ((double*) h1)[4+x] += 1.;                       \
-    else                                               \
-     if (h1) mgr()->FillH1(h1, x, 1.);                 \
+#define DefFastFillH1(h1,x,weight) {              \
+    if (h1) {                                     \
+      if (fIntHistFormat)                         \
+        ((double*) h1)[4+(x)] += weight;          \
+     else                                         \
+        mgr()->FillH1(h1, (x), weight);           \
+     }                                            \
 }
 
 #define DefFillH2(h2,x,y,weight) {               \
@@ -89,8 +91,8 @@ namespace base {
            { DefFillH1(h1,x,weight); }
 
          /** Can only be used where index is same as x itself, no range checks are performed */
-         inline void FastFillH1(H1handle h1, int x)
-            { DefFastFillH1(h1,x); }
+         inline void FastFillH1(H1handle h1, int x, double weight = 1.)
+            { DefFastFillH1(h1,x, weight); }
 
          inline double GetH1Content(H1handle h1, int nbin)
          {
