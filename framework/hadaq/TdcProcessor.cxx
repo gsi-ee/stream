@@ -631,27 +631,9 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
    bool do_tot = use_in_calibr && is_0d_trig && DoFallingEdge();
    bool check_calibr_progress = false;
 
-   uint32_t *src_data = 0, *tgt_data = 0, src_value;
-
-   // use fast access to the data, when perform copying and swapped four-bytes access
-   bool fast_access = tgt && sub->IsSwapped() && (sub->Alignment()==4);
-
-   // fast_access = false;
-
-   if (fast_access) {
-      src_data = (uint32_t *) ((char*) (sub) + sizeof(hadaqs::RawSubevent)) + indx;
-      tgt_data = (uint32_t *) ((char*) (tgt) + sizeof(hadaqs::RawSubevent)) + tgtindx;
-   }
-
    while (datalen-- > 0) {
 
-      if (fast_access) {
-         src_value = *src_data++;
-         msg.assign(__builtin_bswap32(src_value));
-         indx++;
-      } else {
-         msg.assign(sub->Data(indx++));
-      }
+       msg.assign(sub->Data(indx++));
 
       cnt++;
 
@@ -666,12 +648,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
       if (!msg.isHit0Msg()) {
          if (msg.isEpochMsg()) { epoch = msg.getEpochValue(); } else
          if (msg.isCalibrMsg()) { calibr_indx = tgtindx; calibr_num = 0; }
-         if (fast_access) {
-            *tgt_data++ = src_value;
-            tgtindx++;
-         } else if (tgt) {
-            tgt->SetData(tgtindx++, msg.getData());
-         }
+         tgt->SetData(tgtindx++, msg.getData());
          continue;
       }
       hitcnt++;
@@ -738,7 +715,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
          }
          if (new_fine>0x3ffe) new_fine = 0x3ffe;
 
-         if (calibr_indx==0) {
+         if (calibr_indx == 0) {
             calibr_indx = tgtindx++;
             calibr_num = 0;
             calibr.assign(tdckind_Calibr);
@@ -746,7 +723,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
             calibr.assign(tgt->Data(calibr_indx));
          }
 
-         // set data of calibr message
+         // set data of calibr message, do not use fast access
          calibr.setCalibrFine(calibr_num++, new_fine);
          tgt->SetData(calibr_indx, calibr.getData());
          if (calibr_num>1) calibr_indx = 0;
