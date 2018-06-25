@@ -60,6 +60,8 @@ namespace hadaq {
          unsigned fTakenTriggerCnt;  ///< registered trigger counts
 
          base::H1handle fEvSize;     ///< HADAQ event size
+         unsigned fSubevHLen;        ///< maximal length of subevent in bytes
+         unsigned fSubevHDiv;        ///< integer division for subevent
          base::H1handle fSubevSize;  ///< HADAQ subevent size
          base::H1handle fLostRate;   ///< lost rate
          base::H1handle fTrigType;   ///< trigger type

@@ -50,7 +50,9 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc, int hfi
    fHitsPerBrd = 0;
 
    fEvSize = MakeH1("EvSize", "Event size", 500, 0, 50000, "bytes");
-   fSubevSize = MakeH1("SubevSize", "Subevent size", 500, 0, 5000, "bytes");
+   fSubevHLen = 5000;
+   fSubevHDiv = 10;
+   fSubevSize = MakeH1("SubevSize", "Subevent size", fSubevHLen/fSubevHDiv, 0, fSubevHLen, "bytes");
    fLostRate = MakeH1("LostRate", "Relative number of lost packets", 1000, 0, 1., "data lost");
    fTrigType = MakeH1("TrigType", "Number of different trigger types", 16, 0, 16, "trigger;xbin:0x0,0x1,0x2,0x3,0x4,0x5,0x6,0x7,0x8,0x9,0xA,0xB,0xC,0xD,0xE,0xF");
 
@@ -787,7 +789,7 @@ bool hadaq::TrbProcessor::CreateMissingTDC(hadaqs::RawSubevent *sub, const std::
 unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub, void* tgtbuf, unsigned tgtlen, bool only_hist)
 {
 
-   unsigned trig_type = sub->GetTrigTypeTrb3();
+   unsigned trig_type = sub->GetTrigTypeTrb3(), sz = sub->GetSize();
 
    if (only_hist && (GetID() == 0x8800)) {
       unsigned wordNr = 2;
@@ -798,9 +800,10 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub, void* 
       trig_type = (val & bitmask) >> bitshift;
    }
 
-   DefFastFillH1(fTrigType, trig_type & 0xF, 1.);
+   DefFastFillH1(fTrigType, (trig_type & 0xF), 1.);
 
-   DefFillH1(fSubevSize, sub->GetSize(), 1.);
+   if (sz < fSubevHLen)
+      DefFastFillH1(fSubevSize, sz / fSubevHDiv, 1.);
 
    // only fill histograms
    if (only_hist) return 0;
