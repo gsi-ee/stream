@@ -728,7 +728,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
          }
       } else {
          rec.falling_cnt++;
-         if (use_in_calibr) { rec.rising_stat[fine]++; rec.all_rising_stat++; }
+         if (use_in_calibr) { rec.falling_stat[fine]++; rec.all_falling_stat++; }
          if (do_tot && rec.rising_new_value) {
             rec.last_tot = ((epoch << 11) | coarse) * 5e-9 - corr - rec.rising_last_tm;
             rec.rising_new_value = false;
