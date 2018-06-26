@@ -522,6 +522,24 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
    if ((fCalibrProgress>=1.) && fAutoCalibr) PerformAutoCalibrate();
 }
 
+long hadaq::TdcProcessor::CheckChannelStat(unsigned ch)
+{
+   ChannelRec &rec = fCh[ch];
+   if (!rec.docalibr) return 0;
+
+   if (fEdgeMask == edge_CommonStatistic)
+      return rec.all_rising_stat + rec.all_falling_stat;
+
+   long stat = 0;
+
+   if (DoRisingEdge() && (rec.all_rising_stat>0)) stat = rec.all_rising_stat;
+
+   if (DoFallingEdge() && (rec.all_falling_stat>0) && (fEdgeMask == edge_BothIndepend))
+      if ((stat == 0) || (rec.all_falling_stat < stat)) stat = rec.all_falling_stat;
+
+   return stat;
+}
+
 double hadaq::TdcProcessor::TestCanCalibrate()
 {
    if (fCalibrCounts<=0) return 0.;
@@ -530,13 +548,10 @@ double hadaq::TdcProcessor::TestCanCalibrate()
    long min = 1000000000L;
 
    for (unsigned ch=0;ch<NumChannels();ch++) {
-      ChannelRec &rec = fCh[ch];
-      if (rec.docalibr) {
-         long stat = rec.GetCalibrStat(fEdgeMask);
-         if (stat>100) {
-            isany = true;
-            if (stat<min) min = stat;
-         }
+      long stat = CheckChannelStat(ch);
+      if (stat>0) {
+         isany = true;
+         if (stat<min) min = stat;
       }
    }
 
@@ -738,7 +753,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
       // trigger check of calibration only when enough statistic in that channel
       // done only once for specified channel
       if (rec.docalibr && !rec.check_calibr && (fCalibrCounts > 0)) {
-         if (rec.GetCalibrStat(fEdgeMask) >= fCalibrCounts) {
+         if (CheckChannelStat(chid) >= fCalibrCounts) {
             rec.check_calibr = true;
             check_calibr_progress = true;
          }

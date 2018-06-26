@@ -161,14 +161,6 @@ namespace hadaq {
                if (falling_stat) { delete [] falling_stat; falling_stat = 0; }
                if (falling_calibr) { delete [] falling_calibr; falling_calibr = 0; }
             }
-
-            long GetCalibrStat(unsigned edgesMask) {
-               if (!docalibr) return 0;
-               long stat = all_rising_stat;
-               if (edgesMask==edge_CommonStatistic) stat += all_falling_stat; else
-               if ((edgesMask==edge_BothIndepend) && (all_falling_stat < stat)) stat = all_falling_stat;
-               return stat;
-            }
          };
 
          TdcIterator fIter1;         //! iterator for the first scan
@@ -287,6 +279,8 @@ namespace hadaq {
          /** These methods used to fill different raw histograms during first scan */
          virtual void BeforeFill();
          virtual void AfterFill(SubProcMap* = 0);
+
+         long CheckChannelStat(unsigned ch);
 
          bool CalibrateChannel(unsigned nch, long* statistic, float* calibr, bool use_linear = false);
          void CopyCalibration(float* calibr, base::H1handle hcalibr, unsigned ch = 0, base::H2handle h2calibr = 0);
