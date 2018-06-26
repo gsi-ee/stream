@@ -333,6 +333,7 @@ namespace hadaq {
          inline unsigned NumChannels() const { return fNumChannels; }
          inline bool DoRisingEdge() const { return true; }
          inline bool DoFallingEdge() const { return fEdgeMask > 1; }
+         inline unsigned GetEdgeMask() const { return fEdgeMask; }
 
          double GetCalibrProgress() const { return fCalibrProgress; }
          std::string GetCalibrStatus() const { return fCalibrStatus; }
