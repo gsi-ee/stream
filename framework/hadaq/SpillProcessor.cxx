@@ -37,8 +37,8 @@ hadaq::SpillProcessor::SpillProcessor() :
    snprintf(title, sizeof(title), "Slow hits distribution, %5.2f ms bins", BINWIDTHSLOW*1e3);
    fHitsSlow = MakeH1("HitsSlow", title, NUMHISTBINS, 0., BINWIDTHSLOW*NUMHISTBINS, "sec");
 
-   fBeamX = MakeH1("BeamX", "Beam X position", 16, 0, 16, "ch");
-   fBeamY = MakeH1("BeamY", "Beam Y position", 16, 0, 16, "ch");
+   fBeamX = MakeH1("BeamX", "Beam X position in spill", 16, 0, 16, "ch");
+   fBeamY = MakeH1("BeamY", "Beam Y position in spill", 16, 0, 16, "ch");
 
    fTrendX = MakeH1("TrendX", "Trending for beam X position", NUMSTATBINS, 0., NUMSTATBINS*BINWIDTHSTAT, "sec");
    fTrendY = MakeH1("TrendY", "Trending for beam Y position", NUMSTATBINS, 0., NUMSTATBINS*BINWIDTHSTAT, "sec");
@@ -97,7 +97,7 @@ void hadaq::SpillProcessor::StartSpill(unsigned epoch)
    ClearH1(fTrendX);
    ClearH1(fTrendY);
    fSumX = fCntX = fSumY = fCntY = 0;
-   fCurrXYBin = 0;
+   fCurrXYBin = 0; fLastX = fLastY = 0.;
    printf("SPILL ON  0x%08x tm  %6.2f s\n", epoch, EpochTmDiff(0, epoch));
 }
 
@@ -192,9 +192,15 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
                            unsigned bin = diff / (FASTEPOCHS*NUMSTAT);
 
                            if (bin != fCurrXYBin) {
-                              if (fCurrXYBin<NUMSTATBINS) {
-                                 if (fCntX>5) SetH1Content(fTrendX, fCurrXYBin, 1.*fSumX/fCntX);
-                                 if (fCntY>5) SetH1Content(fTrendY, fCurrXYBin, 1.*fSumY/fCntY);
+                              if (fCntX>5) fLastX = 1.*fSumX/fCntX;
+                              if (fCntY>5) fLastY = 1.*fSumY/fCntY;
+
+                              if (bin >= NUMSTATBINS) bin = NUMSTATBINS - 1;
+
+                              while (fCurrXYBin<bin) {
+                                 SetH1Content(fTrendX, fCurrXYBin, fLastX);
+                                 SetH1Content(fTrendY, fCurrXYBin, fLastY);
+                                 fCurrXYBin++;
                               }
 
                               fSumX = fCntX = fSumY = fCntY = 0;

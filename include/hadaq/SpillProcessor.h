@@ -30,6 +30,7 @@ protected:
 
    long fSumX, fCntX, fSumY, fCntY;
    unsigned fCurrXYBin;       ///< bin where current XY is calculated
+   double fLastX, fLastY;
 
    unsigned fLastBinFast;
    unsigned fLastBinSlow;
