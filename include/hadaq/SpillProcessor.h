@@ -22,6 +22,9 @@ protected:
    base::H1handle fSpill;     ///< Current SPILL histogram
    base::H1handle fLastSpill; ///< Last SPILL histogram
 
+   base::H1handle fBeamX;     ///< Current X position
+   base::H1handle fBeamY;     ///< Current Y position
+
    unsigned fLastBinFast;
    unsigned fLastBinSlow;
    unsigned fLastEpoch;

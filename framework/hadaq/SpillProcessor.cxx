@@ -15,6 +15,10 @@ const unsigned NUMSTAT = 100; // use 100 bins for stat calculations
 const double BINWIDTHSTAT = BINWIDTHFAST * NUMSTAT;
 const unsigned NUMSTATBINS = 8000; // use 100 bins for stat calculations
 
+const unsigned ChannelsLookup[33] = {0,
+             0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
+           100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115 };
+
 hadaq::SpillProcessor::SpillProcessor() :
    base::StreamProc("HLD", 0, false)
 {
@@ -32,6 +36,9 @@ hadaq::SpillProcessor::SpillProcessor() :
    fHitsFast = MakeH1("HitsFast", title, NUMHISTBINS, 0., BINWIDTHFAST*NUMHISTBINS*1e3, "ms");
    snprintf(title, sizeof(title), "Slow hits distribution, %5.2f ms bins", BINWIDTHSLOW*1e3);
    fHitsSlow = MakeH1("HitsSlow", title, NUMHISTBINS, 0., BINWIDTHSLOW*NUMHISTBINS, "sec");
+
+   fBeamX = MakeH1("BeamX", "Beam X position", 16, 0, 16, "ch");
+   fBeamY = MakeH1("BeamY", "Beam Y position", 16, 0, 16, "ch");
 
    fLastBinFast = 0;
    fLastBinSlow = 0;
@@ -82,6 +89,8 @@ void hadaq::SpillProcessor::StartSpill(unsigned epoch)
    fLastSpillEpoch = epoch & ~(FASTEPOCHS-1); // mask not used bins
    fLastSpillBin = 0;
    ClearH1(fSpill);
+   ClearH1(fBeamX);
+   ClearH1(fBeamY);
    printf("SPILL ON  0x%08x tm  %6.2f s\n", epoch, EpochTmDiff(0, epoch));
 }
 
@@ -163,9 +172,17 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
 
                      numhits++;
 
-                     if (chid!=0) {
+                     if (chid>0) {
+
                         FastFillH1(fHitsFast, fastbin);
                         FastFillH1(fHitsSlow, slowbin);
+
+                        if (chid < 34) {
+                           unsigned lookup = ChannelsLookup[chid];
+
+                           if (lookup<16) FastFillH1(fBeamX, lookup);
+                                     else FastFillH1(fBeamY, lookup % 100);
+                        }
                      }
 
                   } else if (msg.isEpochMsg()) {
