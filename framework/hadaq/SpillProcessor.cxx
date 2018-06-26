@@ -25,7 +25,7 @@ hadaq::SpillProcessor::SpillProcessor() :
    mgr()->RegisterProc(this, base::proc_TRBEvent, 0);
 
    fEvType = MakeH1("EvType", "Event type", 16, 0, 16, "id");
-   fEvSize = MakeH1("EvSize", "Event size", 500, 0, 50000, "bytes");
+   fEvSize = MakeH1("EvSize", "Event size", 500, 0, 5000, "bytes");
    fSubevSize = MakeH1("SubevSize", "Subevent size", 500, 0, 5000, "bytes");
 
    fSpill = MakeH1("Spill", "Spill structure", NUMSTATBINS, 0., NUMSTATBINS*BINWIDTHSTAT, "sec");
