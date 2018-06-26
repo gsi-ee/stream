@@ -40,6 +40,9 @@ hadaq::SpillProcessor::SpillProcessor() :
    fBeamX = MakeH1("BeamX", "Beam X position", 16, 0, 16, "ch");
    fBeamY = MakeH1("BeamY", "Beam Y position", 16, 0, 16, "ch");
 
+   fTrendX = MakeH1("TrendX", "Trending for beam X position", NUMSTATBINS, 0., NUMSTATBINS*BINWIDTHSTAT, "sec");
+   fTrendY = MakeH1("TrendY", "Trending for beam Y position", NUMSTATBINS, 0., NUMSTATBINS*BINWIDTHSTAT, "sec");
+
    fLastBinFast = 0;
    fLastBinSlow = 0;
    fLastEpoch = 0;
@@ -91,6 +94,10 @@ void hadaq::SpillProcessor::StartSpill(unsigned epoch)
    ClearH1(fSpill);
    ClearH1(fBeamX);
    ClearH1(fBeamY);
+   ClearH1(fTrendX);
+   ClearH1(fTrendY);
+   fSumX = fCntX = fSumY = fCntY = 0;
+   fCurrXYBin = 0;
    printf("SPILL ON  0x%08x tm  %6.2f s\n", epoch, EpochTmDiff(0, epoch));
 }
 
@@ -177,11 +184,32 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
                         FastFillH1(fHitsFast, fastbin);
                         FastFillH1(fHitsSlow, slowbin);
 
-                        if (chid < 34) {
-                           unsigned lookup = ChannelsLookup[chid];
+                        if (fSpillStartEpoch && (chid < 34))  {
 
-                           if (lookup<16) FastFillH1(fBeamX, lookup);
-                                     else FastFillH1(fBeamY, lookup % 100);
+                           unsigned lookup = ChannelsLookup[chid], pos = lookup % 100;
+
+                           unsigned diff = EpochDiff(fSpillStartEpoch, fLastEpoch);
+                           unsigned bin = diff / (FASTEPOCHS*NUMSTAT);
+
+                           if (bin != fCurrXYBin) {
+                              if (fCurrXYBin<NUMSTATBINS) {
+                                 if (fCntX>5) SetH1Content(fTrendX, fCurrXYBin, 1.*fSumX/fCntX);
+                                 if (fCntY>5) SetH1Content(fTrendY, fCurrXYBin, 1.*fSumY/fCntY);
+                              }
+
+                              fSumX = fCntX = fSumY = fCntY = 0;
+                              fCurrXYBin = bin;
+                           }
+
+                           if (lookup<16) {
+                              FastFillH1(fBeamX, pos);
+                              fSumX += pos;
+                              fCntX++;
+                           } else {
+                              FastFillH1(fBeamY, pos);
+                              fSumY += pos;
+                              fCntY++;
+                           }
                         }
                      }
 
@@ -230,7 +258,7 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
 
          if (all_over) StartSpill(fLastEpoch);
 
-      } else if (!fSpillStartEpoch && (fLastBinSlow>=fSpillMinCnt)) {
+      } else if (fSpillStartEpoch && (fLastBinSlow>=fSpillMinCnt)) {
          // detecting spill OFF
          bool all_below = true;
 
@@ -246,12 +274,12 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
 
       if (fLastSpillEpoch) {
 
-         // check when last bin in spill statistic was caclualted
+         // check when last bin in spill statistic was calculated
          unsigned diff = EpochDiff(fLastSpillEpoch, fLastEpoch);
          if (diff > 0.8*FASTEPOCHS*NUMHISTBINS) {
             // too large different jump in epoch value - skip most of them
 
-            unsigned jump = diff / FASTEPOCHS*NUMSTAT;
+            unsigned jump = diff / (FASTEPOCHS*NUMSTAT);
             if (jump>1) jump--;
 
             fLastSpillBin += jump;

@@ -22,8 +22,14 @@ protected:
    base::H1handle fSpill;     ///< Current SPILL histogram
    base::H1handle fLastSpill; ///< Last SPILL histogram
 
-   base::H1handle fBeamX;     ///< Current X position
-   base::H1handle fBeamY;     ///< Current Y position
+   base::H1handle fBeamX;     ///< Accumulated X position
+   base::H1handle fBeamY;     ///< Accumulated Y position
+
+   base::H1handle fTrendX;    ///< Beam X trending
+   base::H1handle fTrendY;    ///< Beam Y trending
+
+   long fSumX, fCntX, fSumY, fCntY;
+   unsigned fCurrXYBin;       ///< bin where current XY is calculated
 
    unsigned fLastBinFast;
    unsigned fLastBinSlow;
