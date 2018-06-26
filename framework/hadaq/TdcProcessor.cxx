@@ -575,20 +575,7 @@ void hadaq::TdcProcessor::CompleteCalibration(bool dummy, const std::string &fil
    fAllCalibrMode = 0;
    fCalibrCounts = 0;
 
-   if (dummy) {
-      if (fCalibrProgress >= 1) {
-         fCalibrStatus = "Ready";
-         fCalibrQuality = 1.;
-      } else if (fCalibrProgress >= 0.3) {
-         fCalibrStatus = "LowStat";
-         fCalibrQuality = 0.5;
-      } else {
-         fCalibrStatus = "NoStat";
-         fCalibrQuality = 0.2;
-      }
-   } else {
-      ProduceCalibration(true, fUseLinear);
-   }
+   ProduceCalibration(true, fUseLinear, dummy);
 
    if (!filename.empty()) StoreCalibration(filename);
    if (!subname.empty()) StoreCalibration(subname);
@@ -2047,8 +2034,21 @@ void hadaq::TdcProcessor::CopyCalibration(float* calibr, base::H1handle hcalibr,
    }
 }
 
-void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear)
+void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, bool dummy)
 {
+   if (fCalibrProgress >= 1) {
+      fCalibrStatus = "Ready";
+      fCalibrQuality = 1.;
+   } else if (fCalibrProgress >= 0.3) {
+      fCalibrStatus = "LowStat";
+      fCalibrQuality = 0.5;
+   } else {
+      fCalibrStatus = "BadStat";
+      fCalibrQuality = 0.2;
+   }
+
+   if (dummy) return;
+
    printf("%s produce %s calibrations \n", GetName(), (use_linear ? "linear" : "normal"));
 
    if (fCalibrTempSum0 > 5) {
@@ -2066,17 +2066,6 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear)
    ClearH2(fRisingCalibr);
    ClearH2(fFallingCalibr);
    ClearH1(fTotShifts);
-
-   if (fCalibrProgress >= 1) {
-      fCalibrStatus = "Ready";
-      fCalibrQuality = 1.;
-   } else if (fCalibrProgress >= 0.3) {
-      fCalibrStatus = "LowStat";
-      fCalibrQuality = 0.5;
-   } else {
-      fCalibrStatus = "BadStat";
-      fCalibrQuality = 0.2;
-   }
 
    for (unsigned ch=0;ch<NumChannels();ch++) {
 

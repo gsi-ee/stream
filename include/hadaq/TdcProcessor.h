@@ -530,7 +530,7 @@ namespace hadaq {
          void IncCalibration(unsigned ch, bool rising, unsigned fine, unsigned value);
 
          /** For expert use - artificially produce calibration */
-         void ProduceCalibration(bool clear_stat = true, bool use_linear = false);
+         void ProduceCalibration(bool clear_stat = true, bool use_linear = false, bool dummy = false);
 
          /** Access value of temperature during calibration.
           * Used to adjust all kind of calibrations afterwards */
