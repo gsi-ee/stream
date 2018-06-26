@@ -750,7 +750,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
 
       // trigger check of calibration only when enough statistic in that channel
       // done only once for specified channel
-      if (!rec.check_calibr && (fCalibrCounts > 0)) {
+      if (rec.docalibr && !rec.check_calibr && (fCalibrCounts > 0)) {
          if (rec.GetCalibrStat(fEdgeMask) >= fCalibrCounts) {
             rec.check_calibr = true;
             check_calibr_progress = true;
