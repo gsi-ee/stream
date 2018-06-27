@@ -69,7 +69,7 @@ hadaq::SpillProcessor::~SpillProcessor()
 /** returns -1 when leftbin<rightbin, taking into account overflow around 0x1000)
  *          +1 when leftbin>rightbin
  *          0  when leftbin==rightbin */
-int hadaq::SpillProcessor::CompareEpochBins(unsigned leftbin, unsigned rightbin)
+int hadaq::SpillProcessor::CompareHistBins(unsigned leftbin, unsigned rightbin)
 {
    if (leftbin == rightbin) return 0;
 
@@ -162,6 +162,8 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
             bool istdc = (dataid>=fTdcMin) && (dataid<fTdcMax);
 
             unsigned slowbin = 0, fastbin = 0; // current bin number in histogram
+            unsigned epochch0 = 0;
+            bool firtst_epoch = true, use_hits = false;
 
             if (istdc) {
 
@@ -171,7 +173,7 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
                hadaq::TdcMessage &msg = iter.msg();
 
                while (iter.next()) {
-                  if (msg.isHitMsg()) {
+                  if (msg.isHitMsg() && use_hits) {
                      unsigned chid = msg.getHitChannel();
                      //unsigned fine = msg.getHitTmFine();
                      //unsigned coarse = msg.getHitTmCoarse();
@@ -220,7 +222,22 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
                      }
 
                   } else if (msg.isEpochMsg()) {
-                     fLastEpoch = iter.getCurEpoch();
+                     if (firtst_epoch) {
+                        epochch0 = iter.getCurEpoch();
+                        firtst_epoch = false;
+                        continue;
+                     }
+
+                     unsigned val = iter.getCurEpoch();
+                     double diff = EpochTmDiff(val, epochch0);
+
+                     if ((diff < -0.001) || (diff > 0.001)) {
+                        use_hits = false;
+                        continue;
+                     }
+
+                     fLastEpoch = val;
+                     use_hits = true;
 
                      fastbin = (fLastEpoch >> 1) % NUMHISTBINS; // use lower bits from epoch
                      slowbin = (fLastEpoch >> 12) % NUMHISTBINS; // use only 12 bits, skipping lower 12 bits
@@ -231,11 +248,11 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
                         fLastBinSlow = slowbin;
                      } else {
                         // clear all previous bins in-between
-                        while (CompareEpochBins(fLastBinSlow, slowbin) < 0) {
+                        while (CompareHistBins(fLastBinSlow, slowbin) < 0) {
                            fLastBinSlow = (fLastBinSlow+1) % NUMHISTBINS;
                            SetH1Content(fHitsSlow, fLastBinSlow, 0.);
                         }
-                        while (CompareEpochBins(fLastBinFast, fastbin) < 0) {
+                        while (CompareHistBins(fLastBinFast, fastbin) < 0) {
                            fLastBinFast = (fLastBinFast+1) % NUMHISTBINS;
                            SetH1Content(fHitsFast, fLastBinFast, 0.);
                         }

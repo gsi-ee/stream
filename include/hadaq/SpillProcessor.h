@@ -55,7 +55,7 @@ protected:
    /** returns -1 when leftbin<rightbin, taking into account overflow around 0x1000)
     *          +1 when leftbin>rightbin
     *          0  when leftbin==rightbin */
-   int CompareEpochBins(unsigned leftbin, unsigned rightbin);
+   int CompareHistBins(unsigned leftbin, unsigned rightbin);
 
    /** Hard difference between epochs */
    inline unsigned EpochDiff(unsigned ep1, unsigned ep2) { return ep1 <= ep2 ? ep2 - ep1 : ep2 + 0x10000000 - ep1; }
