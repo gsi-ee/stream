@@ -60,6 +60,9 @@ hadaq::SpillProcessor::SpillProcessor() :
    fLastSpillBin = 0;
 
    fMaxSpillLength = 10.;
+
+   for (unsigned n=0;n<33;++n)
+      fChannelsLookup[n] = ChannelsLookup[n];
 }
 
 hadaq::SpillProcessor::~SpillProcessor()

@@ -52,6 +52,8 @@ protected:
    unsigned fTdcMin; // minimal TDC id
    unsigned fTdcMax; // maximal TDC id
 
+   unsigned fChannelsLookup[33];
+
    /** returns -1 when leftbin<rightbin, taking into account overflow around 0x1000)
     *          +1 when leftbin>rightbin
     *          0  when leftbin==rightbin */
@@ -87,6 +89,8 @@ public:
    }
 
    void SetMaxSpillLength(double tm = 10) { fMaxSpillLength = tm; }
+
+   void SetChannelsLookup(unsigned ch, unsigned lookup) { fChannelsLookup[ch] = lookup; }
 };
 }
 
