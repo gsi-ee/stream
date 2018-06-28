@@ -100,6 +100,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fAutoCalibr(false),
    fAutoCalibrOnce(false),
    fAllCalibrMode(-1),
+   fAllTotMode(-1),
    fWriteCalibr(),
    fWriteEveryTime(false),
    fUseLinear(false),
@@ -577,10 +578,16 @@ void hadaq::TdcProcessor::BeginCalibration(long cnt)
    fAutoCalibrOnce = false;
    fAutoCalibr = false;
    fAllCalibrMode = 1;
+   fAllTotMode = -1; // first detect 10 0xD triggers
+   fAllDTrigCnt = 0;
 
    fCalibrStatus = "Accumulating";
    fCalibrQuality = 0.7;
    fCalibrProgress = 0.;
+
+   // ensure that calibration statistic is empty
+   for (unsigned ch=0;ch<NumChannels();ch++)
+      ClearChannelStat(ch);
 }
 
 
@@ -589,6 +596,8 @@ void hadaq::TdcProcessor::CompleteCalibration(bool dummy, const std::string &fil
    if (fAllCalibrMode<=0) return;
    fAllCalibrMode = 0;
    fCalibrCounts = 0;
+   fAllTotMode = -1;
+   fAllDTrigCnt = 0;
 
    ProduceCalibration(true, fUseLinear, dummy);
 
@@ -625,21 +634,29 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
    unsigned tgtindx0(tgtindx), calibr_indx(0), calibr_num(0), epoch(0);
 
    bool use_in_calibr = ((1 << sub->GetTrigTypeTrb3()) & fCalibrTriggerMask) != 0;
-   bool is_0d_trig = (sub->GetTrigTypeTrb3() == 0xD);
+   bool is_0d_trig = (sub->GetTrigTypeTrb3() == 0xD) || true;
 
-   if (fAllCalibrMode==0) use_in_calibr = false; else
-   if (fAllCalibrMode>0) use_in_calibr = true;
+   if (fAllCalibrMode==0) {
+      use_in_calibr = false;
+   } else if (fAllCalibrMode>0) {
+      use_in_calibr = true;
+      if (is_0d_trig) fAllDTrigCnt++;
+      if ((fAllDTrigCnt>10) && (fAllTotMode<0)) fAllTotMode = 0;
+   }
 
-   bool do_tot = use_in_calibr && is_0d_trig && DoFallingEdge();
+   // do ToT calculations only when preliminary calibration was produced
+   bool do_tot = use_in_calibr && is_0d_trig && DoFallingEdge() && (fAllTotMode==1);
    bool check_calibr_progress = false;
+
+   // if (fAllTotMode==1) printf("%s dtrig %d do_tot %d dofalling %d\n", GetName(), is_0d_trig, do_tot, DoFallingEdge());
 
    while (datalen-- > 0) {
 
-       msg.assign(sub->Data(indx++));
+      msg.assign(sub->Data(indx++));
 
       cnt++;
 
-      // ONLY FOR DEBUG PURPOSES - check performance
+      // HERE ONLY FOR DEBUG PURPOSES - check performance
       //if (tgt) {
       //   tgt->SetData(tgtindx++, msg.getData());
       //   continue;
@@ -660,11 +677,13 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
       unsigned coarse = msg.getHitTmCoarse();
       bool isrising = msg.isHitRisingEdge();
 
+      // if (fAllTotMode==1) printf("%s ch %u rising %d fine %x\n", GetName(), chid, isrising, fine);
+
+      bool hard_failure = false;
       if ((chid >= NumChannels()) || (fine >= fNumFineBins)) {
-         msg.setAsHit1(0x3ff);
-         sub->SetData(indx-1, msg.getData());
+         hard_failure = true;
+         chid = 0; // use dummy channel
          errcnt++;
-         continue;
       }
 
       ChannelRec &rec = fCh[chid];
@@ -677,6 +696,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
             // value from 0 to 1000 is 5 ps unit, should be SUB from coarse time value
             uint32_t new_fine = (uint32_t) (corr/5e-12);
             if (new_fine>=1000) new_fine = 1000;
+            if (hard_failure) new_fine = 0x3ff;
             msg.setAsHit1(new_fine);
          } else {
             // simple approach for falling edge - replace data in the source buffer
@@ -697,6 +717,8 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
             if (corr_coarse > coarse)
                new_fine |= 0x200; // indicate that corrected time belongs to the previous epoch
 
+            if (hard_failure) new_fine = 0x3ff;
+
             msg.setAsHit1(new_fine);
             if (corr_coarse > 0)
                msg.setHitTmCoarse(coarse - corr_coarse);
@@ -715,7 +737,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
             // falling edge correction used for 50 ns, approx 3.05ps binning
             new_fine = (uint32_t) (corr/5e-8*0x3ffe);
          }
-         if (new_fine>0x3ffe) new_fine = 0x3ffe;
+         if ((new_fine>0x3ffe) || hard_failure) new_fine = 0x3ffe;
 
          if (calibr_indx == 0) {
             calibr_indx = tgtindx++;
@@ -734,6 +756,8 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
          tgt->SetData(tgtindx++, msg.getData());
       }
 
+      if (hard_failure) continue;
+
       if (isrising) {
          rec.rising_cnt++;
          if (use_in_calibr) { rec.rising_stat[fine]++; rec.all_rising_stat++; }
@@ -745,15 +769,18 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
          rec.falling_cnt++;
          if (use_in_calibr) { rec.falling_stat[fine]++; rec.all_falling_stat++; }
          if (do_tot && rec.rising_new_value) {
-            rec.last_tot = ((epoch << 11) | coarse) * 5e-9 - corr - rec.rising_last_tm;
+            rec.last_tot = ((((epoch << 11) | coarse) * 5e-9 - corr) - rec.rising_last_tm)*1e9 + rec.tot_shift;
             rec.rising_new_value = false;
+            // printf("%s ch %u TOT %5.2f calibr %d\n", GetName(), chid, rec.last_tot, rec.hascalibr);
          }
       }
 
       // trigger check of calibration only when enough statistic in that channel
       // done only once for specified channel
       if (rec.docalibr && !rec.check_calibr && (fCalibrCounts > 0)) {
-         if (CheckChannelStat(chid) >= fCalibrCounts) {
+         long stat = CheckChannelStat(chid);
+         // if ToT mode enabled, make first check at half of the statistic to make preliminary calibrations
+         if (stat >= fCalibrCounts * ((fAllTotMode==0) ? 0.5 : 1.)) {
             rec.check_calibr = true;
             check_calibr_progress = true;
          }
@@ -803,6 +830,12 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
    if (check_calibr_progress) {
       fCalibrProgress = TestCanCalibrate();
       fCalibrQuality = (fCalibrProgress > 2) ? 0.9 : 0.7 + fCalibrProgress*0.1;
+
+      if ((fAllTotMode == 0) && (fCalibrProgress>=0.5)) {
+         ProduceCalibration(false, fUseLinear, false, true);
+         fAllTotMode = 1; // now can start accumulate ToT values
+      }
+
       if ((fCalibrProgress>=1.) && fAutoCalibr) PerformAutoCalibrate();
    }
 
@@ -2049,22 +2082,25 @@ void hadaq::TdcProcessor::CopyCalibration(float* calibr, base::H1handle hcalibr,
    }
 }
 
-void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, bool dummy)
+void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, bool dummy, bool preliminary)
 {
-   if (fCalibrProgress >= 1) {
-      fCalibrStatus = "Ready";
-      fCalibrQuality = 1.;
-   } else if (fCalibrProgress >= 0.3) {
-      fCalibrStatus = "LowStat";
-      fCalibrQuality = 0.5;
-   } else {
-      fCalibrStatus = "BadStat";
-      fCalibrQuality = 0.2;
+   if (!preliminary) {
+      if (fCalibrProgress >= 1) {
+         fCalibrStatus = "Ready";
+         fCalibrQuality = 1.;
+      } else if (fCalibrProgress >= 0.3) {
+         fCalibrStatus = "LowStat";
+         fCalibrQuality = 0.5;
+      } else {
+         fCalibrStatus = "BadStat";
+         fCalibrQuality = 0.2;
+      }
    }
 
    if (dummy) return;
 
-   printf("%s produce %s calibrations \n", GetName(), (use_linear ? "linear" : "normal"));
+   if (!preliminary)
+      printf("%s produce %s calibrations \n", GetName(), (use_linear ? "linear" : "normal"));
 
    if (fCalibrTempSum0 > 5) {
       double mean = fCalibrTempSum1/fCalibrTempSum0;
@@ -2078,9 +2114,11 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
    fCalibrTempSum1 = 0;
    fCalibrTempSum2 = 0;
 
-   ClearH2(fRisingCalibr);
-   ClearH2(fFallingCalibr);
-   ClearH1(fTotShifts);
+   if (!preliminary) {
+      ClearH2(fRisingCalibr);
+      ClearH2(fFallingCalibr);
+      ClearH1(fTotShifts);
+   }
 
    for (unsigned ch=0;ch<NumChannels();ch++) {
 
@@ -2121,7 +2159,7 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
          if (DoFallingEdge() && (fCh[ch].all_falling_stat>0) && (fEdgeMask == edge_BothIndepend))
             if (!CalibrateChannel(ch, fCh[ch].falling_stat, fCh[ch].falling_calibr, use_linear)) res = false;
 
-         if (DoFallingEdge() && (fCh[ch].tot0d_cnt > 100)) {
+         if (DoFallingEdge() && (fCh[ch].tot0d_cnt > 100) && !preliminary) {
             CalibrateTot(ch, fCh[ch].tot0d_hist, fCh[ch].tot_shift, 0.05);
             for (unsigned n=0;n<TotBins;n++) {
                double x = TotLeft + (n + 0.1) / TotBins * (TotRight-TotLeft);
@@ -2135,26 +2173,31 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
             for (unsigned n=0;n<fNumFineBins;n++)
                fCh[ch].falling_calibr[n] = fCh[ch].rising_calibr[n];
 
-         if (clear_stat) {
-            for (unsigned n=0;n<fNumFineBins;n++) {
-               fCh[ch].falling_stat[n] = 0;
-               fCh[ch].rising_stat[n] = 0;
-            }
-            fCh[ch].all_falling_stat = 0;
-            fCh[ch].all_rising_stat = 0;
-            fCh[ch].tot0d_cnt = 0;
-            for (unsigned n=0;n<TotBins;n++)
-               fCh[ch].tot0d_hist[n] = 0;
-         }
+         if (clear_stat && !preliminary)
+            ClearChannelStat(ch);
       }
-      if (DoRisingEdge())
-         CopyCalibration(fCh[ch].rising_calibr, fCh[ch].fRisingCalibr, ch, fRisingCalibr);
 
-      if (DoFallingEdge())
-         CopyCalibration(fCh[ch].falling_calibr, fCh[ch].fFallingCalibr, ch, fFallingCalibr);
-
-      DefFillH1(fTotShifts, ch, fCh[ch].tot_shift);
+      if (!preliminary) {
+         if (DoRisingEdge())
+            CopyCalibration(fCh[ch].rising_calibr, fCh[ch].fRisingCalibr, ch, fRisingCalibr);
+         if (DoFallingEdge())
+            CopyCalibration(fCh[ch].falling_calibr, fCh[ch].fFallingCalibr, ch, fFallingCalibr);
+         DefFillH1(fTotShifts, ch, fCh[ch].tot_shift);
+      }
    }
+}
+
+void hadaq::TdcProcessor::ClearChannelStat(unsigned ch)
+{
+   for (unsigned n=0;n<fNumFineBins;n++) {
+      fCh[ch].falling_stat[n] = 0;
+      fCh[ch].rising_stat[n] = 0;
+   }
+   fCh[ch].all_falling_stat = 0;
+   fCh[ch].all_rising_stat = 0;
+   fCh[ch].tot0d_cnt = 0;
+   for (unsigned n=0;n<TotBins;n++)
+      fCh[ch].tot0d_hist[n] = 0;
 
 }
 

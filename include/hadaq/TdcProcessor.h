@@ -9,7 +9,7 @@
 
 namespace hadaq {
 
-   enum { FineCounterBins = 600, TotBins = 3000, TotLeft = 50, TotRight = 80 };
+   enum { FineCounterBins = 600, TotBins = 3000, TotLeft = 30, TotRight = 60 };
 
    /** This is specialized sub-processor for FPGA-TDC.
     * Normally it should be used together with TrbProcessor,
@@ -223,7 +223,9 @@ namespace hadaq {
          long        fCalibrCounts;    //! indicates minimal number of counts in each channel required to produce calibration
          bool        fAutoCalibr;      //! when true, perform auto calibration
          bool        fAutoCalibrOnce;  //! when true, auto calibration will be executed once
-         int         fAllCalibrMode;   //! use all data for calibrations, used with DABC
+         int         fAllCalibrMode;   //! use all data for calibrations, used with DABC -1 - disabled, 0 - off, 1 - on
+         int         fAllTotMode;      //! ToT calibration mode -1 - disabled, 0 - accumulate stat for channels, 1 - accumulate stat for ToT
+         int         fAllDTrigCnt;     //! number of 0xD triggers
 
          std::string fWriteCalibr;    //! file which should be written at the end of data processing
          bool        fWriteEveryTime; //! write calibration every time automatic calibration performed
@@ -296,6 +298,9 @@ namespace hadaq {
 
          /** Perform automatic calibration of channels */
          bool PerformAutoCalibrate();
+
+         /** Clear channel statistic used for calibrations */
+         void ClearChannelStat(unsigned ch);
 
          /** Extract calibration value */
          float ExtractCalibr(float* func, unsigned bin);
@@ -525,7 +530,7 @@ namespace hadaq {
          void IncCalibration(unsigned ch, bool rising, unsigned fine, unsigned value);
 
          /** For expert use - artificially produce calibration */
-         void ProduceCalibration(bool clear_stat = true, bool use_linear = false, bool dummy = false);
+         void ProduceCalibration(bool clear_stat = true, bool use_linear = false, bool dummy = false, bool preliminary = false);
 
          /** Access value of temperature during calibration.
           * Used to adjust all kind of calibrations afterwards */

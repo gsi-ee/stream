@@ -1,3 +1,8 @@
+28.06.2018
+1. Special mode for ToT calibration during beamtime. 
+   Use half of the statistic for preliminary calibrations and then calculate ToT and calibrate to 30 ns.
+
+
 22.06.2018
 1. In hadaq::SpillProcessor introduce fast (20 us binning) and slow (40 ms binning) histogramming 
    of hits counts. Fast histograms will be used to calculate quality 
