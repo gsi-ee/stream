@@ -631,21 +631,17 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
    hadaq::TdcMessage msg, calibr;
 
    int cnt(0), hitcnt(0), errcnt(0);
-   unsigned tgtindx0(tgtindx), calibr_indx(0), calibr_num(0), epoch(0);
+   unsigned tgtindx0(tgtindx), calibr_indx(0), calibr_num(0), epoch(0), nrising(0), nfalling(0);
 
    bool use_in_calibr = ((1 << sub->GetTrigTypeTrb3()) & fCalibrTriggerMask) != 0;
-   bool is_0d_trig = (sub->GetTrigTypeTrb3() == 0xD) || true;
+   bool is_0d_trig = (sub->GetTrigTypeTrb3() == 0xD);
 
    if (fAllCalibrMode==0) {
       use_in_calibr = false;
    } else if (fAllCalibrMode>0) {
       use_in_calibr = true;
-      if (is_0d_trig) fAllDTrigCnt++;
-      if ((fAllDTrigCnt>10) && (fAllTotMode<0)) fAllTotMode = 0;
    }
 
-   // do ToT calculations only when preliminary calibration was produced
-   bool do_tot = use_in_calibr && is_0d_trig && DoFallingEdge() && (fAllTotMode==1);
    bool check_calibr_progress = false;
 
    // if (fAllTotMode==1) printf("%s dtrig %d do_tot %d dofalling %d\n", GetName(), is_0d_trig, do_tot, DoFallingEdge());
@@ -759,19 +755,22 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
       if (hard_failure) continue;
 
       if (isrising) {
+         if (chid>0) nrising++;
          rec.rising_cnt++;
          if (use_in_calibr) { rec.rising_stat[fine]++; rec.all_rising_stat++; }
-         if (do_tot) {
-            rec.rising_last_tm = ((epoch << 11) | coarse) * 5e-9 - corr;
-            rec.rising_new_value = true;
-         }
+         rec.rising_last_tm = ((epoch << 11) | coarse) * 5e-9 - corr;
+         rec.rising_new_value = true;
       } else {
+         nfalling++;
          rec.falling_cnt++;
          if (use_in_calibr) { rec.falling_stat[fine]++; rec.all_falling_stat++; }
-         if (do_tot && rec.rising_new_value) {
-            rec.last_tot = ((((epoch << 11) | coarse) * 5e-9 - corr) - rec.rising_last_tm)*1e9 + rec.tot_shift;
+         if (rec.rising_new_value) {
+            double tot = ((((epoch << 11) | coarse) * 5e-9 - corr) - rec.rising_last_tm)*1e9;
+
+            // DefFillH1(rec.fTot, tot, 1.);
+
+            rec.last_tot = tot + rec.tot_shift;
             rec.rising_new_value = false;
-            // printf("%s ch %u TOT %5.2f calibr %d\n", GetName(), chid, rec.last_tot, rec.hascalibr);
          }
       }
 
@@ -812,6 +811,18 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
       fCalibrTempSum1 += fCurrentTemp;
       fCalibrTempSum2 += fCurrentTemp*fCurrentTemp;
    }
+
+
+   if (fAllCalibrMode>0) {
+      // detect 0xD trigger ourself
+      if (!is_0d_trig && (nrising == nfalling) && (nfalling +1 == NumChannels())) is_0d_trig = true;
+
+      if (is_0d_trig) fAllDTrigCnt++;
+      if ((fAllDTrigCnt>10) && (fAllTotMode<0)) fAllTotMode = 0;
+   }
+
+   // do ToT calculations only when preliminary calibration was produced
+   bool do_tot = use_in_calibr && is_0d_trig && DoFallingEdge() && (fAllTotMode==1);
 
    if (do_tot)
       for (unsigned ch=1;ch<NumChannels();ch++) {
@@ -1946,7 +1957,7 @@ void hadaq::TdcProcessor::SetLinearCalibration(unsigned nch, unsigned finemin, u
 }
 
 
-bool hadaq::TdcProcessor::CalibrateChannel(unsigned nch, long* statistic, float* calibr, bool use_linear)
+bool hadaq::TdcProcessor::CalibrateChannel(unsigned nch, long* statistic, float* calibr, bool use_linear, bool preliminary)
 {
    double sum(0.), limits(use_linear ? 100 : 1000);
    unsigned finemin(0), finemax(0);
@@ -1959,27 +1970,27 @@ bool hadaq::TdcProcessor::CalibrateChannel(unsigned nch, long* statistic, float*
       calibr[n] = sum;
    }
 
-   if (sum <= limits) {
+/*   if (sum <= limits) {
       if (sum>0)
          printf("%s Ch:%u Too few counts %5.0f for calibration of fine counter, use predefined\n", GetName(), nch, sum);
    } else {
       printf("%s Ch:%u Cnts: %7.0f produce %s calibration min:%u max:%u\n", GetName(), nch, sum, (use_linear ? "linear" : "normal"),  finemin, finemax);
    }
+*/
 
-
-   if ((finemin>50) && (fCalibrQuality>0.4)) {
+   if (!preliminary && (finemin>50) && (fCalibrQuality>0.4)) {
       fCalibrStatus = "BadFineMin"; fCalibrStatus+=finemin;
       fCalibrQuality = 0.4;
    }
 
-   if ((finemax<400) && (fCalibrQuality>0.4)) {
+   if (!preliminary && (finemax<400) && (fCalibrQuality>0.4)) {
       fCalibrStatus = "BadFineMax"; fCalibrStatus+=finemax;
       fCalibrQuality = 0.4;
    }
 
    if (sum <= limits) {
 
-      if (fCalibrQuality>0.15) {
+      if ((fCalibrQuality>0.15) && !preliminary)  {
          fCalibrStatus = "LowStat";
          fCalibrQuality = 0.15;
       }
@@ -2009,9 +2020,11 @@ bool hadaq::TdcProcessor::CalibrateChannel(unsigned nch, long* statistic, float*
    }
 
 
-   if ((fCalibrQuality>0.6) && !use_linear && (sum1>100)) {
+   if (!preliminary && (fCalibrQuality>0.6) && !use_linear && (sum1>100)) {
       double dev = sqrt(sum2/sum1); // average deviation
-      if (dev > 0.01) {
+
+      printf("%s ch %u deviation %5.4f\n", GetName(), nch, dev);
+      if (dev > 0.03) {
          fCalibrStatus = "NonLinear";
          fCalibrQuality = 0.6;
       }
@@ -2154,10 +2167,10 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
          bool res = false;
 
          if (DoRisingEdge() && (fCh[ch].all_rising_stat>0))
-            res = CalibrateChannel(ch, fCh[ch].rising_stat, fCh[ch].rising_calibr, use_linear);
+            res = CalibrateChannel(ch, fCh[ch].rising_stat, fCh[ch].rising_calibr, use_linear, preliminary);
 
          if (DoFallingEdge() && (fCh[ch].all_falling_stat>0) && (fEdgeMask == edge_BothIndepend))
-            if (!CalibrateChannel(ch, fCh[ch].falling_stat, fCh[ch].falling_calibr, use_linear)) res = false;
+            if (!CalibrateChannel(ch, fCh[ch].falling_stat, fCh[ch].falling_calibr, use_linear, preliminary)) res = false;
 
          if (DoFallingEdge() && (fCh[ch].tot0d_cnt > 100) && !preliminary) {
             CalibrateTot(ch, fCh[ch].tot0d_hist, fCh[ch].tot_shift, 0.05);

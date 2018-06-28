@@ -134,7 +134,7 @@ Bool_t TUserSource::BuildDatEvent(TGo4MbsEvent* evnt)
    uint32_t bufsize = cnt*sizeof(uint32_t);
 
    TGo4SubEventHeader10 fxSubevHead;
-   memset(&fxSubevHead, 0, sizeof(fxSubevHead));
+   memset((void *) &fxSubevHead, 0, sizeof(fxSubevHead));
    fxSubevHead.fsProcid = 1;
 
    evnt->AddSubEvent(fxSubevHead.fiFullid, (Short_t*) arr, bufsize/sizeof(Short_t) + 2, kTRUE);
@@ -174,7 +174,7 @@ Bool_t TUserSource::BuildEvent(TGo4EventElement* dest)
    }
 
    TGo4SubEventHeader10 fxSubevHead;
-   memset(&fxSubevHead, 0, sizeof(fxSubevHead));
+   memset((void *) &fxSubevHead, 0, sizeof(fxSubevHead));
    fxSubevHead.fsProcid = base::proc_TRBEvent; // mark to be processed by TTrbProc
 
    evnt->AddSubEvent(fxSubevHead.fiFullid, (Short_t*) fxBuffer, bufsize/sizeof(Short_t) + 2, kTRUE);

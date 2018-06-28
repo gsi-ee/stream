@@ -284,7 +284,7 @@ namespace hadaq {
 
          long CheckChannelStat(unsigned ch);
 
-         bool CalibrateChannel(unsigned nch, long* statistic, float* calibr, bool use_linear = false);
+         bool CalibrateChannel(unsigned nch, long* statistic, float* calibr, bool use_linear = false, bool preliminary = false);
          void CopyCalibration(float* calibr, base::H1handle hcalibr, unsigned ch = 0, base::H2handle h2calibr = 0);
 
          bool CalibrateTot(unsigned ch, long* hist, float& tot_shift, float cut = 0.);
