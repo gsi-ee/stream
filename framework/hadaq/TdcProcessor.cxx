@@ -757,26 +757,33 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
       if (isrising) {
          if (chid>0) nrising++;
          rec.rising_cnt++;
-         if (use_in_calibr) { rec.rising_stat[fine]++; rec.all_rising_stat++; }
-         rec.rising_last_tm = ((epoch << 11) | coarse) * 5e-9 - corr;
-         rec.rising_new_value = true;
+         if (use_in_calibr) {
+            rec.rising_stat[fine]++;
+            rec.all_rising_stat++;
+            rec.rising_last_tm = ((epoch << 11) | coarse) * 5e-9 - corr;
+            rec.rising_new_value = true;
+         }
       } else {
          nfalling++;
          rec.falling_cnt++;
-         if (use_in_calibr) { rec.falling_stat[fine]++; rec.all_falling_stat++; }
-         if (rec.rising_new_value) {
-            double tot = ((((epoch << 11) | coarse) * 5e-9 - corr) - rec.rising_last_tm)*1e9;
+         if (use_in_calibr) {
+            rec.falling_stat[fine]++;
+            rec.all_falling_stat++;
+            if (rec.rising_new_value) {
+               double tot = ((((epoch << 11) | coarse) * 5e-9 - corr) - rec.rising_last_tm)*1e9;
 
-            // DefFillH1(rec.fTot, tot, 1.);
+               // DefFillH1(rec.fTot, tot, 1.);
 
-            rec.last_tot = tot + rec.tot_shift;
-            rec.rising_new_value = false;
+               // add shift again to be on safe side when calculate new shift at the end
+               rec.last_tot = tot + rec.tot_shift;
+               rec.rising_new_value = false;
+            }
          }
       }
 
       // trigger check of calibration only when enough statistic in that channel
       // done only once for specified channel
-      if (rec.docalibr && !rec.check_calibr && (fCalibrCounts > 0)) {
+      if (use_in_calibr && rec.docalibr && !rec.check_calibr && (fCalibrCounts > 0)) {
          long stat = CheckChannelStat(chid);
          // if ToT mode enabled, make first check at half of the statistic to make preliminary calibrations
          if (stat >= fCalibrCounts * ((fAllTotMode==0) ? 0.5 : 1.)) {
@@ -811,7 +818,6 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
       fCalibrTempSum1 += fCurrentTemp;
       fCalibrTempSum2 += fCurrentTemp*fCurrentTemp;
    }
-
 
    if (fAllCalibrMode>0) {
       // detect 0xD trigger ourself
@@ -2024,7 +2030,7 @@ bool hadaq::TdcProcessor::CalibrateChannel(unsigned nch, long* statistic, float*
       double dev = sqrt(sum2/sum1); // average deviation
 
       printf("%s ch %u deviation %5.4f\n", GetName(), nch, dev);
-      if (dev > 0.03) {
+      if (dev > 0.05) {
          fCalibrStatus = "NonLinear";
          fCalibrQuality = 0.6;
       }
