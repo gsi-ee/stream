@@ -294,6 +294,9 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
          if (all_below) StopSpill(fLastEpoch);
       }
 
+      // workaround - always set to zero first bin to preserve Y scaling
+      SetH1Content(fHitsSlow, 0, 0.);
+
       // check length of the current spill
       if (fSpillStartEpoch && (EpochTmDiff(fSpillStartEpoch, fLastEpoch) > fMaxSpillLength))
          StopSpill(fLastEpoch);
