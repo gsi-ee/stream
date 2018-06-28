@@ -28,8 +28,8 @@ hadaq::SpillProcessor::SpillProcessor() :
    fEvSize = MakeH1("EvSize", "Event size", 500, 0, 5000, "bytes");
    fSubevSize = MakeH1("SubevSize", "Subevent size", 500, 0, 5000, "bytes");
 
-   fSpill = MakeH1("Spill", "Spill structure", NUMSTATBINS, 0., NUMSTATBINS*BINWIDTHSTAT, "sec");
-   fLastSpill = MakeH1("Last", "Last spill structure", NUMSTATBINS, 0., NUMSTATBINS*BINWIDTHSTAT, "sec");
+   fSpill = MakeH1("Spill_Q_factor", "Current spill Quality factor", NUMSTATBINS, 0., NUMSTATBINS*BINWIDTHSTAT, "sec");
+   fLastSpill = MakeH1("LastSpill_Q_factor", "Last spill Quality factor", NUMSTATBINS, 0., NUMSTATBINS*BINWIDTHSTAT, "sec");
 
    char title[200];
    snprintf(title, sizeof(title), "Fast hits distribution, %5.2f us bins", BINWIDTHFAST*1e6);
