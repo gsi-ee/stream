@@ -676,7 +676,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
       // if (fAllTotMode==1) printf("%s ch %u rising %d fine %x\n", GetName(), chid, isrising, fine);
 
       bool hard_failure = false;
-      if ((chid >= NumChannels()) || (fine >= fNumFineBins)) {
+      if (chid >= NumChannels()) {
          hard_failure = true;
          chid = 0; // use dummy channel
          errcnt++;
@@ -684,7 +684,12 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
 
       ChannelRec &rec = fCh[chid];
 
-      double corr = ExtractCalibr(isrising ? rec.rising_calibr : rec.falling_calibr, fine);
+      if (fine >= fNumFineBins) {
+         hard_failure = true;
+         errcnt++;
+      }
+
+      double corr = hard_failure ? 0. : ExtractCalibr(isrising ? rec.rising_calibr : rec.falling_calibr, fine);
 
       if (tgt==0) {
          if (isrising) {
