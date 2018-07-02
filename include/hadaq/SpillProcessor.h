@@ -18,6 +18,7 @@ protected:
 
    base::H1handle fHitsFast; ///< Hits fast (with 20 us binning)
    base::H1handle fHitsSlow; ///< Hits slow (with 40 ms  binning)
+   base::H1handle fQualitySlow; ///< Quality histogram (with 40 ms  binning)
 
    base::H1handle fSpill;     ///< Current SPILL histogram
    base::H1handle fLastSpill; ///< Last SPILL histogram
@@ -67,6 +68,8 @@ protected:
 
    void StartSpill(unsigned epoch);
    void StopSpill(unsigned epoch);
+
+   double CalcQuality(unsigned firstbin, unsigned len);
 
 public:
    SpillProcessor();

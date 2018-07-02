@@ -36,6 +36,8 @@ hadaq::SpillProcessor::SpillProcessor() :
    fHitsFast = MakeH1("HitsFast", title, NUMHISTBINS, 0., BINWIDTHFAST*NUMHISTBINS*1e3, "ms");
    snprintf(title, sizeof(title), "Slow hits distribution, %5.2f ms bins", BINWIDTHSLOW*1e3);
    fHitsSlow = MakeH1("HitsSlow", title, NUMHISTBINS, 0., BINWIDTHSLOW*NUMHISTBINS, "sec");
+   snprintf(title, sizeof(title), "Quality factor, %5.2f ms bins", BINWIDTHSLOW*1e3);
+   fQualitySlow = MakeH1("QSlow", title, NUMHISTBINS, 0., BINWIDTHSLOW*NUMHISTBINS, "sec");
 
    fBeamX = MakeH1("BeamX", "Beam X position in spill", 16, 0, 16, "ch");
    fBeamY = MakeH1("BeamY", "Beam Y position in spill", 16, 0, 16, "ch");
@@ -114,6 +116,23 @@ void hadaq::SpillProcessor::StopSpill(unsigned epoch)
    fLastSpillBin = 0;
    CopyH1(fLastSpill, fSpill);
 }
+
+double hadaq::SpillProcessor::CalcQuality(unsigned fastbin, unsigned len)
+{
+   double sum = 0., max = 0.;
+
+   for (unsigned n=0;n<len;++n) {
+      double cont = GetH1Content(fHitsFast, fastbin++);
+      sum += cont;
+      if (cont>max) max = cont;
+      if (fastbin >= NUMHISTBINS) fastbin = 0;
+   }
+
+   sum = sum/len;
+
+   return sum>0 ? max/sum : 0.;
+}
+
 
 bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
 {
@@ -251,13 +270,21 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
                         fLastBinSlow = slowbin;
                      } else {
                         // clear all previous bins in-between
-                        while (CompareHistBins(fLastBinSlow, slowbin) < 0) {
-                           fLastBinSlow = (fLastBinSlow+1) % NUMHISTBINS;
-                           SetH1Content(fHitsSlow, fLastBinSlow, 0.);
-                        }
                         while (CompareHistBins(fLastBinFast, fastbin) < 0) {
                            fLastBinFast = (fLastBinFast+1) % NUMHISTBINS;
                            SetH1Content(fHitsFast, fLastBinFast, 0.);
+                        }
+
+                        int diff = 0;
+
+                        while ((diff = CompareHistBins(fLastBinSlow, slowbin)) < 0) {
+                           if (diff == -1) {
+                              SetH1Content(fQualitySlow, fLastBinSlow, CalcQuality((fLastBinSlow % 2 == 0) ? 0 : NUMHISTBINS / 2, NUMHISTBINS / 2));
+                           }
+
+                           fLastBinSlow = (fLastBinSlow+1) % NUMHISTBINS;
+                           SetH1Content(fHitsSlow, fLastBinSlow, 0.);
+                           SetH1Content(fQualitySlow, fLastBinSlow, 0.);
                         }
                      }
                   }
@@ -322,20 +349,7 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
          while ((diff > 1.5*FASTEPOCHS*NUMSTAT) && (fLastSpillBin < NUMSTATBINS)) {
 
             // first bin for statistic
-            unsigned fastbin = (fLastEpoch >> 1) % NUMHISTBINS;
-
-            double sum = 0, max = 0;
-
-            for (unsigned n=0;n<NUMSTAT;++n) {
-               double cont = GetH1Content(fHitsFast, fastbin++);
-               sum+=cont;
-               if (cont>max) max = cont;
-               if (fastbin >= NUMHISTBINS) fastbin = 0;
-            }
-
-            sum = sum/NUMSTAT;
-
-            SetH1Content(fSpill, fLastSpillBin, sum>0 ? max/sum : 0.);
+            SetH1Content(fSpill, fLastSpillBin, CalcQuality((fLastEpoch >> 1) % NUMHISTBINS, NUMSTAT));
 
             fLastSpillBin++;
             fLastSpillEpoch += FASTEPOCHS*NUMSTAT;
