@@ -62,6 +62,7 @@ hadaq::SpillProcessor::SpillProcessor() :
    fLastSpillBin = 0;
 
    fMaxSpillLength = 10.;
+   fLastQSlowValue = 0;
 
    for (unsigned n=0;n<33;++n)
       fChannelsLookup[n] = ChannelsLookup[n];
@@ -278,10 +279,10 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
                         int diff = 0;
 
                         while ((diff = CompareHistBins(fLastBinSlow, slowbin)) < 0) {
-                           if (diff == -1) {
-                              SetH1Content(fQualitySlow, fLastBinSlow, CalcQuality((fLastBinSlow % 2 == 0) ? 0 : NUMHISTBINS / 2, NUMHISTBINS / 2));
-                           }
+                           if (diff == -1)
+                              fLastQSlowValue = CalcQuality((fLastBinSlow % 2 == 0) ? 0 : NUMHISTBINS / 2, NUMHISTBINS / 2);
 
+                           SetH1Content(fQualitySlow, fLastBinSlow, fLastQSlowValue);
                            fLastBinSlow = (fLastBinSlow+1) % NUMHISTBINS;
                            SetH1Content(fHitsSlow, fLastBinSlow, 0.);
                            SetH1Content(fQualitySlow, fLastBinSlow, 0.);

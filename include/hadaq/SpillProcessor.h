@@ -55,6 +55,8 @@ protected:
 
    unsigned fChannelsLookup[33];
 
+   double fLastQSlowValue; // last value of Q factor for slow histogram
+
    /** returns -1 when leftbin<rightbin, taking into account overflow around 0x1000)
     *          +1 when leftbin>rightbin
     *          0  when leftbin==rightbin */
