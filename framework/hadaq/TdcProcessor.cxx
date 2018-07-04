@@ -140,9 +140,9 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fLastRateTm = -1;
    fBubbleErrDistr = 0;
 
-   fToT0xD = 30.;
-   fToThmin = TotLeft;
-   fToThmax = TotRight;
+   fToTvalue = ToTvalue;
+   fToThmin = ToThmin;
+   fToThmax = ToThmax;
 
    if (HistFillLevel() > 1) {
       fChannels = MakeH1("Channels", "Messages per TDC channels", numchannels, 0, numchannels, "ch");
@@ -252,12 +252,12 @@ void hadaq::TdcProcessor::DisableCalibrationFor(unsigned firstch, unsigned lastc
       fCh[n].docalibr = false;
 }
 
-void hadaq::TdcProcessor::SetToTRange(double tot_0xd, double hmin, double hmax)
+void hadaq::TdcProcessor::SetToTRange(double tot, double hmin, double hmax)
 {
    // set real ToT value for 0xD trigger and min/max for histogram accumulation
    // default is 30ns, and 50ns - 80ns range
 
-   fToT0xD = tot_0xd;
+   fToTvalue = tot;
    fToThmin = hmin;
    fToThmax = hmax;
 }
@@ -2101,7 +2101,7 @@ bool hadaq::TdcProcessor::CalibrateTot(unsigned nch, long* hist, float& tot_shif
       return false;
    }
 
-   tot_shift = mean - fToT0xD;
+   tot_shift = mean - fToTvalue;
 
    printf("%s Ch:%u TOT: %6.3f rms: %5.3f offset %6.3f\n", GetName(), nch, mean, rms, tot_shift);
 

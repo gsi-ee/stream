@@ -1,3 +1,7 @@
+4.07.2018
+1. Let configure ToT value and histogram range for 0xD trigger
+
+
 28.06.2018
 1. Special mode for ToT calibration during beamtime. 
    Use half of the statistic for preliminary calibrations and then calculate ToT and calibrate to 30 ns.

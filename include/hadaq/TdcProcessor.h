@@ -9,7 +9,7 @@
 
 namespace hadaq {
 
-   enum { FineCounterBins = 600, TotBins = 3000, TotLeft = 50, TotRight = 80 };
+   enum { FineCounterBins = 600, TotBins = 3000, ToTvalue = 30, ToThmin = 50, ToThmax = 80 };
 
    /** This is specialized sub-processor for FPGA-TDC.
     * Normally it should be used together with TrbProcessor,
@@ -188,7 +188,7 @@ namespace hadaq {
          bool                     fCalibrUseTemp;  //! when true, use temperature adjustment for calibration
          unsigned                 fCalibrTriggerMask; //! mask with enabled for trigger events ids, default all
 
-         double                   fToT0xD;         //! ToT of 0xd trigger
+         double                   fToTvalue;         //! ToT of 0xd trigger
          double                   fToThmin;        //! histogram min
          double                   fToThmax;        //! histogram max
 
