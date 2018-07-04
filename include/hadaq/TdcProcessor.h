@@ -192,6 +192,7 @@ namespace hadaq {
          double                   fToThmin;        //! histogram min
          double                   fToThmax;        //! histogram max
 
+         long   fCalibrAmount;        //! current accumulated calibr data
          double fCalibrProgress;      //! current progress in calibration
          std::string fCalibrStatus;   //! calibration status
          double fCalibrQuality;       //! calibration quality:

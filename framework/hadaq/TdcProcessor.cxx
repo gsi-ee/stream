@@ -655,7 +655,17 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
       use_in_calibr = true;
    }
 
+
    bool check_calibr_progress = false;
+
+   if (use_in_calibr) {
+      fCalibrAmount += datalen;
+      if (fCalibrAmount > 200000) {
+         fCalibrAmount = 0;
+         check_calibr_progress = true;
+      }
+   }
+
 
    // if (fAllTotMode==1) printf("%s dtrig %d do_tot %d dofalling %d\n", GetName(), is_0d_trig, do_tot, DoFallingEdge());
 
@@ -801,7 +811,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
 
       // trigger check of calibration only when enough statistic in that channel
       // done only once for specified channel
-      if (use_in_calibr && rec.docalibr && !rec.check_calibr && (fCalibrCounts > 0)) {
+      if (!check_calibr_progress && use_in_calibr && rec.docalibr && !rec.check_calibr && (fCalibrCounts > 0)) {
          long stat = CheckChannelStat(chid);
          // if ToT mode enabled, make first check at half of the statistic to make preliminary calibrations
          if (stat >= fCalibrCounts * ((fAllTotMode==0) ? 0.5 : 1.)) {
