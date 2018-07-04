@@ -9,7 +9,7 @@
 
 namespace hadaq {
 
-   enum { FineCounterBins = 600, TotBins = 3000, TotLeft = 30, TotRight = 60 };
+   enum { FineCounterBins = 600, TotBins = 3000, TotLeft = 50, TotRight = 80 };
 
    /** This is specialized sub-processor for FPGA-TDC.
     * Normally it should be used together with TrbProcessor,
@@ -187,6 +187,10 @@ namespace hadaq {
          float                    fCalibrTempCoef; //! coefficient to scale calibration curve (real value -1)
          bool                     fCalibrUseTemp;  //! when true, use temperature adjustment for calibration
          unsigned                 fCalibrTriggerMask; //! mask with enabled for trigger events ids, default all
+
+         double                   fToT0xD;         //! ToT of 0xd trigger
+         double                   fToThmin;        //! histogram min
+         double                   fToThmax;        //! histogram max
 
          double fCalibrProgress;      //! current progress in calibration
          std::string fCalibrStatus;   //! calibration status
@@ -488,6 +492,9 @@ namespace hadaq {
 
          /** Returns true is linear calibrations are configured */
          bool IsUseLinear() const { return fUseLinear; }
+
+         /** Configure 0xD trigger ToT length and min/max values for histogram */
+         void SetToTRange(double tot_0xd, double hmin, double hmax);
 
          /** When enabled, last hit time in the channel used for reference time calculations
           * By default, first hit time is used

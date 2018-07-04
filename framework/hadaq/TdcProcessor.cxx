@@ -140,6 +140,10 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fLastRateTm = -1;
    fBubbleErrDistr = 0;
 
+   fToT0xD = 30.;
+   fToThmin = TotLeft;
+   fToThmax = TotRight;
+
    if (HistFillLevel() > 1) {
       fChannels = MakeH1("Channels", "Messages per TDC channels", numchannels, 0, numchannels, "ch");
       if (DoFallingEdge() && DoRisingEdge())
@@ -228,7 +232,7 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
       if (gBubbleMode < 2) {
          fCh[ch].fFallingMult = MakeH1("FallingMult", "Falling event multiplicity", 128, 0, 128, "nhits");
          fCh[ch].fTot = MakeH1("Tot", "Time over threshold", gTotRange*100, 0, gTotRange, "ns");
-         fCh[ch].fTot0D = MakeH1("Tot0D", "Time over threshold with 0xD trigger", TotBins, TotLeft, TotRight, "ns");
+         fCh[ch].fTot0D = MakeH1("Tot0D", "Time over threshold with 0xD trigger", TotBins, fToThmin, fToThmax, "ns");
       }
       // copy calibration only when histogram created
       CopyCalibration(fCh[ch].falling_calibr, fCh[ch].fFallingCalibr, ch, fFallingCalibr);
@@ -248,6 +252,15 @@ void hadaq::TdcProcessor::DisableCalibrationFor(unsigned firstch, unsigned lastc
       fCh[n].docalibr = false;
 }
 
+void hadaq::TdcProcessor::SetToTRange(double tot_0xd, double hmin, double hmax)
+{
+   // set real ToT value for 0xD trigger and min/max for histogram accumulation
+   // default is 30ns, and 50ns - 80ns range
+
+   fToT0xD = tot_0xd;
+   fToThmin = hmin;
+   fToThmax = hmax;
+}
 
 void hadaq::TdcProcessor::UserPostLoop()
 {
@@ -839,8 +852,8 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
       for (unsigned ch=1;ch<NumChannels();ch++) {
          ChannelRec& rec = fCh[ch];
 
-         if (rec.hascalibr && (rec.last_tot >= TotLeft) && (rec.last_tot < TotRight)) {
-            int bin = (int) ((rec.last_tot - TotLeft) / (TotRight - TotLeft) * TotBins);
+         if (rec.hascalibr && (rec.last_tot >= fToThmin) && (rec.last_tot < fToThmax)) {
+            int bin = (int) ((rec.last_tot - fToThmin) / (fToThmax - fToThmin) * TotBins);
             rec.tot0d_hist[bin]++;
             rec.tot0d_cnt++;
          }
@@ -1851,8 +1864,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       // when doing TOT calibration, use only last TOT value - before one could find other signals
       if (do_tot)
          for (unsigned ch=1;ch<NumChannels();ch++) {
-            if (fCh[ch].hascalibr && (fCh[ch].last_tot >= TotLeft) && (fCh[ch].last_tot < TotRight)) {
-               int bin = (int) ((fCh[ch].last_tot - TotLeft) / (TotRight - TotLeft) * TotBins);
+            if (fCh[ch].hascalibr && (fCh[ch].last_tot >= fToThmin) && (fCh[ch].last_tot < fToThmax)) {
+               int bin = (int) ((fCh[ch].last_tot - fToThmin) / (fToThmax - fToThmin) * TotBins);
                fCh[ch].tot0d_hist[bin]++;
                fCh[ch].tot0d_cnt++;
             }
@@ -2068,7 +2081,7 @@ bool hadaq::TdcProcessor::CalibrateTot(unsigned nch, long* hist, float& tot_shif
    sum0 = 0;
 
    for (int n=left;n<right;n++) {
-      double x = TotLeft + (n + 0.5) / TotBins * (TotRight-TotLeft); // x coordinate of center bin
+      double x = fToThmin + (n + 0.5) / TotBins * (fToThmax-fToThmin); // x coordinate of center bin
 
       sum0 += hist[n];
       sum1 += hist[n]*x;
@@ -2088,9 +2101,9 @@ bool hadaq::TdcProcessor::CalibrateTot(unsigned nch, long* hist, float& tot_shif
       return false;
    }
 
-   tot_shift = mean - 30.;
+   tot_shift = mean - fToT0xD;
 
-   printf("%s Ch:%u TOT: %6.3f rms: %5.3f\n", GetName(), nch, mean, rms);
+   printf("%s Ch:%u TOT: %6.3f rms: %5.3f offset %6.3f\n", GetName(), nch, mean, rms, tot_shift);
 
    return true;
 }
@@ -2186,7 +2199,7 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
          if (DoFallingEdge() && (fCh[ch].tot0d_cnt > 100) && !preliminary) {
             CalibrateTot(ch, fCh[ch].tot0d_hist, fCh[ch].tot_shift, 0.05);
             for (unsigned n=0;n<TotBins;n++) {
-               double x = TotLeft + (n + 0.1) / TotBins * (TotRight-TotLeft);
+               double x = fToThmin + (n + 0.1) / TotBins * (fToThmax-fToThmin);
                DefFillH1(fCh[ch].fTot0D, x, fCh[ch].tot0d_hist[n]);
             }
          }
