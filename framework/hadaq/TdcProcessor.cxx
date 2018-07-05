@@ -849,7 +849,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
 
    if (fAllCalibrMode>0) {
       // detect 0xD trigger ourself
-      if (!is_0d_trig && (nrising == nfalling) && (nfalling +1 == NumChannels())) is_0d_trig = true;
+      if (!is_0d_trig && (nrising == nfalling) && (nrising +1 == NumChannels())) is_0d_trig = true;
 
       if (is_0d_trig) fAllDTrigCnt++;
       if ((fAllDTrigCnt>10) && (fAllTotMode<0)) fAllTotMode = 0;
@@ -2206,7 +2206,7 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
          if (DoFallingEdge() && (fCh[ch].all_falling_stat>0) && (fEdgeMask == edge_BothIndepend))
             if (!CalibrateChannel(ch, fCh[ch].falling_stat, fCh[ch].falling_calibr, use_linear, preliminary)) res = false;
 
-         if (DoFallingEdge() && (fCh[ch].tot0d_cnt > 100) && !preliminary) {
+         if ((ch>0) && DoFallingEdge() && (fCh[ch].tot0d_cnt > 100) && !preliminary) {
             CalibrateTot(ch, fCh[ch].tot0d_hist, fCh[ch].tot_shift, 0.05);
             for (unsigned n=0;n<TotBins;n++) {
                double x = fToThmin + (n + 0.1) / TotBins * (fToThmax-fToThmin);
