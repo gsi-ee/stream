@@ -46,6 +46,9 @@ bool hadaq::StartProcessor::FirstBufferScan(const base::Buffer& buf)
 
    unsigned evcnt = 0;
 
+   hadaq::TdcMessage calibr;
+   unsigned ncalibr(20); // position in calibr
+
    while ((ev = iter.nextEvent()) != 0) {
 
       evcnt++;
@@ -87,14 +90,35 @@ bool hadaq::StartProcessor::FirstBufferScan(const base::Buffer& buf)
                hadaq::TdcMessage &msg = iter.msg();
 
                while (iter.next()) {
-                  if (msg.isHitMsg()) {
+                  if (msg.isCalibrMsg()) {
+                     ncalibr = 0;
+                     calibr = msg;
+                  } else if (msg.isHitMsg()) {
                      unsigned chid = msg.getHitChannel();
-                     //unsigned fine = msg.getHitTmFine();
-                     //unsigned coarse = msg.getHitTmCoarse();
-                     //bool isrising = msg.isHitRisingEdge();
+                     // unsigned coarse = msg.getHitTmCoarse();
+                     bool isrising = msg.isHitRisingEdge();
+                     double corr = 0., localtm = iter.getMsgTimeCoarse();
+
+                     if (ncalibr < 2) {
+                         // use correction from special message
+                         corr = calibr.getCalibrFine(ncalibr++)*5e-9/0x3ffe;
+                         if (!isrising) corr *= 10.; // range for falling edge is 50 ns.
+                     } else {
+                        unsigned fine = msg.getHitTmFine();
+                        corr = hadaq::TdcMessage::SimpleFineCalibr(fine);
+                     }
+
+                     // this is corrected absolute time stamp for hit message
+                     localtm -= corr;
 
                   } else if (msg.isEpochMsg()) {
                      unsigned epoch = iter.getCurEpoch();
+
+                     if (lastepoch) {
+                        int diff = EpochDiff(lastepoch, epoch);
+                        if (diff>45) diff = 45; else if (diff < -45) diff = 45;
+                        DefFillH1(fEpochDiff, diff, 1.);
+                     }
 
                      lastepoch = epoch;
                   }

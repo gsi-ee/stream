@@ -23,8 +23,12 @@ protected:
    unsigned fTdcMin; // minimal TDC id
    unsigned fTdcMax; // maximal TDC id
 
-   /** Hard difference between epochs */
-   inline unsigned EpochDiff(unsigned ep1, unsigned ep2) { return ep1 <= ep2 ? ep2 - ep1 : ep2 + 0x10000000 - ep1; }
+   /** Calculates most realistic difference between epochs */
+   inline int EpochDiff(unsigned ep1, unsigned ep2) {
+      unsigned res = ep1 <= ep2 ? ep2 - ep1 : ep2 + 0x10000000 - ep1;
+
+      return res < 0x8000000 ? res : (int) res - 0x10000000;
+   }
 
    /** Return time difference between epochs in seconds */
    double EpochTmDiff(unsigned ep1, unsigned ep2);
