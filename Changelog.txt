@@ -1,3 +1,7 @@
+5.07.2018
+1. Introduce StartMonitor class. It dedicated to debug START detector in HADES
+
+
 4.07.2018
 1. Let configure ToT value and histogram range for 0xD trigger
 
