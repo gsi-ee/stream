@@ -15,9 +15,9 @@ const unsigned NUMSTAT = 100; // use 100 bins for stat calculations
 const double BINWIDTHSTAT = BINWIDTHFAST * NUMSTAT;
 const unsigned NUMSTATBINS = 8000; // use 100 bins for stat calculations
 
-const unsigned ChannelsLookup[33] = {0,
-             0,   0,   1,   1,   2,   2,   3,   3,   4,   4,   5,  5,   6,   6,  7,  7,
-             8,   8,   9,   9,  10,  10,  11,  11,  12,  12,  13, 13,  14,  14, 15, 15 };
+//const unsigned ChannelsLookup[33] = {0,
+//             0,   0,   1,   1,   2,   2,   3,   3,   4,   4,   5,  5,   6,   6,  7,  7,
+//             8,   8,   9,   9,  10,  10,  11,  11,  12,  12,  13, 13,  14,  14, 15, 15 };
 
 hadaq::SpillProcessor::SpillProcessor() :
    base::StreamProc("HLD", 0, false)
@@ -69,8 +69,8 @@ hadaq::SpillProcessor::SpillProcessor() :
    fLastQSlowValue = 0;
 
    for (unsigned n=0;n<33;++n) {
-      fChannelsLookup1[n] = ChannelsLookup[n];
-      fChannelsLookup2[n] = 100 + ChannelsLookup[n];
+      fChannelsLookup1[n] = 0;
+      fChannelsLookup2[n] = 0;
    }
 
    fSumX = fCntX = fSumY = fCntY = 0;
@@ -246,14 +246,16 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
                            }
                            */
 
-                           if (lookup < 100) {
-                              FastFillH1(fBeamX, pos);
-                              fSumX += pos;
-                              fCntX++;
-                           } else {
-                              FastFillH1(fBeamY, pos);
-                              fSumY += pos;
-                              fCntY++;
+                           if (lookup && pos) {
+                              if (lookup < 100) {
+                                 FastFillH1(fBeamX, pos);
+                                 fSumX += pos;
+                                 fCntX++;
+                              } else {
+                                 FastFillH1(fBeamY, pos);
+                                 fSumY += pos;
+                                 fCntY++;
+                              }
                            }
                         }
                      }
