@@ -43,8 +43,8 @@ hadaq::SpillProcessor::SpillProcessor() :
    snprintf(title, sizeof(title), "Slow Beam Y, %5.2f ms bins", BINWIDTHSLOW*1e3);
    fTrendYSlow = MakeH1("YSlow", title, NUMHISTBINS, 0., BINWIDTHSLOW*NUMHISTBINS, "sec");
 
-   fBeamX = MakeH1("BeamX", "Beam X position in spill", 16, 0, 16, "X");
-   fBeamY = MakeH1("BeamY", "Beam Y position in spill", 16, 0, 16, "Y");
+   fBeamX = MakeH1("BeamX", "Beam X position accumulated", 20, 0, 20, "X");
+   fBeamY = MakeH1("BeamY", "Beam Y position accumulated", 20, 0, 20, "Y");
 
    fTrendX = MakeH1("TrendX", "Spill X position", NUMSTATBINS, 0., NUMSTATBINS*BINWIDTHSTAT, "sec");
    fTrendY = MakeH1("TrendY", "Spill Y position", NUMSTATBINS, 0., NUMSTATBINS*BINWIDTHSTAT, "sec");
