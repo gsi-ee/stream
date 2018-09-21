@@ -246,7 +246,7 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
                            }
                            */
 
-                           if (lookup < 16) {
+                           if (lookup < 100) {
                               FastFillH1(fBeamX, pos);
                               fSumX += pos;
                               fCntX++;
