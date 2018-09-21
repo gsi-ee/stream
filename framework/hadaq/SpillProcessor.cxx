@@ -16,8 +16,8 @@ const double BINWIDTHSTAT = BINWIDTHFAST * NUMSTAT;
 const unsigned NUMSTATBINS = 8000; // use 100 bins for stat calculations
 
 const unsigned ChannelsLookup[33] = {0,
-             0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
-           100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115 };
+             0,   0,   1,   1,   2,   2,   3,   3,   4,   4,   5,  5,   6,   6,  7,  7,
+             8,   8,   9,   9,  10,  10,  11,  11,  12,  12,  13, 13,  14,  14, 15, 15 };
 
 hadaq::SpillProcessor::SpillProcessor() :
    base::StreamProc("HLD", 0, false)
@@ -39,8 +39,8 @@ hadaq::SpillProcessor::SpillProcessor() :
    snprintf(title, sizeof(title), "Quality factor, %5.2f ms bins", BINWIDTHSLOW*1e3);
    fQualitySlow = MakeH1("QSlow", title, NUMHISTBINS, 0., BINWIDTHSLOW*NUMHISTBINS, "sec");
 
-   fBeamX = MakeH1("BeamX", "Beam X position in spill", 16, 0, 16, "ch");
-   fBeamY = MakeH1("BeamY", "Beam Y position in spill", 16, 0, 16, "ch");
+   fBeamX = MakeH1("BeamX", "Beam X position in spill", 16, 0, 16, "X");
+   fBeamY = MakeH1("BeamY", "Beam Y position in spill", 16, 0, 16, "Y");
 
    fTrendX = MakeH1("TrendX", "Trending for beam X position", NUMSTATBINS, 0., NUMSTATBINS*BINWIDTHSTAT, "sec");
    fTrendY = MakeH1("TrendY", "Trending for beam Y position", NUMSTATBINS, 0., NUMSTATBINS*BINWIDTHSTAT, "sec");
@@ -64,8 +64,10 @@ hadaq::SpillProcessor::SpillProcessor() :
    fMaxSpillLength = 10.;
    fLastQSlowValue = 0;
 
-   for (unsigned n=0;n<33;++n)
-      fChannelsLookup[n] = ChannelsLookup[n];
+   for (unsigned n=0;n<33;++n) {
+      fChannelsLookup1[n] = ChannelsLookup[n];
+      fChannelsLookup2[n] = 100 + ChannelsLookup[n];
+   }
 }
 
 hadaq::SpillProcessor::~SpillProcessor()
@@ -195,6 +197,8 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
 
                hadaq::TdcMessage &msg = iter.msg();
 
+               unsigned *lookup_table = (dataid==fTdcMin) ? fChannelsLookup1 : fChannelsLookup2;
+
                while (iter.next()) {
                   if (msg.isHitMsg() && use_hits) {
                      unsigned chid = msg.getHitChannel();
@@ -211,7 +215,7 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
 
                         if (fSpillStartEpoch && (chid < 34))  {
 
-                           unsigned lookup = ChannelsLookup[chid], pos = lookup % 100;
+                           unsigned lookup = lookup_table[chid], pos = lookup % 100;
 
                            unsigned diff = EpochDiff(fSpillStartEpoch, fLastEpoch);
                            unsigned bin = diff / (FASTEPOCHS*NUMSTAT);
@@ -232,7 +236,7 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
                               fCurrXYBin = bin;
                            }
 
-                           if (lookup<16) {
+                           if (lookup < 16) {
                               FastFillH1(fBeamX, pos);
                               fSumX += pos;
                               fCntX++;

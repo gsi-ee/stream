@@ -53,7 +53,8 @@ protected:
    unsigned fTdcMin; // minimal TDC id
    unsigned fTdcMax; // maximal TDC id
 
-   unsigned fChannelsLookup[33];
+   unsigned fChannelsLookup1[33];   // first tdc
+   unsigned fChannelsLookup2[33];   // second tdc
 
    double fLastQSlowValue; // last value of Q factor for slow histogram
 
@@ -95,7 +96,8 @@ public:
 
    void SetMaxSpillLength(double tm = 10) { fMaxSpillLength = tm; }
 
-   void SetChannelsLookup(unsigned ch, unsigned lookup) { fChannelsLookup[ch] = lookup; }
+   void SetChannelsLookup1(unsigned ch, unsigned lookup) { fChannelsLookup1[ch] = lookup; }
+   void SetChannelsLookup2(unsigned ch, unsigned lookup) { fChannelsLookup2[ch] = lookup; }
 };
 }
 
