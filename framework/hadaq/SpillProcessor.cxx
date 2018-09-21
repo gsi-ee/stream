@@ -38,16 +38,16 @@ hadaq::SpillProcessor::SpillProcessor() :
    fHitsSlow = MakeH1("HitsSlow", title, NUMHISTBINS, 0., BINWIDTHSLOW*NUMHISTBINS, "sec");
    snprintf(title, sizeof(title), "Quality factor, %5.2f ms bins", BINWIDTHSLOW*1e3);
    fQualitySlow = MakeH1("QSlow", title, NUMHISTBINS, 0., BINWIDTHSLOW*NUMHISTBINS, "sec");
-   snprintf(title, sizeof(title), "Beam X position, %5.2f ms bins", BINWIDTHSLOW*1e3);
+   snprintf(title, sizeof(title), "Slow Beam X, %5.2f ms bins", BINWIDTHSLOW*1e3);
    fTrendXSlow = MakeH1("XSlow", title, NUMHISTBINS, 0., BINWIDTHSLOW*NUMHISTBINS, "sec");
-   snprintf(title, sizeof(title), "Beam Y position, %5.2f ms bins", BINWIDTHSLOW*1e3);
+   snprintf(title, sizeof(title), "Slow Beam Y, %5.2f ms bins", BINWIDTHSLOW*1e3);
    fTrendYSlow = MakeH1("YSlow", title, NUMHISTBINS, 0., BINWIDTHSLOW*NUMHISTBINS, "sec");
 
    fBeamX = MakeH1("BeamX", "Beam X position in spill", 16, 0, 16, "X");
    fBeamY = MakeH1("BeamY", "Beam Y position in spill", 16, 0, 16, "Y");
 
-   fTrendX = MakeH1("TrendX", "Trending for beam X position", NUMSTATBINS, 0., NUMSTATBINS*BINWIDTHSTAT, "sec");
-   fTrendY = MakeH1("TrendY", "Trending for beam Y position", NUMSTATBINS, 0., NUMSTATBINS*BINWIDTHSTAT, "sec");
+   fTrendX = MakeH1("TrendX", "Spill X position", NUMSTATBINS, 0., NUMSTATBINS*BINWIDTHSTAT, "sec");
+   fTrendY = MakeH1("TrendY", "Spill Y position", NUMSTATBINS, 0., NUMSTATBINS*BINWIDTHSTAT, "sec");
 
    fLastBinFast = 0;
    fLastBinSlow = 0;
@@ -295,15 +295,9 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
                         while ((diff = CompareHistBins(fLastBinSlow, slowbin)) < 0) {
                            if (diff == -1) {
                               fLastQSlowValue = CalcQuality((fLastBinSlow % 2 == 0) ? 0 : NUMHISTBINS / 2, NUMHISTBINS / 2);
-                              if (fCntX > 0) {
-                                 fLastX = 1.*fSumX/fCntX;
-                                 fSumX = fCntX = 0;
-
-                              }
-                              if (fCntY > 0) {
-                                 fLastY = 1.*fSumY/fCntY;
-                                 fSumY = fCntY = 0;
-                              }
+                              fLastX = (fCntX > 0) ? 1.*fSumX/fCntX : 0.;
+                              fLastY = (fCntY > 0) ? 1.*fSumY/fCntY : 0;
+                              fSumX = fCntX = fSumY = fCntY = 0;
                            }
 
                            SetH1Content(fQualitySlow, fLastBinSlow, fLastQSlowValue);
