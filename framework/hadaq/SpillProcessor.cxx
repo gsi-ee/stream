@@ -295,10 +295,14 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
                         while ((diff = CompareHistBins(fLastBinSlow, slowbin)) < 0) {
                            if (diff == -1) {
                               fLastQSlowValue = CalcQuality((fLastBinSlow % 2 == 0) ? 0 : NUMHISTBINS / 2, NUMHISTBINS / 2);
-                              if ((fCntX > 0) && (fCntY > 0)) {
+                              if (fCntX > 0) {
                                  fLastX = 1.*fSumX/fCntX;
+                                 fSumX = fCntX = 0;
+
+                              }
+                              if (fCntY > 0) {
                                  fLastY = 1.*fSumY/fCntY;
-                                 fSumX = fCntX = fSumY = fCntY = 0;
+                                 fSumY = fCntY = 0;
                               }
                            }
 
