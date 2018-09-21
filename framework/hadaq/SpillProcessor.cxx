@@ -72,6 +72,9 @@ hadaq::SpillProcessor::SpillProcessor() :
       fChannelsLookup1[n] = ChannelsLookup[n];
       fChannelsLookup2[n] = 100 + ChannelsLookup[n];
    }
+
+   fSumX = fCntX = fSumY = fCntY = 0;
+   fLastX = fLastY = 0.;
 }
 
 hadaq::SpillProcessor::~SpillProcessor()
@@ -104,12 +107,13 @@ void hadaq::SpillProcessor::StartSpill(unsigned epoch)
    fLastSpillEpoch = epoch & ~(FASTEPOCHS-1); // mask not used bins
    fLastSpillBin = 0;
    ClearH1(fSpill);
-   ClearH1(fBeamX);
-   ClearH1(fBeamY);
+   //ClearH1(fBeamX);
+   //ClearH1(fBeamY);
    ClearH1(fTrendX);
    ClearH1(fTrendY);
-   fSumX = fCntX = fSumY = fCntY = 0;
-   fCurrXYBin = 0; fLastX = fLastY = 0.;
+   // fSumX = fCntX = fSumY = fCntY = 0;
+   // fLastX = fLastY = 0.;
+   fCurrXYBin = 0;
    printf("SPILL ON  0x%08x tm  %6.2f s\n", epoch, EpochTmDiff(0, epoch));
 }
 
