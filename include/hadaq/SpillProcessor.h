@@ -19,6 +19,8 @@ protected:
    base::H1handle fHitsFast; ///< Hits fast (with 20 us binning)
    base::H1handle fHitsSlow; ///< Hits slow (with 40 ms  binning)
    base::H1handle fQualitySlow; ///< Quality histogram (with 40 ms  binning)
+   base::H1handle fTrendXSlow; ///< Beam X with Quality histogram (with 40 ms  binning)
+   base::H1handle fTrendYSlow; ///< Quality histogram (with 40 ms  binning)
 
    base::H1handle fSpill;     ///< Current SPILL histogram
    base::H1handle fLastSpill; ///< Last SPILL histogram

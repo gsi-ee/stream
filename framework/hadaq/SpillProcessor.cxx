@@ -38,6 +38,10 @@ hadaq::SpillProcessor::SpillProcessor() :
    fHitsSlow = MakeH1("HitsSlow", title, NUMHISTBINS, 0., BINWIDTHSLOW*NUMHISTBINS, "sec");
    snprintf(title, sizeof(title), "Quality factor, %5.2f ms bins", BINWIDTHSLOW*1e3);
    fQualitySlow = MakeH1("QSlow", title, NUMHISTBINS, 0., BINWIDTHSLOW*NUMHISTBINS, "sec");
+   snprintf(title, sizeof(title), "Beam X position, %5.2f ms bins", BINWIDTHSLOW*1e3);
+   fTrendXSlow = MakeH1("XSlow", title, NUMHISTBINS, 0., BINWIDTHSLOW*NUMHISTBINS, "sec");
+   snprintf(title, sizeof(title), "Beam Y position, %5.2f ms bins", BINWIDTHSLOW*1e3);
+   fTrendYSlow = MakeH1("YSlow", title, NUMHISTBINS, 0., BINWIDTHSLOW*NUMHISTBINS, "sec");
 
    fBeamX = MakeH1("BeamX", "Beam X position in spill", 16, 0, 16, "X");
    fBeamY = MakeH1("BeamY", "Beam Y position in spill", 16, 0, 16, "Y");
@@ -213,13 +217,14 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
                         FastFillH1(fHitsFast, fastbin);
                         FastFillH1(fHitsSlow, slowbin);
 
-                        if (fSpillStartEpoch && (chid < 34))  {
+                        if (chid < 34)  {
 
                            unsigned lookup = lookup_table[chid], pos = lookup % 100;
 
-                           unsigned diff = EpochDiff(fSpillStartEpoch, fLastEpoch);
-                           unsigned bin = diff / (FASTEPOCHS*NUMSTAT);
+                           //unsigned diff = EpochDiff(fSpillStartEpoch, fLastEpoch);
+                           //unsigned bin = diff / (FASTEPOCHS*NUMSTAT);
 
+                           /*
                            if (bin != fCurrXYBin) {
                               if (fCntX>5) fLastX = 1.*fSumX/fCntX;
                               if (fCntY>5) fLastY = 1.*fSumY/fCntY;
@@ -235,6 +240,7 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
                               fSumX = fCntX = fSumY = fCntY = 0;
                               fCurrXYBin = bin;
                            }
+                           */
 
                            if (lookup < 16) {
                               FastFillH1(fBeamX, pos);
@@ -280,6 +286,12 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
                            SetH1Content(fHitsFast, fLastBinFast, 0.);
                         }
 
+                        if ((fLastBinSlow != slowbin) && (fCntX > 0) && (fCntY > 0)) {
+                           fLastX = 1.*fSumX/fCntX;
+                           fLastY = 1.*fSumY/fCntY;
+                           fSumX = fCntX = fSumY = fCntY = 0;
+                        }
+
                         int diff = 0;
 
                         while ((diff = CompareHistBins(fLastBinSlow, slowbin)) < 0) {
@@ -287,6 +299,8 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
                               fLastQSlowValue = CalcQuality((fLastBinSlow % 2 == 0) ? 0 : NUMHISTBINS / 2, NUMHISTBINS / 2);
 
                            SetH1Content(fQualitySlow, fLastBinSlow, fLastQSlowValue);
+                           SetH1Content(fTrendXSlow, fLastBinSlow, fLastX);
+                           SetH1Content(fTrendYSlow, fLastBinSlow, fLastY);
                            fLastBinSlow = (fLastBinSlow+1) % NUMHISTBINS;
                            SetH1Content(fHitsSlow, fLastBinSlow, 0.);
                            SetH1Content(fQualitySlow, fLastBinSlow, 0.);
@@ -355,6 +369,8 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
 
             // first bin for statistic
             SetH1Content(fSpill, fLastSpillBin, CalcQuality((fLastEpoch >> 1) % NUMHISTBINS, NUMSTAT));
+            SetH1Content(fTrendX, fLastSpillBin, fLastX);
+            SetH1Content(fTrendY, fLastSpillBin, fLastY);
 
             fLastSpillBin++;
             fLastSpillEpoch += FASTEPOCHS*NUMSTAT;
