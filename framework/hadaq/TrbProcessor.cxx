@@ -55,6 +55,8 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc, int hfi
    fSubevSize = MakeH1("SubevSize", "Subevent size", fSubevHLen/fSubevHDiv, 0, fSubevHLen, "bytes");
    fLostRate = MakeH1("LostRate", "Relative number of lost packets", 1000, 0, 1., "data lost");
    fTrigType = MakeH1("TrigType", "Number of different trigger types", 16, 0, 16, "trigger;xbin:0x0,0x1,0x2,0x3,0x4,0x5,0x6,0x7,0x8,0x9,0xA,0xB,0xC,0xD,0xE,0xF");
+   fErrBits =  MakeH1("ErrorBits", "Number of trbnet error bits", 32, 0, 32,
+       "errorbit;xbin:OK,Coll,WMis,ChkaMis,DU,BufMis,AnsMiss,7,8,9,10,11,12,13,14,15, EvNumMis,TrgCdMis,WrLen,AnsMiss,NotFnd,PrtMiss,SevPlm,BrokEv,EthLnkErr,SEvBuFull,EthErr,TmTrgErr,28,29,30,31");
 
    fHadaqCTSId = 0x8000;
 
@@ -805,6 +807,15 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub, void* 
    if (sz < fSubevHLen)
       DefFastFillH1(fSubevSize, sz / fSubevHDiv, 1.);
 
+   // JAM2018: add errorbit statistics
+   uint32_t error_word = sub->GetErrBits();
+   for(int bit=0; bit<32;++bit)
+   {
+     uint32_t mask = (bit << 1);
+     if((error_word & mask) == mask) DefFastFillH1(fErrBits, bit, 1.);
+   }
+
+
    // only fill histograms
    if (only_hist) return 0;
 
@@ -887,6 +898,8 @@ unsigned hadaq::TrbProcessor::EmulateTransform(hadaqs::RawSubevent *sub, int dum
    DefFillH1(fTrigType, 0x1, 1.);
 
    DefFillH1(fSubevSize, sub->GetSize(), 1.);
+
+   DefFillH1(fErrBits, 0, 1.);
 
    // only fill histograms
    if (only_hist) return 0;

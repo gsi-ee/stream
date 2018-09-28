@@ -65,6 +65,7 @@ namespace hadaq {
          base::H1handle fSubevSize;  ///< HADAQ subevent size
          base::H1handle fLostRate;   ///< lost rate
          base::H1handle fTrigType;   ///< trigger type
+         base::H1handle fErrBits;    ///< error bit statistics
 
          base::H1handle fMsgPerBrd;  //! messages per board - from TRB
          base::H1handle fErrPerBrd;  //! errors per board - from TRB
