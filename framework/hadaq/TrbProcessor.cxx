@@ -130,16 +130,21 @@ void hadaq::TrbProcessor::CreatePerTDCHistos()
 
 void hadaq::TrbProcessor::UserPreLoop()
 {
-   fProfiler.MakeStatistic();
-
    if (fMap.size()>0)
       CreatePerTDCHistos();
 
+   printf("TrbProcessor::UserPreLoop\n");
+
+   fProfiler.MakeStatistic();
 }
 
 void hadaq::TrbProcessor::UserPostLoop()
 {
    fProfiler.MakeStatistic();
+
+   printf("TrbProcessor::UserPostLoop HUBs %u\n", (unsigned) fHadaqHUBId.size());
+
+   printf("TRB PROFILER: %s\n", fProfiler.Format().c_str());
 }
 
 
@@ -330,9 +335,10 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
 
 //   printf("Scan TRB buffer size %u\n", buf().datalen);
 
+
    hadaq::TrbIterator iter(buf().buf, buf().datalen);
 
-   hadaqs::RawEvent* ev = 0;
+   hadaqs::RawEvent  *ev = 0;
 
    while ((ev = iter.nextEvent()) != 0) {
 
@@ -800,6 +806,7 @@ bool hadaq::TrbProcessor::CreateMissingTDC(hadaqs::RawSubevent *sub, const std::
 
 unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub, void* tgtbuf, unsigned tgtlen, bool only_hist)
 {
+   base::ProfilerGuard grd(fProfiler, "enter");
 
    unsigned trig_type = sub->GetTrigTypeTrb3(), sz = sub->GetSize();
 
@@ -825,9 +832,34 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub, void* 
      if((error_word & mask) == mask) DefFastFillH1(fErrBits, bit, 1.);
    }
 
-
    // only fill histograms
    if (only_hist) return 0;
+
+   if ((fMinTdc == 0) && (fMaxTdc == 0) && (fTdcsVect.size()==0) && (fMap.size() > 0)) {
+      bool isany = false;
+      fMinTdc = 0xffffff;
+
+      for (auto &&entry : fMap) {
+         if (entry.second->IsTDC()) {
+            isany = true;
+            if (entry.first > fMaxTdc) fMaxTdc = entry.first;
+            if (entry.first < fMinTdc) fMinTdc = entry.first;
+         }
+      }
+
+      if (!isany || (fMaxTdc-fMinTdc > 0xffff)) {
+         fMinTdc = fMaxTdc = 1;
+      } else {
+         fMaxTdc++;
+         fTdcsVect.resize(fMaxTdc - fMinTdc, nullptr);
+         for (auto &&entry : fMap)
+            if (entry.second->IsTDC())
+               fTdcsVect[entry.first - fMinTdc] = static_cast<hadaq::TdcProcessor*>(entry.second);
+      }
+   }
+
+   bool get_fast = fMaxTdc > fMinTdc;
+
 
    // !!! DEBUG ONLY - just copy data
    // if (tgtbuf && tgtlen) {
@@ -835,6 +867,8 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub, void* 
    //   memcpy((void *) tgtbuf, (void *) sub, sub->GetPaddedSize());
    //   return sub->GetPaddedSize();
    // }
+
+   grd.Next("hdr");
 
    hadaqs::RawSubevent* tgt = (hadaqs::RawSubevent*) tgtbuf;
    // copy complete header first
@@ -849,6 +883,9 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub, void* 
    unsigned trbSubEvSize = (sub->GetSize() - sizeof(hadaqs::RawSubevent)) / 4;
 
    while (ix < trbSubEvSize) {
+
+      grd.Next("sub", 5);
+
       //! Extract data portion from the whole packet (in a loop)
       uint32_t data = sub->Data(ix++);
 
@@ -859,20 +896,33 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub, void* 
 
       unsigned datalen = (data >> 16) & 0xFFFF;
 
-      if (std::find(fHadaqHUBId.begin(), fHadaqHUBId.end(), data & 0xFFFF) != fHadaqHUBId.end()) {
-         // ix+=datalen;  // WORKAROUND !!!
+      grd.Next("hub");
 
-         // copy hub header to the target
-         if (tgt) tgt->SetData(tgtix++, data);
+      if (fHadaqHUBId.size() > 0)
+         if (std::find(fHadaqHUBId.begin(), fHadaqHUBId.end(), data & 0xFFFF) != fHadaqHUBId.end()) {
+            // ix+=datalen;  // WORKAROUND !!!
 
-         // TODO: formally we should analyze HUB subevent as real subevent but
-         // we just skip header and continue to analyze data
-         continue;
-      }
+            // copy hub header to the target
+            if (tgt) tgt->SetData(tgtix++, data);
+
+            // TODO: formally we should analyze HUB subevent as real subevent but
+            // we just skip header and continue to analyze data
+            continue;
+         }
+
+      grd.Next("get");
 
       //! ================= FPGA TDC header ========================
-      TdcProcessor* subproc = GetTDC(data & 0xFFFF, true);
+      TdcProcessor *subproc = nullptr;
+      if (get_fast) {
+         unsigned id = data & 0xFFFF;
+         if ((id >= fMinTdc) && (id < fMaxTdc)) subproc = fTdcsVect[id-fMinTdc];
+      } else {
+         subproc = GetTDC(data & 0xFFFF, true);
+      }
+
       if (subproc) {
+         grd.Next("trans");
          unsigned newlen = subproc->TransformTdcData(sub, ix, datalen, tgt, tgtix+1);
          if (tgt) {
             tgt->SetData(tgtix++, (data & 0xFFFF) | ((newlen & 0xffff) << 16));
@@ -882,6 +932,7 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub, void* 
          continue; // go to next block
       }  // end of if TDC header
 
+      grd.Next("unrec", 10);
 
       // copy unrecognized data to the target
       if (tgt) {
@@ -893,6 +944,8 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub, void* 
       // all other blocks are ignored
       ix+=datalen;
    }
+
+   grd.Next("finish", 15);
 
    if (tgt) {
       tgt->SetSize(sizeof(hadaqs::RawSubevent) + tgtix*4);

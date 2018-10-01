@@ -92,6 +92,10 @@ namespace hadaq {
 
          base::Profiler  fProfiler;   ///< profiler
 
+         unsigned fMinTdc{0};         ///< minimal id of TDC
+         unsigned fMaxTdc{0};         ///< maximal id of TDC
+         std::vector<TdcProcessor*> fTdcsVect; ///< array of TDCs
+
          hadaqs::RawSubevent   fLastSubevHdr; //! copy of last subevent header (without data)
 
          static unsigned gNumChannels;     ///< default number of channels
@@ -200,13 +204,11 @@ namespace hadaq {
          {
             SubProcMap::const_iterator iter = fMap.find(tdcid);
 
-            // ignore integrated TDCs, they have upper 16bits set
-            if(iter->first >> 16 != 0) return 0;
-
             // for old analysis, where IDs are only last 8 bit
             if ((iter == fMap.end()) && !fullid) iter = fMap.find(tdcid & 0xff);
 
-            return ((iter != fMap.end()) && iter->second->IsTDC()) ? (TdcProcessor*) iter->second : 0;
+            // ignore integrated TDCs, they have upper 16bits set
+            return ((iter != fMap.end()) && ((iter->first >> 16) == 0) && iter->second->IsTDC()) ? (TdcProcessor*) iter->second : 0;
          }
 
          unsigned NumberOfTDC() const
