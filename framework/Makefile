@@ -11,7 +11,7 @@ IS_ROOT6 = true
 endif
 endif
 
-CXXOPT       += -O2 -fPIC -Wall $(INCLUDES:%=-I%) $(DEFINITIONS:%=-D%) 
+CXXOPT       += -std=c++11 -O2 -fPIC -Wall $(INCLUDES:%=-I%) $(DEFINITIONS:%=-D%) 
 LD            = g++
 CXX           = g++
 
