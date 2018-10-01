@@ -11,7 +11,9 @@ IS_ROOT6 = true
 endif
 endif
 
-CXXOPT       += -std=c++11 -O2 -fPIC -Wall $(INCLUDES:%=-I%) $(DEFINITIONS:%=-D%) 
+CPPVERS      = -std=c++11
+
+CXXOPT       += $(CPPVERS) -O2 -fPIC -Wall $(INCLUDES:%=-I%) $(DEFINITIONS:%=-D%) 
 LD            = g++
 CXX           = g++
 
@@ -88,7 +90,7 @@ endif
 $(NEWLIBDICT_OBJ): $(NEWLIBDICT_SRC) $(NEWLIBDICT_LINKDEF)
 
 $(NEWLIBDICT_OBJ): CXXOPT += $(shell root-config --cflags)
-#$(NEWLIBDICT_OBJ): INCLUDES += $(STREAMSYS)/include
+$(NEWLIBDICT_OBJ): CPPVERS = 
 
 $(NEWLIBDICT_LIB): $(NEWLIBDICT_OBJ) $(NEWLIBROOT_OBJS) $(NEWLIBDICT_LINKDEF)
 	@echo 'Building: $@'
