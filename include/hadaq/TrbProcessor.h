@@ -3,7 +3,7 @@
 
 #include "base/StreamProc.h"
 
-#include "base/Profiler.h"
+// #include "base/Profiler.h"
 
 #include "hadaq/definess.h"
 
@@ -90,7 +90,7 @@ namespace hadaq {
          TrbMessage  fMsg;            ///< used for TTree store
          TrbMessage* pMsg;            ///< used for TTree store
 
-         base::Profiler  fProfiler;   ///< profiler
+//         base::Profiler  fProfiler;   ///< profiler
 
          unsigned fMinTdc{0};         ///< minimal id of TDC
          unsigned fMaxTdc{0};         ///< maximal id of TDC

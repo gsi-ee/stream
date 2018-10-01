@@ -85,7 +85,7 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc, int hfi
    // only raw scan, data can be immediately removed
    SetRawScanOnly();
 
-   fProfiler.Reserve(50);
+//   fProfiler.Reserve(50);
 }
 
 hadaq::TrbProcessor::~TrbProcessor()
@@ -133,18 +133,13 @@ void hadaq::TrbProcessor::UserPreLoop()
    if (fMap.size()>0)
       CreatePerTDCHistos();
 
-   printf("TrbProcessor::UserPreLoop\n");
-
-   fProfiler.MakeStatistic();
+   // fProfiler.MakeStatistic();
 }
 
 void hadaq::TrbProcessor::UserPostLoop()
 {
-   fProfiler.MakeStatistic();
-
-   printf("TrbProcessor::UserPostLoop HUBs %u\n", (unsigned) fHadaqHUBId.size());
-
-   printf("TRB PROFILER: %s\n", fProfiler.Format().c_str());
+   // fProfiler.MakeStatistic();
+   // printf("TRB PROFILER: %s\n", fProfiler.Format().c_str());
 }
 
 
@@ -806,7 +801,7 @@ bool hadaq::TrbProcessor::CreateMissingTDC(hadaqs::RawSubevent *sub, const std::
 
 unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub, void* tgtbuf, unsigned tgtlen, bool only_hist)
 {
-   base::ProfilerGuard grd(fProfiler, "enter");
+//   base::ProfilerGuard grd(fProfiler, "enter");
 
    unsigned trig_type = sub->GetTrigTypeTrb3(), sz = sub->GetSize();
 
@@ -860,7 +855,6 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub, void* 
 
    bool get_fast = fMaxTdc > fMinTdc;
 
-
    // !!! DEBUG ONLY - just copy data
    // if (tgtbuf && tgtlen) {
    //   printf("SUBEVENT swap:%u len:%u\n", sub->IsSwapped(), sub->GetPaddedSize());
@@ -868,7 +862,7 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub, void* 
    //   return sub->GetPaddedSize();
    // }
 
-   grd.Next("hdr");
+//   grd.Next("hdr");
 
    hadaqs::RawSubevent* tgt = (hadaqs::RawSubevent*) tgtbuf;
    // copy complete header first
@@ -884,7 +878,7 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub, void* 
 
    while (ix < trbSubEvSize) {
 
-      grd.Next("sub", 5);
+//      grd.Next("sub", 5);
 
       //! Extract data portion from the whole packet (in a loop)
       uint32_t data = sub->Data(ix++);
@@ -895,11 +889,10 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub, void* 
       }
 
       unsigned datalen = (data >> 16) & 0xFFFF;
-
-      grd.Next("hub");
+      unsigned id = data & 0xFFFF;
 
       if (fHadaqHUBId.size() > 0)
-         if (std::find(fHadaqHUBId.begin(), fHadaqHUBId.end(), data & 0xFFFF) != fHadaqHUBId.end()) {
+         if (std::find(fHadaqHUBId.begin(), fHadaqHUBId.end(), id) != fHadaqHUBId.end()) {
             // ix+=datalen;  // WORKAROUND !!!
 
             // copy hub header to the target
@@ -910,29 +903,28 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub, void* 
             continue;
          }
 
-      grd.Next("get");
+//      grd.Next("get");
 
       //! ================= FPGA TDC header ========================
       TdcProcessor *subproc = nullptr;
       if (get_fast) {
-         unsigned id = data & 0xFFFF;
          if ((id >= fMinTdc) && (id < fMaxTdc)) subproc = fTdcsVect[id-fMinTdc];
       } else {
-         subproc = GetTDC(data & 0xFFFF, true);
+         subproc = GetTDC(id, true);
       }
 
       if (subproc) {
-         grd.Next("trans");
+//         grd.Next("trans");
          unsigned newlen = subproc->TransformTdcData(sub, ix, datalen, tgt, tgtix+1);
          if (tgt) {
-            tgt->SetData(tgtix++, (data & 0xFFFF) | ((newlen & 0xffff) << 16));
+            tgt->SetData(tgtix++, id | ((newlen & 0xffff) << 16));
             tgtix += newlen;
          }
          ix += datalen;
          continue; // go to next block
       }  // end of if TDC header
 
-      grd.Next("unrec", 10);
+//      grd.Next("unrec", 10);
 
       // copy unrecognized data to the target
       if (tgt) {
@@ -945,7 +937,7 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub, void* 
       ix+=datalen;
    }
 
-   grd.Next("finish", 15);
+//   grd.Next("finish", 15);
 
    if (tgt) {
       tgt->SetSize(sizeof(hadaqs::RawSubevent) + tgtix*4);
