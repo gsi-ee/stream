@@ -84,6 +84,8 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc, int hfi
 
    // only raw scan, data can be immediately removed
    SetRawScanOnly();
+
+   fProfiler.Reserve(50);
 }
 
 hadaq::TrbProcessor::~TrbProcessor()
@@ -128,8 +130,16 @@ void hadaq::TrbProcessor::CreatePerTDCHistos()
 
 void hadaq::TrbProcessor::UserPreLoop()
 {
+   fProfiler.MakeStatistic();
+
    if (fMap.size()>0)
       CreatePerTDCHistos();
+
+}
+
+void hadaq::TrbProcessor::UserPostLoop()
+{
+   fProfiler.MakeStatistic();
 }
 
 

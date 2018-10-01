@@ -3,6 +3,8 @@
 
 #include "base/StreamProc.h"
 
+#include "base/Profiler.h"
+
 #include "hadaq/definess.h"
 
 #include "hadaq/TdcProcessor.h"
@@ -48,7 +50,7 @@ namespace hadaq {
 
       protected:
 
-         HldProcessor* fHldProc;     ///< pointer on HLD processor
+         HldProcessor *fHldProc;     ///< pointer on HLD processor
 
          SubProcMap fMap;            ///< map of sub-processors
 
@@ -87,6 +89,8 @@ namespace hadaq {
 
          TrbMessage  fMsg;            ///< used for TTree store
          TrbMessage* pMsg;            ///< used for TTree store
+
+         base::Profiler  fProfiler;   ///< profiler
 
          hadaqs::RawSubevent   fLastSubevHdr; //! copy of last subevent header (without data)
 
@@ -140,6 +144,7 @@ namespace hadaq {
          void SetHadaqSUBId(unsigned) {} // keep for backward compatibility, can be ignored
 
          virtual void UserPreLoop();
+         virtual void UserPostLoop();
 
          /** Set trigger window not only for itself, bit for all subprocessors */
          virtual void SetTriggerWindow(double left, double right);
