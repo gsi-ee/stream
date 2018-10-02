@@ -641,6 +641,9 @@ float hadaq::TdcProcessor::ExtractCalibr(float* func, unsigned bin)
 
 unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigned indx, unsigned datalen, hadaqs::RawSubevent* tgt, unsigned tgtindx)
 {
+   // do nothing in case of empty TDC sub-sub-event
+   if (datalen == 0) return 0;
+
    hadaq::TdcMessage msg, calibr;
 
    int cnt(0), hitcnt(0), errcnt(0);
