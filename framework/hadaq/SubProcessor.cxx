@@ -6,12 +6,13 @@ hadaq::SubProcessor::SubProcessor(TrbProcessor *trb, const char* nameprefix, uns
    base::StreamProc(nameprefix, subid, false),
    fTrb(trb)
 {
-   std::string pref = trb->GetName();
-   pref.append("/");
-   pref.append(GetName());
-   SetPathPrefix(pref);
-
    if (trb) {
+
+      std::string pref = trb->GetName();
+      pref.append("/");
+      pref.append(GetName());
+      SetPathPrefix(pref);
+
       if ((mgr()==0) && (trb->mgr()!=0)) trb->mgr()->AddProcessor(this);
 
       trb->AddSub(this, subid);
