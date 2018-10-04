@@ -39,9 +39,9 @@ void hadaq::SubProcessor::AssignPerBrdHistos(TrbProcessor* trb, unsigned seqid)
 void hadaq::SubProcessor::UserPreLoop()
 {
    unsigned cnt(0);
-   if (fTrb != 0)
-      for (SubProcMap::const_iterator iter = fTrb->fMap.begin(); iter!=fTrb->fMap.end(); iter++) {
-         if (iter->second == this) { fSeqeunceId = cnt; break; }
+   if (fTrb)
+      for (auto &&item : fTrb->fMap) {
+         if (item.second == this) { fSeqeunceId = cnt; break; }
          cnt++;
       }
 }
