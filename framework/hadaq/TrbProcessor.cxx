@@ -704,12 +704,16 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
 
             // continue processing
             continue;
-         } else
-         if ((dataid >= gTDCMin) && (dataid <= gTDCMax)) {
-            // suppose this is TDC data, first word should be TDC header
-            TdcMessage msg(sub->Data(ix));
+         } else if ((dataid >= gTDCMin) && (dataid <= gTDCMax)) {
 
-            if (msg.isHeaderMsg() || hadaq::TdcProcessor::IsDRICHReapir()) {
+            bool is_tdc = (datalen == 0);
+            if (!is_tdc) {
+               TdcMessage msg(sub->Data(ix));
+               is_tdc = msg.isHeaderMsg() || hadaq::TdcProcessor::IsDRICHReapir();
+            }
+
+            // suppose this is TDC data, first word should be TDC header
+            if (is_tdc) {
                unsigned numch = gNumChannels, edges = gEdgesMask;
                // here should be channel/edge/min/max selection based on TDC design ID
 
