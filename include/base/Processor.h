@@ -68,8 +68,9 @@ namespace base {
          enum { DummyBrdId = 0xffffffff };
 
          std::string   fName;                     //!< processor name, used for event naming
-         unsigned      fID;                  //!< identifier, used mostly for debugging
+         unsigned      fID;                       //!< identifier, used mostly for debugging
          ProcMgr*      fMgr;                      //!< direct pointer on manager
+         std::string   fPathPrefix;               //!< histogram path prefix, used for histogram folder name
          std::string   fPrefix;                   //!< prefix, used for histogram names
          std::string   fSubPrefixD;               //!< sub-prefix for histogram directory
          std::string   fSubPrefixN;               //!< sub-prefix for histogram names
@@ -81,6 +82,8 @@ namespace base {
          Processor(const char* name = "", unsigned brdid = DummyBrdId);
 
          void SetBoardId(unsigned id) { fID = id; }
+
+         void SetPathPrefix(const std::string &prefix) { fPathPrefix = prefix; }
 
          /** Set subprefix for histograms and conditions */
          void SetSubPrefix(const char* subname = "", int indx = -1, const char* subname2 = "", int indx2 = -1);

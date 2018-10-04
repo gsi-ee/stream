@@ -4,14 +4,12 @@
 
 hadaq::SubProcessor::SubProcessor(TrbProcessor *trb, const char* nameprefix, unsigned subid) :
    base::StreamProc(nameprefix, subid, false),
-   fTrb(trb),
-   fSeqeunceId(0),
-   fIsTDC(false),
-   fNewDataFlag(false)
+   fTrb(trb)
 {
-   fMsgPerBrd = 0;
-   fErrPerBrd = 0;
-   fHitsPerBrd = 0;
+   std::string pref = trb->GetName();
+   pref.append("/");
+   pref.append(GetName());
+   SetPathPrefix(pref);
 
    if (trb) {
       if ((mgr()==0) && (trb->mgr()!=0)) trb->mgr()->AddProcessor(this);
@@ -22,7 +20,6 @@ hadaq::SubProcessor::SubProcessor(TrbProcessor *trb, const char* nameprefix, uns
 
       AssignPerBrdHistos(trb, 0);
    }
-
 }
 
 void hadaq::SubProcessor::AssignPerBrdHistos(TrbProcessor* trb, unsigned seqid)

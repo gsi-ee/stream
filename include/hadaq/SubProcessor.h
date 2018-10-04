@@ -34,9 +34,9 @@ namespace hadaq {
          base::H1handle *fErrPerBrd{nullptr};  //! errors per board - from TRB
          base::H1handle *fHitsPerBrd{nullptr}; //! data hits per board - from TRB
 
-         bool      fNewDataFlag;      //! flag used by TRB processor to indicate if new data was added
-         bool      fPrintRawData;     //! if true, raw data will be printed
-         bool      fCrossProcess;     //! if true, AfterFill will be called by Trb processor
+         bool      fNewDataFlag{false};       //! flag used by TRB processor to indicate if new data was added
+         bool      fPrintRawData{false};      //! if true, raw data will be printed
+         bool      fCrossProcess{false};      //! if true, AfterFill will be called by Trb processor
 
          SubProcessor(TrbProcessor *trb, const char* nameprefix, unsigned subid);
 

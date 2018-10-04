@@ -24,6 +24,7 @@ base::Processor::Processor(const char* name, unsigned brdid) :
       fID = brdid;
    }
 
+   fPathPrefix = fName;
    fPrefix = fName;
 
    SetManager(base::ProcMgr::instance());
@@ -83,7 +84,7 @@ base::H1handle base::Processor::MakeH1(const char* name, const char* title, int 
 {
    if ((mgr()==0) || !IsHistFilling()) return 0;
 
-   std::string hname = fPrefix + "/";
+   std::string hname = fPathPrefix + "/";
    if (!fSubPrefixD.empty()) hname += fSubPrefixD;
    hname += fPrefix + "_";
    if (!fSubPrefixN.empty()) hname += fSubPrefixN;
@@ -102,7 +103,7 @@ base::H2handle base::Processor::MakeH2(const char* name, const char* title, int 
 {
    if ((mgr()==0) ||!IsHistFilling()) return 0;
 
-   std::string hname = fPrefix + "/";
+   std::string hname = fPathPrefix + "/";
    if (!fSubPrefixD.empty()) hname += fSubPrefixD;
    hname += fPrefix + "_";
    if (!fSubPrefixN.empty()) hname += fSubPrefixN;
@@ -121,7 +122,7 @@ base::C1handle base::Processor::MakeC1(const char* name, double left, double rig
 {
    if (mgr()==0) return 0;
 
-   std::string cname = fPrefix + "/";
+   std::string cname = fPathPrefix + "/";
    if (!fSubPrefixD.empty()) cname += fSubPrefixD;
    cname += fPrefix + "_";
    if (!fSubPrefixN.empty()) cname += fSubPrefixN;
