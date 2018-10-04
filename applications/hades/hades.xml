@@ -26,6 +26,7 @@
        <asf value="${asf}"/>
        <parallel value="${parallel}"/>
        <InputPort name="Input0" reconnect="5" loop="1" url="mbss://lxhadeb08:8101"/>
+       <!-- InputPort name="Input0" reconnect="5" loop="1" url="mbss://localhost"/ -->
        <OutputPort name="*" auto="false"/>
        <Events width="4" prec="1" low="0" up="1000" debug="0"/>
     </Module>
