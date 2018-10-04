@@ -1,0 +1,1 @@
+This is monitoring application for HADES DAQ, can be used with Go4 or DABC
