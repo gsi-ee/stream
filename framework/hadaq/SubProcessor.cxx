@@ -7,7 +7,6 @@ hadaq::SubProcessor::SubProcessor(TrbProcessor *trb, const char* nameprefix, uns
    fTrb(trb)
 {
    if (trb) {
-
       std::string pref = trb->GetName();
       pref.append("/");
       pref.append(GetName());
