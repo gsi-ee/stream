@@ -101,19 +101,26 @@ hadaq::TdcProcessor* hadaq::TrbProcessor::FindTDC(unsigned tdcid) const
 
 void hadaq::TrbProcessor::CreatePerTDCHistos()
 {
-   unsigned numtdc = fMap.size();
-   if (numtdc<4) numtdc = 4;
+
+   std::vector<TdcProcessor *> tdcs;
+
+   unsigned numtdc = NumberOfTDC();
+   for (unsigned indx=0;indx<numtdc;++indx)
+      tdcs.push_back(GetTDCWithIndex(indx));
+
    std::string lbl = "tdc;xbin:";
    unsigned cnt = 0;
-   for (SubProcMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
+   for (auto &&tdc : tdcs) {
       if (cnt++>0) lbl.append(",");
       char sbuf[50];
-      sprintf(sbuf, "0x%04X", iter->second->GetID());
+      snprintf(sbuf, sizeof(sbuf), "0x%04X", tdc->GetID());
       lbl.append(sbuf);
    }
 
-   while (cnt++<numtdc)
-      lbl.append(",----");
+   while (numtdc<4) {
+      if (numtdc++ > 0) lbl.append(",");
+      lbl.append("----");
+   }
 
    if (!fMsgPerBrd)
       fMsgPerBrd = MakeH1("MsgPerTDC", "Number of messages per TDC", numtdc, 0, numtdc, lbl.c_str());
@@ -123,9 +130,8 @@ void hadaq::TrbProcessor::CreatePerTDCHistos()
       fHitsPerBrd = MakeH1("HitsPerTDC", "Number of data hits per TDC", numtdc, 0, numtdc, lbl.c_str());
 
    cnt = 0;
-   for (SubProcMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++)
-      iter->second->AssignPerBrdHistos(this, cnt++);
-
+   for (auto &&tdc : tdcs)
+      tdc->AssignPerBrdHistos(this, cnt++);
 }
 
 void hadaq::TrbProcessor::UserPreLoop()

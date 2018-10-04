@@ -180,6 +180,9 @@ namespace hadaq {
          base::H1handle fTempDistr;   //! temperature distribution
          base::H1handle fBubbleErrDistr; //! distribution of place with errors
 
+         unsigned fHldId{0};                   //! sequence number of processor in HLD
+         base::H1handle *fErrPerHld{nullptr};  //! errors per board - from HLD
+
          unsigned                 fNumChannels; //! number of channels
          unsigned                 fNumFineBins; //! number of fine-counter bins
          std::vector<ChannelRec>  fCh; //! histogram for individual channels
@@ -386,6 +389,12 @@ namespace hadaq {
           * int channels[] = {33, 34, 35, 36, 0};
           * tdc->CreateHistograms( channels ); */
          void CreateHistograms(int *arr = 0);
+
+         void AssignPerHldHistos(unsigned id, base::H1handle *hist)
+         {
+            fHldId = id;
+            fErrPerHld = hist;
+         }
 
          /** Set calibration trigger type(s)
           * One could specify up-to 4 different trigger types, for instance 0x1 and 0xD

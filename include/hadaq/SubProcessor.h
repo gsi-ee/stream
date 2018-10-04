@@ -26,23 +26,23 @@ namespace hadaq {
 
       protected:
 
-         TrbProcessor* fTrb;         //! pointer on TRB processor
-         unsigned fSeqeunceId;       //! sequence number of processor in TRB
-         bool fIsTDC;                //! indicate when it is TDC, to avoid dynamic_cast
+         TrbProcessor *fTrb{nullptr};//! pointer on TRB processor
+         unsigned fSeqeunceId{0};    //! sequence number of processor in TRB
+         bool fIsTDC{false};         //! indicate when it is TDC, to avoid dynamic_cast
 
-         base::H1handle* fMsgPerBrd;  //! messages per board - from TRB
-         base::H1handle* fErrPerBrd;  //! errors per board - from TRB
-         base::H1handle* fHitsPerBrd; //! data hits per board - from TRB
+         base::H1handle *fMsgPerBrd{nullptr};  //! messages per board - from TRB
+         base::H1handle *fErrPerBrd{nullptr};  //! errors per board - from TRB
+         base::H1handle *fHitsPerBrd{nullptr}; //! data hits per board - from TRB
 
          bool      fNewDataFlag;      //! flag used by TRB processor to indicate if new data was added
          bool      fPrintRawData;     //! if true, raw data will be printed
          bool      fCrossProcess;     //! if true, AfterFill will be called by Trb processor
 
-         SubProcessor(TrbProcessor* trb, const char* nameprefix, unsigned subid);
+         SubProcessor(TrbProcessor *trb, const char* nameprefix, unsigned subid);
 
          /** These methods used to fill different raw histograms during first scan */
          virtual void BeforeFill() {}
-         virtual void AfterFill(SubProcMap* = 0) {}
+         virtual void AfterFill(SubProcMap* = nullptr) {}
 
          /** Method will be called by TRB processor if SYNC message was found
           * One should change 4 first bytes in the last buffer in the queue */

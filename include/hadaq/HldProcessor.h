@@ -79,9 +79,11 @@ namespace hadaq {
          long fCalibrPeriod;           ///< how often calibration should be performed
          unsigned fCalibrTriggerMask;  ///< mask with enabled event ID, default all
 
-         base::H1handle fEvType;     ///< HADAQ event type
-         base::H1handle fEvSize;     ///< HADAQ event size
-         base::H1handle fSubevSize;  ///< HADAQ sub-event size
+         base::H1handle fEvType{nullptr};       ///< HADAQ event type
+         base::H1handle fEvSize{nullptr};       ///< HADAQ event size
+         base::H1handle fSubevSize{nullptr};    ///< HADAQ sub-event size
+         base::H1handle fErrPerTDC{nullptr};    ///< HADAQ sub-event size
+
 
          HldMessage     fMsg;        ///< used for TTree store
          HldMessage    *pMsg;        ///< used for TTree store
@@ -98,6 +100,8 @@ namespace hadaq {
          virtual void CreateBranch(TTree*);
 
          virtual void Store(base::Event* ev);
+
+         void CreatePerTDCHisto();
 
       public:
 

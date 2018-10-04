@@ -153,11 +153,11 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
 
    hadaq::TrbIterator iter(buf().buf, buf().datalen);
 
-   hadaqs::RawEvent* ev = 0;
+   hadaqs::RawEvent* ev = nullptr;
 
    unsigned evcnt = 0;
 
-   while ((ev = iter.nextEvent()) != 0) {
+   while ((ev = iter.nextEvent()) != nullptr) {
 
       evcnt++;
 
@@ -219,6 +219,7 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
       if (fAutoCreate) {
          fAutoCreate = false; // with first event
          if (fAfterFunc.length()>0) mgr()->CallFunc(fAfterFunc.c_str(), this);
+         CreatePerTDCHisto();
       }
    }
 
@@ -312,6 +313,42 @@ void hadaq::HldProcessor::UserPreLoop()
 {
    if (!fAutoCreate && (fAfterFunc.length()>0))
       mgr()->CallFunc(fAfterFunc.c_str(), this);
+
+   if (!fAutoCreate) CreatePerTDCHisto();
 }
+
+
+void hadaq::HldProcessor::CreatePerTDCHisto()
+{
+   if (fErrPerTDC) return;
+
+   std::vector<TdcProcessor *> tdcs;
+
+   for (auto&& item : fMap) {
+      unsigned num = item.second->NumberOfTDC();
+      for (unsigned indx=0;indx<num;++indx)
+         tdcs.push_back(item.second->GetTDCWithIndex(indx));
+   }
+
+   if (tdcs.size() == 0) return;
+
+   std::string lbl = "tdc;xbin:";
+   unsigned cnt = 0;
+   for (auto &&tdc : tdcs) {
+      if (cnt++>0) lbl.append(",");
+      char sbuf[50];
+      snprintf(sbuf, sizeof(sbuf), "0x%04X", tdc->GetID());
+      lbl.append(sbuf);
+   }
+
+   if (!fErrPerTDC)
+      fErrPerTDC = MakeH1("ErrPerTDC", "Number of errors per TDC", tdcs.size(), 0, tdcs.size(), lbl.c_str());
+
+   cnt = 0;
+   for (auto &&tdc : tdcs)
+      tdc->AssignPerHldHistos(cnt++, &fErrPerTDC);
+
+}
+
 
 
