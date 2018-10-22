@@ -16,7 +16,7 @@
 #define RAWPRINT( args ...) if(IsPrintRawData()) printf( args )
 
 
-#define ADDERROR(code, args ...) if((1 << code) & gErrorMask) AddError( code, args )
+#define ADDERROR(code, args ...) if(((1 << code) & gErrorMask) || mgr()->DoLog()) AddError( code, args )
 
 
 unsigned hadaq::TdcProcessor::gNumFineBins = FineCounterBins;

@@ -90,6 +90,7 @@ namespace base {
 
          virtual void AddRunLog(const char *msg) {}
          virtual void AddErrLog(const char *msg) {}
+         virtual bool DoLog() { return false; }
 
          virtual H1handle MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle = 0);
          virtual void FillH1(H1handle h1, double x, double weight = 1.);

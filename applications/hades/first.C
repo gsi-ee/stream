@@ -16,6 +16,10 @@ void first()
    // this limits used for liner calibrations when nothing else is available
    hadaq::TdcMessage::SetFineLimits(31, 491);
 
+   // Enable 1 or disable 0 errors logging from following enumeration
+   //  { errNoHeader, errChId, errEpoch, errFine, err3ff, errCh0, errMismatchDouble, errUncknHdr, errDesignId, errMisc }
+   hadaq::TdcMessage::SetErrorMask(0xffffff);
+
    // default channel numbers and edges mask
    // 1 - use only rising edge, falling edge is ignore
    // 2   - falling edge enabled and fully independent from rising edge
@@ -44,9 +48,9 @@ void first()
    //   (1 << 0xD) - special 0XD trigger with internal pulser, used also for TOT calibration
    //    0x3FFF - all kinds of trigger types will be used for calibration (excluding 0xE and 0xF)
    //   0x80000000 in mask enables usage of temperature correction
-   
+
    //   hld->ConfigureCalibration("", 100000, (1 << 0xD));
-   hld->ConfigureCalibration("", 0 , 0);
+   hld->ConfigureCalibration("", 0, 0);
    // only accept trigger type 0x1 when storing file
    // new hadaq::HldFilter(0x1);
 
@@ -58,7 +62,6 @@ void first()
    // 2 - std::vector<hadaq::MessageFloat>  - compact form, without channel 0, stamp as float (relative to ch0)
    // 3 - std::vector<hadaq::MessageDouble> - compact form, with channel 0, absolute time stamp as double
    base::ProcMgr::instance()->SetStoreKind(0);
-
 
    // when configured as output in DABC, one specifies:
    // <OutputPort name="Output2" url="stream://file.root?maxsize=5000&kind=3"/>
@@ -94,5 +97,4 @@ extern "C" void after_create(hadaq::HldProcessor* hld)
         tdc->SetRefChannel(nch, 1, 0xffff, 2000,  -10., 10.);
    }
 }
-
 
