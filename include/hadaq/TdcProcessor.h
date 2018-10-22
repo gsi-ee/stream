@@ -181,7 +181,8 @@ namespace hadaq {
          base::H1handle fBubbleErrDistr; //! distribution of place with errors
 
          unsigned fHldId{0};                   //! sequence number of processor in HLD
-         base::H1handle *fErrPerHld{nullptr};  //! errors per board - from HLD
+         base::H1handle *fHitsPerHld{nullptr}; //! hits per TDC - from HLD
+         base::H1handle *fErrPerHld{nullptr};  //! errors per TDC - from HLD
 
          unsigned                 fNumChannels; //! number of channels
          unsigned                 fNumFineBins; //! number of fine-counter bins
@@ -390,10 +391,11 @@ namespace hadaq {
           * tdc->CreateHistograms( channels ); */
          void CreateHistograms(int *arr = 0);
 
-         void AssignPerHldHistos(unsigned id, base::H1handle *hist)
+         void AssignPerHldHistos(unsigned id, base::H1handle *hHits, base::H1handle *hErrs)
          {
             fHldId = id;
-            fErrPerHld = hist;
+            fHitsPerHld = hHits;
+            fErrPerHld = hErrs;
          }
 
          /** Set calibration trigger type(s)

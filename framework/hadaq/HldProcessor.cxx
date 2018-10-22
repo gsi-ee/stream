@@ -341,12 +341,15 @@ void hadaq::HldProcessor::CreatePerTDCHisto()
       lbl.append(sbuf);
    }
 
+   if (!fHitsPerTDC)
+      fHitsPerTDC = MakeH1("HitsPerTDC", "Number of hits per TDC", tdcs.size(), 0, tdcs.size(), lbl.c_str());
+
    if (!fErrPerTDC)
       fErrPerTDC = MakeH1("ErrPerTDC", "Number of errors per TDC", tdcs.size(), 0, tdcs.size(), lbl.c_str());
 
    cnt = 0;
    for (auto &&tdc : tdcs)
-      tdc->AssignPerHldHistos(cnt++, &fErrPerTDC);
+      tdc->AssignPerHldHistos(cnt++, &fHitsPerTDC, &fErrPerTDC);
 
 }
 

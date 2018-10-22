@@ -1945,6 +1945,9 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       // fill number of "good" hits
       if (fHitsPerBrd) DefFillH1(*fHitsPerBrd, fSeqeunceId, hitcnt);
 
+      // number of hits per TDC in HLD
+      if (fHitsPerHld) DefFillH1(*fHitsPerHld, fHldId, hitcnt);
+
       if (iserr || missinghit) {
          if (fErrPerBrd) DefFillH1(*fErrPerBrd, fSeqeunceId, 1.);
          if (fErrPerHld) DefFillH1(*fErrPerHld, fHldId, 1.);

@@ -82,8 +82,8 @@ namespace hadaq {
          base::H1handle fEvType{nullptr};       ///< HADAQ event type
          base::H1handle fEvSize{nullptr};       ///< HADAQ event size
          base::H1handle fSubevSize{nullptr};    ///< HADAQ sub-event size
-         base::H1handle fErrPerTDC{nullptr};    ///< HADAQ sub-event size
-
+         base::H1handle fHitsPerTDC{nullptr};   ///< HADAQ hits per TDC
+         base::H1handle fErrPerTDC{nullptr};    ///< HADAQ errors per TDC
 
          HldMessage     fMsg;        ///< used for TTree store
          HldMessage    *pMsg;        ///< used for TTree store
