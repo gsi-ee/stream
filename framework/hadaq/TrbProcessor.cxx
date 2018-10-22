@@ -447,6 +447,20 @@ void hadaq::TrbProcessor::AddBufferToTDC(hadaqs::RawSubevent* sub,
    tdcproc->SetNewDataFlag(true);
 }
 
+void hadaq::TrbProcessor::EventError(const char *msg)
+{
+   char sbuf[1000];
+   snprintf(sbuf, sizeof(sbuf), "Ev: %06x Msg: %s", fCurrentEventId, msg);
+   mgr()->AddErrLog(sbuf);
+}
+
+void hadaq::TrbProcessor::EventLog(const char *msg)
+{
+   char sbuf[1000];
+   snprintf(sbuf, sizeof(sbuf), "Ev: %06x Msg: %s", fCurrentEventId, msg);
+   mgr()->AddRunLog(sbuf);
+}
+
 void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3eventid)
 {
    // this is first scan of subevent from TRB3 data
@@ -454,6 +468,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
    // also for trigger-type 1 we should add SYNC message to each processor
 
    memcpy((void *) &fLastSubevHdr, sub, sizeof(fLastSubevHdr));
+   fCurrentEventId = trb3eventid;
 
    DefFillH1(fTrigType, sub->GetTrigTypeTrb3(), 1.);
 

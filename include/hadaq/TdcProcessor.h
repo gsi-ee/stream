@@ -28,6 +28,9 @@ namespace hadaq {
 
       protected:
 
+
+         enum { errNoHeader, errChId, errEpoch, errFine, err3ff, errCh0, errMismatchDouble, errUncknHdr, errDesignId, errMisc };
+
          enum { rising_edge = 1, falling_edge = 2 };
 
          enum { edge_None = 0, edge_Rising = 1, edge_BothIndepend = 2, edge_ForceRising  = 3, edge_CommonStatistic = 4 };
@@ -264,6 +267,7 @@ namespace hadaq {
 
          static unsigned gNumFineBins;   //! default value for number of bins in histograms for fine bins
          static unsigned gTotRange;      //! default range for TOT histogram
+         static unsigned gErrorMask;     //! mask for errors to display
          static bool gAllHistos;         //! when true, all histos for all channels created simultaneously
          static int gBubbleMode;         //! 0-off, 1-two edges, 2 - raw bubbles
          static int gBubbleMask;         //! bubble mask id (starts from 1), which is interesting for the evaluation
@@ -316,6 +320,8 @@ namespace hadaq {
 
          virtual void CreateBranch(TTree*);
 
+         void AddError(unsigned code, const char *args, ...);
+
       public:
 
          TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels = MaxNumTdcChannels, unsigned edge_mask = 1);
@@ -324,6 +330,8 @@ namespace hadaq {
          static void SetMaxBoardId(unsigned) { }
 
          static void SetDefaults(unsigned numfinebins = 600, unsigned totrange = 100);
+
+         static void SetErrorMask(unsigned mask = 0xffffffffU);
 
          static void SetAllHistos(bool on = true);
 

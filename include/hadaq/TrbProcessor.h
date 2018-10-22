@@ -96,7 +96,8 @@ namespace hadaq {
          unsigned fMaxTdc{0};         ///< maximal id of TDC
          std::vector<TdcProcessor*> fTdcsVect; ///< array of TDCs
 
-         hadaqs::RawSubevent   fLastSubevHdr; //! copy of last subevent header (without data)
+         hadaqs::RawSubevent   fLastSubevHdr; ///<! copy of last subevent header (without data)
+         unsigned fCurrentEventId{0};         ///<! current processed event id, used in log msg
 
          static unsigned gNumChannels;     ///< default number of channels
          static unsigned gEdgesMask;       ///< default edges mask
@@ -127,6 +128,9 @@ namespace hadaq {
          void AfterEventScan();
 
          virtual void CreateBranch(TTree* t);
+
+         void EventError(const char *msg);
+         void EventLog(const char *msg);
 
       public:
 

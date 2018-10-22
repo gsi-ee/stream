@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
+#include <stdarg.h>
 
 #include "base/defines.h"
 #include "base/ProcMgr.h"
@@ -14,8 +15,13 @@
 
 #define RAWPRINT( args ...) if(IsPrintRawData()) printf( args )
 
+
+#define ADDERROR(code, args ...) if((1 << code) & gErrorMask) AddError( code, args )
+
+
 unsigned hadaq::TdcProcessor::gNumFineBins = FineCounterBins;
 unsigned hadaq::TdcProcessor::gTotRange = 100;
+unsigned hadaq::TdcProcessor::gErrorMask = 0xffffffffU;
 bool hadaq::TdcProcessor::gAllHistos = false;
 int hadaq::TdcProcessor::gBubbleMode = 0;
 int hadaq::TdcProcessor::gBubbleMask = 0;
@@ -33,6 +39,12 @@ void hadaq::TdcProcessor::SetDefaults(unsigned numfinebins, unsigned totrange)
    gNumFineBins = numfinebins;
    gTotRange = totrange;
 }
+
+void hadaq::TdcProcessor::SetErrorMask(unsigned mask)
+{
+   gErrorMask = mask;
+}
+
 
 void hadaq::TdcProcessor::SetAllHistos(bool on)
 {
@@ -196,6 +208,39 @@ bool hadaq::TdcProcessor::CheckPrintError()
 {
    return fTrb ? fTrb->CheckPrintError() : true;
 }
+
+
+void hadaq::TdcProcessor::AddError(unsigned code, const char *fmt, ...)
+{
+   va_list args;
+   int length(256);
+   char *buffer(0);
+
+   std::string sbuf;
+   while (1) {
+      if (buffer) delete [] buffer;
+      buffer = new char [length];
+      va_start(args, fmt);
+      auto result = vsnprintf(buffer, length, fmt, args);
+      va_end(args);
+
+      if (result < 0) length *= 2; else                 // this is error handling in glibc 2.0
+      if (result >= length) length = result + 1; else   // this is error handling in glibc 2.1
+      break;
+   }
+   sbuf.assign(buffer);
+   delete [] buffer;
+
+   if (CheckPrintError()) {
+      printf(GetName());
+      printf(" ");
+      printf(sbuf.c_str());
+      printf("\n");
+   }
+
+   if (fTrb) fTrb->EventError(sbuf.c_str());
+}
+
 
 bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
 {
@@ -1420,8 +1465,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          if (!msg.isHeaderMsg()) {
             if (!gDRICHReapir) {
                iserr = true;
-               if (CheckPrintError())
-                  printf("%5s Missing header message\n", GetName());
+               ADDERROR(errNoHeader, "Missing header message");
             }
          } else {
 
@@ -1484,8 +1528,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                // printf("Ch: %u tm1 %g tm2 %g diff %5.2f\n", chid, tm1, tm2, (tm2-tm1)*1e9);
 
                if (((tm2-tm1)<25e-9) || ((tm2-tm1)>40e-9)) {
-                  if (CheckPrintError())
-                      printf("%s Reject Ch: %u tm1 %g tm2 %g diff %5.2f\n", GetName(), chid, tm1, tm2, (tm2-tm1)*1e9);
+                  ADDERROR(errMisc, "Reject Ch: %u tm1 %g tm2 %g diff %5.2f", chid, tm1, tm2, (tm2-tm1)*1e9);
                   continue;
                }
                accept_next_falling = true;
@@ -1495,8 +1538,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          localtm = iter.getMsgTimeCoarse();
 
          if (chid >= NumChannels()) {
-            if (CheckPrintError())
-               printf("%5s Channel number %u bigger than configured %u\n", GetName(), chid, NumChannels());
+            ADDERROR(errChId, "Channel number %u bigger than configured %u", chid, NumChannels());
             iserr = true;
             continue;
          }
@@ -1515,8 +1557,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             if ((chid != first_double_msg.getHitChannel()) ||
                 (coarse != first_double_msg.getHitTmCoarse()) ||
                 (isrising != first_double_msg.isHitRisingEdge())) {
-               if (CheckPrintError())
-                  printf("%5s Mismatch in double edges readout from channel %u\n", GetName(), chid);
+               ADDERROR(errMismatchDouble, "Mismatch in double edges readout from channel %u", chid);
                first_double_msg.assign(0);
                continue;
             }
@@ -1529,8 +1570,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
          if (!iter.isCurEpoch()) {
             // one expects epoch before each hit message, if not data are corrupted and we can ignore it
-            if (CheckPrintError())
-               printf("%5s Missing epoch for hit from channel %u\n", GetName(), chid);
+            ADDERROR(errEpoch, "Missing epoch for hit from channel %u", chid);
             iserr = true;
             continue;
          }
@@ -1541,8 +1581,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          if (fine == 0x3FF) {
             if (first_scan) {
                // special case - missing hit, just ignore such value
-               if (CheckPrintError())
-                  printf("%5s Missing hit in channel %u fine counter is %x\n", GetName(), chid, fine);
+               ADDERROR(err3ff, "Missing hit in channel %u fine counter is %x", chid, fine);
 
                missinghit = true;
                FastFillH1(fChannels, chid);
@@ -1600,8 +1639,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          } else {
             if (fine >= fNumFineBins) {
                FastFillH1(fErrors, chid);
-               if (CheckPrintError())
-                  printf("%5s Fine counter %u out of allowed range 0..%u in channel %u\n", GetName(), fine, fNumFineBins, chid);
+               ADDERROR(errFine, "Fine counter %u out of allowed range 0..%u in channel %u", fine, fNumFineBins, chid);
                iserr = true;
                continue;
             }
@@ -1629,10 +1667,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          if ((chid==0) && (ch0time==0)) ch0time = localtm;
 
          if (IsTriggeredAnalysis()) {
-            if (ch0time==0) {
-               if (CheckPrintError())
-                  printf("%5s channel 0 time not found when first HIT in channel %u appears\n", GetName(), chid);
-            }
+            if (ch0time==0)
+               ADDERROR(errCh0, "channel 0 time not found when first HIT in channel %u appears", chid);
 
             localtm -= ch0time;
          }
@@ -1841,8 +1877,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
         case tdckind_Epoch:
            break;
         default:
-           if (CheckPrintError())
-              printf("%5s Unknown bits 0x%x in header\n", GetName(), msg.getKind());
+           ADDERROR(errUncknHdr, "Unknown message header 0x%x", msg.getKind());
            break;
       }
    }
@@ -1889,8 +1924,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          unsigned id = (highid << 16) | lowid;
 
          if ((fDesignId != 0) && (fDesignId != id))
-            if (CheckPrintError())
-                printf("%5s mismatch in design id before:0x%x now:0x%x\n", GetName(), fDesignId, id);
+            ADDERROR(errDesignId, "mismatch in design id before:0x%x now:0x%x", fDesignId, id);
 
          fDesignId = id;
       }
