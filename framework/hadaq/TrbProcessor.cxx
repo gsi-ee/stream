@@ -490,6 +490,12 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
 
    bool did_create_tdc = false;
 
+   if ((fMinTdc == 0) && (fMaxTdc == 0) && (fTdcsVect.size()==0) && (fMap.size() > 0)) {
+      BuildFastTDCVector();
+   }
+
+   bool get_fast = fMaxTdc > fMinTdc;
+
    unsigned maxhublen = 0, lasthubid = 0; // if saw HUB subsubevents, control size of data inside
 
 //   RAWPRINT("Scan TRB3 raw event 4-bytes size %u\n", trbSubEvSize);
@@ -623,7 +629,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
 
          // This is special TDC processor for data from CTS header
          TdcProcessor* tdcproc = GetTDC(fHadaqCTSId, true);
-         if ((tdcproc!=0) && (datalen>0)) {
+         if ((tdcproc!=nullptr) && (datalen>0)) {
             // if TDC processor found, process such data as normal TDC data
             AddBufferToTDC(sub, tdcproc, ix, datalen);
          }
@@ -634,9 +640,15 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
          continue;
       }
 
-      TdcProcessor* tdcproc = GetTDC(dataid);
+      TdcProcessor *tdcproc = nullptr;
+      if (get_fast) {
+         if ((dataid >= fMinTdc) && (dataid < fMaxTdc)) tdcproc = fTdcsVect[dataid-fMinTdc];
+      } else {
+         tdcproc = GetTDC(dataid);
+      }
+
       //! ================= FPGA TDC header ========================
-      if (tdcproc != 0) {
+      if (tdcproc) {
          RAWPRINT("   FPGA-TDC header: 0x%08x, tdcid=0x%04x, size=%u\n", (unsigned) data, dataid, datalen);
 
          if (IsPrintRawData()) {
@@ -670,10 +682,10 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
       }
 
       SubProcMap::const_iterator iter = fMap.find(dataid);
-      SubProcessor* subproc = iter != fMap.end() ? iter->second : 0;
+      SubProcessor* subproc = iter != fMap.end() ? iter->second : nullptr;
 
       //! ================= any other header ========================
-      if (subproc!=0) {
+      if (subproc) {
          RAWPRINT ("   SUB header: 0x%08x, id=0x%04x, size=%u\n", (unsigned) data, dataid, datalen);
 
          if(datalen==0)
@@ -682,20 +694,19 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
          base::Buffer buf;
 
          // check if this processor has some attached TDC
-         size_t offset = 0;
+         unsigned  offset = 0;
          SubProcMap::const_iterator iter_tdc = fMap.find(dataid | 0xff0000);
          if(iter_tdc != fMap.end()) {
             // pre-scan for begin marker of non-TDC data
-            for(size_t i=0;i<datalen;i++) {
-               const uint32_t data_ = sub->Data(ix+i);
+            for(unsigned i=0;i<datalen;i++) {
+               unsigned data_ = sub->Data(ix+i);
                if(data_ >> 28 == 0x1) {
                   offset = i;
                   break;
                }
             }
-            if(offset>0) {
+            if(offset>0)
                AddBufferToTDC(sub, iter_tdc->second, ix, offset);
-            }
          }
 
          datalen -= offset;
@@ -768,7 +779,10 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
       ix+=datalen;
    }
 
-   if (did_create_tdc) CreatePerTDCHistos();
+   if (did_create_tdc) {
+      CreatePerTDCHistos();
+      ClearFastTDCVector();
+   }
 
    if (fUseTriggerAsSync) {
       fMsg.fTrigSyncIdFound = true;
@@ -826,6 +840,35 @@ bool hadaq::TrbProcessor::CreateMissingTDC(hadaqs::RawSubevent *sub, const std::
    return isany;
 }
 
+void hadaq::TrbProcessor::BuildFastTDCVector()
+{
+   bool isany = false;
+   fMinTdc = 0xffffff;
+
+   for (auto &&entry : fMap) {
+      if (entry.second->IsTDC()) {
+         isany = true;
+         if (entry.first > fMaxTdc) fMaxTdc = entry.first;
+         if (entry.first < fMinTdc) fMinTdc = entry.first;
+      }
+   }
+
+   if (!isany || (fMaxTdc-fMinTdc > 0xffff)) {
+      fMinTdc = fMaxTdc = 1;
+   } else {
+      fMaxTdc++;
+      fTdcsVect.resize(fMaxTdc - fMinTdc, nullptr);
+      for (auto &&entry : fMap)
+         if (entry.second->IsTDC())
+            fTdcsVect[entry.first - fMinTdc] = static_cast<hadaq::TdcProcessor*>(entry.second);
+   }
+}
+
+void hadaq::TrbProcessor::ClearFastTDCVector()
+{
+   fTdcsVect.clear();
+   fMinTdc = fMaxTdc = 0;
+}
 
 unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub, void* tgtbuf, unsigned tgtlen, bool only_hist)
 {
@@ -858,28 +901,8 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub, void* 
    // only fill histograms
    if (only_hist) return 0;
 
-   if ((fMinTdc == 0) && (fMaxTdc == 0) && (fTdcsVect.size()==0) && (fMap.size() > 0)) {
-      bool isany = false;
-      fMinTdc = 0xffffff;
-
-      for (auto &&entry : fMap) {
-         if (entry.second->IsTDC()) {
-            isany = true;
-            if (entry.first > fMaxTdc) fMaxTdc = entry.first;
-            if (entry.first < fMinTdc) fMinTdc = entry.first;
-         }
-      }
-
-      if (!isany || (fMaxTdc-fMinTdc > 0xffff)) {
-         fMinTdc = fMaxTdc = 1;
-      } else {
-         fMaxTdc++;
-         fTdcsVect.resize(fMaxTdc - fMinTdc, nullptr);
-         for (auto &&entry : fMap)
-            if (entry.second->IsTDC())
-               fTdcsVect[entry.first - fMinTdc] = static_cast<hadaq::TdcProcessor*>(entry.second);
-      }
-   }
+   if ((fMinTdc == 0) && (fMaxTdc == 0) && (fTdcsVect.size()==0) && (fMap.size() > 0))
+      BuildFastTDCVector();
 
    bool get_fast = fMaxTdc > fMinTdc;
 

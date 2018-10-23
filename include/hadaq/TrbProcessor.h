@@ -128,6 +128,9 @@ namespace hadaq {
 
          void AfterEventScan();
 
+         void BuildFastTDCVector();
+         void ClearFastTDCVector();
+
          virtual void CreateBranch(TTree* t);
 
          void EventError(const char *msg);
