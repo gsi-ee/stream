@@ -97,6 +97,7 @@ namespace hadaq {
          std::vector<TdcProcessor*> fTdcsVect; ///< array of TDCs
 
          hadaqs::RawSubevent   fLastSubevHdr; ///<! copy of last subevent header (without data)
+         unsigned fCurrentRunId{0};           ///<! current runid
          unsigned fCurrentEventId{0};         ///<! current processed event id, used in log msg
 
          static unsigned gNumChannels;     ///< default number of channels
@@ -121,7 +122,7 @@ namespace hadaq {
          void AddSub(SubProcessor* tdc, unsigned id);
 
          /** Scan FPGA-TDC data, distribute over sub-processors */
-         void ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3eventid);
+         void ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3runid, unsigned trb3seqid);
 
          void BeforeEventScan();
 

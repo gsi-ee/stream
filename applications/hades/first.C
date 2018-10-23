@@ -18,7 +18,7 @@ void first()
 
    // Enable 1 or disable 0 errors logging from following enumeration
    //  { errNoHeader, errChId, errEpoch, errFine, err3ff, errCh0, errMismatchDouble, errUncknHdr, errDesignId, errMisc }
-   hadaq::TdcMessage::SetErrorMask(0xffffff);
+   hadaq::TdcProcessor::SetErrorMask(0xffffff);
 
    // default channel numbers and edges mask
    // 1 - use only rising edge, falling edge is ignore

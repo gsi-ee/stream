@@ -166,8 +166,8 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
       memcpy((void *)&fLastEvHdr, ev, sizeof(fLastEvHdr));
 
       fMsg.trig_type = ev->GetId() & 0xf;
-      fMsg.seq_nr = ev->GetSeqNr();
       fMsg.run_nr = ev->GetRunNr();
+      fMsg.seq_nr = ev->GetSeqNr();
 
       if ((fEventTypeSelect <= 0xf) && ((ev->GetId() & 0xf) != fEventTypeSelect)) continue;
 
@@ -178,9 +178,9 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
       for (TrbProcMap::iterator diter = fMap.begin(); diter != fMap.end(); diter++)
          diter->second->BeforeEventScan();
 
-      hadaqs::RawSubevent* sub = 0;
+      hadaqs::RawSubevent* sub = nullptr;
 
-      while ((sub = iter.nextSubevent()) != 0) {
+      while ((sub = iter.nextSubevent()) != nullptr) {
 
          if (IsPrintRawData()) sub->Dump(true);
 
@@ -192,7 +192,7 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
          TrbProcMap::iterator iter = fMap.find(sub->GetId());
 
          if (iter != fMap.end())
-            iter->second->ScanSubEvent(sub, ev->GetSeqNr());
+            iter->second->ScanSubEvent(sub, fMsg.run_nr, fMsg.seq_nr);
          else
          if (fAutoCreate) {
             TrbProcessor* trb = new TrbProcessor(sub->GetId(), this);
@@ -202,10 +202,10 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
 
             mgr()->UserPreLoop(trb); // while loop already running, call it once again for new processor
 
-            printf("Create TRB 0x%04x procmgr %p lvl %d \n", sub->GetId(), trb->mgr(), trb->HistFillLevel());
+            printf("Create TRB 0x%04x procmgr %p hlvl %d \n", sub->GetId(), trb->mgr(), trb->HistFillLevel());
 
             // in auto mode only TDC processors should be created
-            trb->ScanSubEvent(sub, ev->GetSeqNr());
+            trb->ScanSubEvent(sub, fMsg.run_nr, fMsg.seq_nr);
 
             trb->ConfigureCalibration(fCalibrName, fCalibrPeriod, fCalibrTriggerMask);
 

@@ -216,8 +216,8 @@ void hadaq::TdcProcessor::AddError(unsigned code, const char *fmt, ...)
    int length(256);
    char *buffer(0);
 
-   std::string sbuf;
-   while (1) {
+   std::string sbuf(GetName());
+   while (true) {
       if (buffer) delete [] buffer;
       buffer = new char [length];
       va_start(args, fmt);
@@ -228,12 +228,11 @@ void hadaq::TdcProcessor::AddError(unsigned code, const char *fmt, ...)
       if (result >= length) length = result + 1; else   // this is error handling in glibc 2.1
       break;
    }
-   sbuf.assign(buffer);
+   sbuf.append(" ");
+   sbuf.append(buffer);
    delete [] buffer;
 
    if (CheckPrintError()) {
-      printf(GetName());
-      printf(" ");
       printf(sbuf.c_str());
       printf("\n");
    }

@@ -339,12 +339,13 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
 
    hadaq::TrbIterator iter(buf().buf, buf().datalen);
 
-   hadaqs::RawEvent  *ev = 0;
+   hadaqs::RawEvent *ev = nullptr;
 
-   while ((ev = iter.nextEvent()) != 0) {
+   while ((ev = iter.nextEvent()) != nullptr) {
 
       if (ev->GetSize() > buf().datalen+4) {
-         printf("Corrupted event size %u!\n", ev->GetSize()); return true;
+         printf("Corrupted event size %u!\n", ev->GetSize());
+         return true;
       }
 
       if (IsPrintRawData()) ev->Dump();
@@ -353,13 +354,14 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
 
       BeforeEventScan();
 
-      hadaqs::RawSubevent* sub = 0;
+      hadaqs::RawSubevent* sub = nullptr;
       unsigned subcnt(0);
 
-      while ((sub = iter.nextSubevent()) != 0) {
+      while ((sub = iter.nextSubevent()) != nullptr) {
 
          if (sub->GetSize() > buf().datalen+4) {
-            printf("Corrupted subevent size %u!\n", sub->GetSize()); return true;
+            printf("Corrupted subevent size %u!\n", sub->GetSize());
+            return true;
          }
 
          if (IsPrintRawData()) sub->Dump(true);
@@ -367,7 +369,7 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
          // use only 16-bit in trigger number while CTS make a lot of errors in higher 8 bits
          AccountTriggerId((sub->GetTrigNr() >> 8) & 0xffff);
 
-         ScanSubEvent(sub, ev->GetSeqNr());
+         ScanSubEvent(sub, ev->GetRunNr(), ev->GetSeqNr());
 
          subcnt++;
       }
@@ -450,25 +452,26 @@ void hadaq::TrbProcessor::AddBufferToTDC(hadaqs::RawSubevent* sub,
 void hadaq::TrbProcessor::EventError(const char *msg)
 {
    char sbuf[1000];
-   snprintf(sbuf, sizeof(sbuf), "Ev: %06x Msg: %s", fCurrentEventId, msg);
+   snprintf(sbuf, sizeof(sbuf), "Run: %u Ev: 0x%08x Msg: %s", fCurrentRunId, fCurrentEventId, msg);
    mgr()->AddErrLog(sbuf);
 }
 
 void hadaq::TrbProcessor::EventLog(const char *msg)
 {
    char sbuf[1000];
-   snprintf(sbuf, sizeof(sbuf), "Ev: %06x Msg: %s", fCurrentEventId, msg);
+   snprintf(sbuf, sizeof(sbuf), "Ev: %08x Msg: %s", fCurrentEventId, msg);
    mgr()->AddRunLog(sbuf);
 }
 
-void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3eventid)
+void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3runid, unsigned trb3seqid)
 {
    // this is first scan of subevent from TRB3 data
    // our task is statistic over all messages we will found
    // also for trigger-type 1 we should add SYNC message to each processor
 
    memcpy((void *) &fLastSubevHdr, sub, sizeof(fLastSubevHdr));
-   fCurrentEventId = trb3eventid;
+   fCurrentRunId = trb3runid;
+   fCurrentEventId = sub->GetTrigNr();
 
    DefFillH1(fTrigType, sub->GetTrigTypeTrb3(), 1.);
 
@@ -769,7 +772,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ev
 
    if (fUseTriggerAsSync) {
       fMsg.fTrigSyncIdFound = true;
-      fMsg.fTrigSyncId = trb3eventid;
+      fMsg.fTrigSyncId = trb3seqid;
       fMsg.fTrigSyncIdStatus = 0; // dummy
    }
 
