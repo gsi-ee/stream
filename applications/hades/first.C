@@ -11,7 +11,7 @@ void first()
    // base::ProcMgr::instance()->SetTriggeredAnalysis(true);
 
    // all new instances get this value
-   base::ProcMgr::instance()->SetHistFilling(2);
+   base::ProcMgr::instance()->SetHistFilling(4);
 
    // this limits used for liner calibrations when nothing else is available
    hadaq::TdcMessage::SetFineLimits(31, 491);
@@ -28,7 +28,7 @@ void first()
    hadaq::TrbProcessor::SetDefaults(49, 2);
 
    // [min..max] range for TDC ids
-   hadaq::TrbProcessor::SetTDCRange(0x5000, 0x7FFF);
+   hadaq::TrbProcessor::SetTDCRange(0x7100, 0x7200);
 
    // [min..max] range for HUB ids
    hadaq::TrbProcessor::SetHUBRange(0x100, 0x100);
@@ -81,7 +81,7 @@ extern "C" void after_create(hadaq::HldProcessor* hld)
    for (unsigned k=0;k<hld->NumberOfTRB();k++) {
       hadaq::TrbProcessor* trb = hld->GetTRB(k);
       if (trb==0) continue;
-      printf("Configure %s!\n", trb->GetName());
+      //printf("Configure %s!\n", trb->GetName());
       trb->SetPrintErrors(10);
       // trb->SetPrintErrors(1000000000L);
    }
@@ -90,11 +90,12 @@ extern "C" void after_create(hadaq::HldProcessor* hld)
       hadaq::TdcProcessor* tdc = hld->GetTDC(k);
       if (tdc==0) continue;
 
-      printf("Configure %s!\n", tdc->GetName());
+      //printf("Configure %s!\n", tdc->GetName());
 
       // tdc->SetUseLastHit(true);
-      for (unsigned nch=2;nch<tdc->NumChannels();nch++)
-        tdc->SetRefChannel(nch, 1, 0xffff, 2000,  -10., 10.);
+
+      //for (unsigned nch=2;nch<tdc->NumChannels();nch++)
+      //   tdc->SetRefChannel(nch, 1, 0xffff, 2000,  -10., 10.);
    }
 }
 

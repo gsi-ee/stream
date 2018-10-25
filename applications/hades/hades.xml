@@ -25,6 +25,7 @@
     <Module name="Run" class="stream::RunModule">
        <asf value="${asf}"/>
        <parallel value="${parallel}"/>
+       <!--  InputPort name="Input0" url="hld://co1829811362701.hld"/-->
        <InputPort name="Input0" reconnect="5" loop="1" url="mbss://lxhadeb08:8101"/>
        <!-- InputPort name="Input0" reconnect="5" loop="1" url="mbss://localhost"/ -->
        <OutputPort name="*" auto="false"/>
