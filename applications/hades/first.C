@@ -11,7 +11,7 @@ void first()
    // base::ProcMgr::instance()->SetTriggeredAnalysis(true);
 
    // all new instances get this value
-   base::ProcMgr::instance()->SetHistFilling(4);
+   base::ProcMgr::instance()->SetHistFilling(2);
 
    // this limits used for liner calibrations when nothing else is available
    hadaq::TdcMessage::SetFineLimits(31, 491);
@@ -28,7 +28,7 @@ void first()
    hadaq::TrbProcessor::SetDefaults(49, 2);
 
    // [min..max] range for TDC ids
-   hadaq::TrbProcessor::SetTDCRange(0x7100, 0x7200);
+   hadaq::TrbProcessor::SetTDCRange(0x5000, 0x7FFF);
 
    // [min..max] range for HUB ids
    hadaq::TrbProcessor::SetHUBRange(0x100, 0x100);
