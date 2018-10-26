@@ -1571,6 +1571,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             // one expects epoch before each hit message, if not data are corrupted and we can ignore it
             ADDERROR(errEpoch, "Missing epoch for hit from channel %u", chid);
             iserr = true;
+            if (fChErrPerHld) DefFillH2(*fChErrPerHld, fHldId, chid, 1);
             continue;
          }
 
@@ -1585,6 +1586,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                missinghit = true;
                FastFillH1(fChannels, chid);
                FastFillH1(fUndHits, chid);
+
+               if (fChErrPerHld) DefFillH2(*fChErrPerHld, fHldId, chid, 1);
             }
             continue;
          }
@@ -1638,6 +1641,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          } else {
             if (fine >= fNumFineBins) {
                FastFillH1(fErrors, chid);
+               if (fChErrPerHld) DefFillH2(*fChErrPerHld, fHldId, chid, 1);
                ADDERROR(errFine, "Fine counter %u out of allowed range 0..%u in channel %u", fine, fNumFineBins, chid);
                iserr = true;
                continue;
@@ -1703,6 +1707,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             DefFillH1(fHits, (chid + (isrising ? 0.25 : 0.75)), 1.);
             if (raw_hit && use_fine_for_stat) DefFillH2(fAllFine, chid, fine, 1.);
             DefFillH2(fAllCoarse, chid, coarse, 1.);
+
+            if (fChHitsPerHld) DefFillH2(*fChHitsPerHld, fHldId, chid, 1);
 
             if (isrising) {
                // processing of rising edge

@@ -27,6 +27,10 @@ void hadaq::TrbProcessor::SetDefaults(unsigned numch, unsigned edges, bool ignor
    gIgnoreSync = ignore_sync;
 }
 
+unsigned hadaq::TrbProcessor::GetDefaultNumCh()
+{
+   return gNumChannels;
+}
 
 hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc, int hfill) :
    base::StreamProc("TRB_%04X", brdid, false),

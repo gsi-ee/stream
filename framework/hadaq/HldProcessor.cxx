@@ -344,12 +344,24 @@ void hadaq::HldProcessor::CreatePerTDCHisto()
    if (!fHitsPerTDC)
       fHitsPerTDC = MakeH1("HitsPerTDC", "Number of hits per TDC", tdcs.size(), 0, tdcs.size(), lbl.c_str());
 
+   if (!fHitsPerTDCChannel)
+      fHitsPerTDCChannel = MakeH2("HitsPerChannel", "Number of hits per TDC channel",
+                                  tdcs.size(), 0, tdcs.size(),
+                                  TrbProcessor::GetDefaultNumCh(), 0, TrbProcessor::GetDefaultNumCh(),
+                                  lbl.c_str());
+
    if (!fErrPerTDC)
       fErrPerTDC = MakeH1("ErrPerTDC", "Number of errors per TDC", tdcs.size(), 0, tdcs.size(), lbl.c_str());
 
+   if (!fErrPerTDCChannel)
+      fErrPerTDCChannel = MakeH2("ErrPerChannel", "Number of errors per TDC channel",
+                                 tdcs.size(), 0, tdcs.size(),
+                                 TrbProcessor::GetDefaultNumCh(), 0, TrbProcessor::GetDefaultNumCh(),
+                                 lbl.c_str());
+
    cnt = 0;
    for (auto &&tdc : tdcs)
-      tdc->AssignPerHldHistos(cnt++, &fHitsPerTDC, &fErrPerTDC);
+      tdc->AssignPerHldHistos(cnt++, &fHitsPerTDC, &fErrPerTDC, &fHitsPerTDCChannel, &fErrPerTDCChannel);
 
 }
 
