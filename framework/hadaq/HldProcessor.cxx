@@ -341,7 +341,7 @@ void hadaq::HldProcessor::CreatePerTDCHisto()
       lbl.append(sbuf);
    }
 
-   std::string opt1 = lbl + ";fill:2;tdc";
+   std::string opt1 = lbl + ";fill:2;tdc"; // opt1 += ";hmin:0;hmax:1000";
 
    if (!fHitsPerTDC)
       fHitsPerTDC = MakeH1("HitsPerTDC", "Number of hits per TDC", tdcs.size(), 0, tdcs.size(), opt1.c_str());
