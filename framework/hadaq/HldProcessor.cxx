@@ -332,7 +332,7 @@ void hadaq::HldProcessor::CreatePerTDCHisto()
 
    if (tdcs.size() == 0) return;
 
-   std::string lbl = "tdc;xbin:";
+   std::string lbl = "xbin:";
    unsigned cnt = 0;
    for (auto &&tdc : tdcs) {
       if (cnt++>0) lbl.append(",");
@@ -341,25 +341,27 @@ void hadaq::HldProcessor::CreatePerTDCHisto()
       lbl.append(sbuf);
    }
 
+   std::string opt1 = lbl + ";fill:2;tdc";
+
    if (!fHitsPerTDC)
-      fHitsPerTDC = MakeH1("HitsPerTDC", "Number of hits per TDC", tdcs.size(), 0, tdcs.size(), lbl.c_str());
+      fHitsPerTDC = MakeH1("HitsPerTDC", "Number of hits per TDC", tdcs.size(), 0, tdcs.size(), opt1.c_str());
 
    if (!fErrPerTDC)
-      fErrPerTDC = MakeH1("ErrPerTDC", "Number of errors per TDC", tdcs.size(), 0, tdcs.size(), lbl.c_str());
+      fErrPerTDC = MakeH1("ErrPerTDC", "Number of errors per TDC", tdcs.size(), 0, tdcs.size(), opt1.c_str());
 
-   lbl += ";channels";
+   std::string opt2 = lbl + ";tdc;channels";
 
    if (!fHitsPerTDCChannel)
       fHitsPerTDCChannel = MakeH2("HitsPerChannel", "Number of hits per TDC channel",
                                   tdcs.size(), 0, tdcs.size(),
                                   TrbProcessor::GetDefaultNumCh(), 0, TrbProcessor::GetDefaultNumCh(),
-                                  lbl.c_str());
+                                  opt2.c_str());
 
    if (!fErrPerTDCChannel)
       fErrPerTDCChannel = MakeH2("ErrPerChannel", "Number of errors per TDC channel",
                                  tdcs.size(), 0, tdcs.size(),
                                  TrbProcessor::GetDefaultNumCh(), 0, TrbProcessor::GetDefaultNumCh(),
-                                 lbl.c_str());
+                                 opt2.c_str());
 
    cnt = 0;
    for (auto &&tdc : tdcs)
