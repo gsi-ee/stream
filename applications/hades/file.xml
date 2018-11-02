@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<dabc version="2">
+  <Variables>
+     <parallel value="0"/>
+     <asf value="hades.root"/>
+  </Variables>
+
+  <Context host="localhost" name="HADES">
+    <Run>
+      <lib value="libDabcHttp.so"/>  
+      <lib value="libDabcStream.so"/>  
+      <logfile value="hades.log"/>
+      <debuglevel value="1"/>
+      <loglevel value="-1"/>
+      <loglimit value="100"/>
+    </Run>
+
+    <HttpServer name="http" port="8090"/>
+
+    <MemoryPool name="Pool">
+       <BufferSize value="400000"/>
+       <NumBuffers value="1000"/>
+    </MemoryPool>
+
+    <Module name="Run" class="stream::RunModule">
+       <asf value="${asf}"/>
+       <parallel value="${parallel}"/>
+       <InputPort name="Input0" url="hld://co1829811362701.hld"/>
+       <OutputPort name="*" auto="false"/>
+       <Events width="4" prec="1" low="0" up="1000" debug="0"/>
+    </Module>
+
+  </Context>
+
+</dabc>
