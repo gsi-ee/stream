@@ -4,7 +4,15 @@
 
 hadaq::SubProcessor::SubProcessor(TrbProcessor *trb, const char* nameprefix, unsigned subid) :
    base::StreamProc(nameprefix, subid, false),
-   fTrb(trb)
+   fTrb(trb),
+   fSeqeunceId(0),
+   fIsTDC(false),
+   fMsgPerBrd(nullptr),
+   fErrPerBrd(nullptr),
+   fHitsPerBrd(nullptr),
+   fNewDataFlag(false),
+   fPrintRawData(false),
+   fCrossProcess(false)
 {
    if (trb) {
       std::string pref = trb->GetName();

@@ -94,7 +94,7 @@ namespace hadaq {
 
          unsigned fMinTdc{0};         ///< minimal id of TDC
          unsigned fMaxTdc{0};         ///< maximal id of TDC
-         std::vector<TdcProcessor*> fTdcsVect; ///< array of TDCs
+         std::vector<hadaq::TdcProcessor*> fTdcsVect; ///< array of TDCs
 
          hadaqs::RawSubevent   fLastSubevHdr; ///<! copy of last subevent header (without data)
          unsigned fCurrentRunId{0};           ///<! current runid
