@@ -49,6 +49,10 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc, int hfi
 
    // printf("Create TrbProcessor %s\n", GetName());
 
+   fMinTdc = fMaxTdc = 0;
+   fCurrentRunId = 0;
+   fCurrentEventId = 0;
+
    fMsgPerBrd = 0;
    fErrPerBrd = 0;
    fHitsPerBrd = 0;

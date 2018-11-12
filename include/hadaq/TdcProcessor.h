@@ -183,11 +183,11 @@ namespace hadaq {
          base::H1handle fTempDistr;   //! temperature distribution
          base::H1handle fBubbleErrDistr; //! distribution of place with errors
 
-         unsigned fHldId{0};                   //! sequence number of processor in HLD
-         base::H1handle *fHitsPerHld{nullptr}; //! hits per TDC - from HLD
-         base::H1handle *fErrPerHld{nullptr};  //! errors per TDC - from HLD
-         base::H2handle *fChHitsPerHld{nullptr}; //! hits per TDC channel - from HLD
-         base::H2handle *fChErrPerHld{nullptr}; //! errors per TDC channel - from HLD
+         unsigned fHldId;               //! sequence number of processor in HLD
+         base::H1handle *fHitsPerHld;   //! hits per TDC - from HLD
+         base::H1handle *fErrPerHld;    //! errors per TDC - from HLD
+         base::H2handle *fChHitsPerHld; //! hits per TDC channel - from HLD
+         base::H2handle *fChErrPerHld;  //! errors per TDC channel - from HLD
 
          unsigned                 fNumChannels; //! number of channels
          unsigned                 fNumFineBins; //! number of fine-counter bins

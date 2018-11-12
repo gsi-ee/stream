@@ -32,6 +32,11 @@ hadaq::HldProcessor::HldProcessor(bool auto_create, const char* after_func) :
    fEvSize = MakeH1("EvSize", "Event size", 500, 0, 50000, "bytes");
    fSubevSize = MakeH1("SubevSize", "Subevent size", 500, 0, 5000, "bytes");
 
+   fHitsPerTDC = nullptr;   ///< HADAQ hits per TDC
+   fErrPerTDC = nullptr;    ///< HADAQ errors per TDC
+   fHitsPerTDCChannel = nullptr; ///< HADAQ hits per TDC channel
+   fErrPerTDCChannel = nullptr;  ///< HADAQ hits per TDC channel
+
    // printf("Create HldProcessor %s\n", GetName());
 
    // this is raw-scan processor, therefore no synchronization is required for it

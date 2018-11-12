@@ -79,13 +79,13 @@ namespace hadaq {
          long fCalibrPeriod;           ///< how often calibration should be performed
          unsigned fCalibrTriggerMask;  ///< mask with enabled event ID, default all
 
-         base::H1handle fEvType{nullptr};       ///< HADAQ event type
-         base::H1handle fEvSize{nullptr};       ///< HADAQ event size
-         base::H1handle fSubevSize{nullptr};    ///< HADAQ sub-event size
-         base::H1handle fHitsPerTDC{nullptr};   ///< HADAQ hits per TDC
-         base::H1handle fErrPerTDC{nullptr};    ///< HADAQ errors per TDC
-         base::H2handle fHitsPerTDCChannel{nullptr}; ///< HADAQ hits per TDC channel
-         base::H2handle fErrPerTDCChannel{nullptr};  ///< HADAQ hits per TDC channel
+         base::H1handle fEvType;       ///< HADAQ event type
+         base::H1handle fEvSize;       ///< HADAQ event size
+         base::H1handle fSubevSize;    ///< HADAQ sub-event size
+         base::H1handle fHitsPerTDC;   ///< HADAQ hits per TDC
+         base::H1handle fErrPerTDC;    ///< HADAQ errors per TDC
+         base::H2handle fHitsPerTDCChannel; ///< HADAQ hits per TDC channel
+         base::H2handle fErrPerTDCChannel;  ///< HADAQ hits per TDC channel
 
          HldMessage     fMsg;        ///< used for TTree store
          HldMessage    *pMsg;        ///< used for TTree store

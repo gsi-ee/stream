@@ -152,6 +152,12 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fLastRateTm = -1;
    fBubbleErrDistr = 0;
 
+   fHldId = 0;                   //! sequence number of processor in HLD
+   fHitsPerHld = nullptr;
+   fErrPerHld = nullptr;
+   fChHitsPerHld = nullptr;
+   fChErrPerHld = nullptr; //! errors per TDC channel - from HLD
+
    fToTvalue = ToTvalue;
    fToThmin = ToThmin;
    fToThmax = ToThmax;
