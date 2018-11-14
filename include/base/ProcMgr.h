@@ -93,6 +93,7 @@ namespace base {
          virtual bool DoLog() { return false; }
 
          virtual H1handle MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle = 0);
+         virtual bool GetH1NBins(H1handle h1, int &nbins);
          virtual void FillH1(H1handle h1, double x, double weight = 1.);
          virtual double GetH1Content(H1handle h1, int bin);
          virtual void SetH1Content(H1handle h1, int bin, double v = 0.);
@@ -100,6 +101,7 @@ namespace base {
          virtual void CopyH1(H1handle tgt, H1handle src);
 
          virtual H2handle MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options = 0);
+         virtual bool GetH2NBins(H2handle h2, int &nbins1, int &nbins2);
          virtual void FillH2(H2handle h2, double x, double y, double weight = 1.);
          virtual double GetH2Content(H2handle h2, int bin1, int bin2);
          virtual void SetH2Content(H2handle h2, int bin1, int bin2, double v = 0.);

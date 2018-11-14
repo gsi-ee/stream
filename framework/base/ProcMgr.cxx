@@ -92,6 +92,15 @@ base::H1handle base::ProcMgr::MakeH1(const char* name, const char* title, int nb
    return arr;
 }
 
+bool base::ProcMgr::GetH1NBins(H1handle h1, int &nbins)
+{
+   if (!InternalHistFormat() || !h1) return false;
+   double* arr = (double*) h1;
+   nbins = (int) arr[0];
+   return true;
+}
+
+
 void base::ProcMgr::FillH1(H1handle h1, double x, double weight)
 {
    // put code here, but it should be already performed in processor
@@ -166,6 +175,17 @@ base::H2handle base::ProcMgr::MakeH2(const char* name, const char* title, int nb
 
    return (base::H2handle) bins;
 }
+
+bool base::ProcMgr::GetH2NBins(H2handle h2, int &nbins1, int &nbins2)
+{
+   if (!h2 || !InternalHistFormat()) return false;
+   double* arr = (double*) h2;
+
+   nbins1 = (int) arr[0];
+   nbins2 = (int) arr[3];
+   return true;
+}
+
 
 void base::ProcMgr::FillH2(H2handle h2, double x, double y, double weight)
 {

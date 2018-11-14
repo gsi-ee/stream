@@ -202,6 +202,63 @@ base::H1handle TFirstStepProcessor::MakeH1(const char* name, const char* title, 
    return (base::H1handle) histo1;
 }
 
+bool TFirstStepProcessor::GetH1NBins(base::H1handle h1, int &nbins)
+{
+   if (h1==0) return false;
+
+   TH1* histo1 = (TH1*) h1;
+   nbins = histo1->GetNbinsX();
+   return true;
+}
+
+
+void TFirstStepProcessor::FillH1(base::H1handle h1, double x, double weight)
+{
+   if (h1==0) return;
+
+   TH1* histo1 = (TH1*) h1;
+
+   if (weight!=1.)
+      histo1->Fill(x, weight);
+   else
+      histo1->Fill(x);
+}
+
+double TFirstStepProcessor::GetH1Content(base::H1handle h1, int nbin)
+{
+   if (h1==0) return 0.;
+
+   TH1* histo1 = (TH1*) h1;
+
+   return histo1->GetBinContent(nbin+1);
+}
+
+void TFirstStepProcessor::SetH1Content(base::H1handle h1, int nbin, double v)
+{
+   TH1* histo1 = (TH1*) h1;
+
+   if (histo1) histo1->SetBinContent(nbin+1, v);
+}
+
+
+void TFirstStepProcessor::ClearH1(base::H1handle h1)
+{
+   if (!h1) return;
+
+   TH1* histo1 = (TH1*) h1;
+   histo1->Reset();
+}
+
+void TFirstStepProcessor::CopyH1(base::H1handle tgt, base::H1handle src)
+{
+   if (!tgt || !src) return;
+
+   TH1 *htgt = (TH1*) tgt;
+   TH1 *hsrc = (TH1*) src;
+   htgt->Reset();
+   htgt->Add(hsrc);
+}
+
 base::H2handle TFirstStepProcessor::MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options)
 {
    // we will use title arguments to deliver different optional arguments
@@ -249,56 +306,14 @@ base::H2handle TFirstStepProcessor::MakeH2(const char* name, const char* title, 
    return (base::H2handle) histo2;
 }
 
-void TFirstStepProcessor::FillH1(base::H1handle h1, double x, double weight)
+bool TFirstStepProcessor::GetH2NBins(base::H2handle h2, int &nbins1, int &nbins2)
 {
-   if (h1==0) return;
-
-   TH1* histo1 = (TH1*) h1;
-
-   if (weight!=1.)
-      histo1->Fill(x, weight);
-   else
-      histo1->Fill(x);
+   if (h2==0) return false;
+   TH2* histo2 = (TH2*) h2;
+   nbins1 = histo2->GetNbinsX();
+   nbins2 = histo2->GetNbinsY();
+   return true;
 }
-
-double TFirstStepProcessor::GetH1Content(base::H1handle h1, int nbin)
-{
-   if (h1==0) return 0.;
-
-   TH1* histo1 = (TH1*) h1;
-
-   return histo1->GetBinContent(nbin+1);
-}
-
-void TFirstStepProcessor::SetH1Content(base::H1handle h1, int nbin, double v)
-{
-   TH1* histo1 = (TH1*) h1;
-
-   if (histo1) histo1->SetBinContent(nbin+1, v);
-}
-
-
-void TFirstStepProcessor::ClearH1(base::H1handle h1)
-{
-   if (!h1) return;
-
-   TH1* histo1 = (TH1*) h1;
-   histo1->Reset();
-}
-
-
-void TFirstStepProcessor::CopyH1(base::H1handle tgt, base::H1handle src)
-{
-   if (!tgt || !src) return;
-
-   TH1 *htgt = (TH1*) tgt;
-   TH1 *hsrc = (TH1*) src;
-   htgt->Reset();
-   htgt->Add(hsrc);
-
-}
-
-
 
 void TFirstStepProcessor::FillH2(base::H2handle h2, double x, double y, double weight)
 {
