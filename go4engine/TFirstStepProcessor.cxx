@@ -300,17 +300,38 @@ void TFirstStepProcessor::CopyH1(base::H1handle tgt, base::H1handle src)
 
 
 
-void TFirstStepProcessor::FillH2(base::H1handle h2, double x, double y, double weight)
+void TFirstStepProcessor::FillH2(base::H2handle h2, double x, double y, double weight)
 {
    if (h2==0) return;
 
    TH2* histo2 = (TH2*) h2;
 
-   if (weight!=1.)
+   if (weight != 1.)
       histo2->Fill(x, y, weight);
    else
       histo2->Fill(x, y);
 }
+
+
+double TFirstStepProcessor::GetH2Content(base::H2handle h2, int bin1, int bin2)
+{
+   if (h2==0) return 0.;
+
+   TH2* histo2 = (TH2*) h2;
+
+   return histo2->GetBinContent(bin1+1, bin2+1);
+}
+
+
+void TFirstStepProcessor::SetH2Content(base::H2handle h2, int bin1, int bin2, double v)
+{
+   if (h2==0) return;
+
+   TH2* histo2 = (TH2*) h2;
+
+   return histo2->SetBinContent(bin1+1, bin2+1, v);
+}
+
 
 void TFirstStepProcessor::ClearH2(base::H2handle h2)
 {
@@ -319,7 +340,6 @@ void TFirstStepProcessor::ClearH2(base::H2handle h2)
    TH2* histo2 = (TH2*) h2;
    histo2->Reset();
 }
-
 
 base::C1handle TFirstStepProcessor::MakeC1(const char* name, double left, double right, base::H1handle h1)
 {

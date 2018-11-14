@@ -167,7 +167,7 @@ base::H2handle base::ProcMgr::MakeH2(const char* name, const char* title, int nb
    return (base::H2handle) bins;
 }
 
-void base::ProcMgr::FillH2(H1handle h2, double x, double y, double weight)
+void base::ProcMgr::FillH2(H2handle h2, double x, double y, double weight)
 {
    if (!h2 || !InternalHistFormat()) return;
    double* arr = (double*) h2;
@@ -181,8 +181,37 @@ void base::ProcMgr::FillH2(H1handle h2, double x, double y, double weight)
    if (bin1<0) bin1 = -1; else if (bin1>nbin1) bin1 = nbin1;
    if (bin2<0) bin2 = -1; else if (bin2>nbin2) bin2 = nbin2;
 
-   arr[6 + (bin1+1) + (bin2+1)*(nbin1+2)]+=weight;
+   arr[6 + (bin1+1) + (bin2+1)*(nbin1+2)] += weight;
 }
+
+double base::ProcMgr::GetH2Content(H2handle h2, int bin1, int bin2)
+{
+   if (!h2 || !InternalHistFormat()) return 0.;
+   double* arr = (double*) h2;
+
+   int nbin1 = (int) arr[0];
+   int nbin2 = (int) arr[3];
+
+   if (bin1<0) bin1 = -1; else if (bin1>nbin1) bin1 = nbin1;
+   if (bin2<0) bin2 = -1; else if (bin2>nbin2) bin2 = nbin2;
+
+   return arr[6 + (bin1+1) + (bin2+1)*(nbin1+2)];
+}
+
+void base::ProcMgr::SetH2Content(H2handle h2, int bin1, int bin2, double v)
+{
+   if (!h2 || !InternalHistFormat()) return;
+   double* arr = (double*) h2;
+
+   int nbin1 = (int) arr[0];
+   int nbin2 = (int) arr[3];
+
+   if (bin1<0) bin1 = -1; else if (bin1>nbin1) bin1 = nbin1;
+   if (bin2<0) bin2 = -1; else if (bin2>nbin2) bin2 = nbin2;
+
+   arr[6 + (bin1+1) + (bin2+1)*(nbin1+2)] = v;
+}
+
 
 void base::ProcMgr::ClearH2(base::H2handle h2)
 {
