@@ -33,21 +33,31 @@ hadaq::SpillProcessor::SpillProcessor() :
 
    char title[200];
    snprintf(title, sizeof(title), "Fast hits distribution, %5.2f us bins", BINWIDTHFAST*1e6);
-   fHitsFast = MakeH1("HitsFast", title, NUMHISTBINS, 0., BINWIDTHFAST*NUMHISTBINS*1e3, "ms");
+   fHitsFast = MakeH1("HitsFast", title, NUMHISTBINS, 0., BINWIDTHFAST*NUMHISTBINS*1e3, "Time[ms];Ncounts_in_20.48us_bin");
    snprintf(title, sizeof(title), "Slow hits distribution, %5.2f ms bins", BINWIDTHSLOW*1e3);
-   fHitsSlow = MakeH1("HitsSlow", title, NUMHISTBINS, 0., BINWIDTHSLOW*NUMHISTBINS, "sec");
+   fHitsSlow = MakeH1("HitsSlow", title, NUMHISTBINS, 0., BINWIDTHSLOW*NUMHISTBINS, "sec;Ncounts_in_41.94ms_bin");
    snprintf(title, sizeof(title), "Quality factor, %5.2f ms bins", BINWIDTHSLOW*1e3);
-   fQualitySlow = MakeH1("QSlow", title, NUMHISTBINS, 0., BINWIDTHSLOW*NUMHISTBINS, "sec");
-   snprintf(title, sizeof(title), "Slow Beam X, %5.2f ms bins", BINWIDTHSLOW*1e3);
-   fTrendXSlow = MakeH1("XSlow", title, NUMHISTBINS, 0., BINWIDTHSLOW*NUMHISTBINS, "sec");
-   snprintf(title, sizeof(title), "Slow Beam Y, %5.2f ms bins", BINWIDTHSLOW*1e3);
-   fTrendYSlow = MakeH1("YSlow", title, NUMHISTBINS, 0., BINWIDTHSLOW*NUMHISTBINS, "sec");
+   fQualitySlow = MakeH1("QSlow", title, NUMHISTBINS, 0., BINWIDTHSLOW*NUMHISTBINS, "hmin:0;hmax:20;sec;Q_Factor_Slow");
+   snprintf(title, sizeof(title), "Slow BEAM POSITION_X, %5.2f ms bins", BINWIDTHSLOW*1e3);
+   fTrendXSlow = MakeH1("XSlow", title, NUMHISTBINS, 0., BINWIDTHSLOW*NUMHISTBINS, "hmin:0;hmax:20;Time [sec];X_Beam_Pos[strip]");
+   snprintf(title, sizeof(title), "Slow BEAM POSITION_Y, %5.2f ms bins", BINWIDTHSLOW*1e3);
+   fTrendYSlow = MakeH1("YSlow", title, NUMHISTBINS, 0., BINWIDTHSLOW*NUMHISTBINS, "hmin:0;hmax:20;Time [sec];Y_Beam_Pos[strip]");
 
-   fBeamX = MakeH1("BeamX", "Beam X position accumulated", 20, 0, 20, "X");
-   fBeamY = MakeH1("BeamY", "Beam Y position accumulated", 20, 0, 20, "Y");
+   snprintf(title, sizeof(title), "Slow HALO POSITION_X, %5.2f ms bins", BINWIDTHSLOW*1e3);
+   fTrendXHaloSlow = MakeH1("XHALOSlow", title, NUMHISTBINS, 0., BINWIDTHSLOW*NUMHISTBINS, "hmin:0;hmax:4;Time [sec];Y_HALO_Pos[strip]");
+   snprintf(title, sizeof(title), "Slow HALO POSITION_Y, %5.2f ms bins", BINWIDTHSLOW*1e3);
+   fTrendYHaloSlow = MakeH1("YHALOSlow", title, NUMHISTBINS, 0., BINWIDTHSLOW*NUMHISTBINS, "hmin:0;hmax:4;Time [sec];Y_HALO_Pos[strip]");
 
-   fTrendX = MakeH1("TrendX", "Spill X position", NUMSTATBINS, 0., NUMSTATBINS*BINWIDTHSTAT, "sec");
-   fTrendY = MakeH1("TrendY", "Spill Y position", NUMSTATBINS, 0., NUMSTATBINS*BINWIDTHSTAT, "sec");
+
+
+   fBeamX = MakeH1("BeamX", "BEAM_X (ONE SPILL)", 20, 0, 20, "STRIP_X");
+   fBeamY = MakeH1("BeamY", "BEAM_Y (ONE SPILL)", 20, 0, 20, "STRIP_Y");
+
+   fTrendX = MakeH1("TrendX", "BEAM_X POSITION", NUMSTATBINS, 0., NUMSTATBINS*BINWIDTHSTAT, "hmin:0;hmax:20;Time [sec];Strip_X");
+   fTrendY = MakeH1("TrendY", "BEAM_Y POSITION", NUMSTATBINS, 0., NUMSTATBINS*BINWIDTHSTAT, "hmin:0;hmax:20;Time [sec];Strip_Y");
+
+   fHaloPattern = MakeH2("HALO_Patt", "HALO_PATTERN", 4,0,4,4,0,4,"X_dir;Y_dir");
+   fVetoPattern = MakeH2("VETO_Patt", "VETO_PATTERN", 4,0,4,4,0,4,"X_dir;Y_dir");
 
    fLastBinFast = 0;
    fLastBinSlow = 0;
@@ -57,24 +67,26 @@ hadaq::SpillProcessor::SpillProcessor() :
    fTdcMin = 0xc000;
    fTdcMax = 0xc010;
 
-   fSpillOnLevel = 5000;
-   fSpillOffLevel = 500;
-   fSpillMinCnt = 3;
+   fSpillOnLevel = 500;
+   fSpillOffLevel = 10;
+   fSpillMinCnt = 5;
    fSpillStartEpoch = 0;
 
    fLastSpillEpoch = 0;
    fLastSpillBin = 0;
 
-   fMaxSpillLength = 10.;
+   fMaxSpillLength = 15.;
    fLastQSlowValue = 0;
 
    for (unsigned n=0;n<33;++n) {
       fChannelsLookup1[n] = 0;
       fChannelsLookup2[n] = 0;
+      fChannelsLookup3[n] = 0;
    }
 
    fSumX = fCntX = fSumY = fCntY = 0;
-   fLastX = fLastY = 0.;
+   fSumHaloX = fCntHaloX = fSumHaloY = fCntHaloY = 0;
+   fLastX = fLastY = fLastHaloX = fLastHaloY = 0.;
 }
 
 hadaq::SpillProcessor::~SpillProcessor()
@@ -107,10 +119,12 @@ void hadaq::SpillProcessor::StartSpill(unsigned epoch)
    fLastSpillEpoch = epoch & ~(FASTEPOCHS-1); // mask not used bins
    fLastSpillBin = 0;
    ClearH1(fSpill);
-   //ClearH1(fBeamX);
-   //ClearH1(fBeamY);
+   ClearH1(fBeamX);
+   ClearH1(fBeamY);
    ClearH1(fTrendX);
    ClearH1(fTrendY);
+   ClearH2(fHaloPattern);
+   ClearH2(fVetoPattern);
    // fSumX = fCntX = fSumY = fCntY = 0;
    // fLastX = fLastY = 0.;
    fCurrXYBin = 0;
@@ -205,7 +219,11 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
 
                hadaq::TdcMessage &msg = iter.msg();
 
-               unsigned *lookup_table = (dataid==fTdcMin) ? fChannelsLookup1 : fChannelsLookup2;
+               //unsigned *lookup_table = (dataid==fTdcMin) ? fChannelsLookup1 : fChannelsLookup2;
+               unsigned *lookup_table; 
+			   if (dataid==fTdcMin)   lookup_table = fChannelsLookup1; 
+			   if (dataid==fTdcMin+1) lookup_table = fChannelsLookup2; 
+			   if (dataid==fTdcMin+2) lookup_table = fChannelsLookup3; 
 
                while (iter.next()) {
                   if (msg.isHitMsg() && use_hits) {
@@ -217,9 +235,9 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
                      numhits++;
 
                      if (chid>0) {
-
-                        FastFillH1(fHitsFast, fastbin);
-                        FastFillH1(fHitsSlow, slowbin);
+                            // fill these histograms only for StartX and StartY // Sergey  
+                        //FastFillH1(fHitsFast, fastbin);
+                        //FastFillH1(fHitsSlow, slowbin);
 
                         if (chid < 34)  {
 
@@ -228,34 +246,54 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
                            //unsigned diff = EpochDiff(fSpillStartEpoch, fLastEpoch);
                            //unsigned bin = diff / (FASTEPOCHS*NUMSTAT);
 
-                           /*
-                           if (bin != fCurrXYBin) {
-                              if (fCntX>5) fLastX = 1.*fSumX/fCntX;
-                              if (fCntY>5) fLastY = 1.*fSumY/fCntY;
-
-                              if (bin >= NUMSTATBINS) bin = NUMSTATBINS - 1;
-
-                              while (fCurrXYBin<bin) {
-                                 SetH1Content(fTrendX, fCurrXYBin, fLastX);
-                                 SetH1Content(fTrendY, fCurrXYBin, fLastY);
-                                 fCurrXYBin++;
-                              }
-
-                              fSumX = fCntX = fSumY = fCntY = 0;
-                              fCurrXYBin = bin;
-                           }
-                           */
 
                            if (lookup && pos) {
                               if (lookup < 100) {
+                                  // fill these histograms only for StartX and StartY   
+                                  FastFillH1(fHitsFast, fastbin);
+                                  FastFillH1(fHitsSlow, slowbin);
                                  FastFillH1(fBeamX, pos);
                                  fSumX += pos;
                                  fCntX++;
-                              } else {
+                              } else if (lookup >100 && lookup <200) {
+                                  // fill these histograms only for StartX and StartY   
+                                  FastFillH1(fHitsFast, fastbin);
+                                  FastFillH1(fHitsSlow, slowbin);
                                  FastFillH1(fBeamY, pos);
                                  fSumY += pos;
                                  fCntY++;
-                              }
+                              } else if (lookup >200 && lookup <300) { // Halo channels, Up, Down, L, R
+								  if(pos == 9) { // Halo Up
+									  DefFastFillH2(fHaloPattern,2,3);
+                                      fSumHaloY += 3;
+                                      fCntHaloY++;
+								  } 	  
+								  if(pos == 10) { //Halo Down
+									  DefFastFillH2(fHaloPattern,2,1);
+                                      fSumHaloY += 1;
+                                      fCntHaloY++;
+								  } 	  
+								  if(pos == 11) { //Halo Left 
+									  DefFastFillH2(fHaloPattern,1,2);
+                                      fSumHaloX += 1;
+                                      fCntHaloX++;
+								  } 	  
+								  if(pos == 12) { //Halo Right 
+									  DefFastFillH2(fHaloPattern,3,2);
+                                      fSumHaloX += 3;
+                                      fCntHaloX++;
+								  } 	  
+                                  // fill Veto pattern
+								  if(pos == 1)  DefFastFillH2(fVetoPattern,1,2);
+								  if(pos == 2)  DefFastFillH2(fVetoPattern,2,1);
+								  if(pos == 3)  DefFastFillH2(fVetoPattern,1,0);
+								  if(pos == 4)  DefFastFillH2(fVetoPattern,0,1);
+								  if(pos == 5)  DefFastFillH2(fVetoPattern,0,2);
+								  if(pos == 6)  DefFastFillH2(fVetoPattern,2,2);
+								  if(pos == 7)  DefFastFillH2(fVetoPattern,2,0);
+								  if(pos == 8)  DefFastFillH2(fVetoPattern,0,0);
+
+							  }	  
                            }
                         }
                      }
@@ -300,12 +338,20 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
                               fLastX = (fCntX > 0) ? 1.*fSumX/fCntX : 0.;
                               fLastY = (fCntY > 0) ? 1.*fSumY/fCntY : 0;
                               fSumX = fCntX = fSumY = fCntY = 0;
+
+                              fLastHaloX = (fCntHaloX > 0) ? 1.*fSumHaloX/fCntHaloX : 0.;
+                              fLastHaloY = (fCntHaloY > 0) ? 1.*fSumHaloY/fCntHaloY : 0;
+                              fSumHaloX = fCntHaloX = fSumHaloY = fCntHaloY = 0;
                            }
 
                            SetH1Content(fQualitySlow, fLastBinSlow, fLastQSlowValue);
                            SetH1Content(fTrendXSlow, fLastBinSlow, fLastX);
                            SetH1Content(fTrendYSlow, fLastBinSlow, fLastY);
-                           fLastBinSlow = (fLastBinSlow+1) % NUMHISTBINS;
+						   //halo trends
+                           SetH1Content(fTrendXHaloSlow, fLastBinSlow, fLastHaloX);
+                           SetH1Content(fTrendYHaloSlow, fLastBinSlow, fLastHaloY);
+
+						   fLastBinSlow = (fLastBinSlow+1) % NUMHISTBINS;
                            SetH1Content(fHitsSlow, fLastBinSlow, 0.);
                            SetH1Content(fQualitySlow, fLastBinSlow, 0.);
                         }

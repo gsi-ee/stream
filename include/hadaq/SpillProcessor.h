@@ -22,18 +22,27 @@ protected:
    base::H1handle fTrendXSlow; ///< Beam X with Quality histogram (with 40 ms  binning)
    base::H1handle fTrendYSlow; ///< Quality histogram (with 40 ms  binning)
 
+   base::H1handle fTrendXHaloSlow; ///< Quality histogram (with 40 ms  binning)
+   base::H1handle fTrendYHaloSlow; ///< Quality histogram (with 40 ms  binning)
+
+
    base::H1handle fSpill;     ///< Current SPILL histogram
    base::H1handle fLastSpill; ///< Last SPILL histogram
 
    base::H1handle fBeamX;     ///< Accumulated X position
    base::H1handle fBeamY;     ///< Accumulated Y position
 
+
    base::H1handle fTrendX;    ///< Beam X trending
    base::H1handle fTrendY;    ///< Beam Y trending
 
+   base::H2handle fHaloPattern; ///<2dim Halo detector Pattern
+   base::H2handle fVetoPattern; ///<2dim Veto detector Pattern
+
    long fSumX, fCntX, fSumY, fCntY;
+   long fSumHaloX, fCntHaloX, fSumHaloY, fCntHaloY;
    unsigned fCurrXYBin;       ///< bin where current XY is calculated
-   double fLastX, fLastY;
+   double fLastX, fLastY, fLastHaloX, fLastHaloY;
 
    unsigned fLastBinFast;
    unsigned fLastBinSlow;
@@ -57,6 +66,7 @@ protected:
 
    unsigned fChannelsLookup1[33];   // first tdc
    unsigned fChannelsLookup2[33];   // second tdc
+   unsigned fChannelsLookup3[33];   // third  tdc
 
    double fLastQSlowValue; // last value of Q factor for slow histogram
 
@@ -100,6 +110,7 @@ public:
 
    void SetChannelsLookup1(unsigned ch, unsigned lookup) { fChannelsLookup1[ch] = lookup; }
    void SetChannelsLookup2(unsigned ch, unsigned lookup) { fChannelsLookup2[ch] = lookup; }
+   void SetChannelsLookup3(unsigned ch, unsigned lookup) { fChannelsLookup3[ch] = lookup; }
 };
 }
 
