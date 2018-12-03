@@ -220,10 +220,10 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
                hadaq::TdcMessage &msg = iter.msg();
 
                //unsigned *lookup_table = (dataid==fTdcMin) ? fChannelsLookup1 : fChannelsLookup2;
-               unsigned *lookup_table; 
-			   if (dataid==fTdcMin)   lookup_table = fChannelsLookup1; 
-			   if (dataid==fTdcMin+1) lookup_table = fChannelsLookup2; 
-			   if (dataid==fTdcMin+2) lookup_table = fChannelsLookup3; 
+               unsigned *lookup_table = fChannelsLookup1;
+               if (dataid==fTdcMin)   lookup_table = fChannelsLookup1;
+               if (dataid==fTdcMin+1) lookup_table = fChannelsLookup2;
+               if (dataid==fTdcMin+2) lookup_table = fChannelsLookup3;
 
                while (iter.next()) {
                   if (msg.isHitMsg() && use_hits) {
@@ -235,7 +235,7 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
                      numhits++;
 
                      if (chid>0) {
-                            // fill these histograms only for StartX and StartY // Sergey  
+                            // fill these histograms only for StartX and StartY // Sergey
                         //FastFillH1(fHitsFast, fastbin);
                         //FastFillH1(fHitsSlow, slowbin);
 
@@ -249,14 +249,14 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
 
                            if (lookup && pos) {
                               if (lookup < 100) {
-                                  // fill these histograms only for StartX and StartY   
+                                  // fill these histograms only for StartX and StartY
                                   FastFillH1(fHitsFast, fastbin);
                                   FastFillH1(fHitsSlow, slowbin);
                                  FastFillH1(fBeamX, pos);
                                  fSumX += pos;
                                  fCntX++;
                               } else if (lookup >100 && lookup <200) {
-                                  // fill these histograms only for StartX and StartY   
+                                  // fill these histograms only for StartX and StartY
                                   FastFillH1(fHitsFast, fastbin);
                                   FastFillH1(fHitsSlow, slowbin);
                                  FastFillH1(fBeamY, pos);
@@ -267,22 +267,22 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
 									  DefFastFillH2(fHaloPattern,2,3);
                                       fSumHaloY += 3;
                                       fCntHaloY++;
-								  } 	  
+								  }
 								  if(pos == 10) { //Halo Down
 									  DefFastFillH2(fHaloPattern,2,1);
                                       fSumHaloY += 1;
                                       fCntHaloY++;
-								  } 	  
-								  if(pos == 11) { //Halo Left 
+								  }
+								  if(pos == 11) { //Halo Left
 									  DefFastFillH2(fHaloPattern,1,2);
                                       fSumHaloX += 1;
                                       fCntHaloX++;
-								  } 	  
-								  if(pos == 12) { //Halo Right 
+								  }
+								  if(pos == 12) { //Halo Right
 									  DefFastFillH2(fHaloPattern,3,2);
                                       fSumHaloX += 3;
                                       fCntHaloX++;
-								  } 	  
+								  }
                                   // fill Veto pattern
 								  if(pos == 1)  DefFastFillH2(fVetoPattern,1,2);
 								  if(pos == 2)  DefFastFillH2(fVetoPattern,2,1);
@@ -293,7 +293,7 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
 								  if(pos == 7)  DefFastFillH2(fVetoPattern,2,0);
 								  if(pos == 8)  DefFastFillH2(fVetoPattern,0,0);
 
-							  }	  
+							  }
                            }
                         }
                      }
