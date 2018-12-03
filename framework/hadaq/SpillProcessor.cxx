@@ -246,56 +246,56 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
                            //unsigned diff = EpochDiff(fSpillStartEpoch, fLastEpoch);
                            //unsigned bin = diff / (FASTEPOCHS*NUMSTAT);
 
-
                            if (lookup && pos) {
                               if (lookup < 100) {
-                                  // fill these histograms only for StartX and StartY
-                                  FastFillH1(fHitsFast, fastbin);
-                                  FastFillH1(fHitsSlow, slowbin);
+                                 // fill these histograms only for StartX and StartY
+                                 FastFillH1(fHitsFast, fastbin);
+                                 FastFillH1(fHitsSlow, slowbin);
                                  FastFillH1(fBeamX, pos);
                                  fSumX += pos;
                                  fCntX++;
-                              } else if (lookup >100 && lookup <200) {
-                                  // fill these histograms only for StartX and StartY
-                                  FastFillH1(fHitsFast, fastbin);
-                                  FastFillH1(fHitsSlow, slowbin);
+                              } else if (lookup > 100 && lookup < 200) {
+                                 // fill these histograms only for StartX and StartY
+                                 FastFillH1(fHitsFast, fastbin);
+                                 FastFillH1(fHitsSlow, slowbin);
                                  FastFillH1(fBeamY, pos);
                                  fSumY += pos;
                                  fCntY++;
-                              } else if (lookup >200 && lookup <300) { // Halo channels, Up, Down, L, R
-								  if(pos == 9) { // Halo Up
-									  DefFastFillH2(fHaloPattern,2,3);
-                                      fSumHaloY += 3;
-                                      fCntHaloY++;
-								  }
-								  if(pos == 10) { //Halo Down
-									  DefFastFillH2(fHaloPattern,2,1);
-                                      fSumHaloY += 1;
-                                      fCntHaloY++;
-								  }
-								  if(pos == 11) { //Halo Left
-									  DefFastFillH2(fHaloPattern,1,2);
-                                      fSumHaloX += 1;
-                                      fCntHaloX++;
-								  }
-								  if(pos == 12) { //Halo Right
-									  DefFastFillH2(fHaloPattern,3,2);
-                                      fSumHaloX += 3;
-                                      fCntHaloX++;
-								  }
-                                  // fill Veto pattern
-								  if(pos == 1)  DefFastFillH2(fVetoPattern,1,2);
-								  if(pos == 2)  DefFastFillH2(fVetoPattern,2,1);
-								  if(pos == 3)  DefFastFillH2(fVetoPattern,1,0);
-								  if(pos == 4)  DefFastFillH2(fVetoPattern,0,1);
-								  if(pos == 5)  DefFastFillH2(fVetoPattern,0,2);
-								  if(pos == 6)  DefFastFillH2(fVetoPattern,2,2);
-								  if(pos == 7)  DefFastFillH2(fVetoPattern,2,0);
-								  if(pos == 8)  DefFastFillH2(fVetoPattern,0,0);
-
-							  }
-                           }
-                        }
+                              } else if (lookup > 200 && lookup < 300) { // Halo channels, Up, Down, L, R
+                                 switch (pos) {
+                                 // fill Veto pattern
+                                    case 1: DefFastFillH2(fVetoPattern, 1, 2); break;
+                                    case 2: DefFastFillH2(fVetoPattern, 2, 1); break;
+                                    case 3: DefFastFillH2(fVetoPattern, 1, 0); break;
+                                    case 4: DefFastFillH2(fVetoPattern, 0, 1); break;
+                                    case 5: DefFastFillH2(fVetoPattern, 0, 2); break;
+                                    case 6: DefFastFillH2(fVetoPattern, 2, 2); break;
+                                    case 7: DefFastFillH2(fVetoPattern, 2, 0); break;
+                                    case 8: DefFastFillH2(fVetoPattern, 0, 0); break;
+                                    case 9:  // Halo Up
+                                       DefFastFillH2(fHaloPattern, 2, 3);
+                                       fSumHaloY += 3;
+                                       fCntHaloY++;
+                                       break;
+                                    case 10: // Halo Down
+                                       DefFastFillH2(fHaloPattern, 2, 1);
+                                       fSumHaloY += 1;
+                                       fCntHaloY++;
+                                       break;
+                                    case 11: // Halo Left
+                                       DefFastFillH2(fHaloPattern, 1, 2);
+                                       fSumHaloX += 1;
+                                       fCntHaloX++;
+                                       break;
+                                    case 12: // Halo Right
+                                       DefFastFillH2(fHaloPattern, 3, 2);
+                                       fSumHaloX += 3;
+                                       fCntHaloX++;
+                                       break;
+                                  }
+                             }
+                          }
+                       }
                      }
 
                   } else if (msg.isEpochMsg()) {
