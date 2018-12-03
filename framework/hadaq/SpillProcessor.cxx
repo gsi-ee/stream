@@ -71,9 +71,11 @@ hadaq::SpillProcessor::SpillProcessor() :
    fSpillOffLevel = 10;
    fSpillMinCnt = 5;
    fSpillStartEpoch = 0;
+   fAutoSpillDetect = true;
 
    fLastSpillEpoch = 0;
    fLastSpillBin = 0;
+
 
    fMaxSpillLength = 15.;
    fLastQSlowValue = 0;
@@ -235,7 +237,7 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
                      numhits++;
 
                      if (chid>0) {
-                            // fill these histograms only for StartX and StartY // Sergey
+                        // fill these histograms only for StartX and StartY // Sergey
                         //FastFillH1(fHitsFast, fastbin);
                         //FastFillH1(fHitsSlow, slowbin);
 
@@ -293,6 +295,13 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
                                        fCntHaloX++;
                                        break;
                                   }
+                             } else if (lookup > 400 && lookup < 500) { // spill detection
+                                if (!fAutoSpillDetect) {
+                                   // stop previous spill
+                                   if (fSpillStartEpoch) StopSpill(fLastEpoch);
+                                   // start new spill
+                                   StartSpill(fLastEpoch);
+                                }
                              }
                           }
                        }
@@ -347,11 +356,11 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
                            SetH1Content(fQualitySlow, fLastBinSlow, fLastQSlowValue);
                            SetH1Content(fTrendXSlow, fLastBinSlow, fLastX);
                            SetH1Content(fTrendYSlow, fLastBinSlow, fLastY);
-						   //halo trends
+                           //halo trends
                            SetH1Content(fTrendXHaloSlow, fLastBinSlow, fLastHaloX);
                            SetH1Content(fTrendYHaloSlow, fLastBinSlow, fLastHaloY);
 
-						   fLastBinSlow = (fLastBinSlow+1) % NUMHISTBINS;
+                           fLastBinSlow = (fLastBinSlow+1) % NUMHISTBINS;
                            SetH1Content(fHitsSlow, fLastBinSlow, 0.);
                            SetH1Content(fQualitySlow, fLastBinSlow, 0.);
                         }
@@ -365,29 +374,29 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
 
       } // subevents
 
-
       // try to detect start or stop of the spill
+      if (fAutoSpillDetect) {
+         if (!fSpillStartEpoch && (fLastBinSlow >= fSpillMinCnt)) {
+            // detecting spill ON
+            bool all_over = true;
 
-      if (!fSpillStartEpoch && (fLastBinSlow>=fSpillMinCnt)) {
-         // detecting spill ON
-         bool all_over = true;
+            // keep 1 sec for spill OFF signal
+            if (fSpillEndEpoch && EpochTmDiff(fSpillEndEpoch, fLastEpoch)<1.) all_over = false;
 
-         // keep 1 sec for spill OFF signal
-         if (fSpillEndEpoch && EpochTmDiff(fSpillEndEpoch, fLastEpoch)<1.) all_over = false;
+            for (unsigned bin=(fLastBinSlow-fSpillMinCnt); (bin<fLastBinSlow) && all_over; ++bin)
+               if (GetH1Content(fHitsSlow, bin) < fSpillOnLevel) all_over = false;
 
-         for (unsigned bin=(fLastBinSlow-fSpillMinCnt); (bin<fLastBinSlow) && all_over; ++bin)
-            if (GetH1Content(fHitsSlow, bin) < fSpillOnLevel) all_over = false;
+            if (all_over) StartSpill(fLastEpoch);
 
-         if (all_over) StartSpill(fLastEpoch);
+         } else if (fSpillStartEpoch && (fLastBinSlow>=fSpillMinCnt)) {
+            // detecting spill OFF
+            bool all_below = true;
 
-      } else if (fSpillStartEpoch && (fLastBinSlow>=fSpillMinCnt)) {
-         // detecting spill OFF
-         bool all_below = true;
+            for (unsigned bin=(fLastBinSlow-fSpillMinCnt); (bin<fLastBinSlow) && all_below; ++bin)
+               if (GetH1Content(fHitsSlow, bin) > fSpillOffLevel) all_below = false;
 
-         for (unsigned bin=(fLastBinSlow-fSpillMinCnt); (bin<fLastBinSlow) && all_below; ++bin)
-            if (GetH1Content(fHitsSlow, bin) > fSpillOffLevel) all_below = false;
-
-         if (all_below) StopSpill(fLastEpoch);
+            if (all_below) StopSpill(fLastEpoch);
+         }
       }
 
       // workaround - always set to zero first bin to preserve Y scaling

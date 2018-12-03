@@ -32,7 +32,6 @@ protected:
    base::H1handle fBeamX;     ///< Accumulated X position
    base::H1handle fBeamY;     ///< Accumulated Y position
 
-
    base::H1handle fTrendX;    ///< Beam X trending
    base::H1handle fTrendY;    ///< Beam Y trending
 
@@ -49,6 +48,7 @@ protected:
    unsigned fLastEpoch;
    unsigned fLastSpillEpoch; ///< last epoch used to calculate spill quality
    unsigned fLastSpillBin;   ///< last bin number filled in the histogram
+   bool fAutoSpillDetect;    ///< true when spill will be detected automatically
 
    bool fFirstEpoch;
 
@@ -111,6 +111,13 @@ public:
    void SetChannelsLookup1(unsigned ch, unsigned lookup) { fChannelsLookup1[ch] = lookup; }
    void SetChannelsLookup2(unsigned ch, unsigned lookup) { fChannelsLookup2[ch] = lookup; }
    void SetChannelsLookup3(unsigned ch, unsigned lookup) { fChannelsLookup3[ch] = lookup; }
+
+   /** Set channel id on third TDC, which should detect spill-start signal */
+   void SetSpillChannel(unsigned ch)
+   {
+      SetChannelsLookup3(ch, 401);
+      fAutoSpillDetect = false;
+   }
 };
 }
 
