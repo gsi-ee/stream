@@ -48,7 +48,10 @@ hadaq::SpillProcessor::SpillProcessor() :
    snprintf(title, sizeof(title), "Slow HALO POSITION_Y, %5.2f ms bins", BINWIDTHSLOW*1e3);
    fTrendYHaloSlow = MakeH1("YHALOSlow", title, NUMHISTBINS, 0., BINWIDTHSLOW*NUMHISTBINS, "hmin:0;hmax:4;Time [sec];Y_HALO_Pos[strip]");
 
-
+   snprintf(title, sizeof(title), "Fast trigger distribution, %5.2f us bins", BINWIDTHFAST*1e6);
+   fTriggerFast = MakeH1("TriggerFast", title, NUMHISTBINS, 0., BINWIDTHFAST*NUMHISTBINS*1e3, "Time[ms];Ncounts_in_20.48us_bin");
+   snprintf(title, sizeof(title), "Slow trigger distribution, %5.2f ms bins", BINWIDTHSLOW*1e3);
+   fTriggerSlow = MakeH1("TriggerSlow", title, NUMHISTBINS, 0., BINWIDTHSLOW*NUMHISTBINS, "sec;Ncounts_in_41.94ms_bin");
 
    fBeamX = MakeH1("BeamX", "BEAM_X (ONE SPILL)", 20, 0, 20, "STRIP_X");
    fBeamY = MakeH1("BeamY", "BEAM_Y (ONE SPILL)", 20, 0, 20, "STRIP_Y");
@@ -295,13 +298,16 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
                                        fCntHaloX++;
                                        break;
                                   }
-                             } else if (lookup > 400 && lookup < 500) { // spill detection
+                             } else if (lookup == 401) { // spill detection
                                 if (!fAutoSpillDetect) {
                                    // stop previous spill
                                    if (fSpillStartEpoch) StopSpill(fLastEpoch);
                                    // start new spill
                                    StartSpill(fLastEpoch);
                                 }
+                             } else if (lookup == 402) { // trigger counts
+                                FastFillH1(fTriggerFast, fastbin);
+                                FastFillH1(fTriggerSlow, slowbin);
                              }
                           }
                        }
@@ -337,6 +343,7 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
                         while (CompareHistBins(fLastBinFast, fastbin) < 0) {
                            fLastBinFast = (fLastBinFast+1) % NUMHISTBINS;
                            SetH1Content(fHitsFast, fLastBinFast, 0.);
+                           SetH1Content(fTriggerFast, fLastBinFast, 0.);
                         }
 
                         int diff = 0;
@@ -363,6 +370,7 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
                            fLastBinSlow = (fLastBinSlow+1) % NUMHISTBINS;
                            SetH1Content(fHitsSlow, fLastBinSlow, 0.);
                            SetH1Content(fQualitySlow, fLastBinSlow, 0.);
+                           SetH1Content(fTriggerSlow, fLastBinSlow, 0.);
                         }
                      }
                   }
@@ -401,6 +409,7 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
 
       // workaround - always set to zero first bin to preserve Y scaling
       SetH1Content(fHitsSlow, 0, 0.);
+      SetH1Content(fTriggerSlow, 0, 0.);
 
       // check length of the current spill
       if (fSpillStartEpoch && (EpochTmDiff(fSpillStartEpoch, fLastEpoch) > fMaxSpillLength))

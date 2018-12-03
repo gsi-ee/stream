@@ -25,6 +25,8 @@ protected:
    base::H1handle fTrendXHaloSlow; ///< Quality histogram (with 40 ms  binning)
    base::H1handle fTrendYHaloSlow; ///< Quality histogram (with 40 ms  binning)
 
+   base::H1handle fTriggerFast; ///< Quality histogram (with 20 us  binning)
+   base::H1handle fTriggerSlow; ///< Quality histogram (with 40 ms  binning)
 
    base::H1handle fSpill;     ///< Current SPILL histogram
    base::H1handle fLastSpill; ///< Last SPILL histogram
@@ -118,6 +120,13 @@ public:
       SetChannelsLookup3(ch, 401);
       fAutoSpillDetect = false;
    }
+
+   /** Set special channel with trigger info */
+   void SetTriggerChannel(unsigned ch)
+   {
+      SetChannelsLookup3(ch, 402);
+   }
+
 };
 }
 
