@@ -12,8 +12,7 @@ const double BINWIDTHFAST = EPOCHLEN*FASTEPOCHS;
 const unsigned SLOWEPOCHS = 0x1000;
 const double BINWIDTHSLOW = EPOCHLEN*SLOWEPOCHS;
 const unsigned NUMSTAT = 100; // use 100 bins for stat calculations
-const double BINWIDTHSTAT = BINWIDTHFAST * NUMSTAT;
-const unsigned NUMSTATBINS = 8000; // use 100 bins for stat calculations
+const unsigned NUMSPILLBINS = 1000; // approx 40s for spill recording
 
 //const unsigned ChannelsLookup[33] = {0,
 //             0,   0,   1,   1,   2,   2,   3,   3,   4,   4,   5,  5,   6,   6,  7,  7,
@@ -28,10 +27,12 @@ hadaq::SpillProcessor::SpillProcessor() :
    fEvSize = MakeH1("EvSize", "Event size", 500, 0, 5000, "bytes");
    fSubevSize = MakeH1("SubevSize", "Subevent size", 500, 0, 5000, "bytes");
 
-   fSpill = MakeH1("Spill_Q_factor", "Current spill Quality factor", NUMSTATBINS, 0., NUMSTATBINS*BINWIDTHSTAT, "sec");
-   fLastSpill = MakeH1("LastSpill_Q_factor", "Last spill Quality factor", NUMSTATBINS, 0., NUMSTATBINS*BINWIDTHSTAT, "sec");
-
    char title[200];
+   snprintf(title, sizeof(title), "Current spill Quality factor, %5.2f ms bins", BINWIDTHSLOW*1e3);
+   fSpill = MakeH1("Spill_Q_factor", "Current spill Quality factor", NUMSPILLBINS, 0., NUMSPILLBINS*BINWIDTHSLOW, "sec");
+   snprintf(title, sizeof(title), "Last spill Quality factor, %5.2f ms bins", BINWIDTHSLOW*1e3);
+   fLastSpill = MakeH1("LastSpill_Q_factor", "Last spill Quality factor", NUMSPILLBINS, 0., NUMSPILLBINS*BINWIDTHSLOW, "sec");
+
    snprintf(title, sizeof(title), "Fast hits distribution, %5.2f us bins", BINWIDTHFAST*1e6);
    fHitsFast = MakeH1("HitsFast", title, NUMHISTBINS, 0., BINWIDTHFAST*NUMHISTBINS*1e3, "Time[ms];Ncounts_in_20.48us_bin");
    snprintf(title, sizeof(title), "Slow hits distribution, %5.2f ms bins", BINWIDTHSLOW*1e3);
@@ -56,8 +57,8 @@ hadaq::SpillProcessor::SpillProcessor() :
    fBeamX = MakeH1("BeamX", "BEAM_X (ONE SPILL)", 20, 0, 20, "STRIP_X");
    fBeamY = MakeH1("BeamY", "BEAM_Y (ONE SPILL)", 20, 0, 20, "STRIP_Y");
 
-   fTrendX = MakeH1("TrendX", "BEAM_X POSITION", NUMSTATBINS, 0., NUMSTATBINS*BINWIDTHSTAT, "hmin:0;hmax:20;Time [sec];Strip_X");
-   fTrendY = MakeH1("TrendY", "BEAM_Y POSITION", NUMSTATBINS, 0., NUMSTATBINS*BINWIDTHSTAT, "hmin:0;hmax:20;Time [sec];Strip_Y");
+   fTrendX = MakeH1("TrendX", "BEAM_X POSITION", NUMSPILLBINS, 0., NUMSPILLBINS*BINWIDTHSLOW, "hmin:0;hmax:20;Time [sec];Strip_X");
+   fTrendY = MakeH1("TrendY", "BEAM_Y POSITION", NUMSPILLBINS, 0., NUMSPILLBINS*BINWIDTHSLOW, "hmin:0;hmax:20;Time [sec];Strip_Y");
 
    fHaloPattern = MakeH2("HALO_Patt", "HALO_PATTERN", 4,0,4,4,0,4,"X_dir;Y_dir");
    fVetoPattern = MakeH2("VETO_Patt", "VETO_PATTERN", 4,0,4,4,0,4,"X_dir;Y_dir");
@@ -361,6 +362,19 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
                            }
 
                            SetH1Content(fQualitySlow, fLastBinSlow, fLastQSlowValue);
+                           if (fSpillStartEpoch) {
+                              // bin on slow histogram where spill started
+                              unsigned startbin = (fSpillStartEpoch >> 12) % NUMHISTBINS;
+                              unsigned histbin = (fLastBinSlow + NUMHISTBINS - startbin) % NUMHISTBINS;
+                              if (histbin < NUMSPILLBINS) {
+                                 SetH1Content(fSpill, histbin, fLastQSlowValue);
+                                 SetH1Content(fTrendX, histbin, fLastX);
+                                 SetH1Content(fTrendY, histbin, fLastY);
+                              } else {
+                                 StopSpill(fLastEpoch);
+                              }
+                           }
+
                            SetH1Content(fTrendXSlow, fLastBinSlow, fLastX);
                            SetH1Content(fTrendYSlow, fLastBinSlow, fLastY);
                            //halo trends
@@ -415,8 +429,10 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
       if (fSpillStartEpoch && (EpochTmDiff(fSpillStartEpoch, fLastEpoch) > fMaxSpillLength))
          StopSpill(fLastEpoch);
 
-      if (fLastSpillEpoch) {
+      // old code to fill spill structure with different binning
 
+/*
+      if (fLastSpillEpoch) {
          // check when last bin in spill statistic was calculated
          unsigned diff = EpochDiff(fLastSpillEpoch, fLastEpoch);
          if (diff > 0.8*FASTEPOCHS*NUMHISTBINS) {
@@ -433,7 +449,7 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
 
 
          // calculate statistic for all following bins
-         while ((diff > 1.5*FASTEPOCHS*NUMSTAT) && (fLastSpillBin < NUMSTATBINS)) {
+         while ((diff > 1.5*FASTEPOCHS*NUMSTAT) && (fLastSpillBin < NUMSPILLBINS)) {
 
             // first bin for statistic
             SetH1Content(fSpill, fLastSpillBin, CalcQuality((fLastEpoch >> 1) % NUMHISTBINS, NUMSTAT));
@@ -447,9 +463,9 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
          }
 
 
-         if (fLastSpillBin >= NUMSTATBINS) StopSpill(fLastEpoch);
-
+         if (fLastSpillBin >= NUMSPILLBINS) StopSpill(fLastEpoch);
       }
+*/
 
    } // events
    return true;
