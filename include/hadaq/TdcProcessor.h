@@ -575,7 +575,7 @@ namespace hadaq {
          virtual void Store(base::Event*);
 
          /** Method transform TDC data, if output specified, use it otherwise change original data */
-         unsigned TransformTdcData(hadaqs::RawSubevent* sub, unsigned indx, unsigned datalen, hadaqs::RawSubevent* tgt = 0, unsigned tgtindx = 0);
+         unsigned TransformTdcData(hadaqs::RawSubevent* sub, uint32_t *rawdata, unsigned indx, unsigned datalen, hadaqs::RawSubevent* tgt = 0, unsigned tgtindx = 0);
 
          /** Emulate transformation */
          void EmulateTransform(int dummycnt);

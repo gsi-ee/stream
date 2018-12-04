@@ -935,12 +935,23 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub, void* 
 
    unsigned trbSubEvSize = (sub->GetSize() - sizeof(hadaqs::RawSubevent)) / 4;
 
+   if ((sub->Alignment()!=4) || !sub->IsSwapped()) {
+      printf("UNEXPECTED TRB DATA FORMAT align %u swap %d\n", sub->Alignment(), !sub->IsSwapped());
+      exit(7);
+   }
+
+   uint32_t *rawdata = (uint32_t *) sub->RawData();
+
+
    while (ix < trbSubEvSize) {
 
 //      grd.Next("sub", 5);
 
       //! Extract data portion from the whole packet (in a loop)
-      uint32_t data = sub->Data(ix++);
+      // uint32_t data = sub->Data(ix++);
+
+      uint32_t data = rawdata[ix++];
+      data = HADAQ_SWAP4(data);
 
       if (tgt && (tgtix >= tgtlen)) {
          fprintf(stderr,"TrbProcessor::TransformSubEvent not enough space in output buffer\n");
@@ -974,7 +985,7 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub, void* 
 
       if (subproc) {
 //         grd.Next("trans");
-         unsigned newlen = subproc->TransformTdcData(sub, ix, datalen, tgt, tgtix+1);
+         unsigned newlen = subproc->TransformTdcData(sub, rawdata, ix, datalen, tgt, tgtix+1);
          if (tgt) {
             tgt->SetData(tgtix++, id | ((newlen & 0xffff) << 16));
             tgtix += newlen;

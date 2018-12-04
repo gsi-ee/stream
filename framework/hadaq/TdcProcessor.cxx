@@ -689,7 +689,7 @@ float hadaq::TdcProcessor::ExtractCalibr(float* func, unsigned bin)
    return val < hadaq::TdcMessage::CoarseUnit() ? val : hadaq::TdcMessage::CoarseUnit();
 }
 
-unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigned indx, unsigned datalen, hadaqs::RawSubevent* tgt, unsigned tgtindx)
+unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_t *rawdata, unsigned indx, unsigned datalen, hadaqs::RawSubevent* tgt, unsigned tgtindx)
 {
    // do nothing in case of empty TDC sub-sub-event
    if (datalen == 0) return 0;
@@ -719,12 +719,14 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
       }
    }
 
+   uint32_t *tgtraw = tgt ? (uint32_t *) tgt->RawData() : 0;
 
    // if (fAllTotMode==1) printf("%s dtrig %d do_tot %d dofalling %d\n", GetName(), is_0d_trig, do_tot, DoFallingEdge());
 
    while (datalen-- > 0) {
 
-      msg.assign(sub->Data(indx++));
+      uint32_t idata = rawdata[indx++];
+      msg.assign(HADAQ_SWAP4(idata));
 
       cnt++;
 
@@ -739,7 +741,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
       if (!msg.isHit0Msg()) {
          if (msg.isEpochMsg()) { epoch = msg.getEpochValue(); } else
          if (msg.isCalibrMsg()) { calibr_indx = tgtindx; calibr_num = 0; }
-         tgt->SetData(tgtindx++, msg.getData());
+         if (tgtraw) tgtraw[tgtindx++] = idata; // tgt->SetData(tgtindx++, msg.getData());
          continue;
       }
       hitcnt++;
@@ -826,11 +828,15 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, unsigne
 
          // set data of calibr message, do not use fast access
          calibr.setCalibrFine(calibr_num++, new_fine);
-         tgt->SetData(calibr_indx, calibr.getData());
+
+         // tgt->SetData(calibr_indx, calibr.getData());
+         tgtraw[calibr_indx] = HADAQ_SWAP4(calibr.getData());
+
          if (calibr_num>1) calibr_indx = 0;
 
          // copy original hit message
-         tgt->SetData(tgtindx++, msg.getData());
+         // tgt->SetData(tgtindx++, msg.getData());
+         tgtraw[tgtindx++] = idata;
       }
 
       if (hard_failure) continue;

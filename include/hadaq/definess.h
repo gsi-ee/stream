@@ -113,6 +113,8 @@ namespace hadaqs {
       EvtDecoding_64bitAligned = (0x03 << 16) | 0x0001
    };
 
+#define HADAQ_SWAP4(value) (((value & 0xFF) << 24) | ((value & 0xFF00) << 8) | ((value & 0xFF0000) >> 8) | ((value & 0xFF000000) >> 24))
+
 
    /*
     * HADES transport unit header
@@ -137,10 +139,7 @@ namespace hadaqs {
          {
 //            return IsSwapped() ? __builtin_bswap32 (*member) : *member;
 
-            return IsSwapped() ? ((*member & 0xFF) << 24) |
-                                 ((*member & 0xFF00) << 8) |
-                                 ((*member & 0xFF0000) >> 8) |
-                                 ((*member & 0xFF000000) >> 24) : *member;
+            return IsSwapped() ? HADAQ_SWAP4(*member) : *member;
 
 //            return IsSwapped() ? ((((uint8_t *) member)[0] << 24) |
 //                                  (((uint8_t *) member)[1] << 16) |
@@ -151,10 +150,7 @@ namespace hadaqs {
          /** swap-save method to set value stolen from hadtu.h */
          inline void SetValue(uint32_t *member, uint32_t val)
          {
-            *member = IsSwapped() ? ((val & 0xFF) << 24) |
-                                    ((val & 0xFF00) << 8) |
-                                    ((val & 0xFF0000) >> 8) |
-                                    ((val & 0xFF000000) >> 24) : val;
+            *member = IsSwapped() ? HADAQ_SWAP4(val) : val;
 
 //            *member = IsSwapped() ? __builtin_bswap32 (val) : val;
 //            *member = IsSwapped() ?
