@@ -750,6 +750,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
             epochcnt++;
          } else if (kind == hadaq::tdckind_Calibr) {
             DefFastFillH1(fMsgsKind, kind >> 29, 1);
+            calibr.assign(msg.getData()); // copy message into
             calibr_indx = tgtindx;
             calibr_num = 0;
          } else {
@@ -837,15 +838,13 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
             calibr_indx = tgtindx++;
             calibr_num = 0;
             calibr.assign(tdckind_Calibr);
-         } else {
-            calibr.assign(tgt->Data(calibr_indx));
          }
 
          // set data of calibr message, do not use fast access
          calibr.setCalibrFine(calibr_num++, new_fine);
 
          // tgt->SetData(calibr_indx, calibr.getData());
-         if (calibr_num > 1) {
+         if (calibr_num == 2) {
             tgtraw[calibr_indx] = HADAQ_SWAP4(calibr.getData());
             calibr_indx = 0;
             calibr_num = 0;
