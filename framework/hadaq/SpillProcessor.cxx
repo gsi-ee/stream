@@ -60,8 +60,8 @@ hadaq::SpillProcessor::SpillProcessor() :
    fTrendX = MakeH1("TrendX", "BEAM_X POSITION", NUMSPILLBINS, 0., NUMSPILLBINS*BINWIDTHSLOW, "hmin:0;hmax:20;Time [sec];Strip_X");
    fTrendY = MakeH1("TrendY", "BEAM_Y POSITION", NUMSPILLBINS, 0., NUMSPILLBINS*BINWIDTHSLOW, "hmin:0;hmax:20;Time [sec];Strip_Y");
 
-   fHaloPattern = MakeH2("HALO_Patt", "HALO_PATTERN", 4,0,4,4,0,4,"X_dir;Y_dir");
-   fVetoPattern = MakeH2("VETO_Patt", "VETO_PATTERN", 4,0,4,4,0,4,"X_dir;Y_dir");
+   fHaloPattern = MakeH2("HALO_Patt", "HALO_PATTERN", 4,0,4,4,0,4,"opt:colz,text;X_dir;Y_dir");
+   fVetoPattern = MakeH2("VETO_Patt", "VETO_PATTERN", 4,0,4,4,0,4,"opt:colz,text;X_dir;Y_dir");
 
    fLastBinFast = 0;
    fLastBinSlow = 0;
@@ -81,7 +81,7 @@ hadaq::SpillProcessor::SpillProcessor() :
    fLastSpillBin = 0;
 
 
-   fMaxSpillLength = 15.;
+   fMaxSpillLength = 10.;
    fLastQSlowValue = 0;
 
    for (unsigned n=0;n<33;++n) {
