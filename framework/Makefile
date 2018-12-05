@@ -13,7 +13,7 @@ endif
 
 CPPVERS      = -std=c++11
 
-CXXOPT       += $(CPPVERS) -O2 -fPIC -Wall $(INCLUDES:%=-I%) $(DEFINITIONS:%=-D%) 
+CXXOPT       += $(CPPVERS) -O2 -fPIC -m64 -Wall $(INCLUDES:%=-I%) $(DEFINITIONS:%=-D%) 
 LD            = g++
 CXX           = g++
 
