@@ -696,18 +696,18 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
 
    hadaq::TdcMessage msg, calibr;
 
-   int cnt(0), hitcnt(0), errcnt(0);
-   unsigned tgtindx0(tgtindx), calibr_indx(0), calibr_num(0), epoch(0), nrising(0), nfalling(0);
+   unsigned tgtindx0(tgtindx), cnt(0),
+         hitcnt(0), epochcnt(0), errcnt(0), calibr_indx(0), calibr_num(0),
+         nrising(0), nfalling(0);
 
    bool use_in_calibr = ((1 << sub->GetTrigTypeTrb3()) & fCalibrTriggerMask) != 0;
    bool is_0d_trig = (sub->GetTrigTypeTrb3() == 0xD);
 
-   if (fAllCalibrMode==0) {
+   if (fAllCalibrMode == 0) {
       use_in_calibr = false;
-   } else if (fAllCalibrMode>0) {
+   } else if (fAllCalibrMode > 0) {
       use_in_calibr = true;
    }
-
 
    bool check_calibr_progress = false;
 
@@ -719,8 +719,9 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
       }
    }
 
-   uint32_t chid, fine, coarse, new_fine, idata, *tgtraw = tgt ? (uint32_t *) tgt->RawData() : 0;
-   bool isrising, hard_failure;
+   uint32_t epoch(0), chid, fine, kind, coarse, new_fine,
+            idata, *tgtraw = tgt ? (uint32_t *) tgt->RawData() : 0;
+   bool isrising, hard_failure, fast_loop = HistFillLevel() < 2;
    double corr;
 
    // if (fAllTotMode==1) printf("%s dtrig %d do_tot %d dofalling %d\n", GetName(), is_0d_trig, do_tot, DoFallingEdge());
@@ -738,14 +739,26 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
       //   continue;
       //}
 
-      DefFastFillH1(fMsgsKind, msg.getKind() >> 29, 1.);
+      kind = msg.getKind();
 
-      if (!msg.isHit0Msg()) {
-         if (msg.isEpochMsg()) { epoch = msg.getEpochValue(); } else
-         if (msg.isCalibrMsg()) { calibr_indx = tgtindx; calibr_num = 0; }
+      // do not fill for every hit, try to use counters
+      // DefFastFillH1(fMsgsKind, kind >> 29, 1);
+
+      if (kind != hadaq::tdckind_Hit) {
+         if (kind == hadaq::tdckind_Epoch) {
+            epoch = msg.getEpochValue();
+            epochcnt++;
+         } else if (kind == hadaq::tdckind_Calibr) {
+            DefFastFillH1(fMsgsKind, kind >> 29, 1);
+            calibr_indx = tgtindx;
+            calibr_num = 0;
+         } else {
+            DefFastFillH1(fMsgsKind, kind >> 29, 1);
+         }
          if (tgtraw) tgtraw[tgtindx++] = idata; // tgt->SetData(tgtindx++, msg.getData());
          continue;
       }
+
       hitcnt++;
 
       chid = msg.getHitChannel();
@@ -843,43 +856,40 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
 
       if (hard_failure) continue;
 
-      if (isrising) {
-         if (chid>0) nrising++;
-         if (use_in_calibr) {
+      if (use_in_calibr) {
+         if (isrising) {
+            if (chid>0) nrising++;
             rec.rising_stat[fine]++;
             rec.all_rising_stat++;
             rec.rising_last_tm = ((epoch << 11) | coarse) * 5e-9 - corr;
             rec.rising_new_value = true;
-         }
-      } else {
-         nfalling++;
-         if (use_in_calibr) {
+         } else {
+            nfalling++;
             rec.falling_stat[fine]++;
             rec.all_falling_stat++;
             if (rec.rising_new_value) {
                double tot = ((((epoch << 11) | coarse) * 5e-9 - corr) - rec.rising_last_tm)*1e9;
 
                // DefFillH1(rec.fTot, tot, 1.);
-
                // add shift again to be on safe side when calculate new shift at the end
                rec.last_tot = tot + rec.tot_shift;
                rec.rising_new_value = false;
             }
          }
-      }
 
-      // trigger check of calibration only when enough statistic in that channel
-      // done only once for specified channel
-      if (!check_calibr_progress && use_in_calibr && rec.docalibr && !rec.check_calibr && (fCalibrCounts > 0)) {
-         long stat = CheckChannelStat(chid);
-         // if ToT mode enabled, make first check at half of the statistic to make preliminary calibrations
-         if (stat >= fCalibrCounts * ((fAllTotMode==0) ? 0.5 : 1.)) {
-            rec.check_calibr = true;
-            check_calibr_progress = true;
+         // trigger check of calibration only when enough statistic in that channel
+         // done only once for specified channel
+         if (!check_calibr_progress && rec.docalibr && !rec.check_calibr && (fCalibrCounts > 0)) {
+            long stat = CheckChannelStat(chid);
+            // if ToT mode enabled, make first check at half of the statistic to make preliminary calibrations
+            if (stat >= fCalibrCounts * ((fAllTotMode==0) ? 0.5 : 1.)) {
+               rec.check_calibr = true;
+               check_calibr_progress = true;
+            }
          }
       }
 
-      if (HistFillLevel()<2) continue;
+      if (fast_loop) continue;
 
       FastFillH1(fChannels, chid);
       FastFillH1(fHits, (chid*2 + (isrising ? 0 : 1)));
@@ -895,6 +905,9 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
       }
    }
 
+   if (hitcnt) DefFastFillH1(fMsgsKind, hadaq::tdckind_Hit >> 29, hitcnt);
+   if (epochcnt) DefFastFillH1(fMsgsKind, hadaq::tdckind_Epoch >> 29, epochcnt);
+
    if (cnt && fMsgPerBrd) FastFillH1(*fMsgPerBrd, fSeqeunceId, cnt);
    // fill number of "good" hits
    if (hitcnt && fHitsPerBrd) FastFillH1(*fHitsPerBrd, fSeqeunceId, hitcnt);
@@ -906,9 +919,9 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
       fCalibrTempSum2 += fCurrentTemp*fCurrentTemp;
    }
 
-   if (fAllCalibrMode>0) {
+   if (fAllCalibrMode > 0) {
       // detect 0xD trigger ourself
-      if (!is_0d_trig && (nrising == nfalling) && (nrising +1 == NumChannels())) is_0d_trig = true;
+      if (!is_0d_trig && (nrising == nfalling) && (nrising+1 == NumChannels())) is_0d_trig = true;
 
       if (is_0d_trig) fAllDTrigCnt++;
       if ((fAllDTrigCnt>10) && (fAllTotMode<0)) fAllTotMode = 0;
