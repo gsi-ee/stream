@@ -719,7 +719,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
       }
    }
 
-   uint32_t epoch(0), chid, fine, kind, coarse, new_fine,
+   uint32_t epoch(0), chid, fine, kind, coarse(0), new_fine,
             idata, *tgtraw = tgt ? (uint32_t *) tgt->RawData() : 0;
    bool isrising, hard_failure, fast_loop = HistFillLevel() < 2;
    double corr;
@@ -763,7 +763,6 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
 
       chid = msg.getHitChannel();
       fine = msg.getHitTmFine();
-      coarse = msg.getHitTmCoarse();
       isrising = msg.isHitRisingEdge();
 
       // if (fAllTotMode==1) printf("%s ch %u rising %d fine %x\n", GetName(), chid, isrising, fine);
@@ -786,6 +785,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
       corr = hard_failure ? 0. : (isrising ? rec.rising_calibr[fine] : rec.falling_calibr[fine]);
 
       if (!tgt) {
+         coarse = msg.getHitTmCoarse();
          if (isrising) {
             // simple approach for rising edge - replace data in the source buffer
             // value from 0 to 1000 is 5 ps unit, should be SUB from coarse time value
@@ -845,9 +845,11 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
          calibr.setCalibrFine(calibr_num++, new_fine);
 
          // tgt->SetData(calibr_indx, calibr.getData());
-         tgtraw[calibr_indx] = HADAQ_SWAP4(calibr.getData());
-
-         if (calibr_num>1) calibr_indx = 0;
+         if (calibr_num > 1) {
+            tgtraw[calibr_indx] = HADAQ_SWAP4(calibr.getData());
+            calibr_indx = 0;
+            calibr_num = 0;
+         }
 
          // copy original hit message
          // tgt->SetData(tgtindx++, msg.getData());
@@ -857,6 +859,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
       if (hard_failure) continue;
 
       if (use_in_calibr) {
+         coarse = msg.getHitTmCoarse();
          if (isrising) {
             if (chid>0) nrising++;
             rec.rising_stat[fine]++;
@@ -903,6 +906,12 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
       } else {
          FastFillH1(rec.fFallingFine, fine);
       }
+   }
+
+   // if last calibration message not yet copied into output
+   if ((calibr_num == 1) && tgtraw && calibr_indx) {
+      tgtraw[calibr_indx] = HADAQ_SWAP4(calibr.getData());
+      calibr_indx = 0;
    }
 
    if (hitcnt) DefFastFillH1(fMsgsKind, hadaq::tdckind_Hit >> 29, hitcnt);
