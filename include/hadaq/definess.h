@@ -115,6 +115,7 @@ namespace hadaqs {
 
 #define HADAQ_SWAP4(value) (((value & 0xFF) << 24) | ((value & 0xFF00) << 8) | ((value & 0xFF0000) >> 8) | ((value & 0xFF000000) >> 24))
 
+// #define HADAQ_SWAP4(value)  __builtin_bswap32(value)
 
    /*
     * HADES transport unit header
