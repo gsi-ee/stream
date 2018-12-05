@@ -160,9 +160,9 @@ namespace base {
          const char* GetName() const { return fName.c_str(); }
          unsigned GetID() const { return fID; }
 
-         void SetHistFilling(int lvl = 99) { fHistFilling = lvl; }
-         bool IsHistFilling() const { return fHistFilling > 0; }
-         int  HistFillLevel() const { return fHistFilling; }
+         inline void SetHistFilling(int lvl = 99) { fHistFilling = lvl; }
+         inline bool IsHistFilling() const { return fHistFilling > 0; }
+         inline int  HistFillLevel() const { return fHistFilling; }
 
          unsigned GetStoreKind() const { return fStoreKind; }
          bool IsStoreEnabled() const { return GetStoreKind()!=0; }

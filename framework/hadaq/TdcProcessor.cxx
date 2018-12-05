@@ -719,13 +719,15 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
       }
    }
 
-   uint32_t *tgtraw = tgt ? (uint32_t *) tgt->RawData() : 0;
+   uint32_t chid, fine, coarse, new_fine, idata, *tgtraw = tgt ? (uint32_t *) tgt->RawData() : 0;
+   bool isrising, hard_failure;
+   double corr;
 
    // if (fAllTotMode==1) printf("%s dtrig %d do_tot %d dofalling %d\n", GetName(), is_0d_trig, do_tot, DoFallingEdge());
 
    while (datalen-- > 0) {
 
-      uint32_t idata = rawdata[indx++];
+      idata = rawdata[indx++];
       msg.assign(HADAQ_SWAP4(idata));
 
       cnt++;
@@ -746,14 +748,14 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
       }
       hitcnt++;
 
-      unsigned chid = msg.getHitChannel();
-      unsigned fine = msg.getHitTmFine();
-      unsigned coarse = msg.getHitTmCoarse();
-      bool isrising = msg.isHitRisingEdge();
+      chid = msg.getHitChannel();
+      fine = msg.getHitTmFine();
+      coarse = msg.getHitTmCoarse();
+      isrising = msg.isHitRisingEdge();
 
       // if (fAllTotMode==1) printf("%s ch %u rising %d fine %x\n", GetName(), chid, isrising, fine);
 
-      bool hard_failure = false;
+      hard_failure = false;
       if (chid >= NumChannels()) {
          hard_failure = true;
          chid = 0; // use dummy channel
@@ -768,9 +770,9 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
       }
 
       // double corr = hard_failure ? 0. : ExtractCalibr(isrising ? rec.rising_calibr : rec.falling_calibr, fine);
-      double corr = hard_failure ? 0. : (isrising ? rec.rising_calibr[fine] : rec.falling_calibr[fine]);
+      corr = hard_failure ? 0. : (isrising ? rec.rising_calibr[fine] : rec.falling_calibr[fine]);
 
-      if (tgt==0) {
+      if (!tgt) {
          if (isrising) {
             // simple approach for rising edge - replace data in the source buffer
             // value from 0 to 1000 is 5 ps unit, should be SUB from coarse time value
@@ -807,7 +809,6 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
       } else {
          // copy data to the target, introduce extra messages with calibrated
 
-         uint32_t new_fine = 0;
          if (isrising) {
             // rising edge correction used for 5 ns range, approx 0.305ps binning
             new_fine = (uint32_t) (corr/5e-9*0x3ffe);
@@ -844,7 +845,6 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
 
       if (isrising) {
          if (chid>0) nrising++;
-         rec.rising_cnt++;
          if (use_in_calibr) {
             rec.rising_stat[fine]++;
             rec.all_rising_stat++;
@@ -853,7 +853,6 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
          }
       } else {
          nfalling++;
-         rec.falling_cnt++;
          if (use_in_calibr) {
             rec.falling_stat[fine]++;
             rec.all_falling_stat++;
