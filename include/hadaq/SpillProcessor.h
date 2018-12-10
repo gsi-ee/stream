@@ -61,6 +61,7 @@ protected:
    unsigned fSpillStartEpoch; ///< epoch value which assumed to be spill start, 0 - off
    unsigned fSpillEndEpoch;   ///< epoch value when switch off spill
 
+   double fMinSpillLength;  ///< minimal spill time in seconds
    double fMaxSpillLength; ///< maximal spill time in seconds
 
    unsigned fTdcMin; // minimal TDC id
@@ -108,6 +109,7 @@ public:
       fSpillMinCnt = cnt;
    }
 
+   void SetMinSpillLength(double tm = 0.1) { fMinSpillLength = tm; }
    void SetMaxSpillLength(double tm = 10) { fMaxSpillLength = tm; }
 
    void SetChannelsLookup1(unsigned ch, unsigned lookup) { fChannelsLookup1[ch] = lookup; }

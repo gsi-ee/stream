@@ -82,6 +82,7 @@ hadaq::SpillProcessor::SpillProcessor() :
 
 
    fMaxSpillLength = 10.;
+   fMinSpillLength = 0.1;
    fLastQSlowValue = 0;
 
    for (unsigned n=0;n<33;++n) {
@@ -301,10 +302,18 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
                                   }
                              } else if (lookup == 401) { // spill detection
                                 if (!fAutoSpillDetect) {
+                                   bool new_spill = true;
+
                                    // stop previous spill
-                                   if (fSpillStartEpoch) StopSpill(fLastEpoch);
+                                   if (fSpillStartEpoch) {
+                                      if (EpochTmDiff(fSpillStartEpoch, fLastEpoch) > fMinSpillLength)
+                                         StopSpill(fLastEpoch);
+                                      else
+                                         new_spill = false;
+                                   }
+
                                    // start new spill
-                                   StartSpill(fLastEpoch);
+                                   if (new_spill) StartSpill(fLastEpoch);
                                 }
                              } else if (lookup == 402) { // trigger counts
                                 FastFillH1(fTriggerFast, fastbin);
