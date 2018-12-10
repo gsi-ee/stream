@@ -419,7 +419,7 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
 
             if (all_over) StartSpill(fLastEpoch);
 
-         } else if (fSpillStartEpoch && (fLastBinSlow>=fSpillMinCnt)) {
+         } else if (fSpillStartEpoch && (fLastBinSlow>=fSpillMinCnt) && (EpochTmDiff(fSpillStartEpoch, fLastEpoch) > fMinSpillLength)) {
             // detecting spill OFF
             bool all_below = true;
 
