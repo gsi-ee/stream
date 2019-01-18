@@ -32,10 +32,11 @@ hadaq::HldProcessor::HldProcessor(bool auto_create, const char* after_func) :
    fEvSize = MakeH1("EvSize", "Event size", 500, 0, 50000, "bytes");
    fSubevSize = MakeH1("SubevSize", "Subevent size", 500, 0, 5000, "bytes");
 
-   fHitsPerTDC = nullptr;   ///< HADAQ hits per TDC
-   fErrPerTDC = nullptr;    ///< HADAQ errors per TDC
-   fHitsPerTDCChannel = nullptr; ///< HADAQ hits per TDC channel
-   fErrPerTDCChannel = nullptr;  ///< HADAQ hits per TDC channel
+   fHitsPerTDC = nullptr;   // HADAQ hits per TDC
+   fErrPerTDC = nullptr;    // HADAQ errors per TDC
+   fHitsPerTDCChannel = nullptr; // HADAQ hits per TDC channel
+   fErrPerTDCChannel = nullptr;  // HADAQ errorsvper TDC channel
+   fCorrPerTDCChannel = nullptr; // corrections
 
    // printf("Create HldProcessor %s\n", GetName());
 
@@ -368,9 +369,15 @@ void hadaq::HldProcessor::CreatePerTDCHisto()
                                  TrbProcessor::GetDefaultNumCh(), 0, TrbProcessor::GetDefaultNumCh(),
                                  opt2.c_str());
 
+   if (!fCorrPerTDCChannel)
+      fCorrPerTDCChannel = MakeH2("CorrPerChannel", "Number of corrected hits per TDC channel",
+            tdcs.size(), 0, tdcs.size(),
+            TrbProcessor::GetDefaultNumCh(), 0, TrbProcessor::GetDefaultNumCh(),
+            opt2.c_str());
+
    cnt = 0;
    for (auto &&tdc : tdcs)
-      tdc->AssignPerHldHistos(cnt++, &fHitsPerTDC, &fErrPerTDC, &fHitsPerTDCChannel, &fErrPerTDCChannel);
+      tdc->AssignPerHldHistos(cnt++, &fHitsPerTDC, &fErrPerTDC, &fHitsPerTDCChannel, &fErrPerTDCChannel, &fCorrPerTDCChannel);
 
 }
 

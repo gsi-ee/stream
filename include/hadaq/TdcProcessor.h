@@ -173,6 +173,7 @@ namespace hadaq {
          base::H1handle fHits;       //! histogram with hits per channel
          base::H1handle fErrors;     //! histogram with errors per channel
          base::H1handle fUndHits;    //! histogram with undetected hits per channel
+         base::H1handle fCorrHits;   //! histogram with corrected hits per channel
          base::H1handle fMsgsKind;   //! messages kinds
          base::H2handle fAllFine;    //! histogram of all fine counters
          base::H2handle fAllCoarse;  //! histogram of all coarse counters
@@ -188,6 +189,7 @@ namespace hadaq {
          base::H1handle *fErrPerHld;    //! errors per TDC - from HLD
          base::H2handle *fChHitsPerHld; //! hits per TDC channel - from HLD
          base::H2handle *fChErrPerHld;  //! errors per TDC channel - from HLD
+         base::H2handle *fChCorrPerHld;  //! corrections per TDC channel - from HLD
 
          unsigned                 fNumChannels; //! number of channels
          unsigned                 fNumFineBins; //! number of fine-counter bins
@@ -402,13 +404,14 @@ namespace hadaq {
          void CreateHistograms(int *arr = 0);
 
          void AssignPerHldHistos(unsigned id, base::H1handle *hHits, base::H1handle *hErrs,
-                                              base::H2handle *hChHits, base::H2handle *hChErrs)
+                                              base::H2handle *hChHits, base::H2handle *hChErrs, base::H2handle *hChCorr)
          {
             fHldId = id;
             fHitsPerHld = hHits;
             fErrPerHld = hErrs;
             fChHitsPerHld = hChHits;
             fChErrPerHld = hChErrs;
+            fChCorrPerHld = hChCorr;
          }
 
          /** Set calibration trigger type(s)

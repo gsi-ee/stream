@@ -140,6 +140,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fHits = 0;
    fErrors = 0;
    fUndHits = 0;
+   fCorrHits = 0;
    fMsgsKind = 0;
    fAllFine = 0;
    fAllCoarse = 0;
@@ -168,6 +169,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
          fHits = MakeH1("Edges", "Edges counts TDC channels (rising/falling)", numchannels*2, 0, numchannels, "ch");
       fErrors = MakeH1("Errors", "Errors in TDC channels", numchannels, 0, numchannels, "ch");
       fUndHits = MakeH1("UndetectedHits", "Undetected hits in TDC channels", numchannels, 0, numchannels, "ch");
+      fCorrHits = MakeH1("CorrectedHits", "Corrected after 0x3ff hits in TDC channels", numchannels, 0, numchannels, "ch");
 
       fMsgsKind = MakeH1("MsgKind", "kind of messages", 8, 0, 8, "xbin:Trailer,Header,Debug,Epoch,Hit,-,-,Calibr;kind");
 
@@ -1738,6 +1740,10 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
             FastFillH1(fChannels, chid);
             DefFillH1(fHits, (chid + (isrising ? 0.25 : 0.75)), 1.);
+            if (msg.isHit2Msg()) {
+               FastFillH1(fCorrHits, chid);
+               if (fChCorrPerHld) DefFillH2(*fChCorrPerHld, fHldId, chid, 1);
+            }
             if (raw_hit && use_fine_for_stat) DefFillH2(fAllFine, chid, fine, 1.);
             DefFillH2(fAllCoarse, chid, coarse, 1.);
 
