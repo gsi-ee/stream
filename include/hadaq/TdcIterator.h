@@ -102,7 +102,7 @@ namespace hadaq {
          // return fine time value for current message
          inline double getMsgTimeFine() const
          {
-           if (fMsg.isHit0Msg()) return hadaq::TdcMessage::SimpleFineCalibr(fMsg.getHitTmFine());
+           if (fMsg.isHit0Msg() || fMsg.isHit2Msg()) return hadaq::TdcMessage::SimpleFineCalibr(fMsg.getHitTmFine());
            if (fMsg.isHit1Msg()) return hadaq::TdcMessage::CoarseUnit()*fMsg.getHitTmFine()*0.001;
            return 0;
          }

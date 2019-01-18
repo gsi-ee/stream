@@ -744,7 +744,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
       // do not fill for every hit, try to use counters
       // DefFastFillH1(fMsgsKind, kind >> 29, 1);
 
-      if (kind != hadaq::tdckind_Hit) {
+      if ((kind != hadaq::tdckind_Hit) && (kind != hadaq::tdckind_Hit2)) {
          if (kind == hadaq::tdckind_Epoch) {
             epoch = msg.getEpochValue();
             epochcnt++;

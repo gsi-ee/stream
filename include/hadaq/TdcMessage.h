@@ -52,7 +52,8 @@ namespace hadaq {
 
          inline bool isHit0Msg() const { return getKind() == tdckind_Hit; } // original hit message
          inline bool isHit1Msg() const { return getKind() == tdckind_Hit1; } // with replaced fine counter
-         inline bool isHitMsg() const { return isHit0Msg() || isHit1Msg(); }
+         inline bool isHit2Msg() const { return getKind() == tdckind_Hit2; } // repaired 0x3fff message
+         inline bool isHitMsg() const { return isHit0Msg() || isHit1Msg() || isHit2Msg(); }
 
          inline bool isEpochMsg() const { return getKind() == tdckind_Epoch; }
          inline bool isDebugMsg() const { return getKind() == tdckind_Debug; }
