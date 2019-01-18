@@ -261,7 +261,10 @@ void hadaq::TrbProcessor::ConfigureCalibration(const std::string& name, long per
 
    if (name.length() > 0) {
       LoadCalibrations(name.c_str());
-      if ((period == -1) || (period == -77)) SetWriteCalibrations(name.c_str(), false, (period == -77));
+      if ((period == -1) || (period == -77))
+         SetWriteCalibrations(name.c_str(), false, (period == -77));
+      else if (period > 1000)
+         SetWriteCalibrations(name.c_str(), true, (period % 10000 == 77));
    }
 }
 
