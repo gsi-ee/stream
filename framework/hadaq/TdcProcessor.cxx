@@ -11,7 +11,7 @@
 
 #include "hadaq/TrbProcessor.h"
 #include "hadaq/TdcSubEvent.h"
-
+#include <iostream>
 
 #define RAWPRINT( args ...) if(IsPrintRawData()) printf( args )
 
@@ -140,7 +140,6 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fHits = 0;
    fErrors = 0;
    fUndHits = 0;
-   fCorrHits = 0;
    fMsgsKind = 0;
    fAllFine = 0;
    fAllCoarse = 0;
@@ -148,6 +147,10 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fFallingCalibr = 0;
    fTotShifts = 0;
    fTempDistr = 0;
+   fhRaisingFineCalibr = 0;
+   fhTotVsChannel = 0;
+   fhTotMoreCounter = 0;
+   fhTotMinusCounter = 0;
    fHitsRate = 0;
    fRateCnt = 0;
    fLastRateTm = -1;
@@ -169,12 +172,17 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
          fHits = MakeH1("Edges", "Edges counts TDC channels (rising/falling)", numchannels*2, 0, numchannels, "ch");
       fErrors = MakeH1("Errors", "Errors in TDC channels", numchannels, 0, numchannels, "ch");
       fUndHits = MakeH1("UndetectedHits", "Undetected hits in TDC channels", numchannels, 0, numchannels, "ch");
-      fCorrHits = MakeH1("CorrectedHits", "Corrected after 0x3ff hits in TDC channels", numchannels, 0, numchannels, "ch");
 
       fMsgsKind = MakeH1("MsgKind", "kind of messages", 8, 0, 8, "xbin:Trailer,Header,Debug,Epoch,Hit,-,-,Calibr;kind");
 
       fAllFine = MakeH2("FineTm", "fine counter value", numchannels, 0, numchannels, (fNumFineBins==1000 ? 100 : fNumFineBins), 0, fNumFineBins, "ch;fine");
+      fhRaisingFineCalibr = MakeH2("RaisingFineTmCalibr", "raising calibrated fine counter value", numchannels, 0, numchannels, (fNumFineBins==1000 ? 100 : fNumFineBins), 0, fNumFineBins, "ch;calibrated fine");
       fAllCoarse = MakeH2("CoarseTm", "coarse counter value", numchannels, 0, numchannels, 2048, 0, 2048, "ch;coarse");
+
+      fhTotVsChannel = MakeH2("TotVsChannel", "ToT", numchannels, 0, numchannels, 100, 0., 50., "ch;ToT [ns]");
+
+      fhTotMoreCounter = MakeH1("TotMoreCounter", "ToT > 20 ns counter in TDC channels", numchannels, 0, numchannels, "ch");
+      fhTotMinusCounter = MakeH1("TotMinusCounter", "ToT < 0 ns counter in TDC channels", numchannels, 0, numchannels, "ch");
 
       if (DoRisingEdge())
          fRisingCalibr  = MakeH2("RisingCalibr",  "rising edge calibration", numchannels, 0, numchannels, fNumFineBins, 0, fNumFineBins, "ch;fine");
@@ -316,8 +324,10 @@ void hadaq::TdcProcessor::SetToTRange(double tot, double hmin, double hmax)
 
 void hadaq::TdcProcessor::UserPostLoop()
 {
-   if (!fWriteCalibr.empty() && !fWriteEveryTime) {
-      if (fCalibrCounts==0) ProduceCalibration(true, fUseLinear);
+//   printf("************************* hadaq::TdcProcessor postloop *******************\n");
+
+   if (!fWriteCalibr.empty() && fAutoCalibr) {
+      if (fCalibrCounts == 0) ProduceCalibration(true, fUseLinear);
       StoreCalibration(fWriteCalibr);
    }
 }
@@ -744,7 +754,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
       // do not fill for every hit, try to use counters
       // DefFastFillH1(fMsgsKind, kind >> 29, 1);
 
-      if ((kind != hadaq::tdckind_Hit) && (kind != hadaq::tdckind_Hit2)) {
+      if (kind != hadaq::tdckind_Hit) {
          if (kind == hadaq::tdckind_Epoch) {
             epoch = msg.getEpochValue();
             epochcnt++;
@@ -1683,6 +1693,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             if (ncalibr < 2) {
                // use correction from special message
                corr = calibr.getCalibrFine(ncalibr++)*5e-9/0x3ffe;
+               if (isrising) DefFillH2(fhRaisingFineCalibr, chid, calibr.getCalibrFine(ncalibr++), 1.);
                if (!isrising) corr *= 10.; // range for falling edge is 50 ns.
             } else {
 
@@ -1738,10 +1749,6 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
             FastFillH1(fChannels, chid);
             DefFillH1(fHits, (chid + (isrising ? 0.25 : 0.75)), 1.);
-            if (msg.isHit2Msg()) {
-               FastFillH1(fCorrHits, chid);
-               if (fChCorrPerHld) DefFillH2(*fChCorrPerHld, fHldId, chid, 1);
-            }
             if (raw_hit && use_fine_for_stat) DefFillH2(fAllFine, chid, fine, 1.);
             DefFillH2(fAllCoarse, chid, coarse, 1.);
 
@@ -1830,7 +1837,14 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
                if (rec.rising_new_value && (rec.rising_last_tm!=0)) {
                   double tot = (localtm - rec.rising_last_tm)*1e9;
-
+                  // TODO chid
+                  DefFillH2(fhTotVsChannel, chid, tot, 1.);
+                  if (tot < 0. ) {
+                      DefFillH1(fhTotMinusCounter, chid, 1.);
+                  }
+                  if (tot > 20.) {
+                      DefFillH1(fhTotMoreCounter, chid, 1.);
+                  }
                   DefFillH1(rec.fTot, tot, 1.);
                   rec.rising_new_value = false;
 
@@ -2047,7 +2061,148 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       while (iter.next()) iter.printmsg();
    }
 
+   //DoHistAnalysis();
+
    return !iserr;
+}
+
+void hadaq::TdcProcessor::DoHistAnalysis()
+{
+    int nofChannels = NumChannels();
+    for (int iCh = 0; iCh < nofChannels; iCh++) {
+        double testFine = DoTestFineTimeH2(iCh, fAllFine);
+        double testTot = DoTestToT(iCh);
+        double testEdges = DoTestEdges(iCh);
+        double testErrors = DoTestErrors(iCh);
+        int hValue = testFine;
+        if (fQaFinePerHld) SetH2Content(*fQaFinePerHld, fHldId, iCh, testFine);
+        if (fQaToTPerHld) SetH2Content(*fQaToTPerHld, fHldId, iCh, testTot);
+        if (fQaEdgesPerHld) SetH2Content(*fQaEdgesPerHld, fHldId, iCh, testEdges);
+        if (fQaErrorsPerHld) SetH2Content(*fQaErrorsPerHld, fHldId, iCh, testErrors);
+    }
+}
+
+double hadaq::TdcProcessor::DoTestToT(int iCh)
+{
+    int nBins1, nBins2;
+    GetH2NBins(fhTotVsChannel, nBins1, nBins2);
+
+    int nBins = GetH1NBins(fhTotMoreCounter);
+    if (iCh < 0 || iCh >= nBins) return 0.;
+    double moreContent = GetH1Content(fhTotMoreCounter, iCh);
+    double minusContent = GetH1Content(fhTotMinusCounter, iCh);
+
+    double nEntries = 0.;
+    for (int i = 0; i < nBins2; i++){
+        nEntries += GetH2Content(fhTotVsChannel, iCh, i);
+    }
+
+    if (nEntries == 0) return 0.;
+    double ratio = (moreContent + minusContent) / nEntries;
+    double k = 1.;
+    double result = 1. - k * ratio;
+    if (result < 0.) return 0.;
+    return (result > 1.)?100.:100 * result;
+}
+
+double hadaq::TdcProcessor::DoTestErrors(int iCh)
+{
+    int nBins = GetH1NBins(fErrors);
+    if (iCh < 0 || iCh >= nBins) return 0.;
+    double nEntries = 0.;
+    for (int i = 0; i < nBins; i++){
+        nEntries += GetH1Content(fErrors, i);
+    }
+    if (nEntries == 0) return 0.;
+    double nofErrors = GetH1Content(fErrors, iCh);
+
+    double ratio = nofErrors / nEntries;
+    double k = 1.;
+    double result = 1. - k * ratio;
+    if (result < 0.) return 0.;
+    return (result > 1.)?100.:100 * result;
+}
+
+double hadaq::TdcProcessor::DoTestEdges(int iCh)
+{
+    int nBins = GetH1NBins(fHits);
+    if (iCh < 0 || iCh * 2  + 1 >= nBins) return false;
+    double raising = GetH1Content(fHits, 2 * iCh);
+    double falling = GetH1Content(fHits, 2 * iCh + 1);
+    double ratio = (falling != 0)?raising / falling:0.;
+    ratio = (ratio > 1.)?ratio - 1.:1. - ratio;
+    double k = 1.;
+    double result = 1. - k * ratio;
+    if (result < 0.) return 0.;
+    return (result > 1.)?100.:100 * result;
+}
+
+double hadaq::TdcProcessor::DoTestFineTimeH2(int iCh, base::H2handle h)
+{
+    int nBins1, nBins2;
+    GetH2NBins(h, nBins1, nBins2);
+    const int binSizeRebin = 32;
+    const int nBinsRebin = nBins2 / binSizeRebin + 1;
+
+    double hRebin[nBinsRebin];
+    int nEntries = 0;
+    for (int i = 0; i < nBinsRebin; i++){
+        hRebin[i] = 0;
+        for (int j = i * binSizeRebin; j < (i + 1) * binSizeRebin; j++){
+            if (j >= nBins2) break;
+            hRebin[i] += GetH2Content(h, iCh, j);
+        }
+        nEntries += hRebin[i];
+    }
+    return DoTestFineTime(hRebin, nBinsRebin, nEntries);
+}
+
+double hadaq::TdcProcessor::DoTestFineTime(double hRebin[], int nBinsRebin, int nEntries)
+{
+    if (nEntries < 100) return 0.;
+
+    // shrink zero Edges
+    int indMinRebin = 0;
+    int indMaxRebin = 0;
+    for (int i = 0; i < nBinsRebin; i++){
+        if (hRebin[i] != 0){
+            indMinRebin = i;
+            break;
+        }
+    }
+    for (int i = nBinsRebin - 1; i >= 0; i--){
+        if (hRebin[i] != 0){
+            indMaxRebin = i;
+            break;
+        }
+    }
+    int nBinsRebinShrinked = indMaxRebin - indMinRebin + 1;
+
+    double mean = 0.;
+    for (int i = indMinRebin; i <= indMaxRebin; i++) {
+        mean += hRebin[i];
+    }
+    mean = mean / (double)nBinsRebinShrinked;
+    if (mean == 0) return 0.;
+
+    double min = 1.e10;
+    double max = 0.;
+    double mad = 0.;
+    double nBinsMeanMore = 0;
+    for (int i = indMinRebin; i <= indMaxRebin; i++) {
+        if (hRebin[i] < min) min = hRebin[i];
+        if (hRebin[i] > max) max = hRebin[i];
+        if (hRebin[i] > mean) nBinsMeanMore++;
+        mad += std::abs(hRebin[i] - mean);
+    }
+    mad /= nBinsRebinShrinked;
+    nBinsMeanMore /= nBinsRebinShrinked;
+
+    double madMean = (mad/mean > 1.)?1.:mad/mean;
+    double k = 1.;
+    double result = 1. - k * madMean;
+    if (result < 0.) return 0.;
+    return (result > 1.)?100.:100 * result;
 }
 
 void hadaq::TdcProcessor::AppendTrbSync(uint32_t syncid)
@@ -2528,4 +2683,3 @@ void hadaq::TdcProcessor::Store(base::Event* ev)
       }
    }
 }
-

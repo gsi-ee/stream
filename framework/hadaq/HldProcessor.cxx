@@ -37,6 +37,10 @@ hadaq::HldProcessor::HldProcessor(bool auto_create, const char* after_func) :
    fHitsPerTDCChannel = nullptr; // HADAQ hits per TDC channel
    fErrPerTDCChannel = nullptr;  // HADAQ errorsvper TDC channel
    fCorrPerTDCChannel = nullptr; // corrections
+   fQaFinePerTDCChannel = nullptr;  ///< HADAQ QA fine time per TDC channel
+   fQaToTPerTDCChannel = nullptr;  ///< HADAQ QA ToT per TDC channel
+   fQaEdgesPerTDCChannel = nullptr;  ///< HADAQ QA edges per TDC channel
+   fQaErrorsPerTDCChannel = nullptr;  ///< HADAQ QA errors per TDC channel
 
    // printf("Create HldProcessor %s\n", GetName());
 
@@ -375,11 +379,31 @@ void hadaq::HldProcessor::CreatePerTDCHisto()
             TrbProcessor::GetDefaultNumCh(), 0, TrbProcessor::GetDefaultNumCh(),
             opt2.c_str());
 
+    if (!fQaFinePerTDCChannel)
+       fQaFinePerTDCChannel = MakeH2("QaFinePerChannel", "QA fine time per TDC channel",
+                           tdcs.size(), 0, tdcs.size(),
+                                TrbProcessor::GetDefaultNumCh(), 0, TrbProcessor::GetDefaultNumCh(),
+                                opt2.c_str());
+
+    if (!fQaToTPerTDCChannel)
+       fQaToTPerTDCChannel = MakeH2("QAToTPerChannel", "QA ToT per TDC channel",
+                           tdcs.size(), 0, tdcs.size(),
+                                TrbProcessor::GetDefaultNumCh(), 0, TrbProcessor::GetDefaultNumCh(),
+                                opt2.c_str());
+    if (!fQaEdgesPerTDCChannel)
+       fQaEdgesPerTDCChannel = MakeH2("QaEdgesPerChannel", "QA edges per TDC channel",
+                           tdcs.size(), 0, tdcs.size(),
+                                TrbProcessor::GetDefaultNumCh(), 0, TrbProcessor::GetDefaultNumCh(),
+                                opt2.c_str());
+
+    if (!fQaErrorsPerTDCChannel)
+       fQaErrorsPerTDCChannel = MakeH2("QaErrorsPerChannel", "QA errors per TDC channel",
+                           tdcs.size(), 0, tdcs.size(),
+                                TrbProcessor::GetDefaultNumCh(), 0, TrbProcessor::GetDefaultNumCh(),
+                                opt2.c_str());
    cnt = 0;
    for (auto &&tdc : tdcs)
-      tdc->AssignPerHldHistos(cnt++, &fHitsPerTDC, &fErrPerTDC, &fHitsPerTDCChannel, &fErrPerTDCChannel, &fCorrPerTDCChannel);
+      tdc->AssignPerHldHistos(cnt++, &fHitsPerTDC, &fErrPerTDC, &fHitsPerTDCChannel, &fErrPerTDCChannel, &fCorrPerTDCChannel,
+          &fQaFinePerTDCChannel, &fQaToTPerTDCChannel, &fQaEdgesPerTDCChannel, &fQaErrorsPerTDCChannel);
 
 }
-
-
-

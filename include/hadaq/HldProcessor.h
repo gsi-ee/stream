@@ -87,6 +87,10 @@ namespace hadaq {
          base::H2handle fHitsPerTDCChannel; ///< HADAQ hits per TDC channel
          base::H2handle fErrPerTDCChannel;  ///< HADAQ errors per TDC channel
          base::H2handle fCorrPerTDCChannel; ///< HADAQ corrections per TDC channel
+         base::H2handle fQaFinePerTDCChannel;  ///< HADAQ QA fine time per TDC channel
+         base::H2handle fQaToTPerTDCChannel;  ///< HADAQ QA ToT per TDC channel
+         base::H2handle fQaEdgesPerTDCChannel;  ///< HADAQ QA edges per TDC channel
+         base::H2handle fQaErrorsPerTDCChannel;  ///< HADAQ QA errors per TDC channel
 
          HldMessage     fMsg;        ///< used for TTree store
          HldMessage    *pMsg;        ///< used for TTree store
