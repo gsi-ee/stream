@@ -289,6 +289,7 @@ namespace hadaq {
          static double gTrigDWindowLow;  //! low limit of time stamps for 0xD trigger used for calibration
          static double gTrigDWindowHigh; //! high limit of time stamps for 0xD trigger used for calibration
          static bool gUseDTrigForRef;    //! when true, use special triggers for ref calculations
+         static int gHadesMonitorInterval; //! how often special HADES monitoring procedure called
 
          /** Method will be called by TRB processor if SYNC message was found
           * One should change 4 first bytes in the last buffer in the queue */
@@ -355,6 +356,9 @@ namespace hadaq {
          static void SetErrorMask(unsigned mask = 0xffffffffU);
 
          static void SetAllHistos(bool on = true);
+
+         static void SetHadesMonitorInterval(int tm = -1);
+         static int GetHadesMonitorInterval();
 
          /** Configure bubble mode
           * 0  - off,

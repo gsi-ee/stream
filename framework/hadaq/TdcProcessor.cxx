@@ -30,6 +30,7 @@ bool hadaq::TdcProcessor::gDRICHReapir = false;
 double hadaq::TdcProcessor::gTrigDWindowLow = 0;
 double hadaq::TdcProcessor::gTrigDWindowHigh = 0;
 bool hadaq::TdcProcessor::gUseDTrigForRef = false;
+int hadaq::TdcProcessor::gHadesMonitorInterval = -111;
 
 unsigned BUBBLE_SIZE = 19;
 
@@ -80,6 +81,17 @@ void hadaq::TdcProcessor::SetUseDTrigForRef(bool on)
    gUseDTrigForRef = on;
 }
 
+void hadaq::TdcProcessor::SetHadesMonitorInterval(int tm)
+{
+   gHadesMonitorInterval = tm;
+}
+
+int hadaq::TdcProcessor::GetHadesMonitorInterval()
+{
+   return gHadesMonitorInterval;
+}
+
+///////////////////////////////////////////////////////////////////////////
 
 hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels, unsigned edge_mask) :
    SubProcessor(trb, "TDC_%04X", tdcid),
@@ -161,6 +173,11 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fErrPerHld = nullptr;
    fChHitsPerHld = nullptr;
    fChErrPerHld = nullptr; //! errors per TDC channel - from HLD
+   fChCorrPerHld = nullptr;  //! corrections per TDC channel - from HLD
+   fQaFinePerHld = nullptr;  //! QA fine counter per TDC channel - from HLD
+   fQaToTPerHld = nullptr;  //! QA ToT per TDC channel - from HLD
+   fQaEdgesPerHld = nullptr;  //! QA Edges per TDC channel - from HLD
+   fQaErrorsPerHld = nullptr;  //! QA Errors per TDC channel - from HLD
 
    fToTvalue = ToTvalue;
    fToThmin = ToThmin;
