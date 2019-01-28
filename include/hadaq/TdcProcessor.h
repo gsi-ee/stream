@@ -184,7 +184,7 @@ namespace hadaq {
          base::H1handle fTempDistr;   //! temperature distribution
          base::H1handle fBubbleErrDistr; //! distribution of place with errors
 
-         base::H2handle  fhRaisingFineCalibr; //! histogram of calibrated raising fine counter vs channel
+         base::H2handle fhRaisingFineCalibr; //! histogram of calibrated raising fine counter vs channel
          base::H2handle fhTotVsChannel; //! histogram of ToT vs channel
          base::H1handle fhTotMoreCounter; //! histogram of counter with ToT >20 ns per channel
          base::H1handle fhTotMinusCounter; //! histogram of counter with ToT < 0 ns per channel
