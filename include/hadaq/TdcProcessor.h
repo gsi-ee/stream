@@ -184,12 +184,21 @@ namespace hadaq {
          base::H1handle fTempDistr;   //! temperature distribution
          base::H1handle fBubbleErrDistr; //! distribution of place with errors
 
+         base::H2handle  fhRaisingFineCalibr; //! histogram of calibrated raising fine counter vs channel
+         base::H2handle fhTotVsChannel; //! histogram of ToT vs channel
+         base::H1handle fhTotMoreCounter; //! histogram of counter with ToT >20 ns per channel
+         base::H1handle fhTotMinusCounter; //! histogram of counter with ToT < 0 ns per channel
+
          unsigned fHldId;               //! sequence number of processor in HLD
          base::H1handle *fHitsPerHld;   //! hits per TDC - from HLD
          base::H1handle *fErrPerHld;    //! errors per TDC - from HLD
          base::H2handle *fChHitsPerHld; //! hits per TDC channel - from HLD
          base::H2handle *fChErrPerHld;  //! errors per TDC channel - from HLD
          base::H2handle *fChCorrPerHld;  //! corrections per TDC channel - from HLD
+         base::H2handle *fQaFinePerHld;  //! QA fine counter per TDC channel - from HLD
+         base::H2handle *fQaToTPerHld;  //! QA ToT per TDC channel - from HLD
+         base::H2handle *fQaEdgesPerHld;  //! QA Edges per TDC channel - from HLD
+         base::H2handle *fQaErrorsPerHld;  //! QA Errors per TDC channel - from HLD
 
          unsigned                 fNumChannels; //! number of channels
          unsigned                 fNumFineBins; //! number of fine-counter bins
@@ -294,6 +303,14 @@ namespace hadaq {
 
          /** Scan all bubble data */
          bool DoBubbleScan(const base::Buffer& buf, bool isfirst);
+
+         void DoHistAnalysis();
+         double DoTestToT(int iCh);
+         double DoTestErrors(int iCh);
+         double DoTestEdges(int iCh);
+         double DoTestFineTimeH2(int iCh, base::H2handle h);
+         double DoTestFineTime(double hRebin[], int nBinsRebin, int nEntries);
+
 
          /** These methods used to fill different raw histograms during first scan */
          virtual void BeforeFill();
@@ -404,7 +421,10 @@ namespace hadaq {
          void CreateHistograms(int *arr = 0);
 
          void AssignPerHldHistos(unsigned id, base::H1handle *hHits, base::H1handle *hErrs,
-                                              base::H2handle *hChHits, base::H2handle *hChErrs, base::H2handle *hChCorr)
+                                              base::H2handle *hChHits, base::H2handle *hChErrs,
+                                              base::H2handle *hChCorr,
+                                              base::H2handle *hQaFine, base::H2handle *hQaToT,
+                                              base::H2handle *hQaEdges, base::H2handle *hQaErrors)
          {
             fHldId = id;
             fHitsPerHld = hHits;
@@ -412,6 +432,10 @@ namespace hadaq {
             fChHitsPerHld = hChHits;
             fChErrPerHld = hChErrs;
             fChCorrPerHld = hChCorr;
+            fQaFinePerHld = hQaFine;
+            fQaToTPerHld = hQaToT;
+            fQaEdgesPerHld = hQaEdges;
+            fQaErrorsPerHld = hQaErrors;
          }
 
          /** Set calibration trigger type(s)

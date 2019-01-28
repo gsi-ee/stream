@@ -107,6 +107,14 @@ namespace base {
             if (h1) mgr()->SetH1Content(h1, nbin, v);
          }
 
+         inline int GetH1NBins(H1handle h1)
+         {
+            int nbins = 0;
+            bool isGood = mgr()->GetH1NBins(h1, nbins);
+            return isGood ? nbins : 0;
+         }
+
+
          inline void ClearH1(H1handle h1)
          {
             if (h1) mgr()->ClearH1(h1);
@@ -126,6 +134,22 @@ namespace base {
          /** Can only be used where index is same as x and y themself, no range checks are performed */
          inline void FastFillH2(H1handle h2, int x, int y)
          { DefFastFillH2(h2,x,y); }
+
+         inline void SetH2Content(H2handle h2, int nbin1, int nbin2, double v = 0.)
+         {
+            if (h2) mgr()->SetH2Content(h2, nbin1, nbin2, v);
+         }
+
+         inline double GetH2Content(H2handle h2, int bin1, int bin2)
+         {
+            return h2 ? mgr()->GetH2Content(h2, bin1, bin2) : 0.;
+         }
+
+         inline bool GetH2NBins(H2handle h2, int &nBins1, int &nBins2)
+         {
+            bool isGood = mgr()->GetH2NBins(h2, nBins1, nBins2);
+            return isGood;
+         }
 
          inline void ClearH2(base::H2handle h2)
          {
