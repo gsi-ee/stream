@@ -305,7 +305,6 @@ namespace hadaq {
          /** Scan all bubble data */
          bool DoBubbleScan(const base::Buffer& buf, bool isfirst);
 
-         void DoHistAnalysis();
          double DoTestToT(int iCh);
          double DoTestErrors(int iCh);
          double DoTestEdges(int iCh);
@@ -610,6 +609,9 @@ namespace hadaq {
 
          /** Emulate transformation */
          void EmulateTransform(int dummycnt);
+
+         /** Special hades histograms creation */
+         void DoHadesHistAnalysis();
    };
 
 }

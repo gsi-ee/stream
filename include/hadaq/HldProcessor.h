@@ -97,6 +97,8 @@ namespace hadaq {
 
          hadaqs::RawEvent  fLastEvHdr;    //! copy of last event header (without data)
 
+         long fLastHadesTm{0};
+
          /** Returns true when processor used to select trigger signal
           * TRB3 not yet able to perform trigger selection */
          virtual bool doTriggerSelection() const { return false; }

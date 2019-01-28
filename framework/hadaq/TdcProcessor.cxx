@@ -2076,12 +2076,10 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       while (iter.next()) iter.printmsg();
    }
 
-   //DoHistAnalysis();
-
    return !iserr;
 }
 
-void hadaq::TdcProcessor::DoHistAnalysis()
+void hadaq::TdcProcessor::DoHadesHistAnalysis()
 {
     int nofChannels = NumChannels();
     for (int iCh = 0; iCh < nofChannels; iCh++) {

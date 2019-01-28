@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
+#include <time.h>
 
 #include "base/defines.h"
 #include "base/ProcMgr.h"
@@ -237,6 +238,19 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
       if (evcnt>1)
          fprintf(stderr, "event count %u bigger than 1 - not work for triggered analysis\n", evcnt);
       mgr()->AddToTrigEvent(GetName(), new hadaq::HldSubEvent(fMsg));
+   }
+
+   if (hadaq::TdcProcessor::GetHadesMonitorInterval() > 0) {
+      auto tm = ::time(NULL);
+      if (fLastHadesTm <= 0) fLastHadesTm = tm;
+      if (fLastHadesTm - tm > hadaq::TdcProcessor::GetHadesMonitorInterval()) {
+         fLastHadesTm = tm;
+         for (auto&& item : fMap) {
+            unsigned num = item.second->NumberOfTDC();
+            for (unsigned indx=0;indx<num;++indx)
+               item.second->GetTDCWithIndex(indx)->DoHadesHistAnalysis();
+         }
+      }
    }
 
    return true;
