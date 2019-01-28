@@ -2066,6 +2066,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
 void hadaq::TdcProcessor::DoHistAnalysis()
 {
+    
     int nofChannels = NumChannels();
     for (int iCh = 0; iCh < nofChannels; iCh++) {
         double testFine = DoTestFineTimeH2(iCh, fAllFine);
