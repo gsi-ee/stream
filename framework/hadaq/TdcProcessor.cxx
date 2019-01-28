@@ -722,7 +722,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
    hadaq::TdcMessage msg, calibr;
 
    unsigned tgtindx0(tgtindx), cnt(0),
-         hitcnt(0), epochcnt(0), errcnt(0), calibr_indx(0), calibr_num(0),
+         hitcnt(0), hit1cnt(0), epochcnt(0), errcnt(0), calibr_indx(0), calibr_num(0),
          nrising(0), nfalling(0);
 
    bool use_in_calibr = ((1 << sub->GetTrigTypeTrb3()) & fCalibrTriggerMask) != 0;
@@ -769,7 +769,8 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
       // do not fill for every hit, try to use counters
       // DefFastFillH1(fMsgsKind, kind >> 29, 1);
 
-      if (kind != hadaq::tdckind_Hit) {
+      if (kind == hadaq::tdckind_Hit) hitcnt++; else
+      if (kind == hadaq::tdckind_Hit1) hit1cnt++; else {
          if (kind == hadaq::tdckind_Epoch) {
             epoch = msg.getEpochValue();
             epochcnt++;
@@ -785,7 +786,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
          continue;
       }
 
-      hitcnt++;
+      // from here HitMsg and Hit1Msg handled similarly
 
       chid = msg.getHitChannel();
       fine = msg.getHitTmFine();
@@ -818,7 +819,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
             uint32_t new_fine = (uint32_t) (corr/5e-12);
             if (new_fine>=1000) new_fine = 1000;
             if (hard_failure) new_fine = 0x3ff;
-            msg.setAsHit1(new_fine);
+            msg.setAsHit2(new_fine);
          } else {
             // simple approach for falling edge - replace data in the source buffer
             // value from 0 to 500 is 10 ps unit, should be SUB from coarse time value
@@ -840,7 +841,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
 
             if (hard_failure) new_fine = 0x3ff;
 
-            msg.setAsHit1(new_fine);
+            msg.setAsHit2(new_fine);
             if (corr_coarse > 0)
                msg.setHitTmCoarse(coarse - corr_coarse);
          }
@@ -939,6 +940,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
    }
 
    if (hitcnt) DefFastFillH1(fMsgsKind, hadaq::tdckind_Hit >> 29, hitcnt);
+   if (hit1cnt) DefFastFillH1(fMsgsKind, hadaq::tdckind_Hit1 >> 29, hit1cnt);
    if (epochcnt) DefFastFillH1(fMsgsKind, hadaq::tdckind_Epoch >> 29, epochcnt);
 
    if (cnt && fMsgPerBrd) FastFillH1(*fMsgPerBrd, fSeqeunceId, cnt);
@@ -1688,7 +1690,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          double corr(0.);
          bool raw_hit(true);
 
-         if (msg.getKind() == tdckind_Hit1) {
+         if (msg.getKind() == tdckind_Hit2) {
             if (isrising) {
                corr = fine * 5e-12;
             } else {

@@ -93,7 +93,7 @@ bool hadaq::StartProcessor::FirstBufferScan(const base::Buffer& buf)
                   if (msg.isCalibrMsg()) {
                      ncalibr = 0;
                      calibr = msg;
-                  } else if (msg.isHitMsg()) {
+                  } else if (msg.isHit0Msg() || msg.isHit1Msg()) {
                      // unsigned chid = msg.getHitChannel();
                      // unsigned coarse = msg.getHitTmCoarse();
                      bool isrising = msg.isHitRisingEdge();

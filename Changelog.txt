@@ -1,3 +1,11 @@
+28.01.2019
+1. Change interpretation of hit1 and hit2 message
+     hit0 (0x8) from hardware, normal hit message 
+     hit1 (0xa) from hardware, produced instead of 0x3ff
+     hit2 (0xe) software, is planned for replaced hit0 messages
+2. Initial commit from Semen Lebedev for HADES raw data quality monitoring      
+     
+
 5.07.2018
 1. Introduce StartMonitor class. It dedicated to debug START detector in HADES
 

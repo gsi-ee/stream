@@ -4,9 +4,9 @@ unsigned hadaq::TdcMessage::gFineMinValue = 20;
 unsigned hadaq::TdcMessage::gFineMaxValue = 500;
 
 
-void hadaq::TdcMessage::setAsHit1(uint32_t finebin)
+void hadaq::TdcMessage::setAsHit2(uint32_t finebin)
 {
-   fData = (fData & ~tdckind_Mask) | tdckind_Hit1; // mark as message 1
+   fData = (fData & ~tdckind_Mask) | tdckind_Hit2; // mark as message 1
    if (finebin>=0x3ff) {
       fData |= (0x3ff << 12);
    } else {

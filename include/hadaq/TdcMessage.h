@@ -14,8 +14,8 @@ namespace hadaq {
       tdckind_Epoch    = 0x60000000,
       tdckind_Mask     = 0xe0000000,
       tdckind_Hit      = 0x80000000,  // original hit message
-      tdckind_Hit1     = 0xa0000000,  // fine time replaced with 5ps binning value
-      tdckind_Hit2     = 0xc0000000,
+      tdckind_Hit1     = 0xa0000000,  // corrected hit message, instead of 0x3ff
+      tdckind_Hit2     = 0xc0000000,  // fine time replaced with 5ps binning value
       tdckind_Calibr   = 0xe0000000   // calibration data for next two hits
    };
 
@@ -51,8 +51,8 @@ namespace hadaq {
          inline uint32_t getKind() const { return fData & tdckind_Mask; }
 
          inline bool isHit0Msg() const { return getKind() == tdckind_Hit; } // original hit message
-         inline bool isHit1Msg() const { return getKind() == tdckind_Hit1; } // with replaced fine counter
-         inline bool isHit2Msg() const { return getKind() == tdckind_Hit2; } // repaired 0x3fff message
+         inline bool isHit1Msg() const { return getKind() == tdckind_Hit1; } // repaired 0x3fff message
+         inline bool isHit2Msg() const { return getKind() == tdckind_Hit2; } // with replaced fine counter
          inline bool isHitMsg() const { return isHit0Msg() || isHit1Msg() || isHit2Msg(); }
 
          inline bool isEpochMsg() const { return getKind() == tdckind_Epoch; }
@@ -89,7 +89,7 @@ namespace hadaq {
          inline bool isHitRisingEdge() const { return getHitEdge() == 0x1; }
          inline bool isHitFallingEdge() const { return getHitEdge() == 0x0; }
 
-         void setAsHit1(uint32_t finebin);
+         void setAsHit2(uint32_t finebin);
 
          /** Returns hit reserved value, 2 bits */
          inline uint32_t getHitReserved() const { return (fData >> 29) & 0x3; }
