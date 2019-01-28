@@ -324,10 +324,8 @@ void hadaq::TdcProcessor::SetToTRange(double tot, double hmin, double hmax)
 
 void hadaq::TdcProcessor::UserPostLoop()
 {
-//   printf("************************* hadaq::TdcProcessor postloop *******************\n");
-
-   if (!fWriteCalibr.empty() && fAutoCalibr) {
-      if (fCalibrCounts == 0) ProduceCalibration(true, fUseLinear);
+   if (!fWriteCalibr.empty() && !fWriteEveryTime) {
+      if (fCalibrCounts==0) ProduceCalibration(true, fUseLinear);
       StoreCalibration(fWriteCalibr);
    }
 }
