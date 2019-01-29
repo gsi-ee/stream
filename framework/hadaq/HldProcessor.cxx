@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
+#include <iostream>
 
 #include "base/defines.h"
 #include "base/ProcMgr.h"
@@ -243,7 +244,7 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
    if (hadaq::TdcProcessor::GetHadesMonitorInterval() > 0) {
       auto tm = ::time(NULL);
       if (fLastHadesTm <= 0) fLastHadesTm = tm;
-      if (fLastHadesTm - tm > hadaq::TdcProcessor::GetHadesMonitorInterval()) {
+      if (tm - fLastHadesTm > hadaq::TdcProcessor::GetHadesMonitorInterval()) {
          fLastHadesTm = tm;
          for (auto&& item : fMap) {
             unsigned num = item.second->NumberOfTDC();
