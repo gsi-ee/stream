@@ -2095,7 +2095,6 @@ void hadaq::TdcProcessor::DoHadesHistAnalysis()
         double testTot = DoTestToT(iCh);
         double testEdges = DoTestEdges(iCh);
         double testErrors = DoTestErrors(iCh);
-        int hValue = testFine;
         if (fQaFinePerHld) SetH2Content(*fQaFinePerHld, fHldId, iCh, testFine);
         if (fQaToTPerHld) SetH2Content(*fQaToTPerHld, fHldId, iCh, testTot);
         if (fQaEdgesPerHld) SetH2Content(*fQaEdgesPerHld, fHldId, iCh, testEdges);
@@ -2125,7 +2124,8 @@ double hadaq::TdcProcessor::DoTestToT(int iCh)
     if (result <= 0) result = 0;
     if (result >= 99) result = 99;
 
-    double dresult = 1.*result + ((nEntries >= 100) ? 0.99 : (nEntries / 100.));
+    double resultEntries = (nEntries >= 100) ? 0.99 : (nEntries / 100.);
+    double dresult = 1.*result + resultEntries;
 
     return dresult;
 }
@@ -2142,24 +2142,38 @@ double hadaq::TdcProcessor::DoTestErrors(int iCh)
     double nofErrors = GetH1Content(fErrors, iCh);
 
     double ratio = nofErrors / nEntries;
-    double k = 1.;
-    double result = 1. - k * ratio;
-    if (result < 0.) return 0.;
-    return (result > 1.)?100.:100 * result;
+
+    int result = (int) (100. * (1. - ratio));
+    if (result <= 0) result = 0;
+    if (result >= 99) result = 99;
+
+    double resultEntries = (nEntries >= 100) ? 0.99 : (nEntries / 100.);
+    double dresult = 1.*result + resultEntries;
+
+    return dresult;
 }
 
 double hadaq::TdcProcessor::DoTestEdges(int iCh)
 {
     int nBins = GetH1NBins(fHits);
     if (iCh < 0 || iCh * 2  + 1 >= nBins) return false;
+    double nEntries = 0.;
+    for (int i = 0; i < nBins; i++){
+        nEntries += GetH1Content(fHits, i);
+    }
+    if (nEntries == 0) return 0.;
     double raising = GetH1Content(fHits, 2 * iCh);
     double falling = GetH1Content(fHits, 2 * iCh + 1);
-    double ratio = (falling != 0)?raising / falling:0.;
-    ratio = (ratio > 1.)?ratio - 1.:1. - ratio;
-    double k = 1.;
-    double result = 1. - k * ratio;
-    if (result < 0.) return 0.;
-    return (result > 1.)?100.:100 * result;
+    if (raising + falling == 0) return 0.;
+    double ratio = std::abs(raising - falling) / (0.5 * (raising + falling));
+
+    int result = (int) (100. * (1. - ratio));
+    if (result <= 0) result = 0;
+    if (result >= 99) result = 99;
+
+    double resultEntries = (nEntries >= 100) ? 0.99 : (nEntries / 100.);
+    double dresult = 1.*result + resultEntries;
+    return dresult;
 }
 
 double hadaq::TdcProcessor::DoTestFineTimeH2(int iCh, base::H2handle h)
@@ -2184,7 +2198,7 @@ double hadaq::TdcProcessor::DoTestFineTimeH2(int iCh, base::H2handle h)
 
 double hadaq::TdcProcessor::DoTestFineTime(double hRebin[], int nBinsRebin, int nEntries)
 {
-    if (nEntries < 100) return 0.;
+    if (nEntries < 50) return 0.;
 
     // shrink zero Edges
     int indMinRebin = 0;
@@ -2223,11 +2237,15 @@ double hadaq::TdcProcessor::DoTestFineTime(double hRebin[], int nBinsRebin, int 
     mad /= nBinsRebinShrinked;
     nBinsMeanMore /= nBinsRebinShrinked;
 
-    double madMean = (mad/mean > 1.)?1.:mad/mean;
-    double k = 1.;
-    double result = 1. - k * madMean;
-    if (result < 0.) return 0.;
-    return (result > 1.)?100.:100 * result;
+    double k = 0.3;
+    double madMean = (mad/mean > 1.)?1.:k * mad/mean;
+    int result = (int) (100. * (1. - madMean));
+    if (result <= 0) result = 0;
+    if (result >= 99) result = 99;
+
+    double resultEntries = (nEntries >= 100) ? 0.99 : (nEntries / 100.);
+    double dresult = 1.*result + resultEntries;
+    return dresult;
 }
 
 void hadaq::TdcProcessor::AppendTrbSync(uint32_t syncid)

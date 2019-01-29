@@ -374,7 +374,7 @@ void hadaq::HldProcessor::CreatePerTDCHisto()
    if (!fErrPerTDC)
       fErrPerTDC = MakeH1("ErrPerTDC", "Number of errors per TDC", tdcs.size(), 0, tdcs.size(), opt1.c_str());
 
-   std::string opt2 = lbl + ";opt:colz,pal53;tdc;channels";
+   std::string opt2 = lbl + ";opt:colz,pal70;tdc;channels";
 
    if (!fHitsPerTDCChannel)
       fHitsPerTDCChannel = MakeH2("HitsPerChannel", "Number of hits per TDC channel",
