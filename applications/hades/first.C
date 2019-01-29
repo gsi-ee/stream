@@ -20,6 +20,9 @@ void first()
    //  { errNoHeader, errChId, errEpoch, errFine, err3ff, errCh0, errMismatchDouble, errUncknHdr, errDesignId, errMisc }
    hadaq::TdcProcessor::SetErrorMask(0xffffff);
 
+   // enable HADES raw data quality monitoring, update histos every 5 seconds
+   hadaq::TdcProcessor::SetHadesMonitorInterval(5);
+
    // default channel numbers and edges mask
    // 1 - use only rising edge, falling edge is ignore
    // 2   - falling edge enabled and fully independent from rising edge
