@@ -2120,10 +2120,14 @@ double hadaq::TdcProcessor::DoTestToT(int iCh)
 
     if (nEntries == 0) return 0.;
     double ratio = (moreContent + minusContent) / nEntries;
-    double k = 1.;
-    double result = 1. - k * ratio;
-    if (result < 0.) return 0.;
-    return (result > 1.)?100.:100 * result;
+
+    int result = (int) (100. * (1. - ratio));
+    if (result <= 0) result = 0;
+    if (result >= 99) result = 99;
+
+    double dresult = 1.*result + ((nEntries >= 100) ? 0.99 : (nEntries / 100.));
+
+    return dresult;
 }
 
 double hadaq::TdcProcessor::DoTestErrors(int iCh)
