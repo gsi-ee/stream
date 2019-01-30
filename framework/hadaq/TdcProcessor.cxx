@@ -2134,16 +2134,20 @@ double hadaq::TdcProcessor::DoTestErrors(int iCh)
 {
     int nBins = GetH1NBins(fErrors);
     if (iCh < 0 || iCh >= nBins) return 0.;
-    double nEntries = 0.;
-    for (int i = 0; i < nBins; i++){
-        nEntries += GetH1Content(fErrors, i);
-    }
-    if (nEntries == 0) return 0.;
-    double nofErrors = GetH1Content(fErrors, iCh);
 
-    double ratio = nofErrors / nEntries;
+    double nEntries = GetH1Content(fChannels, iCh);
 
-    int result = (int) (100. * (1. - ratio));
+    double nErrors = GetH1Content(fErrors, iCh) + GetH1Content(fUndHits, iCh) + GetH1Content(fCorrHits, iCh);
+
+    if (nEntries <= 0) return 0.;
+
+    if (nErrors == 0) return 100.;
+
+    double ratio = nErrors / nEntries;
+    // if (ratio > 0.01) return 1.;
+
+    // expand range by factor 100 that error rate bigger than 0.01 is already RED color
+    int result = 100 - (int) 100/0.01 * ratio;
     if (result <= 0) result = 0;
     if (result >= 99) result = 99;
 
