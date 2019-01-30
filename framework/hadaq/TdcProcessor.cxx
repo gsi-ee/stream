@@ -2155,6 +2155,8 @@ double hadaq::TdcProcessor::DoTestErrors(int iCh)
 
 double hadaq::TdcProcessor::DoTestEdges(int iCh)
 {
+    if (iCh == 0) return 0.;
+
     int nBins = GetH1NBins(fHits);
     if (iCh < 0 || iCh * 2  + 1 >= nBins) return 0.;
     double raising = GetH1Content(fHits, 2 * iCh);
@@ -2167,7 +2169,12 @@ double hadaq::TdcProcessor::DoTestEdges(int iCh)
 
     int result = (int) (100. * (1. - ratio));
     if (result <= 0) result = 0;
-    if (result >= 99) result = 99;
+    if (result >= 100) result = 100;
+
+    // change scale by factor 6, starting from 100
+    // idea to expand range [90..100] to [70..100] where 70 is visible boundary on histogram
+    result = 100 - (100-result) * 3;
+    if (result < 0) result = 0; else if (result > 99) result = 99;
 
     double resultEntries = (nEntries >= 100) ? 0.99 : (nEntries / 100.);
     double dresult = 1.*result + resultEntries;
