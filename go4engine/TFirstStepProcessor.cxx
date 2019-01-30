@@ -259,6 +259,15 @@ void TFirstStepProcessor::CopyH1(base::H1handle tgt, base::H1handle src)
    htgt->Add(hsrc);
 }
 
+void TFirstStepProcessor::SetH1Title(base::H1handle h1, const char* title)
+{
+   if (!h1) return;
+
+   TH1* histo1 = (TH1*) h1;
+   histo1->SetTitle(title);
+}
+
+
 base::H2handle TFirstStepProcessor::MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options)
 {
    // we will use title arguments to deliver different optional arguments
@@ -355,6 +364,15 @@ void TFirstStepProcessor::ClearH2(base::H2handle h2)
    TH2* histo2 = (TH2*) h2;
    histo2->Reset();
 }
+
+void TFirstStepProcessor::SetH2Title(base::H2handle h2, const char* title)
+{
+   if (!h2) return;
+
+   TH2* histo2 = (TH2*) h2;
+   histo2->SetTitle(title);
+}
+
 
 base::C1handle TFirstStepProcessor::MakeC1(const char* name, double left, double right, base::H1handle h1)
 {

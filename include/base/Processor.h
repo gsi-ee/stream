@@ -125,6 +125,10 @@ namespace base {
             mgr()->CopyH1(tgt, src);
          }
 
+         inline void SetH1Title(H1handle h1, const char* title)
+         {
+            mgr()->SetH1Title(h1, title);
+         }
 
          H2handle MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options = 0);
 
@@ -155,6 +159,12 @@ namespace base {
          {
             if (h2) mgr()->ClearH2(h2);
          }
+
+         inline void SetH2Title(H2handle h2, const char* title)
+         {
+            mgr()->SetH2Title(h2, title);
+         }
+
 
          C1handle MakeC1(const char* name, double left, double right, H1handle h1 = 0);
 

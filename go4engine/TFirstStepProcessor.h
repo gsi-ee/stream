@@ -31,6 +31,7 @@ class TFirstStepProcessor : public TGo4EventProcessor,
       virtual void SetH1Content(base::H1handle h1, int bin, double v = 0.);
       virtual void ClearH1(base::H1handle h1);
       virtual void CopyH1(base::H1handle tgt, base::H1handle src);
+      virtual void SetH1Title(base::H1handle h1, const char* title);
 
       virtual base::H2handle MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options = 0);
       virtual bool GetH2NBins(base::H2handle h2, int &nbins1, int &nbins2);
@@ -38,6 +39,7 @@ class TFirstStepProcessor : public TGo4EventProcessor,
       virtual double GetH2Content(base::H2handle h2, int bin1, int bin2);
       virtual void SetH2Content(base::H2handle h2, int bin1, int bin2, double v = 0.);
       virtual void ClearH2(base::H2handle h2);
+      virtual void SetH2Title(base::H2handle h2, const char* title);
 
       virtual base::C1handle MakeC1(const char* name, double left, double right, base::H1handle h1 = 0);
       virtual void ChangeC1(base::C1handle c1, double left, double right);

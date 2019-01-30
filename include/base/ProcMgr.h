@@ -99,6 +99,7 @@ namespace base {
          virtual void SetH1Content(H1handle h1, int bin, double v = 0.);
          virtual void ClearH1(H1handle h1);
          virtual void CopyH1(H1handle tgt, H1handle src);
+         virtual void SetH1Title(H1handle h1, const char* title) {}
 
          virtual H2handle MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options = 0);
          virtual bool GetH2NBins(H2handle h2, int &nbins1, int &nbins2);
@@ -106,6 +107,7 @@ namespace base {
          virtual double GetH2Content(H2handle h2, int bin1, int bin2);
          virtual void SetH2Content(H2handle h2, int bin1, int bin2, double v = 0.);
          virtual void ClearH2(H2handle h2);
+         virtual void SetH2Title(H2handle h1, const char* title) {}
 
          virtual C1handle MakeC1(const char* name, double left, double right, base::H1handle h1 = 0);
          virtual void ChangeC1(C1handle c1, double left, double right);
