@@ -2156,16 +2156,14 @@ double hadaq::TdcProcessor::DoTestErrors(int iCh)
 double hadaq::TdcProcessor::DoTestEdges(int iCh)
 {
     int nBins = GetH1NBins(fHits);
-    if (iCh < 0 || iCh * 2  + 1 >= nBins) return false;
-    double nEntries = 0.;
-    for (int i = 0; i < nBins; i++){
-        nEntries += GetH1Content(fHits, i);
-    }
-    if (nEntries == 0) return 0.;
+    if (iCh < 0 || iCh * 2  + 1 >= nBins) return 0.;
     double raising = GetH1Content(fHits, 2 * iCh);
     double falling = GetH1Content(fHits, 2 * iCh + 1);
-    if (raising + falling == 0) return 0.;
-    double ratio = std::abs(raising - falling) / (0.5 * (raising + falling));
+
+    double nEntries = raising + falling;
+
+    if (nEntries < 10) return 0.;
+    double ratio = std::abs(raising - falling) / (0.5 * nEntries);
 
     int result = (int) (100. * (1. - ratio));
     if (result <= 0) result = 0;
