@@ -2231,24 +2231,25 @@ double hadaq::TdcProcessor::DoTestFineTime(double hRebin[], int nBinsRebin, int 
         mean += hRebin[i];
     }
     mean = mean / (double)nBinsRebinShrinked;
-    if (mean == 0) return 0.;
+    if (mean == 0.) return 0.;
 
-    double min = 1.e10;
-    double max = 0.;
-    double mad = 0.;
-    double nBinsMeanMore = 0;
+    //double mad = 0.; // Mean Absolute Deviation
+    double stDev = 0.; //standard deviation
     for (int i = indMinRebin; i <= indMaxRebin; i++) {
-        if (hRebin[i] < min) min = hRebin[i];
-        if (hRebin[i] > max) max = hRebin[i];
-        if (hRebin[i] > mean) nBinsMeanMore++;
-        mad += std::abs(hRebin[i] - mean);
+        double d = hRebin[i] - mean;
+        //mad += std::abs(d);
+        stDev += d * d;
     }
-    mad /= nBinsRebinShrinked;
-    nBinsMeanMore /= nBinsRebinShrinked;
+    //mad /= nBinsRebinShrinked;
+    stDev = std::sqrt(stDev / nBinsRebinShrinked);
 
     double k = 0.3;
-    double madMean = (mad/mean > 1.)?1.:k * mad/mean;
-    int result = (int) (100. * (1. - madMean));
+    double ratio = (stDev/mean > 1.)?1.:k * stDev/mean;
+    //double ratio = k * stDev/mean;
+    if (ratio >= 1.) ratio = 1.;
+    if ((double)nBinsRebinShrinked/(double)nBinsRebin < 0.5) ratio = 1.;
+
+    int result = (int) (100. * (1. - ratio));
     if (result <= 0) result = 0;
     if (result >= 99) result = 99;
 
