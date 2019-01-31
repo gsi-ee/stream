@@ -43,7 +43,7 @@ hadaq::HldProcessor::HldProcessor(bool auto_create, const char* after_func) :
    fQaToTPerTDCChannel = nullptr;  ///< HADAQ QA ToT per TDC channel
    fQaEdgesPerTDCChannel = nullptr;  ///< HADAQ QA edges per TDC channel
    fQaErrorsPerTDCChannel = nullptr;  ///< HADAQ QA errors per TDC channel
-
+   fQaSummary = nullptr; ///< HADAQ QA summary histogramm
    // printf("Create HldProcessor %s\n", GetName());
 
    // this is raw-scan processor, therefore no synchronization is required for it
@@ -251,12 +251,43 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
             for (unsigned indx=0;indx<num;++indx)
                item.second->GetTDCWithIndex(indx)->DoHadesHistAnalysis();
          }
+         DoHadesHistSummary();
       }
    }
 
    return true;
 }
 
+void hadaq::HldProcessor::DoHadesHistSummary()
+{
+    if (fQaFinePerTDCChannel == nullptr || fQaToTPerTDCChannel == nullptr || fQaEdgesPerTDCChannel == nullptr ||
+            fQaErrorsPerTDCChannel == nullptr || fQaSummary == nullptr) return;
+
+    int nBinsX = 0, nBinsY = 0;
+    GetH2NBins(fQaFinePerTDCChannel, nBinsX, nBinsY);
+    int nBadFine = 0, nBadToT = 0, nBadEdges = 0, nBadErrors = 0;
+    for (int x = 0; x < nBinsX; x++){
+        for (int y = 0; y < nBinsY; y++){
+            double cFine = GetH2Content(fQaFinePerTDCChannel, x, y);
+            if (cFine > 0. && cFine < 50.) nBadFine++;
+
+            double cToT = GetH2Content(fQaToTPerTDCChannel, x, y);
+            if (cToT > 0. && cToT < 50.) nBadToT++;
+
+            double cEdges = GetH2Content(fQaEdgesPerTDCChannel, x, y);
+            if (cEdges > 0. && cEdges < 50.) nBadEdges++;
+
+            double cErrors = GetH2Content(fQaErrorsPerTDCChannel, x, y);
+            double cErrors1;
+            double cErrors2 = std::modf(cErrors, &cErrors1);
+            if (cErrors > 0. && cErrors < 50. && cErrors2 >= 0.99) nBadErrors++;
+        }
+    }
+    SetH1Content(fQaSummary, 0, nBadFine);
+    SetH1Content(fQaSummary, 1, nBadToT);
+    SetH1Content(fQaSummary, 2, nBadEdges);
+    SetH1Content(fQaSummary, 3, nBadErrors);
+}
 
 void hadaq::HldProcessor::Store(base::Event* ev)
 {
@@ -418,6 +449,9 @@ void hadaq::HldProcessor::CreatePerTDCHisto()
                               tdcs.size(), 0, tdcs.size(),
                                    TrbProcessor::GetDefaultNumCh(), 0, TrbProcessor::GetDefaultNumCh(),
                                    opt2.c_str());
+
+       if (!fQaSummary)
+          fQaSummary = MakeH1("QaSummary", "QA summary", 4, -0.5, 3.5, "QA histogram;# bad channels");
    }
    cnt = 0;
    for (auto &&tdc : tdcs)

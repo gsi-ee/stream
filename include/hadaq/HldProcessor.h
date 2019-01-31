@@ -91,6 +91,7 @@ namespace hadaq {
          base::H2handle fQaToTPerTDCChannel;  ///< HADAQ QA ToT per TDC channel
          base::H2handle fQaEdgesPerTDCChannel;  ///< HADAQ QA edges per TDC channel
          base::H2handle fQaErrorsPerTDCChannel;  ///< HADAQ QA errors per TDC channel
+         base::H1handle fQaSummary;  ///< HADAQ QA summary histogram
 
          HldMessage     fMsg;        ///< used for TTree store
          HldMessage    *pMsg;        ///< used for TTree store
@@ -112,6 +113,8 @@ namespace hadaq {
 
          void CreatePerTDCHisto();
 
+         void DoHadesHistSummary();
+         
       public:
 
          HldProcessor(bool auto_create = false, const char* after_func = "");
