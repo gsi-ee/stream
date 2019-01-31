@@ -13,6 +13,19 @@ void first()
    // this limits used for liner calibrations when nothing else is available
    hadaq::TdcMessage::SetFineLimits(31, 491);
 
+   // Enable 1 or disable 0 errors logging from following enumeration
+   //  { errNoHeader, errChId, errEpoch, errFine, err3ff, errCh0, errMismatchDouble, errUncknHdr, errDesignId, errMisc }
+   // hadaq::TdcProcessor::SetErrorMask(0xffffff);
+
+   // Create histograms for all channels immediately - even if channel never appear in data
+   // hadaq::TdcProcessor::SetAllHistos(true);
+
+   // Configure window (in nanoseconds), where time stamps from 0xD trigger will be accepted for calibration
+   // hadaq::TdcProcessor::SetTriggerDWindow(-25, 50);
+
+   // enable usage of D trigger in reference histograms
+   // hadaq::TdcProcessor::SetUseDTrigForRef(true);
+
    // default channel numbers and edges mask
    // 1 - use only rising edge, falling edge is ignore
    // 2   - falling edge enabled and fully independent from rising edge
@@ -47,7 +60,9 @@ void first()
    // second parameter is hits count for autocalibration
    //     0 - only load calibration
    //    -1 - accumulate data and store calibrations only at the end
+   //    -77 - accumulate data and produce liner calibrations only at the end
    //    >0 - automatic calibration after N hits in each active channel
+   //         if value ends with 77 like 10077 linear calibration will be calculated
    // third parameter is trigger type mask used for calibration
    //   (1 << 0xD) - special 0XD trigger with internal pulser, used also for TOT calibration
    //    0x3FFF - all kinds of trigger types will be used for calibration (excluding 0xE and 0xF)
