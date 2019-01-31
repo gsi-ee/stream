@@ -30,6 +30,11 @@ void first()
    // enable usage of D trigger in reference histograms
    // hadaq::TdcProcessor::SetUseDTrigForRef(true);
 
+   // configure ToT calibration parameters
+   // first - minimal number of counts in ToT histogram
+   // second - maximal RMS value
+   hadaq::TdcProcessor::SetToTCalibr(100, 0.2);
+
    // default channel numbers and edges mask
    // 1 - use only rising edge, falling edge is ignore
    // 2   - falling edge enabled and fully independent from rising edge
@@ -113,9 +118,14 @@ extern "C" void after_create(hadaq::HldProcessor* hld)
 
       printf("Configure %s!\n", tdc->GetName());
 
+      // configure 0xD trigger width and hmin/hmax histogram range for 0xD trigger ToT
+      tdc->SetToTRange(30, 50., 80.);
+
       // tdc->SetUseLastHit(true);
       for (unsigned nch=2;nch<tdc->NumChannels();nch++)
         tdc->SetRefChannel(nch, 1, 0xffff, 6000,  -20., 40.);
+
+
    }
 }
 

@@ -1,6 +1,6 @@
 31.01.2019
 1. Let configure sorting order of created sub-folders. Default is ON
-
+2. Let configure parameters of ToT calibration
 
 28.01.2019
 1. Change interpretation of hit1 and hit2 message

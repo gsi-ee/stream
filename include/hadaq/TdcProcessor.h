@@ -290,6 +290,8 @@ namespace hadaq {
          static double gTrigDWindowHigh; //! high limit of time stamps for 0xD trigger used for calibration
          static bool gUseDTrigForRef;    //! when true, use special triggers for ref calculations
          static int gHadesMonitorInterval; //! how often special HADES monitoring procedure called
+         static int gTotStatLimit;         //! how much statistic required for ToT calibration
+         static double gTotRMSLimit;       //! allowed RMS value
 
          /** Method will be called by TRB processor if SYNC message was found
           * One should change 4 first bytes in the last buffer in the queue */
@@ -375,6 +377,9 @@ namespace hadaq {
 
          /** Configure window (in nanoseconds), where time stamps from 0xD trigger will be accepted for calibration */
          static void SetTriggerDWindow(double low = -25, double high = 50);
+
+         /** Configure Tot calibration parameters */
+         static void SetToTCalibr(int minstat = 100, double rms = 0.15);
 
          inline unsigned NumChannels() const { return fNumChannels; }
          inline bool DoRisingEdge() const { return true; }

@@ -31,6 +31,9 @@ double hadaq::TdcProcessor::gTrigDWindowLow = 0;
 double hadaq::TdcProcessor::gTrigDWindowHigh = 0;
 bool hadaq::TdcProcessor::gUseDTrigForRef = false;
 int hadaq::TdcProcessor::gHadesMonitorInterval = -111;
+int hadaq::TdcProcessor::gTotStatLimit = 100;
+double hadaq::TdcProcessor::gTotRMSLimit = 0.15;
+
 
 unsigned BUBBLE_SIZE = 19;
 
@@ -75,6 +78,13 @@ void hadaq::TdcProcessor::SetTriggerDWindow(double low, double high)
    gTrigDWindowLow = low;
    gTrigDWindowHigh = high;
 }
+
+void hadaq::TdcProcessor::SetToTCalibr(int minstat, double rms)
+{
+   gTotStatLimit = minstat;
+   gTotRMSLimit = rms;
+}
+
 
 void hadaq::TdcProcessor::SetUseDTrigForRef(bool on)
 {
@@ -2366,8 +2376,8 @@ bool hadaq::TdcProcessor::CalibrateTot(unsigned nch, long* hist, float& tot_shif
    double sum0(0), sum1(0), sum2(0);
 
    for (int n=left;n<right;n++) sum0 += hist[n];
-   if (sum0 < 10) {
-      printf("%s Ch:%u TOT failed - not enough statistic\n", GetName(), nch);
+   if (sum0 < gTotStatLimit) {
+      printf("%s Ch:%u TOT failed - not enough statistic %5.0f\n", GetName(), nch, sum0);
       return false; // no statistic for small number of counts
    }
 
@@ -2399,7 +2409,7 @@ bool hadaq::TdcProcessor::CalibrateTot(unsigned nch, long* hist, float& tot_shif
    }
    rms = sqrt(rms);
 
-   if (rms > 0.15) {
+   if (rms > gTotRMSLimit) {
       printf("%s Ch:%u TOT failed - RMS %5.3f too high\n", GetName(), nch, rms);
       return false;
    }
