@@ -2427,8 +2427,8 @@ void hadaq::TdcProcessor::CopyCalibration(float* calibr, base::H1handle hcalibr,
    ClearH1(hcalibr);
 
    for (unsigned n=0;n<fNumFineBins;n++) {
-      DefFillH1(hcalibr, n, calibr[n]*1e12);
-      DefFillH2(h2calibr, ch, n, calibr[n]*1e12);
+      SetH1Content(hcalibr, n, calibr[n]*1e12);
+      SetH2Content(h2calibr, ch, n, calibr[n]*1e12);
    }
 }
 
