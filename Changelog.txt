@@ -1,3 +1,7 @@
+31.01.2019
+1. Let configure sorting order of created sub-folders. Default is ON
+
+
 28.01.2019
 1. Change interpretation of hit1 and hit2 message
      hit0 (0x8) from hardware, normal hit message 

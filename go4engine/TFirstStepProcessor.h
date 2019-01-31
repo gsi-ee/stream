@@ -24,6 +24,9 @@ class TFirstStepProcessor : public TGo4EventProcessor,
 
       virtual bool InternalHistFormat() const { return false; }
 
+      virtual void SetSortedOrder(bool = true);
+      virtual bool IsSortedOrder();
+
       virtual base::H1handle MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle = 0);
       virtual bool GetH1NBins(base::H1handle h1, int &nbins);
       virtual void FillH1(base::H1handle h1, double x, double weight = 1.);

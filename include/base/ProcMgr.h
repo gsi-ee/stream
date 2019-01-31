@@ -92,6 +92,9 @@ namespace base {
          virtual void AddErrLog(const char *msg) {}
          virtual bool DoLog() { return false; }
 
+         virtual void SetSortedOrder(bool = true) {}
+         virtual bool IsSortedOrder() { return false; }
+
          virtual H1handle MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle = 0);
          virtual bool GetH1NBins(H1handle h1, int &nbins);
          virtual void FillH1(H1handle h1, double x, double weight = 1.);

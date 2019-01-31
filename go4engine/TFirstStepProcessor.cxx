@@ -64,6 +64,8 @@ TFirstStepProcessor::TFirstStepProcessor(const char* name) :
    fTotalDataSize = 0;
    fNumInpBufs = 0;
    fNumOutEvents = 0;
+
+   SetSortedOrder(true);
 }
 
 TFirstStepProcessor::~TFirstStepProcessor()
@@ -162,6 +164,17 @@ Bool_t TFirstStepProcessor::BuildEvent(TGo4EventElement* outevnt)
 
    return kFALSE;
 }
+
+void TFirstStepProcessor::SetSortedOrder(bool on)
+{
+   TGo4Analysis::Instance()->SetSortedOrder(on);
+}
+
+bool TFirstStepProcessor::IsSortedOrder()
+{
+   return TGo4Analysis::Instance()->IsSortedOrder();
+}
+
 
 base::H1handle TFirstStepProcessor::MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle)
 {

@@ -7,6 +7,10 @@ void first()
    base::ProcMgr::instance()->SetRawAnalysis(true);
    // base::ProcMgr::instance()->SetTriggeredAnalysis(true);
 
+
+   // configure sorting of created folders, default now on
+   base::ProcMgr::instance()->SetSortedOrder(true);
+
    // all new instances get this value
    base::ProcMgr::instance()->SetHistFilling(4);
 
