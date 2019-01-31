@@ -1844,6 +1844,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                if (raw_hit) {
                   switch (use_for_calibr) {
                      case 1:
+                     case 3:
                         if (use_fine_for_stat) {
                            rec.falling_stat[fine]++;
                            rec.all_falling_stat++;
@@ -2489,6 +2490,8 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
                fCh[ch].falling_stat[n] = 0;
             }
          }
+
+         // printf("%s Ch:%d do: %d %d stat: %ld %ld mask %d\n", GetName(), ch, DoRisingEdge(), DoFallingEdge(), fCh[ch].all_rising_stat, fCh[ch].all_falling_stat, fEdgeMask);
 
          bool res = false;
 
