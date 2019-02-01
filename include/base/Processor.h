@@ -88,6 +88,9 @@ namespace base {
          /** Set subprefix for histograms and conditions */
          void SetSubPrefix(const char* subname = "", int indx = -1, const char* subname2 = "", int indx2 = -1);
 
+         /** Set subprefix for histograms and conditions, index uses 2 symbols */
+         void SetSubPrefix2(const char* subname = "", int indx = -1, const char* subname2 = "", int indx2 = -1);
+
          H1handle MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle = 0);
 
          inline void FillH1(H1handle h1, double x, double weight = 1.)

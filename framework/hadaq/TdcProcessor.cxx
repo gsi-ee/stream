@@ -290,7 +290,7 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
 {
    if ((HistFillLevel() < 3) || (ch>=NumChannels())) return false;
 
-   SetSubPrefix("Ch", ch);
+   SetSubPrefix2("Ch", ch);
 
    if ((gBubbleMode>1) && (fCh[ch].fBubbleRising == 0)) {
       fCh[ch].fBubbleRising = MakeH1("BRising", "Bubble rising edge", BUBBLE_SIZE*16, 0, BUBBLE_SIZE*16, "bubble");
@@ -327,7 +327,7 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
       CopyCalibration(fCh[ch].falling_calibr, fCh[ch].fFallingCalibr, ch, fFallingCalibr);
    }
 
-   SetSubPrefix();
+   SetSubPrefix2();
 
    return true;
 }
@@ -404,7 +404,7 @@ void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned re
    }
 
    if ((left < right) && (npoints>1)) {
-      SetSubPrefix("Ch", ch);
+      SetSubPrefix2("Ch", ch);
       if (DoRisingEdge()) {
 
          if (fCh[ch].fRisingRef == 0) {
@@ -420,7 +420,7 @@ void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned re
          }
       }
 
-      SetSubPrefix();
+      SetSubPrefix2();
    }
 }
 
@@ -464,9 +464,9 @@ bool hadaq::TdcProcessor::SetDoubleRefChannel(unsigned ch1, unsigned ch2,
             sprintf(saxis, "(ch%u-ch%u)  - (tdc 0x%04x refch%u) ns", ch, fCh[ch].refch, reftdc, refch);
          }
 
-         SetSubPrefix("Ch", ch);
+         SetSubPrefix2("Ch", ch);
          fCh[ch].fRisingRefRef = MakeH1("RisingRefRef", sbuf, npx, xmin, xmax, saxis);
-         SetSubPrefix();
+         SetSubPrefix2();
       }
 
 
@@ -479,9 +479,9 @@ bool hadaq::TdcProcessor::SetDoubleRefChannel(unsigned ch1, unsigned ch2,
             sprintf(saxis, "ch%u-ch%u ns;tdc 0x%04x refch%u ns", ch, fCh[ch].refch, reftdc, refch);
          }
 
-         SetSubPrefix("Ch", ch);
+         SetSubPrefix2("Ch", ch);
          fCh[ch].fRisingDoubleRef = MakeH2("RisingDoubleRef", sbuf, npx, xmin, xmax, npy, ymin, ymax, saxis);
-         SetSubPrefix();
+         SetSubPrefix2();
       }
    }
 
@@ -490,7 +490,7 @@ bool hadaq::TdcProcessor::SetDoubleRefChannel(unsigned ch1, unsigned ch2,
 
 void hadaq::TdcProcessor::CreateRateHisto(int np, double xmin, double xmax)
 {
-   SetSubPrefix();
+   SetSubPrefix2();
    fHitsRate = MakeH1("HitsRate", "Hits rate", np, xmin, xmax, "hits/sec");
 }
 
@@ -509,12 +509,12 @@ bool hadaq::TdcProcessor::EnableRefCondPrint(unsigned ch, double left, double ri
       fprintf(stderr,"Reference channel %u bigger than channel id %u, conditional print may not work\n", fCh[ch].refch, ch);
    }
 
-   SetSubPrefix("Ch", ch);
+   SetSubPrefix2("Ch", ch);
 
    fCh[ch].fRisingRefCond = MakeC1("RisingRefPrint", left, right, fCh[ch].fRisingRef);
    fCh[ch].rising_cond_prnt = numprint > 0 ? numprint : 100000000;
 
-   SetSubPrefix();
+   SetSubPrefix2();
 
    return true;
 }
@@ -2026,7 +2026,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             printf("%s FirstTemp:%5.2f CalibrTemp:%5.2f UseTemp:%d\n", GetName(), fCurrentTemp, fCalibrTemp, fCalibrUseTemp);
 
             int mid = round(fCurrentTemp);
-            SetSubPrefix();
+            SetSubPrefix2();
             fTempDistr = MakeH1("Temperature", "Temperature distribution", 600, mid-30, mid+30, "C");
          }
          FillH1(fTempDistr, fCurrentTemp);

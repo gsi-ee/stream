@@ -58,7 +58,7 @@ void base::Processor::SetSubPrefix(const char* name, int indx, const char* subna
    fSubPrefixD = name;
    if (indx>=0) {
       char sbuf[100];
-      snprintf(sbuf,sizeof(sbuf), "%d", indx);
+      snprintf(sbuf, sizeof(sbuf), "%d", indx);
       fSubPrefixD.append(sbuf);
       fSubPrefixN.append(sbuf);
    }
@@ -77,7 +77,39 @@ void base::Processor::SetSubPrefix(const char* name, int indx, const char* subna
       fSubPrefixD.append("/");
       fSubPrefixN.append("_");
    }
+}
 
+void base::Processor::SetSubPrefix2(const char* name, int indx, const char* subname2, int indx2)
+{
+   if ((name==0) || (*name==0)) {
+      fSubPrefixD.clear();
+      fSubPrefixN.clear();
+      return;
+   }
+
+   fSubPrefixN = name;
+   fSubPrefixD = name;
+   if (indx>=0) {
+      char sbuf[100];
+      snprintf(sbuf, sizeof(sbuf), "%02d", indx);
+      fSubPrefixD.append(sbuf);
+      fSubPrefixN.append(sbuf);
+   }
+   fSubPrefixD.append("/");
+   fSubPrefixN.append("_");
+
+   if ((subname2!=0) && (*subname2!=0)) {
+      fSubPrefixD.append(subname2);
+      fSubPrefixN.append(subname2);
+      if (indx2>=0) {
+         char sbuf[100];
+         snprintf(sbuf,sizeof(sbuf), "%02d", indx2);
+         fSubPrefixD.append(sbuf);
+         fSubPrefixN.append(sbuf);
+      }
+      fSubPrefixD.append("/");
+      fSubPrefixN.append("_");
+   }
 }
 
 base::H1handle base::Processor::MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle)
