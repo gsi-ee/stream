@@ -939,7 +939,7 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub, void* 
    unsigned trbSubEvSize = (sub->GetSize() - sizeof(hadaqs::RawSubevent)) / 4;
 
    if ((sub->Alignment()!=4) || !sub->IsSwapped()) {
-      printf("UNEXPECTED TRB DATA FORMAT align %u swap %d\n", sub->Alignment(), !sub->IsSwapped());
+      printf("UNEXPECTED TRB DATA FORMAT align %u swap %d - ABORT!!!\n", sub->Alignment(), !sub->IsSwapped());
       exit(7);
    }
 
