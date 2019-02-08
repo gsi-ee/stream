@@ -23,9 +23,6 @@ unsigned hadaq::TdcProcessor::gNumFineBins = FineCounterBins;
 unsigned hadaq::TdcProcessor::gTotRange = 100;
 unsigned hadaq::TdcProcessor::gErrorMask = 0xffffffffU;
 bool hadaq::TdcProcessor::gAllHistos = false;
-int hadaq::TdcProcessor::gBubbleMode = 0;
-int hadaq::TdcProcessor::gBubbleMask = 0;
-int hadaq::TdcProcessor::gBubbleShift = 0;
 bool hadaq::TdcProcessor::gDRICHReapir = false;
 double hadaq::TdcProcessor::gTrigDWindowLow = 0;
 double hadaq::TdcProcessor::gTrigDWindowHigh = 0;
@@ -53,14 +50,6 @@ void hadaq::TdcProcessor::SetErrorMask(unsigned mask)
 void hadaq::TdcProcessor::SetAllHistos(bool on)
 {
    gAllHistos = on;
-}
-
-void hadaq::TdcProcessor::SetBubbleMode(int on, unsigned sz, int maskid, int shift)
-{
-   gBubbleMode = on;
-   BUBBLE_SIZE = sz;
-   gBubbleMask = maskid;
-   gBubbleShift = shift;
 }
 
 void hadaq::TdcProcessor::SetDRICHReapir(bool on)
@@ -177,7 +166,6 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fHitsRate = 0;
    fRateCnt = 0;
    fLastRateTm = -1;
-   fBubbleErrDistr = 0;
 
    fHldId = 0;                   //! sequence number of processor in HLD
    fHitsPerHld = nullptr;
@@ -221,8 +209,6 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
          fTotShifts = MakeH1("TotShifts", "Calibrated time shift for falling edge", numchannels, 0, numchannels, "kind:F;ch;ns");
       }
 
-      if (gBubbleMode > 1)
-         fBubbleErrDistr = MakeH1("AllBubbleErrors", "All bubble errors from all channels", BUBBLE_SIZE*16, 0, BUBBLE_SIZE*16, "bubble");
    }
 
    for (unsigned ch=0;ch<numchannels;ch++)
@@ -292,24 +278,9 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
 
    SetSubPrefix2("Ch", ch);
 
-   if ((gBubbleMode>1) && (fCh[ch].fBubbleRising == 0)) {
-      fCh[ch].fBubbleRising = MakeH1("BRising", "Bubble rising edge", BUBBLE_SIZE*16, 0, BUBBLE_SIZE*16, "bubble");
-      fCh[ch].fBubbleFalling = MakeH1("BFalling", "Bubble falling edge", BUBBLE_SIZE*16, 0, BUBBLE_SIZE*16, "bubble");
-      fCh[ch].fBubbleRisingErr = MakeH1("BErrRising", "Bubble rising edge simple error", BUBBLE_SIZE*16, 0, BUBBLE_SIZE*16, "bubble");
-      fCh[ch].fBubbleFallingErr = MakeH1("BErrFalling", "Bubble falling edge simple error", BUBBLE_SIZE*16, 0, BUBBLE_SIZE*16, "bubble");
-      fCh[ch].fBubbleRisingAll = MakeH1("BRestRising", "All other hits with rising edge", BUBBLE_SIZE*16, 0, BUBBLE_SIZE*16, "bubble");
-      fCh[ch].fBubbleFallingAll = MakeH1("BRestFalling", "All other hits with falling edge", BUBBLE_SIZE*16, 0, BUBBLE_SIZE*16, "bubble");
-   }
-
-   if ((fCh[ch].fBubbleRising == 0) && (gBubbleMode==1)) {
-      fCh[ch].fBubbleRising = MakeH1("BRising", "Bubble rising edge", BUBBLE_SIZE*16, 0, BUBBLE_SIZE*16, "bubble");
-      fCh[ch].fBubbleFalling = MakeH1("BFalling", "Bubble falling edge", BUBBLE_SIZE*16, 0, BUBBLE_SIZE*16, "bubble");
-   }
-
    if (DoRisingEdge() && (fCh[ch].fRisingFine==0)) {
       fCh[ch].fRisingFine = MakeH1("RisingFine", "Rising fine counter", fNumFineBins, 0, fNumFineBins, "fine");
-      if (gBubbleMode < 2)
-         fCh[ch].fRisingMult = MakeH1("RisingMult", "Rising event multiplicity", 128, 0, 128, "nhits");
+      fCh[ch].fRisingMult = MakeH1("RisingMult", "Rising event multiplicity", 128, 0, 128, "nhits");
       fCh[ch].fRisingCalibr = MakeH1("RisingCalibr", "Rising calibration function", fNumFineBins, 0, fNumFineBins, "fine;kind:F");
       // copy calibration only when histogram created
       CopyCalibration(fCh[ch].rising_calibr, fCh[ch].fRisingCalibr, ch, fRisingCalibr);
@@ -318,11 +289,9 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
    if (DoFallingEdge() && (fCh[ch].fFallingFine==0)) {
       fCh[ch].fFallingFine = MakeH1("FallingFine", "Falling fine counter", fNumFineBins, 0, fNumFineBins, "fine");
       fCh[ch].fFallingCalibr = MakeH1("FallingCalibr", "Falling calibration function", fNumFineBins, 0, fNumFineBins, "fine;kind:F");
-      if (gBubbleMode < 2) {
-         fCh[ch].fFallingMult = MakeH1("FallingMult", "Falling event multiplicity", 128, 0, 128, "nhits");
-         fCh[ch].fTot = MakeH1("Tot", "Time over threshold", gTotRange*100, 0, gTotRange, "ns");
-         fCh[ch].fTot0D = MakeH1("Tot0D", "Time over threshold with 0xD trigger", TotBins, fToThmin, fToThmax, "ns");
-      }
+      fCh[ch].fFallingMult = MakeH1("FallingMult", "Falling event multiplicity", 128, 0, 128, "nhits");
+      fCh[ch].fTot = MakeH1("Tot", "Time over threshold", gTotRange*100, 0, gTotRange, "ns");
+      fCh[ch].fTot0D = MakeH1("Tot0D", "Time over threshold with 0xD trigger", TotBins, fToThmin, fToThmax, "ns");
       // copy calibration only when histogram created
       CopyCalibration(fCh[ch].falling_calibr, fCh[ch].fFallingCalibr, ch, fFallingCalibr);
    }
@@ -1264,183 +1233,12 @@ unsigned BubbleCheckCahit(unsigned* bubble, int &p1, int &p2, bool debug = false
 }
 
 
-bool hadaq::TdcProcessor::DoBubbleScan(const base::Buffer& buf, bool first_scan)
-{
-
-   TdcIterator& iter = first_scan ? fIter1 : fIter2;
-
-   if (buf.datalen() < 4) { printf("ZERO\n"); exit(4); }
-
-   if (buf().format==0)
-      iter.assign((uint32_t*) buf.ptr(4), buf.datalen()/4-1, false);
-   else
-      iter.assign((uint32_t*) buf.ptr(0), buf.datalen()/4, buf().format==2);
-
-   hadaq::TdcMessage& msg = iter.msg();
-
-   unsigned lastch = 0xFFFF;
-   unsigned bubble[(BUBBLE_SIZE*5)]; // use more memory for safety
-   unsigned bcnt = 0, chid = 0;
-   double localtm = 0;
-
-   while (iter.next()) {
-
-      if (first_scan) {
-         if (!fMsgsKind || (msg.getKind() >> 29) >= 8) { printf("ERRRRRRRR\n"); exit(4); }
-
-         FastFillH1(fMsgsKind, (msg.getKind() >> 29));
-      }
-
-      chid = 0xFFFF;
-
-      switch (gBubbleMode) {
-         case 2:
-            if (!msg.isHitMsg()) continue;
-            chid = (msg.getData() >> 22) & 0x7F;
-            break;
-         case 3: {
-            if (msg.isHeaderMsg() && (msg.getHeaderFmt() != 0xF) && CheckPrintError())
-               printf("Bubble 3 should be marked with 0xF, but seen 0x%x\n", msg.getHeaderFmt());
-
-            if (msg.isHeaderMsg()) { fLastTdcHeader = msg; continue; }
-
-            if (msg.getKind() == 0xe0000000) {
-               chid = (msg.getData() >> 22) & 0x7F;
-            } else
-            if (msg.isTrailerMsg()) {
-               fLastTdcTrailer = msg;
-               chid = 0xFFFF; // artificially complete analysis of previous chain
-            } else {
-               if (CheckPrintError())
-                  printf("Bubble 3 should have 0xe0000000 message but seen 0x%x\n", msg.getKind());
-               continue;
-            }
-
-            break;
-         }
-      }
-
-      if (chid != lastch) {
-         if ((lastch != 0xFFFF) && (lastch < NumChannels()) && (bcnt==BUBBLE_SIZE)) {
-
-            DefFillH1(fChannels, lastch, BUBBLE_SIZE);
-
-            ChannelRec& rec = fCh[lastch];
-
-            int p1, p2, pp1, pp2;
-
-            // only channel 2 signals selects special fine-counter values, all other works as before
-
-            unsigned res = BubbleCheckCahit(bubble, p1, p2, false, gBubbleMask, gBubbleShift, (lastch==2));
-
-//            if (false)
-//            if ((res == 0x22) || (((res & 0x0F) == 0x02) && ((p2<195) || (p2>225))) || (((res & 0xF0) == 0x20) && ((p1<195) || (p1>220)))) {
-
-            //if (res != 0)  {
-            if (res && ((gBubbleMask==0) || (lastch!=2)) && CheckPrintError() ) {
-
-               //int pp1, pp2;
-               //BubbleCheck(bubble, pp1, pp2);
-
-               // only to detect limits for printout
-               BubbleCheck(bubble, pp1, pp2);
-
-               printf("%s ch:%2u ", GetName(), lastch);
-               PrintBubble(bubble);
-               printf(" p1:%3d %2d  p2:%3d %2d  ", pp1,  (p1-pp1), pp2, (p2-pp2));
-               PrintBubbleBinary(bubble, pp1-3, pp2+3);
-               printf("\n");
-
-               // BubbleCheckCahit(bubble, p1, p2, true);
-            }
-
-            // if ((res & 0xF0) == 0x00) p1 -= 1;
-
-            switch (res & 0xF0) {
-               case 0x00: FastFillH1(rec.fBubbleFalling, p1); break;
-               case 0x10: FastFillH1(rec.fBubbleFallingErr, p1); break;
-               default: FastFillH1(rec.fBubbleFallingAll, p1); break;
-            }
-
-            switch (res & 0x0F) {
-               case 0x00: FastFillH1(rec.fBubbleRising, p2); break;
-               case 0x01: FastFillH1(rec.fBubbleRisingErr, p2); break;
-               default: FastFillH1(rec.fBubbleRisingAll, p2); break;
-            }
-
-            rec.rising_hit_tm = 0;
-
-            unsigned fine = p1 + p2;
-
-            // artificial compensation for hits around errors
-
-            if (res == 0x22) {
-               fine = 0;
-            } else
-            if ((res & 0x0F) == 0x02) { p2 = round(rec.bubble_a + p1*rec.bubble_b); fine = p1 + p2; } else
-            if ((res & 0xF0) == 0x20) { p1 = round((p2 - rec.bubble_a) / rec.bubble_b); fine = p1 + p2; }
-
-            if (res != 0x22) {
-               if ((res & 0x0F) == 0x02) FastFillH1(fBubbleErrDistr, p2);
-               if ((res & 0xF0) == 0x20) FastFillH1(fBubbleErrDistr, p1);
-            }
-
-            if ((p2 < 16) || (p1 < 4)) fine = 0;
-
-            // measure linear coefficients between leading and trailing edge
-            if ((p2>15) && (p1 > 3) && ((res & 0x0F) < 0x02) && ((res & 0xF0) < 0x20)) {
-               rec.sum0 += 1;
-               rec.sumx1 += p1;
-               rec.sumx2 += p1*p1;
-               rec.sumy1 += p2;
-               rec.sumxy += p1*p2;
-            }
-
-            // take only simple data
-            if (fine > 0) {
-               rec.rising_stat[fine]++;
-               rec.all_rising_stat++;
-               rec.rising_cnt++;
-               FastFillH1(rec.fRisingFine, fine);
-               localtm = -rec.rising_calibr[fine];
-
-//               if ((p2>18) && (p2<204) && (p1>10) && (p1<200)) {
-               rec.rising_last_tm = localtm;
-               rec.rising_new_value = true;
-               rec.rising_hit_tm = 1e-8 + localtm; // artificially shift all values on 10 ns to allow histogram filling
-               rec.rising_coarse = 0;
-               rec.rising_fine = fine;
-//               }
-            }
-         }
-
-         lastch = chid; bcnt = 0;
-      }
-
-      if (bcnt >= BUBBLE_SIZE*5) {
-         printf("Too long BUBBLE %u\n", bcnt);
-         return true;
-      }
-      bubble[bcnt++] = msg.getData() & 0xFFFF;
-      lastch = chid;
-   }
-
-   if (first_scan) AfterFill();
-
-   return true;
-}
-
-
-
 bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 {
    if (buf.null()) {
       if (first_scan) printf("Something wrong - empty buffer should not appear in the first scan/n");
       return false;
    }
-
-   if (gBubbleMode > 1)
-      return DoBubbleScan(buf, first_scan);
 
    uint32_t syncid(0xffffffff);
    // copy first 4 bytes - it is syncid
@@ -1458,7 +1256,6 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       if (IsTriggeredAnalysis() &&  (gTrigDWindowLow < gTrigDWindowHigh)) use_for_calibr = 3; // accept time stamps only for inside window
       // use_for_calibr = 2; // always use only last hit
    }
-
 
    // if data could be used for TOT calibration
    bool do_tot = (use_for_calibr>0) && (buf().kind == 0xD) && DoFallingEdge();
@@ -1807,10 +1604,6 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                rec.rising_cnt++;
                if (raw_hit) {
                   if (use_fine_for_stat) FastFillH1(rec.fRisingFine, fine);
-                  if (double_edges) {
-                     DefFillH1(rec.fBubbleRising, fine0!=0x3ff ? fine0 : BUBBLE_SIZE*16 - 1 , 1.);
-                     DefFillH1(rec.fBubbleFalling, fine1!=0x3ff ? fine1 : BUBBLE_SIZE*16 - 1, 1.);
-                  }
                }
 
                bool print_cond = false;
@@ -2471,21 +2264,6 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
    }
 
    for (unsigned ch=0;ch<NumChannels();ch++) {
-
-      if ((gBubbleMode>1) && (fCh[ch].sum0 > 100)) {
-         ChannelRec& rec = fCh[ch];
-
-         double meanx = rec.sumx1/rec.sum0;
-         double meany = rec.sumy1/rec.sum0;
-
-         double b = (rec.sumxy/rec.sum0 - meanx*meany)/ (rec.sumx2/rec.sum0 - meanx * meanx);
-         double a = meany - b* meanx;
-
-         printf("Ch:%2d B:%6.4f A:%4.2f\n", ch, b, a);
-
-         rec.bubble_a = a;
-         rec.bubble_b = b;
-      }
 
       if (fCh[ch].docalibr) {
 

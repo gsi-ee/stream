@@ -80,12 +80,6 @@ namespace hadaq {
             float time_shift_per_grad;      //! delay in channel (ns/C), caused by temperature change
             float trig0d_coef;              //! scaling coefficient, applied when build calibration from 0xD trigger (reserved)
             int rising_cond_prnt;
-            base::H1handle fBubbleRising;      //! position of rising edge in bubble (only correct)
-            base::H1handle fBubbleFalling;     //! position of falling edge in bubble (only correct)
-            base::H1handle fBubbleRisingErr;   //! position of rising edge error 1101000
-            base::H1handle fBubbleFallingErr;  //! position of falling edge error 00001011
-            base::H1handle fBubbleRisingAll;   //! all other errors
-            base::H1handle fBubbleFallingAll;  //! all other errors
             double sum0,sumx1,sumx2,sumy1,sumxy;
             float bubble_a, bubble_b; // bubble edges: rising = a + b * falling a=9, b=1.16
 
@@ -123,22 +117,16 @@ namespace hadaq {
                last_falling_fine(0),
                all_rising_stat(0),
                all_falling_stat(0),
-               rising_stat(0),
-               rising_calibr(0),
-               falling_stat(0),
-               falling_calibr(0),
+               rising_stat(nullptr),
+               rising_calibr(nullptr),
+               falling_stat(nullptr),
+               falling_calibr(nullptr),
                last_tot(0.),
                tot0d_cnt(0),
                tot_shift(0.),
                time_shift_per_grad(0.),
                trig0d_coef(0.),
                rising_cond_prnt(-1),
-               fBubbleRising(0),
-               fBubbleFalling(0),
-               fBubbleRisingErr(0),
-               fBubbleFallingErr(0),
-               fBubbleRisingAll(0),
-               fBubbleFallingAll(0),
                sum0(0),sumx1(0),sumx2(0),sumy1(0),sumxy(0),
                bubble_a(20), bubble_b(1.06)
             {
@@ -147,7 +135,8 @@ namespace hadaq {
                }
             }
 
-            void CreateCalibr(unsigned numfine) {
+            void CreateCalibr(unsigned numfine)
+            {
                rising_stat = new long[numfine];
                rising_calibr = new float[numfine];
                falling_stat = new long[numfine];
@@ -158,11 +147,12 @@ namespace hadaq {
                }
             }
 
-            void ReleaseCalibr() {
-               if (rising_stat) { delete [] rising_stat; rising_stat = 0; }
-               if (rising_calibr) { delete [] rising_calibr; rising_calibr = 0; }
-               if (falling_stat) { delete [] falling_stat; falling_stat = 0; }
-               if (falling_calibr) { delete [] falling_calibr; falling_calibr = 0; }
+            void ReleaseCalibr()
+            {
+               if (rising_stat) { delete [] rising_stat; rising_stat = nullptr; }
+               if (rising_calibr) { delete [] rising_calibr; rising_calibr = nullptr; }
+               if (falling_stat) { delete [] falling_stat; falling_stat = nullptr; }
+               if (falling_calibr) { delete [] falling_calibr; falling_calibr = nullptr; }
             }
          };
 
@@ -182,7 +172,6 @@ namespace hadaq {
          base::H1handle fHitsRate;    //! histogram with data rate
          base::H1handle fTotShifts;  //! histogram with all TOT shifts
          base::H1handle fTempDistr;   //! temperature distribution
-         base::H1handle fBubbleErrDistr; //! distribution of place with errors
 
          base::H2handle fhRaisingFineCalibr; //! histogram of calibrated raising fine counter vs channel
          base::H2handle fhTotVsChannel; //! histogram of ToT vs channel
@@ -202,7 +191,7 @@ namespace hadaq {
 
          unsigned                 fNumChannels; //! number of channels
          unsigned                 fNumFineBins; //! number of fine-counter bins
-         std::vector<ChannelRec>  fCh; //! histogram for individual channels
+         std::vector<ChannelRec>  fCh;          //! full description for each channels
          float                    fCalibrTemp;  //! temperature when calibration was performed
          float                    fCalibrTempCoef; //! coefficient to scale calibration curve (real value -1)
          bool                     fCalibrUseTemp;  //! when true, use temperature adjustment for calibration
@@ -221,7 +210,6 @@ namespace hadaq {
                                       //  0.3..0.7  - poor (yellow color)
                                       //  0.7..0.8  - accumulating (blue color)
                                       //  0.8..1.0  - ok (green color)
-
 
          float                    fTempCorrection; //! correction for temperature sensor
          float                    fCurrentTemp;    //! current measured temperature
@@ -282,9 +270,6 @@ namespace hadaq {
          static unsigned gTotRange;      //! default range for TOT histogram
          static unsigned gErrorMask;     //! mask for errors to display
          static bool gAllHistos;         //! when true, all histos for all channels created simultaneously
-         static int gBubbleMode;         //! 0-off, 1-two edges, 2 - raw bubbles
-         static int gBubbleMask;         //! bubble mask id (starts from 1), which is interesting for the evaluation
-         static int gBubbleShift;        //! shift of lookup table for specified mask
          static bool gDRICHReapir;       //! when true, try to repair bogus DRICH readout
          static double gTrigDWindowLow;  //! low limit of time stamps for 0xD trigger used for calibration
          static double gTrigDWindowHigh; //! high limit of time stamps for 0xD trigger used for calibration
@@ -303,9 +288,6 @@ namespace hadaq {
 
          /** Scan all messages, find reference signals */
          bool DoBufferScan(const base::Buffer& buf, bool isfirst);
-
-         /** Scan all bubble data */
-         bool DoBubbleScan(const base::Buffer& buf, bool isfirst);
 
          double DoTestToT(int iCh);
          double DoTestErrors(int iCh);
@@ -360,16 +342,6 @@ namespace hadaq {
 
          static void SetHadesMonitorInterval(int tm = -1);
          static int GetHadesMonitorInterval();
-
-         /** Configure bubble mode
-          * 0  - off,
-          * 1  - two edges,
-          * 2  - raw bubbles coded with hit message,
-          * 3  - raw bubbles with 0xF in header message, coded with 0xe message (calibr)
-          * sz is length of bubble in 16bit words
-          * maskid and shift - replacement for code assigned with BUBBLE maskid from lookup table */
-         static void SetBubbleMode(int on = 2, unsigned sz = 19, int maskid = 0, int shift = 0);
-
          static void SetDRICHReapir(bool on = true);
          static bool IsDRICHReapir();
 
