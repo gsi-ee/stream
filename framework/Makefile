@@ -52,7 +52,6 @@ NEWLIBDICT_MAP = $(STREAMSYS)/lib/$(NEWLIBDICT_LIBNAME).rootmap
 
 NEWLIBDICT_LINKDEF = LinkDef.h
 NEWLIBDICT_NAME = G__Stream
-NEWLIBDICT_HDR = $(NEWLIBDICT_NAME).h
 NEWLIBDICT_SRC = $(NEWLIBDICT_NAME).cxx
 NEWLIBDICT_OBJ = $(NEWLIBDICT_NAME).o
 
@@ -87,11 +86,6 @@ else
 	@rootcint -f $@ -c -p -I../include $(NEWLIB_HEADERS) $(NEWLIBROOT_HEADERS) $(NEWLIBDICT_LINKDEF)
 endif
 
-$(NEWLIBDICT_OBJ): $(NEWLIBDICT_SRC) $(NEWLIBDICT_LINKDEF)
-
-$(NEWLIBDICT_OBJ): CXXOPT += $(shell root-config --cflags)
-# $(NEWLIBDICT_OBJ): CPPVERS = 
-
 $(NEWLIBDICT_LIB): $(NEWLIBDICT_OBJ) $(NEWLIBROOT_OBJS) $(NEWLIBDICT_LINKDEF)
 	@echo 'Building: $@'
 	@$(LD) -o $@ -shared -O $(NEWLIBDICT_OBJ) $(NEWLIBROOT_OBJS) -L$(STREAMSYS)/lib -lStream -Wl,-rpath,$(STREAMSYS)/lib
@@ -113,8 +107,13 @@ $(NEWLIB) : $(NEWLIB_OBJS)
 	@sed -i 's|$*.o|$*.o $*.d|g' $@
 	@rm -f $@.bak
 
+$(NEWLIBDICT_OBJ): $(NEWLIBDICT_SRC)
+	$(CXX) -c $< $(CXXOPT) $(shell root-config --cflags) -o $@
+
 %.o: %.cxx
 	$(CXX) -c $< $(CXXOPT) -o $@
+
+
 
 ifeq ($(findstring $(MAKECMDGOALS), clean),)
 -include $(NEWLIB_DEPS) $(NEWLIBROOT_DEPS)
