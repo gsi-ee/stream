@@ -80,8 +80,6 @@ namespace hadaq {
             float time_shift_per_grad;      //! delay in channel (ns/C), caused by temperature change
             float trig0d_coef;              //! scaling coefficient, applied when build calibration from 0xD trigger (reserved)
             int rising_cond_prnt;
-            double sum0,sumx1,sumx2,sumy1,sumxy;
-            float bubble_a, bubble_b; // bubble edges: rising = a + b * falling a=9, b=1.16
 
             ChannelRec() :
                refch(0xffffff),
@@ -126,9 +124,8 @@ namespace hadaq {
                tot_shift(0.),
                time_shift_per_grad(0.),
                trig0d_coef(0.),
-               rising_cond_prnt(-1),
-               sum0(0),sumx1(0),sumx2(0),sumy1(0),sumxy(0),
-               bubble_a(20), bubble_b(1.06)
+               rising_cond_prnt(-1)
+               // sum0(0),sumx1(0),sumx2(0),sumy1(0),sumxy(0)
             {
                for (unsigned n=0;n<TotBins;n++) {
                   tot0d_hist[n] = 0;
@@ -270,7 +267,6 @@ namespace hadaq {
          static unsigned gTotRange;      //! default range for TOT histogram
          static unsigned gErrorMask;     //! mask for errors to display
          static bool gAllHistos;         //! when true, all histos for all channels created simultaneously
-         static bool gDRICHReapir;       //! when true, try to repair bogus DRICH readout
          static double gTrigDWindowLow;  //! low limit of time stamps for 0xD trigger used for calibration
          static double gTrigDWindowHigh; //! high limit of time stamps for 0xD trigger used for calibration
          static bool gUseDTrigForRef;    //! when true, use special triggers for ref calculations
@@ -342,8 +338,6 @@ namespace hadaq {
 
          static void SetHadesMonitorInterval(int tm = -1);
          static int GetHadesMonitorInterval();
-         static void SetDRICHReapir(bool on = true);
-         static bool IsDRICHReapir();
 
          static void SetUseDTrigForRef(bool on = true);
 

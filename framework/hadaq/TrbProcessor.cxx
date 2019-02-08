@@ -755,7 +755,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
             bool is_tdc = (datalen == 0);
             if (!is_tdc) {
                TdcMessage msg(sub->Data(ix));
-               is_tdc = msg.isHeaderMsg() || hadaq::TdcProcessor::IsDRICHReapir();
+               is_tdc = msg.isHeaderMsg();
             }
 
             // suppose this is TDC data, first word should be TDC header

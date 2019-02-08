@@ -23,7 +23,6 @@ unsigned hadaq::TdcProcessor::gNumFineBins = FineCounterBins;
 unsigned hadaq::TdcProcessor::gTotRange = 100;
 unsigned hadaq::TdcProcessor::gErrorMask = 0xffffffffU;
 bool hadaq::TdcProcessor::gAllHistos = false;
-bool hadaq::TdcProcessor::gDRICHReapir = false;
 double hadaq::TdcProcessor::gTrigDWindowLow = 0;
 double hadaq::TdcProcessor::gTrigDWindowHigh = 0;
 bool hadaq::TdcProcessor::gUseDTrigForRef = false;
@@ -50,16 +49,6 @@ void hadaq::TdcProcessor::SetErrorMask(unsigned mask)
 void hadaq::TdcProcessor::SetAllHistos(bool on)
 {
    gAllHistos = on;
-}
-
-void hadaq::TdcProcessor::SetDRICHReapir(bool on)
-{
-   gDRICHReapir = on;
-}
-
-bool hadaq::TdcProcessor::IsDRICHReapir()
-{
-   return gDRICHReapir;
 }
 
 void hadaq::TdcProcessor::SetTriggerDWindow(double low, double high)
@@ -1318,7 +1307,6 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    hadaq::TdcMessage& msg = iter.msg();
    hadaq::TdcMessage calibr;
    unsigned ncalibr(20), temp(0), lowid(0), highid(0); // clear indicate that no calibration data present
-   bool accept_next_falling(true);
 
    while (iter.next()) {
 
@@ -1331,10 +1319,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
       if (cnt==1) {
          if (!msg.isHeaderMsg()) {
-            if (!gDRICHReapir) {
-               iserr = true;
-               ADDERROR(errNoHeader, "Missing header message");
-            }
+            iserr = true;
+            ADDERROR(errNoHeader, "Missing header message");
          } else {
 
             if (first_scan) fLastTdcHeader = msg;
@@ -1374,31 +1360,6 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          unsigned fine = msg.getHitTmFine();
          unsigned coarse = msg.getHitTmCoarse();
          bool isrising = msg.isHitRisingEdge();
-
-         if (gDRICHReapir && (chid!=0)) {
-            // try to filter out rising/falling hits in interval [25-35] ns
-            if (!isrising) {
-               if (!accept_next_falling) continue;
-               accept_next_falling = false; // only single falling is accepted
-            } else {
-               accept_next_falling = false;
-               hadaq::TdcMessage msg2;
-               if (!iter.lookForwardMsg(msg2)) continue;
-               if (!msg2.isHitMsg() || msg2.isHitRisingEdge() || (chid!=msg2.getHitChannel())) continue;
-               if ((fine == 0x3ff) || (msg2.getHitTmFine() == 0x3fff)) continue;
-
-               double tm1 = coarse * hadaq::TdcMessage::CoarseUnit() + hadaq::TdcMessage::SimpleFineCalibr(fine);
-               double tm2 = msg2.getHitTmCoarse() * hadaq::TdcMessage::CoarseUnit() + hadaq::TdcMessage::SimpleFineCalibr(msg2.getHitTmFine());
-
-               // printf("Ch: %u tm1 %g tm2 %g diff %5.2f\n", chid, tm1, tm2, (tm2-tm1)*1e9);
-
-               if (((tm2-tm1)<25e-9) || ((tm2-tm1)>40e-9)) {
-                  ADDERROR(errMisc, "Reject Ch: %u tm1 %g tm2 %g diff %5.2f", chid, tm1, tm2, (tm2-tm1)*1e9);
-                  continue;
-               }
-               accept_next_falling = true;
-            }
-         }
 
          localtm = iter.getMsgTimeCoarse();
 
@@ -2303,11 +2264,14 @@ void hadaq::TdcProcessor::StoreCalibration(const std::string& fprefix, unsigned 
    fwrite(&fCalibrTemp, sizeof(fCalibrTemp), 1, f);
    fwrite(&fCalibrTempCoef, sizeof(fCalibrTempCoef), 1, f);
 
+   // old values, no longer used
+   float bubble_a = 0, bubble_b = 1;
+
    for (unsigned ch=0;ch<NumChannels();ch++) {
       fwrite(&(fCh[ch].time_shift_per_grad), sizeof(fCh[ch].time_shift_per_grad), 1, f);
       fwrite(&(fCh[ch].trig0d_coef), sizeof(fCh[ch].trig0d_coef), 1, f);
-      fwrite(&(fCh[ch].bubble_a), sizeof(fCh[ch].bubble_a), 1, f);
-      fwrite(&(fCh[ch].bubble_b), sizeof(fCh[ch].bubble_b), 1, f);
+      fwrite(&bubble_a, sizeof(bubble_a), 1, f);
+      fwrite(&bubble_b, sizeof(bubble_b), 1, f);
    }
 
    fclose(f);
@@ -2372,12 +2336,15 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
          fread(&fCalibrTemp, sizeof(fCalibrTemp), 1, f);
          fread(&fCalibrTempCoef, sizeof(fCalibrTempCoef), 1, f);
 
+         // old values, no longer used
+         float bubble_a = 0, bubble_b = 0;
+
          for (unsigned ch=0;ch<NumChannels();ch++)
             if (!feof(f)) {
                fread(&(fCh[ch].time_shift_per_grad), sizeof(fCh[ch].time_shift_per_grad), 1, f);
                fread(&(fCh[ch].trig0d_coef), sizeof(fCh[ch].trig0d_coef), 1, f);
-               fread(&(fCh[ch].bubble_a), sizeof(fCh[ch].bubble_a), 1, f);
-               fread(&(fCh[ch].bubble_b), sizeof(fCh[ch].bubble_b), 1, f);
+               fread(&bubble_a, sizeof(bubble_a), 1, f);
+               fread(&bubble_b, sizeof(bubble_b), 1, f);
             }
       }
    }
