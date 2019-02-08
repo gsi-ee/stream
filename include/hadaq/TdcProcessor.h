@@ -80,6 +80,10 @@ namespace hadaq {
             float time_shift_per_grad;      //! delay in channel (ns/C), caused by temperature change
             float trig0d_coef;              //! scaling coefficient, applied when build calibration from 0xD trigger (reserved)
             int rising_cond_prnt;
+            float calibr_quality_rising;    //! quality of last calibration 0. is nothing
+            float calibr_quality_falling;    //! quality of last calibration 0. is nothing
+            long calibr_stat_rising;        //! accumulated statistic during last calibration
+            long calibr_stat_falling;       //! accumulated statistic during last calibration
 
             ChannelRec() :
                refch(0xffffff),
@@ -124,8 +128,11 @@ namespace hadaq {
                tot_shift(0.),
                time_shift_per_grad(0.),
                trig0d_coef(0.),
-               rising_cond_prnt(-1)
-               // sum0(0),sumx1(0),sumx2(0),sumy1(0),sumxy(0)
+               rising_cond_prnt(-1),
+               calibr_quality_rising(-1.),
+               calibr_quality_falling(-1.),
+               calibr_stat_rising(0),
+               calibr_stat_falling(0)
             {
                for (unsigned n=0;n<TotBins;n++) {
                   tot0d_hist[n] = 0;

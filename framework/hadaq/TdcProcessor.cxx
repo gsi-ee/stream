@@ -2165,43 +2165,64 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
 
    for (unsigned ch=0;ch<NumChannels();ch++) {
 
-      if (fCh[ch].docalibr) {
+      ChannelRec &rec = fCh[ch];
 
-         fCh[ch].check_calibr = false; // reset flag, used in auto calibration
+      if (!preliminary) {
+         rec.calibr_stat_rising = rec.calibr_stat_falling = 0;
+         rec.calibr_quality_rising = rec.calibr_quality_falling = -1.;
+      }
+
+      if (rec.docalibr) {
+
+         rec.check_calibr = false; // reset flag, used in auto calibration
 
          // special case - use common statistic
          if (fEdgeMask == edge_CommonStatistic) {
-            fCh[ch].all_rising_stat += fCh[ch].all_falling_stat;
-            fCh[ch].all_falling_stat = 0;
+            rec.all_rising_stat += rec.all_falling_stat;
+            rec.all_falling_stat = 0;
             for (unsigned n=0;n<fNumFineBins;n++) {
-               fCh[ch].rising_stat[n] += fCh[ch].falling_stat[n];
-               fCh[ch].falling_stat[n] = 0;
+               rec.rising_stat[n] += rec.falling_stat[n];
+               rec.falling_stat[n] = 0;
             }
          }
 
-         // printf("%s Ch:%d do: %d %d stat: %ld %ld mask %d\n", GetName(), ch, DoRisingEdge(), DoFallingEdge(), fCh[ch].all_rising_stat, fCh[ch].all_falling_stat, fEdgeMask);
+         // printf("%s Ch:%d do: %d %d stat: %ld %ld mask %d\n", GetName(), ch, DoRisingEdge(), DoFallingEdge(), rec.all_rising_stat, rec.all_falling_stat, fEdgeMask);
 
          bool res = false;
 
-         if (DoRisingEdge() && (fCh[ch].all_rising_stat>0))
-            res = CalibrateChannel(ch, fCh[ch].rising_stat, fCh[ch].rising_calibr, use_linear, preliminary);
-
-         if (DoFallingEdge() && (fCh[ch].all_falling_stat>0) && (fEdgeMask == edge_BothIndepend))
-            if (!CalibrateChannel(ch, fCh[ch].falling_stat, fCh[ch].falling_calibr, use_linear, preliminary)) res = false;
-
-         if ((ch>0) && DoFallingEdge() && (fCh[ch].tot0d_cnt > 100) && !preliminary) {
-            CalibrateTot(ch, fCh[ch].tot0d_hist, fCh[ch].tot_shift, 0.05);
-            for (unsigned n=0;n<TotBins;n++) {
-               double x = fToThmin + (n + 0.1) / TotBins * (fToThmax-fToThmin);
-               DefFillH1(fCh[ch].fTot0D, x, fCh[ch].tot0d_hist[n]);
+         if (DoRisingEdge() && (rec.all_rising_stat > 0)) {
+            res = CalibrateChannel(ch, rec.rising_stat, rec.rising_calibr, use_linear, preliminary);
+            if (res) {
+               rec.calibr_stat_rising = rec.all_rising_stat;
+               rec.calibr_quality_rising = fCalibrQuality;
             }
          }
 
-         fCh[ch].hascalibr = res;
+         if (DoFallingEdge() && (rec.all_falling_stat > 0) && (fEdgeMask == edge_BothIndepend)) {
+            if (!CalibrateChannel(ch, rec.falling_stat, rec.falling_calibr, use_linear, preliminary)) {
+               res = false;
+            } else {
+               rec.calibr_stat_falling = rec.all_falling_stat;
+               rec.calibr_quality_falling = fCalibrQuality;
+            }
+         }
 
-         if ((fEdgeMask == edge_CommonStatistic) || (fEdgeMask == edge_ForceRising))
+         if ((ch>0) && DoFallingEdge() && (rec.tot0d_cnt > 100) && !preliminary) {
+            CalibrateTot(ch, rec.tot0d_hist, rec.tot_shift, 0.05);
+            for (unsigned n=0;n<TotBins;n++) {
+               double x = fToThmin + (n + 0.1) / TotBins * (fToThmax-fToThmin);
+               DefFillH1(rec.fTot0D, x, rec.tot0d_hist[n]);
+            }
+         }
+
+         rec.hascalibr = res;
+
+         if ((fEdgeMask == edge_CommonStatistic) || (fEdgeMask == edge_ForceRising)) {
             for (unsigned n=0;n<fNumFineBins;n++)
-               fCh[ch].falling_calibr[n] = fCh[ch].rising_calibr[n];
+               rec.falling_calibr[n] = rec.rising_calibr[n];
+            rec.calibr_stat_falling = rec.calibr_stat_rising;
+            rec.calibr_quality_falling = rec.calibr_quality_rising;
+         }
 
          if (clear_stat && !preliminary)
             ClearChannelStat(ch);
@@ -2209,10 +2230,10 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
 
       if (!preliminary) {
          if (DoRisingEdge())
-            CopyCalibration(fCh[ch].rising_calibr, fCh[ch].fRisingCalibr, ch, fRisingCalibr);
+            CopyCalibration(rec.rising_calibr, rec.fRisingCalibr, ch, fRisingCalibr);
          if (DoFallingEdge())
-            CopyCalibration(fCh[ch].falling_calibr, fCh[ch].fFallingCalibr, ch, fFallingCalibr);
-         DefFillH1(fTotShifts, ch, fCh[ch].tot_shift);
+            CopyCalibration(rec.falling_calibr, rec.fFallingCalibr, ch, fFallingCalibr);
+         DefFillH1(fTotShifts, ch, rec.tot_shift);
       }
    }
 }
@@ -2264,14 +2285,11 @@ void hadaq::TdcProcessor::StoreCalibration(const std::string& fprefix, unsigned 
    fwrite(&fCalibrTemp, sizeof(fCalibrTemp), 1, f);
    fwrite(&fCalibrTempCoef, sizeof(fCalibrTempCoef), 1, f);
 
-   // old values, no longer used
-   float bubble_a = 0, bubble_b = 1;
-
    for (unsigned ch=0;ch<NumChannels();ch++) {
       fwrite(&(fCh[ch].time_shift_per_grad), sizeof(fCh[ch].time_shift_per_grad), 1, f);
       fwrite(&(fCh[ch].trig0d_coef), sizeof(fCh[ch].trig0d_coef), 1, f);
-      fwrite(&bubble_a, sizeof(bubble_a), 1, f);
-      fwrite(&bubble_b, sizeof(bubble_b), 1, f);
+      fwrite(&(fCh[ch].calibr_quality_rising), sizeof(fCh[ch].calibr_quality_rising), 1, f);
+      fwrite(&(fCh[ch].calibr_quality_falling), sizeof(fCh[ch].calibr_quality_falling), 1, f);
    }
 
    fclose(f);
@@ -2336,15 +2354,18 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
          fread(&fCalibrTemp, sizeof(fCalibrTemp), 1, f);
          fread(&fCalibrTempCoef, sizeof(fCalibrTempCoef), 1, f);
 
-         // old values, no longer used
-         float bubble_a = 0, bubble_b = 0;
-
          for (unsigned ch=0;ch<NumChannels();ch++)
             if (!feof(f)) {
                fread(&(fCh[ch].time_shift_per_grad), sizeof(fCh[ch].time_shift_per_grad), 1, f);
                fread(&(fCh[ch].trig0d_coef), sizeof(fCh[ch].trig0d_coef), 1, f);
-               fread(&bubble_a, sizeof(bubble_a), 1, f);
-               fread(&bubble_b, sizeof(bubble_b), 1, f);
+               fread(&(fCh[ch].calibr_quality_rising), sizeof(fCh[ch].calibr_quality_rising), 1, f);
+               fread(&(fCh[ch].calibr_quality_falling), sizeof(fCh[ch].calibr_quality_falling), 1, f);
+
+               // old files with bubble coefficients
+               if ((fabs(fCh[ch].calibr_quality_rising-20.)<0.01) && (fabs(fCh[ch].calibr_quality_falling-1.06)<0.01)) {
+                  fCh[ch].calibr_quality_rising = 1.;
+                  fCh[ch].calibr_quality_falling = 1.;
+               }
             }
       }
    }
