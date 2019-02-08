@@ -5,20 +5,29 @@
 void first()
 {
    base::ProcMgr::instance()->SetRawAnalysis(true);
+   // In triggered mode create output data are created and calls processors from second.C
    // base::ProcMgr::instance()->SetTriggeredAnalysis(true);
 
-
-   // configure sorting of created folders, default now on
+   // configure sorting of created folders, default is on
    base::ProcMgr::instance()->SetSortedOrder(true);
 
    // all new instances get this value
+   base::ProcMgr::instance()->SetHistFilling(4);
+
+   // all new instances get this value
+   // 0 - no histograms
+   // 1 - basic histograms in HLD/TRB
+   // 2 - generic histograms for each TDC
+   // 3 - include histograms for each active TDC channel
+   // 4 - also special time reference histograms for channels (when configured)
    base::ProcMgr::instance()->SetHistFilling(4);
 
    // this limits used for liner calibrations when nothing else is available
    hadaq::TdcMessage::SetFineLimits(31, 491);
 
    // Enable 1 or disable 0 errors logging from following enumeration
-   //  { errNoHeader, errChId, errEpoch, errFine, err3ff, errCh0, errMismatchDouble, errUncknHdr, errDesignId, errMisc }
+   //  { 0x1: errNoHeader, 0x2: errChId, 0x4: errEpoch, 0x8: errFine,
+   //    0x10: err3ff, 0x20: errCh0, 0x40: errMismatchDouble, 0x80: errUncknHdr, 0x100: errDesignId, 0x200: errMisc }
    // hadaq::TdcProcessor::SetErrorMask(0xffffff);
 
    // Create histograms for all channels immediately - even if channel never appear in data
@@ -35,11 +44,11 @@ void first()
    // second - maximal RMS value
    hadaq::TdcProcessor::SetToTCalibr(100, 0.2);
 
-   // default channel numbers and edges mask
+   // default channel numbers and edges usage
    // 1 - use only rising edge, falling edge is ignore
-   // 2   - falling edge enabled and fully independent from rising edge
-   // 3   - falling edge enabled and uses calibration from rising edge
-   // 4   - falling edge enabled and common statistic is used for calibration
+   // 2 - falling edge enabled and fully independent from rising edge
+   // 3 - falling edge enabled and uses calibration from rising edge
+   // 4 - falling edge enabled and common statistic is used for calibration
    hadaq::TrbProcessor::SetDefaults(65, 1);
 
    // [min..max] range for TDC ids
@@ -90,14 +99,12 @@ void first()
    // 3 - std::vector<hadaq::MessageDouble> - compact form, with channel 0, absolute time stamp as double
    base::ProcMgr::instance()->SetStoreKind(3);
 
-
    // when configured as output in DABC, one specifies:
    // <OutputPort name="Output2" url="stream://file.root?maxsize=5000&kind=3"/>
-
-
 }
 
 // extern "C" required by DABC to find function from compiled code
+// function called once all TDC instances are created, here one can configure them
 
 extern "C" void after_create(hadaq::HldProcessor* hld)
 {
@@ -124,7 +131,6 @@ extern "C" void after_create(hadaq::HldProcessor* hld)
       // tdc->SetUseLastHit(true);
       for (unsigned nch=2;nch<tdc->NumChannels();nch++)
         tdc->SetRefChannel(nch, 1, 0xffff, 6000,  -20., 40.);
-
 
    }
 }
