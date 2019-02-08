@@ -75,6 +75,9 @@ $(NEWLIBDICT_MAP): $(NEWLIBDICT_LIB)
 	@echo 'Building: $@'
 ifdef IS_ROOT6
 	@rootcling -v2 -f $(NEWLIBDICT_SRC) -s $(NEWLIBDICT_LIB) -m $(NEWLIBDICT_LIBNAME)_rdict.pcm -excludePath $(STREAMSYS) -rml $(NEWLIBDICT_LIBNAME).so -rmf $(NEWLIBDICT_MAP) -I$(STREAMSYS)/include $(NEWLIB_HEADERS) $(NEWLIBROOT_HEADERS) $(NEWLIBDICT_LINKDEF)
+	@touch $(NEWLIBDICT_OBJ)
+	@touch $(NEWLIBDICT_LIB)
+	@touch $(NEWLIBDICT_MAP)
 else
 	@rlibmap -o $@ -l $(NEWLIBDICT_LIB) -d $(NEWLIB) -c $(NEWLIBDICT_LINKDEF)
 endif
@@ -112,7 +115,6 @@ $(NEWLIBDICT_OBJ): $(NEWLIBDICT_SRC)
 
 %.o: %.cxx
 	$(CXX) -c $< $(CXXOPT) -o $@
-
 
 
 ifeq ($(findstring $(MAKECMDGOALS), clean),)
