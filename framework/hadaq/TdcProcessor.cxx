@@ -840,7 +840,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
             // falling edge correction used for 50 ns, approx 3.05ps binning
             new_fine = (uint32_t) (corr/5e-8*0x3ffe);
          }
-         if ((new_fine>0x3ffe) || hard_failure) new_fine = 0x3ffe;
+         if ((new_fine > 0x3ffe) || hard_failure) new_fine = 0x3ffe;
 
          if (calibr_indx == 0) {
             calibr_indx = tgtindx++;
