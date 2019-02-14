@@ -865,7 +865,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
 
       if (hard_failure) continue;
 
-      if (use_in_calibr) {
+      if (use_in_calibr && (kind == hadaq::tdckind_Hit)) {
          coarse = msg.getHitTmCoarse();
          if (isrising) {
             if (chid>0) nrising++;
@@ -1481,13 +1481,14 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                CreateChannelHistograms(chid);
 
             bool use_fine_for_stat = true;
-
-            if (use_for_calibr == 3)
+            if (!msg.isHit0Msg())
+               use_fine_for_stat = false;
+            else if (use_for_calibr == 3)
                use_fine_for_stat = (gTrigDWindowLow <= localtm*1e9) && (localtm*1e9 <= gTrigDWindowHigh);
 
             FastFillH1(fChannels, chid);
             DefFillH1(fHits, (chid + (isrising ? 0.25 : 0.75)), 1.);
-            if (raw_hit && use_fine_for_stat) DefFillH2(fAllFine, chid, fine, 1.);
+            if (raw_hit) DefFillH2(fAllFine, chid, fine, 1.);
             DefFillH2(fAllCoarse, chid, coarse, 1.);
             if (fChHitsPerHld) DefFillH2(*fChHitsPerHld, fHldId, chid, 1);
 
@@ -1498,14 +1499,12 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
             if (isrising) {
                // processing of rising edge
-               if (raw_hit) {
+               if (raw_hit && use_fine_for_stat) {
                   switch (use_for_calibr) {
                      case 1:
                      case 3:
-                        if (use_fine_for_stat) {
-                           rec.rising_stat[fine]++;
-                           rec.all_rising_stat++;
-                        }
+                        rec.rising_stat[fine]++;
+                        rec.all_rising_stat++;
                         break;
                      case 2:
                         rec.last_rising_fine = fine;
@@ -1513,10 +1512,9 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                   }
                }
 
+               if (raw_hit) FastFillH1(rec.fRisingFine, fine);
+
                rec.rising_cnt++;
-               if (raw_hit) {
-                  if (use_fine_for_stat) FastFillH1(rec.fRisingFine, fine);
-               }
 
                bool print_cond = false;
 
@@ -1556,23 +1554,22 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
             } else {
                // processing of falling edge
-               if (raw_hit) {
+               if (raw_hit && use_fine_for_stat) {
                   switch (use_for_calibr) {
                      case 1:
                      case 3:
-                        if (use_fine_for_stat) {
-                           rec.falling_stat[fine]++;
-                           rec.all_falling_stat++;
-                        }
+                        rec.falling_stat[fine]++;
+                        rec.all_falling_stat++;
                         break;
                      case 2:
                         rec.last_falling_fine = fine;
                         break;
                   }
                }
-               rec.falling_cnt++;
 
-               if (raw_hit && use_fine_for_stat) FastFillH1(rec.fFallingFine, fine);
+               if (raw_hit) FastFillH1(rec.fFallingFine, fine);
+
+               rec.falling_cnt++;
 
                if (rec.rising_new_value && (rec.rising_last_tm!=0)) {
                   double tot = (localtm - rec.rising_last_tm)*1e9;
