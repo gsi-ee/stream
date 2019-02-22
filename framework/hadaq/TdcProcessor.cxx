@@ -720,11 +720,14 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
 
    // do not check progress value too often - this requires extra computations
    bool check_calibr_progress = false;
-   if (use_in_calibr)
-      if (++fCalibrAmount > ((fCalibrCounts > 500) ? fCalibrCounts*0.1 : 50)) {
+   if (use_in_calibr) {
+      double limit = fCalibrCounts*0.07;
+      if (limit < 50) limit = 50; else if (limit>1000) limit = 1000;
+      if (++fCalibrAmount > limit) {
          fCalibrAmount = 0;
          check_calibr_progress = true;
       }
+   }
 
    uint32_t epoch(0), chid, fine, kind, coarse(0), new_fine,
             idata, *tgtraw = tgt ? (uint32_t *) tgt->RawData() : 0;
