@@ -92,6 +92,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fCalibrTempCoef(0.004432),
    fCalibrUseTemp(false),
    fCalibrTriggerMask(0xFFFF),
+   fCalibrAmount(0),
    fCalibrProgress(0),
    fCalibrStatus("NoCalibr"),
    fCalibrQuality(0.),
@@ -642,6 +643,7 @@ void hadaq::TdcProcessor::BeginCalibration(long cnt)
    fCalibrStatus = "Accumulating";
    fCalibrQuality = 0.7;
    fCalibrProgress = 0.;
+   fCalibrAmount = 0;
 
    // ensure that calibration statistic is empty
    for (unsigned ch=0;ch<NumChannels();ch++)
@@ -716,15 +718,13 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
       use_in_calibr = true;
    }
 
+   // do not check progress value too often - this requires extra computations
    bool check_calibr_progress = false;
-
-   if (use_in_calibr) {
-      fCalibrAmount += datalen;
-      if (fCalibrAmount > 200000) {
+   if (use_in_calibr)
+      if (++fCalibrAmount > ((fCalibrCounts > 500) ? fCalibrCounts*0.1 : 50)) {
          fCalibrAmount = 0;
          check_calibr_progress = true;
       }
-   }
 
    uint32_t epoch(0), chid, fine, kind, coarse(0), new_fine,
             idata, *tgtraw = tgt ? (uint32_t *) tgt->RawData() : 0;
@@ -965,7 +965,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
       fCalibrProgress = TestCanCalibrate();
       fCalibrQuality = (fCalibrProgress > 2) ? 0.9 : 0.7 + fCalibrProgress*0.1;
 
-      if ((fAllTotMode == 0) && (fCalibrProgress>=0.5)) {
+      if ((fAllTotMode == 0) && (fCalibrProgress >= 0.5)) {
          ProduceCalibration(false, fUseLinear, false, true);
          fAllTotMode = 1; // now can start accumulate ToT values
       }
