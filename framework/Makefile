@@ -84,8 +84,10 @@ endif
 
 $(NEWLIBDICT_SRC): $(NEWLIBDICT_LINKDEF) $(NEWLIB_HEADERS) $(NEWLIBROOT_HEADERS)
 ifdef IS_ROOT6
+	@echo 'Creating root6 dictionary: $@'
 	@rootcling -f $@ -s $(NEWLIBDICT_LIBNAME).so -c $(CXXOPT) $(NEWLIB_HEADERS) $(NEWLIBROOT_HEADERS) $(NEWLIBDICT_LINKDEF)
 else
+	@echo 'Creating root5 dictionary: $@'
 	@rootcint -f $@ -c -p -I../include $(NEWLIB_HEADERS) $(NEWLIBROOT_HEADERS) $(NEWLIBDICT_LINKDEF)
 endif
 
@@ -93,7 +95,7 @@ $(NEWLIBDICT_LIB): $(NEWLIBDICT_OBJ) $(NEWLIBROOT_OBJS) $(NEWLIBDICT_LINKDEF)
 	@echo 'Building: $@'
 	@$(LD) -o $@ -shared -O $(NEWLIBDICT_OBJ) $(NEWLIBROOT_OBJS) -L$(STREAMSYS)/lib -lStream -Wl,-rpath,$(STREAMSYS)/lib
 
-$(NEWLIBROOT_OBJS) $(NEWLIBROOT_DEPS) : CXXOPT += $(shell root-config --cflags)
+$(NEWLIBDICT_SRC) $(NEWLIBROOT_OBJS) $(NEWLIBROOT_DEPS) : CXXOPT += $(shell root-config --cflags)
 
 endif
 
