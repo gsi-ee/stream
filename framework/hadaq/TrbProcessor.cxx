@@ -831,23 +831,15 @@ bool hadaq::TrbProcessor::CollectMissingTDCs(hadaqs::RawSubevent *sub, std::vect
          continue;
       }
 
-      //! ================= FPGA TDC header ========================
       TdcProcessor* subproc = GetTDC(dataid, true);
-
-      //bool match = false;
-      //for (unsigned n=0;n<mintdc.size();++n)
-      //   if ((dataid>=mintdc[n]) && (dataid<maxtdc[n])) match = true;
 
       if (!subproc && (dataid != 0x5555)) {
 
          ids.push_back(dataid);
-
-         //subproc = new hadaq::TdcProcessor(this, dataid, numch, edges);
-         //isany = true;
-      }  // end of if TDC header
+      }
 
       // raw data is not interesting
-      ix+=datalen;
+      ix += datalen;
    }
 
    return ids.size() > 0;
@@ -857,6 +849,7 @@ void hadaq::TrbProcessor::BuildFastTDCVector()
 {
    bool isany = false;
    fMinTdc = 0xffffff;
+   fMaxTdc = 0;
 
    for (auto &&entry : fMap) {
       if (entry.second->IsTDC()) {
@@ -873,7 +866,7 @@ void hadaq::TrbProcessor::BuildFastTDCVector()
       fTdcsVect.resize(fMaxTdc - fMinTdc, nullptr);
       for (auto &&entry : fMap)
          if (entry.second->IsTDC())
-            fTdcsVect[entry.first - fMinTdc] = static_cast<hadaq::TdcProcessor*>(entry.second);
+            fTdcsVect[entry.first - fMinTdc] = static_cast<hadaq::TdcProcessor *>(entry.second);
    }
 }
 
@@ -883,7 +876,7 @@ void hadaq::TrbProcessor::ClearFastTDCVector()
    fMinTdc = fMaxTdc = 0;
 }
 
-unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent *sub, void *tgtbuf, unsigned tgtlen, bool only_hist)
+unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent *sub, void *tgtbuf, unsigned tgtlen, bool only_hist, std::vector<unsigned> *newids)
 {
 //   base::ProfilerGuard grd(fProfiler, "enter");
 
@@ -992,6 +985,9 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent *sub, void *
          ix += datalen;
          continue; // go to next block
       }  // end of if TDC header
+
+      if (newids && (id != 0x5555))
+         newids->push_back(id);
 
 //      grd.Next("unrec", 10);
 

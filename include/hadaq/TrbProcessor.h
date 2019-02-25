@@ -129,7 +129,6 @@ namespace hadaq {
          void AfterEventScan();
 
          void BuildFastTDCVector();
-         void ClearFastTDCVector();
 
          virtual void CreateBranch(TTree* t);
 
@@ -298,8 +297,11 @@ namespace hadaq {
          /** Collect TDCs using IDs from subevent */
          bool CollectMissingTDCs(hadaqs::RawSubevent *sub, std::vector<unsigned> &ids);
 
+         /** Clear fast access vector for TDC - will be created with next event */
+         void ClearFastTDCVector();
+
          /** Calibrate hits in subevent */
-         unsigned TransformSubEvent(hadaqs::RawSubevent *sub, void *tgtbuf = 0, unsigned tgtlen = 0, bool only_hist = false);
+         unsigned TransformSubEvent(hadaqs::RawSubevent *sub, void *tgtbuf = nullptr, unsigned tgtlen = 0, bool only_hist = false, std::vector<unsigned> *newids = nullptr);
 
          /** Just for emulation of TDC calibrations */
          unsigned EmulateTransform(hadaqs::RawSubevent *sub, int dummycnt, bool only_hist = false);
