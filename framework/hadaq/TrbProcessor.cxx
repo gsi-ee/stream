@@ -881,7 +881,7 @@ void hadaq::TrbProcessor::ClearFastTDCVector()
    fMinTdc = fMaxTdc = 0;
 }
 
-unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub, void* tgtbuf, unsigned tgtlen, bool only_hist)
+unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent *sub, void *tgtbuf, unsigned tgtlen, bool only_hist)
 {
 //   base::ProfilerGuard grd(fProfiler, "enter");
 
@@ -928,7 +928,7 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub, void* 
 
    hadaqs::RawSubevent* tgt = (hadaqs::RawSubevent*) tgtbuf;
    // copy complete header first
-   if (tgt!=0) {
+   if (tgt) {
       // copy header
       memcpy((void *) tgt, sub, sizeof(hadaqs::RawSubevent));
       tgtlen = (tgtlen - sizeof(hadaqs::RawSubevent)) / 4; // how many 32-bit values can be used
@@ -938,13 +938,7 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent* sub, void* 
 
    unsigned trbSubEvSize = (sub->GetSize() - sizeof(hadaqs::RawSubevent)) / 4;
 
-   if ((sub->Alignment()!=4) || !sub->IsSwapped()) {
-      printf("UNEXPECTED TRB DATA FORMAT align %u swap %d - ABORT!!!\n", sub->Alignment(), !sub->IsSwapped());
-      exit(7);
-   }
-
    uint32_t *rawdata = (uint32_t *) sub->RawData();
-
 
    while (ix < trbSubEvSize) {
 
