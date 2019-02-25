@@ -809,9 +809,9 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
    }
 }
 
-bool hadaq::TrbProcessor::CreateMissingTDC(hadaqs::RawSubevent *sub, const std::vector<uint64_t> &mintdc, const std::vector<uint64_t> &maxtdc, int numch, int edges)
+bool hadaq::TrbProcessor::CollectMissingTDCs(hadaqs::RawSubevent *sub, std::vector<unsigned> &ids)
 {
-   bool isany = false;
+   // bool isany = false;
 
    unsigned ix(0); // cursor
 
@@ -834,21 +834,23 @@ bool hadaq::TrbProcessor::CreateMissingTDC(hadaqs::RawSubevent *sub, const std::
       //! ================= FPGA TDC header ========================
       TdcProcessor* subproc = GetTDC(dataid, true);
 
-      bool match = false;
+      //bool match = false;
+      //for (unsigned n=0;n<mintdc.size();++n)
+      //   if ((dataid>=mintdc[n]) && (dataid<maxtdc[n])) match = true;
 
-      for (unsigned n=0;n<mintdc.size();++n)
-         if ((dataid>=mintdc[n]) && (dataid<maxtdc[n])) match = true;
+      if (!subproc && (dataid != 0x5555)) {
 
-      if (!subproc && match && (dataid != 0x5555)) {
-         subproc = new hadaq::TdcProcessor(this, dataid, numch, edges);
-         isany = true;
+         ids.push_back(dataid);
+
+         //subproc = new hadaq::TdcProcessor(this, dataid, numch, edges);
+         //isany = true;
       }  // end of if TDC header
 
-      // all other blocks are ignored
+      // raw data is not interesting
       ix+=datalen;
    }
 
-   return isany;
+   return ids.size() > 0;
 }
 
 void hadaq::TrbProcessor::BuildFastTDCVector()
