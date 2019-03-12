@@ -64,8 +64,8 @@ hadaq::SpillProcessor::SpillProcessor() :
    fVetoPattern = MakeH2("VETO_Patt", "VETO_PATTERN", 3,0,3,3,0,3,
        "h2poly:["
          "[[0,0,1.5,0],[0,1.5,0,0]],[[0.75,1.5,2.25,1.5,0.75],[0.75,1.5,0.75,0,0.75]],[[1.5,3,3,1.5],[0,1.5,0,0]],"
-         "null,null,null,"
-         "[[0,0,1.5,0],[1.5,3,3,1.5]],null,[[1.5,3,3,1.5],[3,3,1.5,3]]"
+         "[[0,0.75,1.5,0.75,0],[1.5,2.25,1.5,0.75,1.5]],null,[[1.5,2.25,3,2.25,1.5],[1.5,2.25,1.5,0.75,1.5]],"
+         "[[0,0,1.5,0],[1.5,3,3,1.5]],[[0.75,1.5,2.25,1.5,0.75],[2.25,3,2.25,1.5,2.25]],[[1.5,3,3,1.5],[3,3,1.5,3]]"
        "];opt:colz,text;X_dir;Y_dir");
 
 /* fVetoPattern = MakeH2("VETO_Patt", "VETO_PATTERN", 3,0,3,3,0,3,"opt:colz,text;X_dir;Y_dir");
@@ -79,6 +79,7 @@ hadaq::SpillProcessor::SpillProcessor() :
    FillH2(fVetoPattern,2,1,7);
    FillH2(fVetoPattern,2,2,8);
 */
+
    fLastBinFast = 0;
    fLastBinSlow = 0;
    fLastEpoch = 0;
