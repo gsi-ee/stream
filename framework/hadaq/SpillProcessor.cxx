@@ -61,16 +61,17 @@ hadaq::SpillProcessor::SpillProcessor() :
    fTrendY = MakeH1("TrendY", "BEAM_Y POSITION", NUMSPILLBINS, 0., NUMSPILLBINS*BINWIDTHSLOW, "hmin:0;hmax:20;Time [sec];Strip_Y");
 
    fHaloPattern = MakeH2("HALO_Patt", "HALO_PATTERN", 4,0,4,4,0,4,"opt:colz,text;X_dir;Y_dir");
-/*   fVetoPattern = MakeH2("VETO_Patt", "VETO_PATTERN", 3,0,3,3,0,3,
+
+   fVetoPattern = MakeH2("VETO_Patt", "VETO_PATTERN", 3,0,3,3,0,3,
        "h2poly:["
          "[[0,0,1.5,0],[0,1.5,0,0]],[[0.75,1.5,2.25,1.5,0.75],[0.75,1.5,0.75,0,0.75]],[[1.5,3,3,1.5],[0,1.5,0,0]],"
          "[[0,0.75,1.5,0.75,0],[1.5,2.25,1.5,0.75,1.5]],null,[[1.5,2.25,3,2.25,1.5],[1.5,2.25,1.5,0.75,1.5]],"
          "[[0,0,1.5,0],[1.5,3,3,1.5]],[[0.75,1.5,2.25,1.5,0.75],[2.25,3,2.25,1.5,2.25]],[[1.5,3,3,1.5],[3,3,1.5,3]]"
        "];opt:colz,text;X_dir;Y_dir");
-*/
 
+   /*
    fVetoPattern = MakeH2("VETO_Patt", "VETO_PATTERN", 4,0,4, 4,0,4,"opt:colz,text;X_dir;Y_dir");
-/*
+
    FillH2(fVetoPattern,0,0,1);
    FillH2(fVetoPattern,0,1,2);
    FillH2(fVetoPattern,0,2,3);
@@ -79,7 +80,7 @@ hadaq::SpillProcessor::SpillProcessor() :
    FillH2(fVetoPattern,2,0,6);
    FillH2(fVetoPattern,2,1,7);
    FillH2(fVetoPattern,2,2,8);
-*/
+   */
 
    fLastBinFast = 0;
    fLastBinSlow = 0;
