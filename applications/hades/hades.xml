@@ -15,10 +15,17 @@
       <loglimit value="100"/>
     </Run>
 
-    <HttpServer name="http" port="8090"/>
+    <HttpServer name="http" port="8090">
+       <TopTitle value="HADES raw monitor"/>
+       <!-- Browser value="off"/-->
+       <Layout value="grid2x2"/>
+       <DrawItem value="[HADES/Run/HLD/HLD_QaFinePerChannel,HADES/Run/HLD/HLD_QAToTPerChannel,HADES/Run/HLD/HLD_QaEdgesPerChannel,HADES/Run/HLD/HLD_QaErrorsPerChannel]"/>
+       <DrawOpt value=""/>
+       <Monitoring value="1000"/>
+    </HttpServer>
 
     <MemoryPool name="Pool">
-       <BufferSize value="400000"/>
+       <BufferSize value="4000000"/>
        <NumBuffers value="1000"/>
     </MemoryPool>
 
@@ -26,7 +33,7 @@
        <asf value="${asf}"/>
        <parallel value="${parallel}"/>
        <!--  InputPort name="Input0" url="hld://co1829811362701.hld"/-->
-       <InputPort name="Input0" reconnect="5" loop="1" url="mbss://lxhadeb08:8101"/>
+       <InputPort name="Input0" reconnect="5" loop="1" url="mbss://lxhadeb11:8104"/>
        <!-- InputPort name="Input0" reconnect="5" loop="1" url="mbss://localhost"/ -->
        <OutputPort name="*" auto="false"/>
        <Events width="4" prec="1" low="0" up="1000" debug="0"/>

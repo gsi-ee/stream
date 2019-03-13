@@ -171,6 +171,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fToTvalue = ToTvalue;
    fToThmin = ToThmin;
    fToThmax = ToThmax;
+   fTotUpperLimit = 20;
 
    if (HistFillLevel() > 1) {
       fChannels = MakeH1("Channels", "Messages per TDC channels", numchannels, 0, numchannels, "ch");
@@ -1581,7 +1582,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                   if (tot < 0. ) {
                       DefFillH1(fhTotMinusCounter, chid, 1.);
                   }
-                  if (tot > 20.) {
+                  if (tot > fTotUpperLimit) {
                       DefFillH1(fhTotMoreCounter, chid, 1.);
                   }
                   DefFillH1(rec.fTot, tot, 1.);

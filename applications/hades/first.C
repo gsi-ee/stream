@@ -93,6 +93,9 @@ extern "C" void after_create(hadaq::HldProcessor* hld)
       hadaq::TdcProcessor* tdc = hld->GetTDC(k);
       if (tdc==0) continue;
 
+      if ((tdc->GetID() >= 0x5000) && (tdc->GetID() < 0x6200))
+         tdc->SetTotUpperLimit(2000);
+
       //printf("Configure %s!\n", tdc->GetName());
 
       // tdc->SetUseLastHit(true);

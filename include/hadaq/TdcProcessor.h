@@ -206,6 +206,7 @@ namespace hadaq {
          double                   fToTvalue;         //! ToT of 0xd trigger
          double                   fToThmin;        //! histogram min
          double                   fToThmax;        //! histogram max
+         double                   fTotUpperLimit; ///<! upper limit for ToT range check
 
          long   fCalibrAmount;        //! current accumulated calibr data
          double fCalibrProgress;      //! current progress in calibration
@@ -486,6 +487,9 @@ namespace hadaq {
 
          /** Create rate histogram to count hits per second (excluding channel 0) */
          void CreateRateHisto(int np = 1000, double xmin = 0., double xmax = 1e5);
+
+         void SetTotUpperLimit(double lmt = 20) { fTotUpperLimit = lmt; }
+         double GetTotUpperLimit() const { return fTotUpperLimit; }
 
          /** Enable print of TDC data when time difference to ref channel belong to specified interval
           * Work ONLY when reference channel 0 is used.
