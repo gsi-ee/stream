@@ -2027,7 +2027,7 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, long* statistic, floa
    if (!preliminary && (finemin>50)) {
       if (quality > 0.4) quality = 0.4;
       if (fCalibrQuality>0.4) {
-         fCalibrStatus = "BadFineMin"; fCalibrStatus += finemin;
+         fCalibrStatus = std::string(GetName()) + std::string("_BadFineMin_") + std::to_string(finemin);
          fCalibrQuality = 0.4;
       }
    }
@@ -2035,7 +2035,7 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, long* statistic, floa
    if (!preliminary && (finemax<400)) {
       if (quality > 0.4) quality = 0.4;
       if (fCalibrQuality > 0.4) {
-         fCalibrStatus = "BadFineMax"; fCalibrStatus += finemax;
+         fCalibrStatus = std::string(GetName()) + std::string("_BadFineMin_") + std::to_string(finemax);
          fCalibrQuality = 0.4;
       }
    }
@@ -2045,7 +2045,7 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, long* statistic, floa
       if (quality > 0.15) quality = 0.15;
 
       if ((fCalibrQuality>0.15) && !preliminary)  {
-         fCalibrStatus = "LowStat";
+         fCalibrStatus = std::string(GetName()) + "_LowStat";
          fCalibrQuality = 0.15;
       }
 
@@ -2080,7 +2080,7 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, long* statistic, floa
       if (dev > 0.05) {
          if (quality > 0.6) quality = 0.6;
          if (fCalibrQuality > 0.6) {
-            fCalibrStatus = "NonLinear";
+            fCalibrStatus = std::string(GetName()) + "_NonLinear";
             fCalibrQuality = 0.6;
          }
       }
@@ -2160,10 +2160,10 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
          fCalibrStatus = "Ready";
          fCalibrQuality = 1.;
       } else if (fCalibrProgress >= 0.3) {
-         fCalibrStatus = "LowStat";
+         fCalibrStatus = std::string(GetName()) + "_LowStat";
          fCalibrQuality = 0.5;
       } else {
-         fCalibrStatus = "BadStat";
+         fCalibrStatus = std::string(GetName()) + "_BadStat";
          fCalibrQuality = 0.2;
       }
    }
