@@ -379,8 +379,7 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
                      slowbin = (fLastEpoch >> 12) % NUMHISTBINS; // use only 12 bits, skipping lower 12 bits
 
                      if (fSpillStartEpoch) {
-                        unsigned diff = EpochDiff(fSpillStartEpoch, fLastEpoch);
-                        hitsbin = diff / NUMEP2;
+                        hitsbin = EpochDiff(fSpillStartEpoch, fLastEpoch) / NUMEP2;
                         hashitsbin = (hitsbin < NUMBINS2);
                      } else {
                         hashitsbin = false;
