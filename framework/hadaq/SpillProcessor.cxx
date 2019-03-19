@@ -178,7 +178,7 @@ void hadaq::SpillProcessor::StopSpill(unsigned epoch)
    CopyH1(fLastSpill, fSpill);
    mgr()->TagH1Time(fLastSpill);
    CopyH1(fHitsLastSpill, fHitsSpill);
-   mgr()->TagH1Time(fHitsSpill);
+   mgr()->TagH1Time(fHitsLastSpill);
 }
 
 double hadaq::SpillProcessor::CalcQuality(unsigned fastbin, unsigned len)
