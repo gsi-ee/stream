@@ -22,6 +22,9 @@ protected:
    base::H1handle fTrendXSlow; ///< Beam X with Quality histogram (with 40 ms  binning)
    base::H1handle fTrendYSlow; ///< Quality histogram (with 40 ms  binning)
 
+   base::H1handle fHitsSpill; ///< Hits in current spill (with 1 ms binning)
+   base::H1handle fHitsLastSpill; ///< Hits in last spill (with 1 ms binning)
+
    base::H1handle fTrendXHaloSlow; ///< Quality histogram (with 40 ms  binning)
    base::H1handle fTrendYHaloSlow; ///< Quality histogram (with 40 ms  binning)
 
