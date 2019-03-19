@@ -15,7 +15,7 @@ const unsigned NUMSTAT = 100; // use 100 bins for stat calculations
 const unsigned NUMSPILLBINS = 1000; // approx 40s for spill recording
 
 const unsigned NUMBINS2 = 30000; // use 100 bins for stat calculations
-const unsigned NUMEP2 = 49; // number of epochs for each bin
+const unsigned NUMEP2 = 98; // number of epochs for each bin
 
 
 //const unsigned ChannelsLookup[33] = {0,
