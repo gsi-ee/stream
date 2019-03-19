@@ -166,6 +166,7 @@ void hadaq::SpillProcessor::StopSpill(unsigned epoch)
    fLastSpillEpoch = 0;
    fLastSpillBin = 0;
    CopyH1(fLastSpill, fSpill);
+   mgr()->TagH1Time(fLastSpill);
 }
 
 double hadaq::SpillProcessor::CalcQuality(unsigned fastbin, unsigned len)
