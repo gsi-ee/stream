@@ -63,6 +63,7 @@ protected:
 
    unsigned fSpillStartEpoch; ///< epoch value which assumed to be spill start, 0 - off
    unsigned fSpillEndEpoch;   ///< epoch value when switch off spill
+   unsigned fSpillStartCoarse;
 
    double fMinSpillLength;  ///< minimal spill time in seconds
    double fMaxSpillLength; ///< maximal spill time in seconds
@@ -84,10 +85,16 @@ protected:
    /** Hard difference between epochs */
    inline unsigned EpochDiff(unsigned ep1, unsigned ep2) { return ep1 <= ep2 ? ep2 - ep1 : ep2 + 0x10000000 - ep1; }
 
+   inline unsigned Get1msBin(unsigned ep1, unsigned c1, unsigned ep2, unsigned c2)
+   {
+      unsigned ediff = EpochDiff(ep1,ep2) * 2048 + c2 - c1; // 5ns
+      return ediff / 200000;
+   }
+
    /** Return time difference between epochs in seconds */
    double EpochTmDiff(unsigned ep1, unsigned ep2);
 
-   void StartSpill(unsigned epoch);
+   void StartSpill(unsigned epoch, unsigned coarse = 0);
    void StopSpill(unsigned epoch);
 
    double CalcQuality(unsigned firstbin, unsigned len);

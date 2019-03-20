@@ -14,8 +14,7 @@ const double BINWIDTHSLOW = EPOCHLEN*SLOWEPOCHS;
 const unsigned NUMSTAT = 100; // use 100 bins for stat calculations
 const unsigned NUMSPILLBINS = 1000; // approx 40s for spill recording
 
-const unsigned NUMBINS2 = 30000; // use 100 bins for stat calculations
-const unsigned NUMEP2 = 98; // number of epochs for each bin
+const unsigned NUM1MSBINS = 20000; // 20 seconds
 
 
 //const unsigned ChannelsLookup[33] = {0,
@@ -48,10 +47,8 @@ hadaq::SpillProcessor::SpillProcessor() :
    snprintf(title, sizeof(title), "Slow BEAM POSITION_Y, %5.2f ms bins", BINWIDTHSLOW*1e3);
    fTrendYSlow = MakeH1("YSlow", title, NUMHISTBINS, 0., BINWIDTHSLOW*NUMHISTBINS, "hmin:0;hmax:20;Time [sec];Y_Beam_Pos[strip]");
 
-   snprintf(title, sizeof(title), "Hits counts in spill, %7.5f ms bins", NUMEP2*EPOCHLEN*1e3);
-   fHitsSpill = MakeH1("HitsSpill", title, NUMBINS2, 0., NUMBINS2*NUMEP2*EPOCHLEN, "Time [sec];Hits");
-   snprintf(title, sizeof(title), "Hits counts in last spill, %7.5f ms bins", NUMEP2*EPOCHLEN*1e3);
-   fHitsLastSpill = MakeH1("HitsLastSpill", title, NUMBINS2, 0., NUMBINS2*NUMEP2*EPOCHLEN, "Time [sec];Hits");
+   fHitsSpill = MakeH1("HitsSpill", "Hits counts in spill, 1 ms bins", NUM1MSBINS, 0., NUM1MSBINS*1e-3, "Time [sec];Hits");
+   fHitsLastSpill = MakeH1("HitsLastSpill", "Hits counts in last spill, 1 ms bins", NUM1MSBINS, 0., NUM1MSBINS*1e-3, "Time [sec];Hits");
 
    snprintf(title, sizeof(title), "Slow HALO POSITION_X, %5.2f ms bins", BINWIDTHSLOW*1e3);
    fTrendXHaloSlow = MakeH1("XHALOSlow", title, NUMHISTBINS, 0., BINWIDTHSLOW*NUMHISTBINS, "hmin:0;hmax:4;Time [sec];Y_HALO_Pos[strip]");
@@ -103,6 +100,7 @@ hadaq::SpillProcessor::SpillProcessor() :
    fSpillOffLevel = 10;
    fSpillMinCnt = 5;
    fSpillStartEpoch = 0;
+   fSpillStartCoarse = 0;
    fAutoSpillDetect = true;
 
    fLastSpillEpoch = 0;
@@ -147,9 +145,10 @@ double hadaq::SpillProcessor::EpochTmDiff(unsigned ep1, unsigned ep2)
    return EpochDiff(ep1, ep2) * EPOCHLEN;
 }
 
-void hadaq::SpillProcessor::StartSpill(unsigned epoch)
+void hadaq::SpillProcessor::StartSpill(unsigned epoch, unsigned coarse)
 {
    fSpillStartEpoch = epoch;
+   fSpillStartCoarse = coarse;
    fSpillEndEpoch = 0;
    fLastSpillEpoch = epoch & ~(FASTEPOCHS-1); // mask not used bins
    fLastSpillBin = 0;
@@ -247,9 +246,9 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
 
             bool istdc = (dataid>=fTdcMin) && (dataid<fTdcMax);
 
-            unsigned slowbin = 0, fastbin = 0, hitsbin = 0; // current bin number in histogram
+            unsigned slowbin = 0, fastbin = 0; // current bin number in histogram
             unsigned epochch0 = 0;
-            bool firtst_epoch = true, use_hits = false, hashitsbin = false;
+            bool firtst_epoch = true, use_hits = false;
 
             if (istdc) {
 
@@ -291,7 +290,10 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
                                  FastFillH1(fHitsFast, fastbin);
                                  FastFillH1(fHitsSlow, slowbin);
                                  FastFillH1(fBeamX, pos);
-                                 if (hashitsbin) FastFillH1(fHitsSpill, hitsbin);
+                                 if (fSpillStartEpoch) {
+                                    unsigned bin = Get1msBin(fSpillStartEpoch, fSpillStartCoarse, fLastEpoch, msg.getHitTmCoarse());
+                                    if (bin < NUM1MSBINS) FastFillH1(fHitsSpill, bin);
+                                 }
                                  fSumX += pos;
                                  fCntX++;
                               } else if (lookup > 100 && lookup < 200) {
@@ -299,7 +301,10 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
                                  FastFillH1(fHitsFast, fastbin);
                                  FastFillH1(fHitsSlow, slowbin);
                                  FastFillH1(fBeamY, pos);
-                                 if (hashitsbin) FastFillH1(fHitsSpill, hitsbin);
+                                 if (fSpillStartEpoch) {
+                                    unsigned bin = Get1msBin(fSpillStartEpoch, fSpillStartCoarse, fLastEpoch, msg.getHitTmCoarse());
+                                    if (bin < NUM1MSBINS) FastFillH1(fHitsSpill, bin);
+                                 }
                                  fSumY += pos;
                                  fCntY++;
                               } else if (lookup > 200 && lookup < 300) { // Halo channels, Up, Down, L, R
@@ -347,7 +352,7 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
                                    }
 
                                    // start new spill
-                                   if (new_spill) StartSpill(fLastEpoch);
+                                   if (new_spill) StartSpill(fLastEpoch, msg.getHitTmCoarse());
                                 }
                              } else if (lookup == 402) { // trigger counts
                                 FastFillH1(fTriggerFast, fastbin);
@@ -377,14 +382,6 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
 
                      fastbin = (fLastEpoch >> 1) % NUMHISTBINS; // use lower bits from epoch
                      slowbin = (fLastEpoch >> 12) % NUMHISTBINS; // use only 12 bits, skipping lower 12 bits
-
-                     if (fSpillStartEpoch) {
-                        hitsbin = EpochDiff(fSpillStartEpoch, fLastEpoch) / NUMEP2;
-                        hashitsbin = (hitsbin < NUMBINS2);
-                     } else {
-                        hashitsbin = false;
-                        hitsbin = 0;
-                     }
 
                      if (fFirstEpoch) {
                         fFirstEpoch = false;
