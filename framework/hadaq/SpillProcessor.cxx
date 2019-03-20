@@ -109,7 +109,7 @@ hadaq::SpillProcessor::SpillProcessor() :
    fLastSpillBin = 0;
 
 
-   fMaxSpillLength = 10.;
+   fMaxSpillLength = 20.;
    fMinSpillLength = 0.1;
    fLastQSlowValue = 0;
 
