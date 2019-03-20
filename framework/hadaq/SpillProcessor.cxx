@@ -66,7 +66,7 @@ hadaq::SpillProcessor::SpillProcessor() :
    fTrendX = MakeH1("TrendX", "BEAM_X POSITION", NUMSPILLBINS, 0., NUMSPILLBINS*BINWIDTHSLOW, "hmin:0;hmax:20;Time [sec];Strip_X");
    fTrendY = MakeH1("TrendY", "BEAM_Y POSITION", NUMSPILLBINS, 0., NUMSPILLBINS*BINWIDTHSLOW, "hmin:0;hmax:20;Time [sec];Strip_Y");
 
-   fHaloPattern = MakeH2("HALO_Patt", "HALO_PATTERN", 4,0,4,4,0,4,"opt:colz,text;X_dir;Y_dir");
+   fHaloPattern = MakeH2("HALO_Patt", "HALO_PATTERN", 3,0,3,3,0,3, "opt:colz,text;X_dir;Y_dir");
 
    fVetoPattern = MakeH2("VETO_Patt", "VETO_PATTERN", 3,0,3,3,0,3,
        "h2poly:["
@@ -319,22 +319,22 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
                                     case 7: DefFastFillH2(fVetoPattern, 2, 0); break;
                                     case 8: DefFastFillH2(fVetoPattern, 0, 0); break;
                                     case 9:  // Halo Up
-                                       DefFastFillH2(fHaloPattern, 2, 3);
+                                       DefFastFillH2(fHaloPattern, 1, 2);
                                        fSumHaloY += 3;
                                        fCntHaloY++;
                                        break;
                                     case 10: // Halo Down
-                                       DefFastFillH2(fHaloPattern, 2, 1);
+                                       DefFastFillH2(fHaloPattern, 1, 0);
                                        fSumHaloY += 1;
                                        fCntHaloY++;
                                        break;
                                     case 11: // Halo Left
-                                       DefFastFillH2(fHaloPattern, 1, 2);
+                                       DefFastFillH2(fHaloPattern, 0, 1);
                                        fSumHaloX += 1;
                                        fCntHaloX++;
                                        break;
                                     case 12: // Halo Right
-                                       DefFastFillH2(fHaloPattern, 3, 2);
+                                       DefFastFillH2(fHaloPattern, 2, 1);
                                        fSumHaloX += 3;
                                        fCntHaloX++;
                                        break;
