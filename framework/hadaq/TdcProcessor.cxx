@@ -63,7 +63,6 @@ void hadaq::TdcProcessor::SetToTCalibr(int minstat, double rms)
    gTotRMSLimit = rms;
 }
 
-
 void hadaq::TdcProcessor::SetUseDTrigForRef(bool on)
 {
    gUseDTrigForRef = on;
@@ -733,7 +732,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
    uint32_t epoch(0), chid, fine, kind, coarse(0), new_fine,
             idata, *tgtraw = tgt ? (uint32_t *) tgt->RawData() : 0;
    bool isrising, hard_failure, fast_loop = HistFillLevel() < 2;
-   double corr;
+   double corr, ch0tm{0};
 
    // if (fAllTotMode==1) printf("%s dtrig %d do_tot %d dofalling %d\n", GetName(), is_0d_trig, do_tot, DoFallingEdge());
 
@@ -871,23 +870,36 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
 
       if (use_in_calibr && (kind == hadaq::tdckind_Hit)) {
          coarse = msg.getHitTmCoarse();
+         double tm = ((epoch << 11) | coarse) * 5e-9 - corr;
+         bool usehit = true;
+
+         if ((chid>0) && ch0tm && (gTrigDWindowLow < gTrigDWindowHigh-1.)) {
+            double localtm = (tm - ch0tm)*1e9;
+            usehit = (gTrigDWindowLow <= localtm) && (localtm <= gTrigDWindowHigh);
+         }
+
          if (isrising) {
+            if (chid==0) ch0tm = tm;
             if (chid>0) nrising++;
-            rec.rising_stat[fine]++;
-            rec.all_rising_stat++;
-            rec.rising_last_tm = ((epoch << 11) | coarse) * 5e-9 - corr;
-            rec.rising_new_value = true;
+            if (usehit) {
+               rec.rising_stat[fine]++;
+               rec.all_rising_stat++;
+               rec.rising_last_tm = tm;
+               rec.rising_new_value = true;
+            }
          } else {
             nfalling++;
-            rec.falling_stat[fine]++;
-            rec.all_falling_stat++;
-            if (rec.rising_new_value) {
-               double tot = ((((epoch << 11) | coarse) * 5e-9 - corr) - rec.rising_last_tm)*1e9;
+            if (usehit) {
+               rec.falling_stat[fine]++;
+               rec.all_falling_stat++;
+               if (rec.rising_new_value) {
+                  double tot = (tm - rec.rising_last_tm)*1e9;
 
-               // DefFillH1(rec.fTot, tot, 1.);
-               // add shift again to be on safe side when calculate new shift at the end
-               rec.last_tot = tot + rec.tot_shift;
-               rec.rising_new_value = false;
+                  // DefFillH1(rec.fTot, tot, 1.);
+                  // add shift again to be on safe side when calculate new shift at the end
+                  rec.last_tot = tot + rec.tot_shift;
+                  rec.rising_new_value = false;
+               }
             }
          }
 
