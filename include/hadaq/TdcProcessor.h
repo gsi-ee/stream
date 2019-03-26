@@ -269,6 +269,8 @@ namespace hadaq {
          long      fRateCnt;             //! counter used for rate calculation
          double    fLastRateTm;          //! last ch0 time when rate was calculated
 
+         unsigned  fSkipTdcMessages;     ///<! number of first messages, skipped from analysis
+
          /** Returns true when processor used to select trigger signal
           * TDC not yet able to perform trigger selection */
          virtual bool doTriggerSelection() const { return false; }
@@ -358,6 +360,9 @@ namespace hadaq {
 
          /** Configure Tot calibration parameters */
          static void SetToTCalibr(int minstat = 100, double rms = 0.15);
+
+         /** Set number of TDC messages, which should be skipped from subevent before analyzing it */
+         void SetSkipTdcMessages(unsigned cnt = 0) { fSkipTdcMessages = cnt; }
 
          inline unsigned NumChannels() const { return fNumChannels; }
          inline bool DoRisingEdge() const { return true; }

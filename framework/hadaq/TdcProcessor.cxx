@@ -123,7 +123,8 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fCompensateEpochCounter(0),
    fCh0Enabled(false),
    fLastTdcHeader(),
-   fLastTdcTrailer()
+   fLastTdcTrailer(),
+   fSkipTdcMessages(0)
 {
    fIsTDC = true;
 
@@ -1343,6 +1344,12 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    hadaq::TdcMessage& msg = iter.msg();
    hadaq::TdcMessage calibr;
    unsigned ncalibr(20), temp(0), lowid(0), highid(0); // clear indicate that no calibration data present
+
+   if (fSkipTdcMessages > 0) {
+      unsigned skipcnt = fSkipTdcMessages;
+      while (skipcnt-- > 0)
+         if (!iter.next()) break;
+   }
 
    while (iter.next()) {
 
