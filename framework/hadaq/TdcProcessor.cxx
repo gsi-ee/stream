@@ -707,7 +707,8 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
 
    unsigned tgtindx0(tgtindx), cnt(0),
          hitcnt(0), hit1cnt(0), epochcnt(0), errcnt(0), calibr_indx(0), calibr_num(0),
-         nrising(0), nfalling(0);
+         nrising(0), nfalling(0),
+         nmatches(0); // try to check sequence of hits, if fails
 
    bool use_in_calibr = ((1 << sub->GetTrigTypeTrb3()) & fCalibrTriggerMask) != 0;
    bool is_0d_trig = (sub->GetTrigTypeTrb3() == 0xD);
@@ -880,16 +881,22 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
 
          if (isrising) {
             if (chid==0) ch0tm = tm;
-            if (chid>0) nrising++;
             if (usehit) {
+               if (chid>0) {
+                  if (nmatches+1 == chid*2) nmatches++; else nmatches = 0;
+                  nrising++;
+               } else {
+                  nmatches = 1;
+               }
                rec.rising_stat[fine]++;
                rec.all_rising_stat++;
                rec.rising_last_tm = tm;
                rec.rising_new_value = true;
             }
          } else {
-            nfalling++;
             if (usehit) {
+               nfalling++;
+               if (nmatches == chid*2) nmatches++; else nmatches = 0;
                rec.falling_stat[fine]++;
                rec.all_falling_stat++;
                if (rec.rising_new_value) {
@@ -955,6 +962,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
    if (fAllCalibrMode > 0) {
       // detect 0xD trigger ourself
       if (!is_0d_trig && (nrising == nfalling) && (nrising+1 == NumChannels())) is_0d_trig = true;
+      if (!is_0d_trig && (nmatches > 16)) is_0d_trig = true;
 
       if (is_0d_trig) fAllDTrigCnt++;
       if ((fAllDTrigCnt>10) && (fAllTotMode<0)) fAllTotMode = 0;
