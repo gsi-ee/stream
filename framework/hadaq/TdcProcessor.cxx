@@ -124,7 +124,8 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fCh0Enabled(false),
    fLastTdcHeader(),
    fLastTdcTrailer(),
-   fSkipTdcMessages(0)
+   fSkipTdcMessages(0),
+   f400Mhz(false)
 {
    fIsTDC = true;
 
@@ -1403,8 +1404,17 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          unsigned fine = msg.getHitTmFine();
          unsigned coarse = msg.getHitTmCoarse();
          bool isrising = msg.isHitRisingEdge();
+         unsigned bad_fine = 0x3FF;
 
          localtm = iter.getMsgTimeCoarse();
+
+         if (f400Mhz) {
+            unsigned coarse25 = (coarse << 1) | ((fine & 0x200) ? 1 : 0);
+            fine = fine & 0x1FF;
+            bad_fine = 0x1ff;
+
+            localtm = iter.get400MsgTimeCoarse(coarse25);
+         }
 
          if (chid >= NumChannels()) {
             ADDERROR(errChId, "Channel number %u bigger than configured %u", chid, NumChannels());
@@ -1423,7 +1433,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          if (IsEveryEpoch())
             iter.clearCurEpoch();
 
-         if (fine == 0x3FF) {
+         if (fine == bad_fine) {
             if (first_scan) {
                // special case - missing hit, just ignore such value
                ADDERROR(err3ff, "Missing hit in channel %u fine counter is %x", chid, fine);
@@ -1514,7 +1524,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                CreateChannelHistograms(chid);
 
             bool use_fine_for_stat = true;
-            if (!msg.isHit0Msg())
+            if (!f400Mhz && !msg.isHit0Msg())
                use_fine_for_stat = false;
             else if (use_for_calibr == 3)
                use_fine_for_stat = (gTrigDWindowLow <= localtm*1e9) && (localtm*1e9 <= gTrigDWindowHigh);
@@ -2053,7 +2063,7 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, long* statistic, floa
    double quality = 1.;
 
 
-   if (!preliminary && (finemin>50)) {
+   if (!preliminary && (finemin > 50)) {
       if (quality > 0.4) quality = 0.4;
       if (fCalibrQuality>0.4) {
          fCalibrStatus = std::string(GetName()) + std::string("_BadFineMin_") + std::to_string(finemin);
@@ -2061,7 +2071,7 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, long* statistic, floa
       }
    }
 
-   if (!preliminary && (finemax<400)) {
+   if (!preliminary && (finemax < (f400Mhz ? 200 : 400))) {
       if (quality > 0.4) quality = 0.4;
       if (fCalibrQuality > 0.4) {
          fCalibrStatus = std::string(GetName()) + std::string("_BadFineMin_") + std::to_string(finemax);
@@ -2105,7 +2115,7 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, long* statistic, floa
 
    if (!preliminary && !use_linear && (sum1>100)) {
       double dev = sqrt(sum2/sum1); // average deviation
-      printf("%s ch %u deviation %5.4f\n", GetName(), nch, dev);
+      printf("%s ch %u cnts %5.0f deviation %5.4f\n", GetName(), nch, sum, dev);
       if (dev > 0.05) {
          if (quality > 0.6) quality = 0.6;
          if (fCalibrQuality > 0.6) {
@@ -2367,7 +2377,6 @@ void hadaq::TdcProcessor::StoreCalibration(const std::string& fprefix, unsigned 
    }
 
    fclose(f);
-
 
    printf("%s storing calibration in %s\n", GetName(), fname);
 }

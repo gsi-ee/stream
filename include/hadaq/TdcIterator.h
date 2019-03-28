@@ -99,6 +99,10 @@ namespace hadaq {
          inline double getMsgTimeCoarse() const
          { return fConv.ToSeconds(getMsgStamp()); }
 
+         // return coarse time for 400 MHz message with given coarse counter
+         inline double get400MsgTimeCoarse(unsigned coarse25) const
+         { return fConv.ToSeconds((isCurEpoch() ? ((uint64_t) fCurEpoch) << 11 : 0) | (coarse25 >> 1)) + (coarse25 % 2) * 2.5e-9; }
+
          // return fine time value for current message
          inline double getMsgTimeFine() const
          {
