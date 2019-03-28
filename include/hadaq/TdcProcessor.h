@@ -147,9 +147,14 @@ namespace hadaq {
                rising_calibr = new float[numfine];
                falling_stat = new long[numfine];
                falling_calibr = new float[numfine];
+               FillCalibr(numfine, 1.0);
+            }
+
+            void FillCalibr(unsigned numfine, double factor = 1.)
+            {
                for (unsigned n=0;n<numfine;n++) {
                   falling_stat[n] = rising_stat[n] = 0;
-                  falling_calibr[n] = rising_calibr[n] = hadaq::TdcMessage::SimpleFineCalibr(n);
+                  falling_calibr[n] = rising_calibr[n] = factor * hadaq::TdcMessage::SimpleFineCalibr(n);
                }
             }
 
@@ -304,7 +309,6 @@ namespace hadaq {
          double DoTestFineTimeH2(int iCh, base::H2handle h);
          double DoTestFineTime(double hRebin[], int nBinsRebin, int nEntries);
 
-
          /** These methods used to fill different raw histograms during first scan */
          virtual void BeforeFill();
          virtual void AfterFill(SubProcMap* = 0);
@@ -365,7 +369,7 @@ namespace hadaq {
          /** Set number of TDC messages, which should be skipped from subevent before analyzing it */
          void SetSkipTdcMessages(unsigned cnt = 0) { fSkipTdcMessages = cnt; }
 
-         void Set400Mhz(bool on = true) { f400Mhz = on; }
+         void Set400Mhz(bool on = true);
 
          inline unsigned NumChannels() const { return fNumChannels; }
          inline bool DoRisingEdge() const { return true; }

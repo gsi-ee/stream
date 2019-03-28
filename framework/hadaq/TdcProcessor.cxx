@@ -206,9 +206,8 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    for (unsigned ch=0;ch<numchannels;ch++)
       fCh.push_back(ChannelRec());
 
-   for (unsigned ch=0;ch<numchannels;ch++) {
+   for (unsigned ch=0;ch<numchannels;ch++)
       fCh[ch].CreateCalibr(fNumFineBins);
-   }
 
    // always create histograms for channel 0
    CreateChannelHistograms(0);
@@ -226,6 +225,16 @@ hadaq::TdcProcessor::~TdcProcessor()
    for (unsigned ch=0;ch<NumChannels();ch++)
       fCh[ch].ReleaseCalibr();
 }
+
+void hadaq::TdcProcessor::Set400Mhz(bool on)
+{
+   f400Mhz = on;
+
+   for (unsigned ch=0;ch<fNumChannels;ch++)
+      fCh[ch].FillCalibr(fNumFineBins, f400Mhz ? 0.5 : 1.);
+}
+
+
 
 bool hadaq::TdcProcessor::CheckPrintError()
 {
@@ -2088,13 +2097,18 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, long* statistic, floa
          fCalibrQuality = 0.15;
       }
 
+      double factor = f400Mhz ? 0.5 : 1.0;
+
       for (unsigned n=0;n<fNumFineBins;n++)
-         calibr[n] = hadaq::TdcMessage::SimpleFineCalibr(n);
+         calibr[n] = factor * hadaq::TdcMessage::SimpleFineCalibr(n);
 
       return quality;
    }
 
-   double sum1 = 0., sum2 = 0., linear = 0, exact = 0.;
+   double sum1 = 0., sum2 = 0., linear = 0, exact = 0.,
+          coarse_unit = hadaq::TdcMessage::CoarseUnit();
+
+   if (f400Mhz) coarse_unit*=0.5;
 
    for (unsigned n=0;n<fNumFineBins;n++) {
       if (n<=finemin) linear = 0.; else
@@ -2109,7 +2123,7 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, long* statistic, floa
          sum2 += (exact - linear) * (exact - linear);
       }
 
-      calibr[n] = exact * hadaq::TdcMessage::CoarseUnit();
+      calibr[n] = exact * coarse_unit;
    }
 
 
