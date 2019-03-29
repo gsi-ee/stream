@@ -32,9 +32,9 @@ hadaq::SpillProcessor::SpillProcessor() :
 
    char title[200];
    snprintf(title, sizeof(title), "Current spill Quality factor, %5.2f ms bins", BINWIDTHSLOW*1e3);
-   fSpill = MakeH1("Spill_Q_factor", "Current spill Quality factor", NUMSPILLBINS, 0., NUMSPILLBINS*BINWIDTHSLOW, "sec");
+   fSpill = MakeH1("Spill_Q_factor", "Current spill Quality factor", NUMSPILLBINS, 0., NUMSPILLBINS*BINWIDTHSLOW, "hmin:0;hmax:20;sec");
    snprintf(title, sizeof(title), "Last spill Quality factor, %5.2f ms bins", BINWIDTHSLOW*1e3);
-   fLastSpill = MakeH1("LastSpill_Q_factor", "Last spill Quality factor", NUMSPILLBINS, 0., NUMSPILLBINS*BINWIDTHSLOW, "sec");
+   fLastSpill = MakeH1("LastSpill_Q_factor", "Last spill Quality factor", NUMSPILLBINS, 0., NUMSPILLBINS*BINWIDTHSLOW, "hmin:0;hmax:20;sec");
 
    snprintf(title, sizeof(title), "Fast hits distribution, %5.2f us bins", BINWIDTHFAST*1e6);
    fHitsFast = MakeH1("HitsFast", title, NUMHISTBINS, 0., BINWIDTHFAST*NUMHISTBINS*1e3, "Time[ms];Ncounts_in_20.48us_bin");
@@ -304,7 +304,7 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
                                  FastFillH1(fBeamY, pos);
                                  if (fSpillStartEpoch) {
                                     unsigned bin = Get1msBin(fSpillStartEpoch, fSpillStartCoarse, fLastEpoch, msg.getHitTmCoarse());
-                                    if (bin < NUM1MSBINS) FastFillH1(fHitsSpill, bin);
+                                   // if (bin < NUM1MSBINS) FastFillH1(fHitsSpill, bin);
                                  }
                                  fSumY += pos;
                                  fCntY++;
@@ -321,19 +321,22 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
                                     case 8: DefFastFillH2(fVetoPattern, 0, 0); break;
                                     case 9:  // Halo Up
                                        // DefFastFillH2(fHaloPattern, 1, 2);
-                                       DefFastFillH2(fHaloPattern, 2, 1);
+                                       //DefFastFillH2(fHaloPattern, 2, 1);
+                                       DefFastFillH2(fHaloPattern, 1, 0);
                                        fSumHaloY += 3;
                                        fCntHaloY++;
                                        break;
                                     case 10: // Halo Down
                                        // DefFastFillH2(fHaloPattern, 1, 0);
-                                       DefFastFillH2(fHaloPattern, 2, 2);
+                                       //DefFastFillH2(fHaloPattern, 2, 2);
+                                       DefFastFillH2(fHaloPattern, 2, 1);
                                        fSumHaloY += 1;
                                        fCntHaloY++;
                                        break;
                                     case 11: // Halo Left
                                        // DefFastFillH2(fHaloPattern, 0, 1);
-                                       DefFastFillH2(fHaloPattern, 1, 0);
+                                       //DefFastFillH2(fHaloPattern, 1, 0);
+                                       DefFastFillH2(fHaloPattern, 2, 2);
                                        fSumHaloX += 1;
                                        fCntHaloX++;
                                        break;
