@@ -276,6 +276,7 @@ namespace hadaq {
 
          unsigned  fSkipTdcMessages;     ///<! number of first messages, skipped from analysis
          bool f400Mhz;                   ///<! is 400Mhz mode (debug)
+         double fCustomMhz;              ///<! new design Mhz
 
          /** Returns true when processor used to select trigger signal
           * TDC not yet able to perform trigger selection */
@@ -370,6 +371,8 @@ namespace hadaq {
          void SetSkipTdcMessages(unsigned cnt = 0) { fSkipTdcMessages = cnt; }
 
          void Set400Mhz(bool on = true);
+
+         void SetCustomMhz(float freq = 400.);
 
          inline unsigned NumChannels() const { return fNumChannels; }
          inline bool DoRisingEdge() const { return true; }

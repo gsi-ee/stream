@@ -45,7 +45,10 @@ void first()
    hadaq::TdcProcessor *tdc = trb3->GetTDC(0x1133);
 
    // mark as 400 MHz
-   tdc->Set400Mhz();
+   // tdc->Set400Mhz();
+
+   // or use custom frequency
+   tdc->SetCustomMhz(340);
 
 
    for (unsigned nch=1;nch<5;nch++)

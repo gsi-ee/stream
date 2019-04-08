@@ -125,7 +125,8 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fLastTdcHeader(),
    fLastTdcTrailer(),
    fSkipTdcMessages(0),
-   f400Mhz(false)
+   f400Mhz(false),
+   fCustomMhz(200.)
 {
    fIsTDC = true;
 
@@ -229,18 +230,26 @@ hadaq::TdcProcessor::~TdcProcessor()
 void hadaq::TdcProcessor::Set400Mhz(bool on)
 {
    f400Mhz = on;
+   fCustomMhz = on ? 400. : 200.;
 
    for (unsigned ch=0;ch<fNumChannels;ch++)
-      fCh[ch].FillCalibr(fNumFineBins, f400Mhz ? 0.5 : 1.);
+      fCh[ch].FillCalibr(fNumFineBins, 200. / fCustomMhz);
 }
 
+void hadaq::TdcProcessor::SetCustomMhz(float freq)
+{
+   f400Mhz = true;
+   fCustomMhz = freq;
+
+   for (unsigned ch=0;ch<fNumChannels;ch++)
+      fCh[ch].FillCalibr(fNumFineBins, 200. / fCustomMhz);
+}
 
 
 bool hadaq::TdcProcessor::CheckPrintError()
 {
    return fTrb ? fTrb->CheckPrintError() : true;
 }
-
 
 void hadaq::TdcProcessor::AddError(unsigned code, const char *fmt, ...)
 {
@@ -1422,7 +1431,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             fine = fine & 0x1FF;
             bad_fine = 0x1ff;
 
-            localtm = iter.get400MsgTimeCoarse(coarse25);
+            localtm = iter.get400MsgTimeCoarse(coarse25, fCustomMhz);
          }
 
          if (chid >= NumChannels()) {
@@ -2097,7 +2106,7 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, long* statistic, floa
          fCalibrQuality = 0.15;
       }
 
-      double factor = f400Mhz ? 0.5 : 1.0;
+      double factor = 200. / fCustomMhz;
 
       for (unsigned n=0;n<fNumFineBins;n++)
          calibr[n] = factor * hadaq::TdcMessage::SimpleFineCalibr(n);
@@ -2108,7 +2117,7 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, long* statistic, floa
    double sum1 = 0., sum2 = 0., linear = 0, exact = 0.,
           coarse_unit = hadaq::TdcMessage::CoarseUnit();
 
-   if (f400Mhz) coarse_unit*=0.5;
+   if (f400Mhz) coarse_unit *= 200. / fCustomMhz;
 
    for (unsigned n=0;n<fNumFineBins;n++) {
       if (n<=finemin) linear = 0.; else
