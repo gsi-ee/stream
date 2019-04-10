@@ -1424,14 +1424,15 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          bool isrising = msg.isHitRisingEdge();
          unsigned bad_fine = 0x3FF;
 
-         localtm = iter.getMsgTimeCoarse();
-
          if (f400Mhz) {
             unsigned coarse25 = (coarse << 1) | ((fine & 0x200) ? 1 : 0);
             fine = fine & 0x1FF;
             bad_fine = 0x1ff;
+            unsigned epoch = iter.isCurEpoch() ? iter.getCurEpoch() : 0;
 
-            localtm = iter.get400MsgTimeCoarse(coarse25, fCustomMhz);
+            localtm = ((epoch << 12) | coarse25) * 1000. / fCustomMhz * 1e-9;
+         } else {
+            localtm = iter.getMsgTimeCoarse();
          }
 
          if (chid >= NumChannels()) {
