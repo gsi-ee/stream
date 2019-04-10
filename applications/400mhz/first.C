@@ -6,20 +6,20 @@ void first()
 
    base::ProcMgr::instance()->SetHistFilling(4);
 
-   // min/max values of
-   hadaq::TdcMessage::SetFineLimits(18, 248);
+   // typical min/max values of
+   hadaq::TdcMessage::SetFineLimits(18, 260);
 
 
    // number of fine bins
    // ToT range in ns
-   hadaq::TdcProcessor::SetDefaults(300, 50);
+   hadaq::TdcProcessor::SetDefaults(400, 50);
 
    // default channel numbers and edges mask
    // 1 - use only rising edge, falling edge is ignored
    // 2 - falling edge enabled and fully independent from rising edge
    // 3 - falling edge enabled and uses calibration from rising edge
    // 4 - falling edge enabled and common statistic is used for calibration
-   hadaq::TrbProcessor::SetDefaults(5, 2);
+   hadaq::TrbProcessor::SetDefaults(9, 2);
 
    hadaq::HldProcessor* hld = new hadaq::HldProcessor();
    hadaq::TrbProcessor* trb3 = new hadaq::TrbProcessor(0x8001, hld);
