@@ -303,7 +303,7 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
                                  FastFillH1(fHitsSlow, slowbin);
                                  FastFillH1(fBeamY, pos);
                                  if (fSpillStartEpoch) {
-                                    unsigned bin = Get1msBin(fSpillStartEpoch, fSpillStartCoarse, fLastEpoch, msg.getHitTmCoarse());
+                                    /* unsigned bin = */ Get1msBin(fSpillStartEpoch, fSpillStartCoarse, fLastEpoch, msg.getHitTmCoarse());
                                    // if (bin < NUM1MSBINS) FastFillH1(fHitsSpill, bin);
                                  }
                                  fSumY += pos;
