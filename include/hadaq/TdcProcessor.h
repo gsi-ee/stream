@@ -284,6 +284,7 @@ namespace hadaq {
 
          static unsigned gNumFineBins;   //! default value for number of bins in histograms for fine bins
          static unsigned gTotRange;      //! default range for TOT histogram
+         static unsigned gHist2dReduce;  //! reduce factor for points in 2D histogram
          static unsigned gErrorMask;     //! mask for errors to display
          static bool gAllHistos;         //! when true, all histos for all channels created simultaneously
          static double gTrigDWindowLow;  //! low limit of time stamps for 0xD trigger used for calibration
@@ -350,7 +351,7 @@ namespace hadaq {
 
          static void SetMaxBoardId(unsigned) { }
 
-         static void SetDefaults(unsigned numfinebins = 600, unsigned totrange = 100);
+         static void SetDefaults(unsigned numfinebins = 600, unsigned totrange = 100, unsigned hist2dreduced = 10);
 
          static void SetErrorMask(unsigned mask = 0xffffffffU);
 

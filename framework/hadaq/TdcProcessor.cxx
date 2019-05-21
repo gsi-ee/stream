@@ -21,6 +21,8 @@
 
 unsigned hadaq::TdcProcessor::gNumFineBins = FineCounterBins;
 unsigned hadaq::TdcProcessor::gTotRange = 100;
+unsigned hadaq::TdcProcessor::gHist2dReduce = 10;  //! reduce factor for points in 2D histogram
+
 unsigned hadaq::TdcProcessor::gErrorMask = 0xffffffffU;
 bool hadaq::TdcProcessor::gAllHistos = false;
 double hadaq::TdcProcessor::gTrigDWindowLow = 0;
@@ -30,14 +32,14 @@ int hadaq::TdcProcessor::gHadesMonitorInterval = -111;
 int hadaq::TdcProcessor::gTotStatLimit = 100;
 double hadaq::TdcProcessor::gTotRMSLimit = 0.15;
 
-
 unsigned BUBBLE_SIZE = 19;
 
 
-void hadaq::TdcProcessor::SetDefaults(unsigned numfinebins, unsigned totrange)
+void hadaq::TdcProcessor::SetDefaults(unsigned numfinebins, unsigned totrange, unsigned hist2dreduced)
 {
    gNumFineBins = numfinebins;
    gTotRange = totrange;
+   gHist2dReduce = hist2dreduced;
 }
 
 void hadaq::TdcProcessor::SetErrorMask(unsigned mask)
@@ -189,7 +191,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
       fhRaisingFineCalibr = MakeH2("RaisingFineTmCalibr", "raising calibrated fine counter value", numchannels, 0, numchannels, (fNumFineBins==1000 ? 100 : fNumFineBins), 0, fNumFineBins, "ch;calibrated fine");
       fAllCoarse = MakeH2("CoarseTm", "coarse counter value", numchannels, 0, numchannels, 2048, 0, 2048, "ch;coarse");
 
-      fhTotVsChannel = MakeH2("TotVsChannel", "ToT", numchannels, 0, numchannels, 100, 0., 50., "ch;ToT [ns]");
+      fhTotVsChannel = MakeH2("TotVsChannel", "ToT", numchannels, 0, numchannels, gTotRange*100/(gHist2dReduce > 0 ? gHist2dReduce : 1), 0., gTotRange, "ch;ToT [ns]");
 
       fhTotMoreCounter = MakeH1("TotMoreCounter", "ToT > 20 ns counter in TDC channels", numchannels, 0, numchannels, "ch");
       fhTotMinusCounter = MakeH1("TotMinusCounter", "ToT < 0 ns counter in TDC channels", numchannels, 0, numchannels, "ch");
