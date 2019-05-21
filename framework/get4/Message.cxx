@@ -68,7 +68,7 @@ Msg:7 Roc:1 SysType: 2 Nx:0 Data:        0 : DAQ finished
 
 void get4::Message::printData(std::ostream& os, unsigned kind, uint32_t epoch, double timeInSec) const
 {
-   char buf[256];
+   char buf[512];
 
    if (kind & base::msg_print_Hex) {
       uint8_t* arr = (uint8_t*) &data;
@@ -139,7 +139,7 @@ void get4::Message::printData(std::ostream& os, unsigned kind, uint32_t epoch, d
                switch (getGet4V10R32MessageType()) {
                   case MSG_GET4_EPOCH:
                      snprintf(buf, sizeof(buf), "EP32 @%17.11f 32bit:%10u 0x%08x get4:%u sync:%u",
-                           timeInSec, 
+                           timeInSec,
                            (unsigned) getGet4V10R32EpochNumber(),
                            (unsigned) getGet4V10R32EpochNumber(),
                            (unsigned) getGet4V10R32ChipId(),
@@ -148,13 +148,13 @@ void get4::Message::printData(std::ostream& os, unsigned kind, uint32_t epoch, d
                   case MSG_GET4_SLOWCTRL:
                      snprintf(buf, sizeof(buf), "SC32 get4:%u chn:0x%x edge:0x%x typ:0x%x data:0x%04x",
                            (unsigned) getGet4V10R32ChipId(),
-                           (unsigned) getGet4V10R32SlChan(), (unsigned) getGet4V10R32SlEdge(), 
+                           (unsigned) getGet4V10R32SlChan(), (unsigned) getGet4V10R32SlEdge(),
                            (unsigned) getGet4V10R32SlType(), (unsigned) getGet4V10R32SlData());
                      break;
                   case MSG_GET4_ERROR:
                      snprintf(buf, sizeof(buf), "ER32 get4:%u chn:0x%x edge:0x%x data:0x%04x",
                            (unsigned) getGet4V10R32ChipId(),
-                           (unsigned) getGet4V10R32ErrorChan(), 
+                           (unsigned) getGet4V10R32ErrorChan(),
                            (unsigned) getGet4V10R32ErrorEdge(), (unsigned) getGet4V10R32ErrorData());
                      break;
                   case MSG_GET4_HIT:

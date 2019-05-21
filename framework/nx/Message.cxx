@@ -68,7 +68,7 @@ Msg:7 Roc:1 SysType: 2 Nx:0 Data:        0 : DAQ finished
 
 void nx::Message::printData(std::ostream& os, unsigned kind, uint32_t epoch, double timeInSec) const
 {
-   char buf[256];
+   char buf[512];
 
    if (kind & base::msg_print_Hex) {
       uint8_t* arr = (uint8_t*) &data;
