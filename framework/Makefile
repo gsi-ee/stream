@@ -17,6 +17,11 @@ CXXOPT       += $(CPPVERS) -O2 -fPIC -m64 -Wall $(INCLUDES:%=-I%) $(DEFINITIONS:
 LD            = g++
 CXX           = g++
 
+ifdef clang
+LD            = clang++
+CXX           = clang++
+endif
+
 ifdef debug
 CXXOPT      += -O0 -g
 endif
