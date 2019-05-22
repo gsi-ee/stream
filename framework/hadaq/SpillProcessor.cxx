@@ -11,7 +11,7 @@ const unsigned FASTEPOCHS = 2;
 const double BINWIDTHFAST = EPOCHLEN*FASTEPOCHS;
 const unsigned SLOWEPOCHS = 0x1000;
 const double BINWIDTHSLOW = EPOCHLEN*SLOWEPOCHS;
-const unsigned NUMSTAT = 100; // use 100 bins for stat calculations
+// const unsigned NUMSTAT = 100; // use 100 bins for stat calculations
 const unsigned NUMSPILLBINS = 1000; // approx 40s for spill recording
 
 const unsigned NUM1MSBINS = 22000; // 22 seconds

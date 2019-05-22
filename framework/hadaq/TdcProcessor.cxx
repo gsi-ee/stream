@@ -275,10 +275,8 @@ void hadaq::TdcProcessor::AddError(unsigned code, const char *fmt, ...)
    sbuf.append(buffer);
    delete [] buffer;
 
-   if (CheckPrintError()) {
-      printf(sbuf.c_str());
-      printf("\n");
-   }
+   if (CheckPrintError())
+      printf("%s\n", sbuf.c_str());
 
    if (fTrb) fTrb->EventError(sbuf.c_str());
 }
@@ -1065,7 +1063,7 @@ void PrintBubbleBinary(unsigned* bubble, int p1 = -1, int p2 = -1) {
    }
 
    *ptr++ = 0;
-   printf(sbuf);
+   printf("%s", sbuf);
 }
 
 unsigned BubbleCheck(unsigned* bubble, int &p1, int &p2) {
