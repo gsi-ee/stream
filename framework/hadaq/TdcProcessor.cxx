@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <math.h>
+#include <cmath>
 #include <stdarg.h>
 
 #include "base/defines.h"
@@ -1944,7 +1944,7 @@ double hadaq::TdcProcessor::DoTestEdges(int iCh)
     double nEntries = raising + falling;
 
     if (nEntries < 10) return 0.;
-    double ratio = std::abs(raising - falling) / (0.5 * nEntries);
+    double ratio = std::fabs(raising - falling) / (0.5 * nEntries);
 
     int result = (int) (100. * (1. - ratio));
     if (result <= 0) result = 0;

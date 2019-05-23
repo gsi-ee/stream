@@ -2,7 +2,7 @@
 
 #include <string.h>
 #include <stdio.h>
-#include <math.h>
+#include <cmath>
 #include <time.h>
 #include <iostream>
 
