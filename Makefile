@@ -61,7 +61,7 @@ $(LOGINFILE):
 	@echo "# this is generated file, use it to configure enviroment" >> $@
 	@echo "# just type '. ./streamlogin' in shell, not forget space in between" >> $@
 	@echo "" >> $@
-	@echo "echo Configure stream v0.9.1 at $(STREAMSYS)" >> $@
+	@echo "echo Configure stream v0.10.0 at $(STREAMSYS)" >> $@
 	@echo "" >> $@
 	@echo 'export STREAMSYS=$(STREAMSYS)' >> $@
 	@echo 'export GO4EXTRAINCLUDE=$(STREAMSYS)/include' >> $@
