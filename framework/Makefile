@@ -116,21 +116,16 @@ $(NEWLIB) : $(NEWLIB_OBJS)
 	@echo 'Building: $@'
 	$(LD) -shared $(LDFLAGSPRE) -O $(NEWLIB_OBJS) -o $@
 
-
 # rules	
 %.d: %.cxx
 	@echo "Build dependency for $< ..."
-	@rm -f $@ $@.bak; touch $@
-	@makedepend -f$@ -Y -o.o -w 30000 -- $(CXXOPT) -- $< > /dev/null 2>&1
-	@sed -i 's|$*.o|$*.o $*.d|g' $@
-	@rm -f $@.bak
+	@$(CXX) $(CXXOPT) $< -o $@ -MM -MT "$*.o $*.d"
 
 $(NEWLIBDICT_OBJ): $(NEWLIBDICT_SRC)
 	$(CXX) -c $< $(CXXOPT) $(shell root-config --cflags) -o $@
 
 %.o: %.cxx
 	$(CXX) -c $< $(CXXOPT) -o $@
-
 
 ifeq ($(findstring $(MAKECMDGOALS), clean),)
 -include $(NEWLIB_DEPS) $(NEWLIBROOT_DEPS)
