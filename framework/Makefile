@@ -106,7 +106,7 @@ endif
 
 $(NEWLIBDICT_LIB): $(NEWLIBDICT_OBJ) $(NEWLIBROOT_OBJS) $(NEWLIBDICT_LINKDEF)
 	@echo 'Building: $@'
-	@$(LD) -o $@ -shared -O $(NEWLIBDICT_OBJ) $(NEWLIBROOT_OBJS) -L$(STREAMSYS)/lib -lStream -Wl,-rpath,$(STREAMSYS)/lib
+	@$(LD) -o $@ -shared -O $(NEWLIBDICT_OBJ) $(NEWLIBROOT_OBJS) -L$(STREAMSYS)/lib -lStream -Wl,-rpath,$(STREAMSYS)/lib $(shell root-config --libs)
 
 $(NEWLIBDICT_SRC) $(NEWLIBROOT_OBJS) $(NEWLIBROOT_DEPS) : CXXOPT += $(shell root-config --cflags)
 
