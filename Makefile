@@ -65,4 +65,8 @@ $(LOGINFILE):
 	@echo "" >> $@
 	@echo 'export STREAMSYS=$(STREAMSYS)' >> $@
 	@echo 'export GO4EXTRAINCLUDE=$(STREAMSYS)/include' >> $@
+ifeq ($(shell uname),Darwin)
+	@echo 'export DYLD_LIBRARY_PATH=.:$$STREAMSYS/lib:$$DYLD_LIBRARY_PATH' >> $@
+else
 	@echo 'export LD_LIBRARY_PATH=.:$$STREAMSYS/lib:$$LD_LIBRARY_PATH' >> $@
+endif
