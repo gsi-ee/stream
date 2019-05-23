@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <math.h>
+#include <cmath>
 #include "TH1.h"
 #include "TFile.h"
 #include "TCanvas.h"
