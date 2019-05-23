@@ -86,7 +86,6 @@ bool SecondProc::Process(base::Event* ev)
       unsigned coarse = ext.msg().getHitTmCoarse();
       double stamp = ext.GetGlobalTime(); // here in seconds
 
-
       FillH2(hFineCh, ch, fine);
 
       if (ch==0) { ch0tm = stamp; }  // ch0 has absolute time, all other channels relative to ch0
@@ -105,16 +104,14 @@ bool SecondProc::Process(base::Event* ev)
 
       // printf("ch %u edge %u stamp %f\n", ch, edge, stamp*1e9);
 
-      if (edge==0) {
+      if (edge==1) {
          last_rising[ch] = stamp;
-
-         }
-//       } else if (!last_rising[ch]) {
+       } else if (!last_rising[ch]) {
 //          // printf(" ToT %f\n", stamp - last_rising[ch]);
-//          FillH1(hToT, stamp - last_rising[ch]);
-//          FillH2(hToTCh, ch, stamp - last_rising[ch]);
-//          last_rising[ch] = 0;
-//       }
+          FillH1(hToT, stamp - last_rising[ch]);
+          FillH2(hToTCh, ch, stamp - last_rising[ch]);
+          last_rising[ch] = 0;
+       }
     }
 
   return true;
