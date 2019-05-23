@@ -38,6 +38,8 @@ TFirstStepProcessor::TFirstStepProcessor(const char* name) :
 {
    TGo4Log::Info("Create TFirstStepProcessor %s", name);
 
+   SetSortedOrder(true);
+
    if (gSystem->AccessPathName("first.C") == 0) {
       if (ExecuteScript("first.C") == -1) {
          TGo4Log::Error("Cannot setup analysis with first.C script");
@@ -64,8 +66,6 @@ TFirstStepProcessor::TFirstStepProcessor(const char* name) :
    fTotalDataSize = 0;
    fNumInpBufs = 0;
    fNumOutEvents = 0;
-
-   SetSortedOrder(true);
 }
 
 TFirstStepProcessor::~TFirstStepProcessor()
