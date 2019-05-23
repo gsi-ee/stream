@@ -71,9 +71,9 @@ $(NEWGO4_DS): $(NEWGO4_H) $(NEWGO4_LINKDEF)
 	@$(ROOTCINTGO4) $(NEWGO4_H) $(NEWGO4_LINKDEF)
 
 clean: 
-	@rm -f $(NEWGO4_O) $(NEWGO4_DO) 
-	@rm -f $(NEWGO4_LIB) 
-	@rm -f $(NEWGO4_DEP) $(NEWGO4_DDEP) $(NEWGO4_DS) $(NEWGO4_DH)
+	@$(RM) $(NEWGO4_O) $(NEWGO4_DO) 
+	@$(RM) $(NEWGO4_LIB) 
+	@$(RM) $(NEWGO4_DEP) $(NEWGO4_DDEP) $(NEWGO4_DS) $(NEWGO4_DH)
 	@echo "Clean everything in new go4 monitor"
 
 -include $(GO4SYS)/Makefile.rules

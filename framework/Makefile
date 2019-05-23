@@ -13,9 +13,17 @@ endif
 
 CPPVERS      = -std=c++11
 
-CXXOPT       += $(CPPVERS) -O2 -fPIC -m64 -Wall $(INCLUDES:%=-I%) $(DEFINITIONS:%=-D%) 
-LD            = g++
+CXXOPT       += $(CPPVERS) -O2 -fPIC -m64 -Wall $(INCLUDES:%=-I%) $(DEFINITIONS:%=-D%)
+
+ifeq ($(shell uname),Darwin)
+CXX           = clang++
+LD            = clang++
+LDFLAGSPRE    =
+else
 CXX           = g++
+LD            = g++
+LDFLAGSPRE    = -Wl,--as-needed
+endif
 
 ifdef clang
 LD            = clang++
@@ -26,7 +34,7 @@ ifdef debug
 CXXOPT      += -O0 -g
 endif
 
-INCLUDES      = $(STREAMSYS)/include
+INCLUDES  = $(STREAMSYS)/include
 
 NEWLIB = $(STREAMSYS)/lib/libStream.so
 
@@ -71,7 +79,7 @@ all: $(LIBTGTS)
 lib: $(LIBTGTS)
 
 clean:
-	rm -f $(NEWLIB) $(NEWLIB_OBJS) $(NEWLIB_DEPS) $(NEWLIBROOT_OBJS) $(NEWLIBROOT_DEPS) $(NEWLIBDICT_MAP) $(NEWLIBDICT_NAME).* $(NEWLIBDICT_LIBNAME)_rdict.pcm
+	@rm -f $(NEWLIB) $(NEWLIB_OBJS) $(NEWLIB_DEPS) $(NEWLIBROOT_OBJS) $(NEWLIBROOT_DEPS) $(NEWLIBDICT_MAP) $(NEWLIBDICT_NAME).* $(NEWLIBDICT_LIBNAME)_rdict.pcm
 
 
 ifdef IS_ROOT
@@ -106,7 +114,7 @@ endif
 
 $(NEWLIB) : $(NEWLIB_OBJS)
 	@echo 'Building: $@'
-	$(LD) -shared -Wl,--as-needed -O $(NEWLIB_OBJS) -o $@
+	$(LD) -shared $(LDFLAGSPRE) -O $(NEWLIB_OBJS) -o $@
 
 
 # rules	
