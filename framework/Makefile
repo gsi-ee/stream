@@ -31,7 +31,7 @@ CXX           = clang++
 endif
 
 ifdef debug
-CXXOPT      += -O0 -g
+CXXOPT      += -g
 endif
 
 INCLUDES  = $(STREAMSYS)/include
