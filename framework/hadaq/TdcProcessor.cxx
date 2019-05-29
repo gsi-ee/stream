@@ -1658,14 +1658,14 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                if (dostore)
                   switch(GetStoreKind()) {
                      case 1:
-                        pStoreVect->push_back(hadaq::TdcMessageExt(msg, (chid>0) ? localtm : ch0time));
+                        pStoreVect->emplace_back(msg, (chid>0) ? localtm : ch0time);
                         break;
                      case 2:
                         if (chid>0)
-                           pStoreFloat->push_back(hadaq::MessageFloat(chid, isrising, localtm*1e9));
+                           pStoreFloat->emplace_back(chid, isrising, localtm*1e9);
                         break;
                      case 3:
-                        pStoreDouble->push_back(hadaq::MessageDouble(chid, isrising, ch0time + localtm));
+                        pStoreDouble->emplace_back(chid, isrising, ch0time + localtm);
                         break;
                      default: break;
                   }
