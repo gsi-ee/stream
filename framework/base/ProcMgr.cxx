@@ -319,19 +319,19 @@ base::ProcMgr* base::ProcMgr::AddProcessor(Processor* proc)
    StreamProc* sproc = dynamic_cast<StreamProc*> (proc);
    EventProc* eproc = dynamic_cast<EventProc*> (proc);
    if (proc && (proc->mgr()!=this)) proc->SetManager(this);
-   if (sproc) fProc.push_back(sproc);
-   if (eproc) fEvProc.push_back(eproc);
+   if (sproc) fProc.emplace_back(sproc);
+   if (eproc) fEvProc.emplace_back(eproc);
    return this;
 }
 
-base::ProcMgr* base::ProcMgr::AddProc(Processor* proc)
+base::ProcMgr *base::ProcMgr::AddProc(Processor* proc)
 {
-   return fInstance==0 ? 0 : fInstance->AddProcessor(proc);
+   return fInstance ? fInstance->AddProcessor(proc) : nullptr;
 }
 
 bool base::ProcMgr::RegisterProc(StreamProc* proc, unsigned kind, unsigned brdid)
 {
-   if (proc==0) return false;
+   if (!proc) return false;
 
    bool find = false;
    for (unsigned n=0;n<fProc.size();n++)

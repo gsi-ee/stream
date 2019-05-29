@@ -144,12 +144,12 @@ namespace hadaq {
          void SetHadaqHUBId(unsigned id1, unsigned id2=0, unsigned id3=0, unsigned id4=0)
          {
             fHadaqHUBId.clear();
-            fHadaqHUBId.push_back(id1);
-            if (id2!=0) fHadaqHUBId.push_back(id2);
-            if (id3!=0) fHadaqHUBId.push_back(id3);
-            if (id4!=0) fHadaqHUBId.push_back(id4);
+            fHadaqHUBId.emplace_back(id1);
+            if (id2!=0) fHadaqHUBId.emplace_back(id2);
+            if (id3!=0) fHadaqHUBId.emplace_back(id3);
+            if (id4!=0) fHadaqHUBId.emplace_back(id4);
          }
-         void AddHadaqHUBId(unsigned id) { fHadaqHUBId.push_back(id); }
+         void AddHadaqHUBId(unsigned id) { fHadaqHUBId.emplace_back(id); }
 
          void SetHadaqTDCId(unsigned) {} // keep for backward compatibility, can be ignored
          void SetHadaqSUBId(unsigned) {} // keep for backward compatibility, can be ignored

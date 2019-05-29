@@ -207,7 +207,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    }
 
    for (unsigned ch=0;ch<numchannels;ch++)
-      fCh.push_back(ChannelRec());
+      fCh.emplace_back();
 
    for (unsigned ch=0;ch<numchannels;ch++)
       fCh[ch].CreateCalibr(fNumFineBins);

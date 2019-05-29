@@ -380,10 +380,10 @@ void hadaq::HldProcessor::CreatePerTDCHisto()
 
    std::vector<TdcProcessor *> tdcs;
 
-   for (auto&& item : fMap) {
+   for (auto &item : fMap) {
       unsigned num = item.second->NumberOfTDC();
-      for (unsigned indx=0;indx<num;++indx)
-         tdcs.push_back(item.second->GetTDCWithIndex(indx));
+      for (unsigned indx = 0; indx < num; ++indx)
+         tdcs.emplace_back(item.second->GetTDCWithIndex(indx));
    }
 
    if (tdcs.size() == 0) return;

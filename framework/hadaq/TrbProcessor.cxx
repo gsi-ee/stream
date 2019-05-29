@@ -114,11 +114,11 @@ void hadaq::TrbProcessor::CreatePerTDCHistos()
 
    unsigned numtdc = NumberOfTDC();
    for (unsigned indx=0;indx<numtdc;++indx)
-      tdcs.push_back(GetTDCWithIndex(indx));
+      tdcs.emplace_back(GetTDCWithIndex(indx));
 
    std::string lbl = "tdc;xbin:";
    unsigned cnt = 0;
-   for (auto &&tdc : tdcs) {
+   for (auto &tdc : tdcs) {
       if (cnt++>0) lbl.append(",");
       char sbuf[50];
       snprintf(sbuf, sizeof(sbuf), "0x%04X", tdc->GetID());
@@ -834,8 +834,7 @@ bool hadaq::TrbProcessor::CollectMissingTDCs(hadaqs::RawSubevent *sub, std::vect
       TdcProcessor* subproc = GetTDC(dataid, true);
 
       if (!subproc && (dataid != 0x5555)) {
-
-         ids.push_back(dataid);
+         ids.emplace_back(dataid);
       }
 
       // raw data is not interesting
@@ -987,7 +986,7 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent *sub, void *
       }  // end of if TDC header
 
       if (newids && (id != 0x5555))
-         newids->push_back(id);
+         newids->emplace_back(id);
 
 //      grd.Next("unrec", 10);
 

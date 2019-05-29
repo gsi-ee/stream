@@ -42,14 +42,14 @@ struct ChannelMap_t {
 };
 
 void Correlate(const char* fname = "scratch/CBTaggTAPS_9227.dat", const bool debug = false) {
-   
+
 #if defined(__CINT__) && !defined(__MAKECINT__)
    cout << "Needs to be compiled with ACLIC, append + to filename" << endl;
    return;
 #endif
-   
+
    cout << "Working on file basename " << fname << endl;
-   
+
    // get some config
    map<string, my_config_t>::const_iterator it_config = my_config.find(fname+string(".hld"));
    if(it_config == my_config.end()) {
@@ -57,7 +57,7 @@ void Correlate(const char* fname = "scratch/CBTaggTAPS_9227.dat", const bool deb
       return;
    }
    const my_config_t& config = it_config->second;
-   
+
    // build the channel map
    // the order in this vector defines the 12 logical channels
    // of this analysis, from 0-11
@@ -67,55 +67,55 @@ void Correlate(const char* fname = "scratch/CBTaggTAPS_9227.dat", const bool deb
       { 9, 3378, 2405},
       {10, 3377, 2406},
       {11, 3376, 2407},
-      
+
       {24, 3371, 2412},
       {25, 3370, 2413},
       {26, 3369, 2414},
       {27, 3368, 2415},
-      
+
       {28, 3375, 2408},
       {29, 3374, 2409},
       {30, 3373, 2410},
       {31, 3372, 2411},
    };
-   
+
    // make some helpful vectors/maps out of it
    map<unsigned, unsigned> TRB3_IDs_map;
    vector<unsigned> ADC_IDs;
    map<unsigned, unsigned> ADC_IDs_map;
    vector<unsigned> TDC_IDs;
    map<unsigned, unsigned> TDC_IDs_map;
-   
+
    for(const auto& ch : ChannelMap) {
-      TRB3_IDs_map[ch.TRB3] = ADC_IDs.size(); // misuse size as counter        
-      ADC_IDs_map[ch.ADC] = ADC_IDs.size();        
-      TDC_IDs_map[ch.TDC] = ADC_IDs.size();        
-      
+      TRB3_IDs_map[ch.TRB3] = ADC_IDs.size(); // misuse size as counter
+      ADC_IDs_map[ch.ADC] = ADC_IDs.size();
+      TDC_IDs_map[ch.TDC] = ADC_IDs.size();
+
       // some extra lists for scanning
-      ADC_IDs.push_back(ch.ADC);
-      TDC_IDs.push_back(ch.TDC);        
+      ADC_IDs.emplace_back(ch.ADC);
+      TDC_IDs.emplace_back(ch.TDC);
    }
    // important to sort them
    sort(ADC_IDs.begin(), ADC_IDs.end());
    sort(TDC_IDs.begin(), TDC_IDs.end());
-   
-   
+
+
    stringstream fname1;
    fname1 << fname << ".root";
-   
+
    stringstream fname2;
    fname2 << fname << ".hld.root";
-   
-   
+
+
    TFile* f1 = new TFile(fname1.str().c_str());
    TTree* t1 = (TTree*)f1->Get("rawADC");
    if(t1==nullptr) {
       cerr << "Acqu data tree not found" << endl;
       exit(1);
    }
-      
+
    t1->SetMakeClass(1); // very important for reading STL stuff
-   
+
    TFile* f2 = new TFile(fname2.str().c_str());
    TTree* t2 = (TTree*)f2->Get("T");
    if(t2==nullptr) {
@@ -123,30 +123,30 @@ void Correlate(const char* fname = "scratch/CBTaggTAPS_9227.dat", const bool deb
       exit(1);
    }
    // t2->SetMakeClass(1); // Go4 stuff already has compiled classes
-   
-   Long64_t n1 = t1->GetEntries(); 
-   Long64_t n2 = t2->GetEntries(); 
+
+   Long64_t n1 = t1->GetEntries();
+   Long64_t n2 = t2->GetEntries();
    // t1 contains the events from Acqu
    // t2 contains the events from Go4
    cout << "Entries: Acqu=" << n1 << " Go4=" << n2 << endl;
-   
+
    vector< unsigned short >* acqu_ID = 0;             // ADC ID
    vector< vector<unsigned short> >* acqu_Values = 0; // Value
    t1->SetBranchAddress("ID",    &acqu_ID);
    t1->SetBranchAddress("Value", &acqu_Values);
-   
+
    hadaq::TrbMessage* go4_trb = 0;
    t2->SetBranchAddress("TRB_8000", &go4_trb);
-   
+
    vector<hadaq::TdcMessageExt>* go4_cts = 0;
    t2->SetBranchAddress("TDC_8000", &go4_cts);
-   
+
    vector< hadaq::AdcMessage >* go4_adc = 0;
    t2->SetBranchAddress("ADC_0200", &go4_adc);
-   
+
    vector<hadaq::TdcMessageExt>* go4_tdc = 0;
    t2->SetBranchAddress("TDC_0200", &go4_tdc);
-   
+
    // setup output
    stringstream fname3;
    fname3 << fname << ".merged.root";
@@ -164,66 +164,66 @@ void Correlate(const char* fname = "scratch/CBTaggTAPS_9227.dat", const bool deb
    t->Branch("Timing_TRB3", &out_Timing_TRB3);
    t->Branch("Integral_Acqu", &out_Integral_Acqu);
    t->Branch("Integral_TRB3", &out_Integral_TRB3);
-   
-   
-   
+
+
+
    Long64_t i1 = 0;
-   Long64_t i2 = 0;    
+   Long64_t i2 = 0;
    unsigned go4_EventId_last = 0;
-   unsigned acqu_EventId_last = 0;       
+   unsigned acqu_EventId_last = 0;
    unsigned go4_overflows = 0;
-   unsigned acqu_overflows = 0;       
-   
+   unsigned acqu_overflows = 0;
+
    Long64_t matches = 0;
    while(i1 < n1 && i2 < n2) {
       t1->GetEntry(i1);
       t2->GetEntry(i2);
       // match the the serial ID
-      
+
       // go4 is easily available
       if(!go4_trb->fTrigSyncIdFound) {
          cerr << "We should always have found some serial ID..." << endl;
          exit(1);
       }
-      
+
       if(go4_trb->fTrigSyncIdStatus != 0xa) {
-         cerr << "Found invalid TRB3 EventId status (should be 0xa): 0x" 
+         cerr << "Found invalid TRB3 EventId status (should be 0xa): 0x"
               << hex << go4_trb->fTrigSyncIdStatus << dec << endl;
          // probably a spurious trigger without an ID, just skip it
          i2++;
          continue;
       }
-      
-      
+
+
       const unsigned go4_EventId = go4_trb->fTrigSyncId;
       // acqu needs searching for ADC 400 ID...
       auto EventId = getAcquADCValues(400, acqu_ID, acqu_Values);
       const unsigned acqu_EventId = EventId[0]; // convert 16bit to 32bit...
-      
+
       if(acqu_EventId<acqu_EventId_last) {
          if(debug)
             cout << "Overflow Acqu: " << acqu_EventId << " < " << acqu_EventId_last << endl;
          acqu_overflows++;
       }
-      
+
       if(go4_EventId<go4_EventId_last) {
          if(debug)
             cout << "Overflow Go4: " << go4_EventId << " < " << go4_EventId_last << endl;
          go4_overflows++;
       }
-      
+
       go4_EventId_last = go4_EventId;
-      acqu_EventId_last = acqu_EventId;      
-      
+      acqu_EventId_last = acqu_EventId;
+
       if(abs(go4_overflows-acqu_overflows)>2) {
          cerr << "Missed one overflow, can't continue." << endl;
          exit(1);
       }
-      
+
       const unsigned go4_EventId_full = go4_EventId + (go4_overflows << 16);
       const unsigned acqu_EventId_full = acqu_EventId + (acqu_overflows << 16);
-      
-      
+
+
       if(go4_EventId_full>acqu_EventId_full) {
          i1++;
          continue;
@@ -232,10 +232,10 @@ void Correlate(const char* fname = "scratch/CBTaggTAPS_9227.dat", const bool deb
          i2++;
          continue;
       }
-     
+
       // here the EventIDs seem to match (except for overflows)
       matches++;
-      
+
       if(debug) {
          cout << "Found match=" << matches <<", i1=" << i1 << " i2=" << i2 << endl;
          // just dump events
@@ -251,9 +251,9 @@ void Correlate(const char* fname = "scratch/CBTaggTAPS_9227.dat", const bool deb
                continue;
             cout << "    Ch=" << setw(4) << ch << " Integral=" << values[1] << endl;
          }
-         
+
       }
-      
+
       // extract the "interesting" ADC/TDC values
       size_t j_TDC = 0;
       size_t j_ADC = 0;
@@ -262,11 +262,11 @@ void Correlate(const char* fname = "scratch/CBTaggTAPS_9227.dat", const bool deb
       vector<double> ADC_Acqu(ChannelMap.size(), std::numeric_limits<double>::quiet_NaN());
       while(j_ID<acqu_ID->size()) {
          const auto id = (*acqu_ID)[j_ID];
-         
+
          //cout << "j_ID="<<j_ID << " j_ADC="<<j_ADC<<endl;
-         
+
          if(j_TDC<TDC_Acqu.size()) {
-            const auto id_TDC = TDC_IDs[j_TDC];            
+            const auto id_TDC = TDC_IDs[j_TDC];
             if(id<id_TDC) {
                j_ID++;
                continue;
@@ -289,7 +289,7 @@ void Correlate(const char* fname = "scratch/CBTaggTAPS_9227.dat", const bool deb
                continue;
             }
             if(id==id_ADC) {
-               //cout << "Found ADC match " << id << " j_ID=" << j_ID << endl;                    
+               //cout << "Found ADC match " << id << " j_ID=" << j_ID << endl;
                ADC_Acqu[ADC_IDs_map[id]] = (*acqu_Values)[j_ID][1]; // second entry is signal
                j_ADC++;
                continue;
@@ -301,104 +301,104 @@ void Correlate(const char* fname = "scratch/CBTaggTAPS_9227.dat", const bool deb
          }
          else {
             break;
-         }           
+         }
       }
-      
-      
+
+
       vector<double> TDC_TRB3(ChannelMap.size(), std::numeric_limits<double>::quiet_NaN());
       vector<double> ADC_TRB3(ChannelMap.size(), std::numeric_limits<double>::quiet_NaN());
-      
-      
+
+
       if(go4_tdc->size() != 1 || go4_cts->size() != 1) {
          cerr << "Found hit without proper TDC information" << endl;
          exit(1);
       }
-      const double tm_CTS = 1e9*(*go4_cts)[0].GetGlobalTime();        
+      const double tm_CTS = 1e9*(*go4_cts)[0].GetGlobalTime();
       const double tm_TDC = 1e9*(*go4_tdc)[0].GetGlobalTime();
       double ADC_phase = tm_TDC-tm_CTS;
-      
+
       if(!isfinite(tm_TDC))
          cerr << "TDC not finite" << endl;
       if(!isfinite(tm_CTS))
          cerr << "CTS not finite" << endl;
-      
-      
 
-      
+
+
+
       for(size_t i=0;i<go4_adc->size();i++) {
          const hadaq::AdcMessage& msg = (*go4_adc)[i];
          const auto id = msg.getCh();
          double fineTiming = 1e9*msg.fFineTiming;
          fineTiming += ADC_phase;
-         // due to some unknown but fixed delay between 
-         // the measurement of tm_TDC and tm_CTS, we need 
+         // due to some unknown but fixed delay between
+         // the measurement of tm_TDC and tm_CTS, we need
          // to correct for an ADC epoch counter "glitch"
          // the treshold does not seem to be constant...
-         // so this bug should actually be fixed in hardware 
+         // so this bug should actually be fixed in hardware
          if(tm_TDC>config.AdcEpochCounterFixThreshold) {
              fineTiming -= config.SamplingPeriod;
-         }         
-         if(debug && abs(fineTiming)>1e8) 
-            cerr << "Very large fine timing found: " 
-                 << fineTiming 
+         }
+         if(debug && abs(fineTiming)>1e8)
+            cerr << "Very large fine timing found: "
+                 << fineTiming
                  << " Corrected: " << (fineTiming - (1<<24)*12.5)
                  << endl;
-         TDC_TRB3[TRB3_IDs_map[id]] = fineTiming;         
+         TDC_TRB3[TRB3_IDs_map[id]] = fineTiming;
          ADC_TRB3[TRB3_IDs_map[id]] = msg.fIntegral;
       }
-      
-      
+
+
       // write it finally to Tree
-      
+
       if(debug)
          cout << ">>> Matched Hits:" << endl;
-      
-      
+
+
       for(size_t i=0;i<ADC_Acqu.size();i++) {
-         const unsigned test = 
+         const unsigned test =
                1*isfinite(ADC_Acqu[i]) +
                2*isfinite(TDC_Acqu[i]) +
                4*isfinite(ADC_TRB3[i]) +
                8*isfinite(TDC_TRB3[i]);
          if(test==0)
             continue;
-         
+
          out_Channel = i;
          out_Status = test;
          out_Integral_Acqu = ADC_Acqu[i];
          out_Timing_Acqu = TDC_Acqu[i];
          out_Integral_TRB3 = ADC_TRB3[i];
          out_Timing_TRB3 = TDC_TRB3[i];
-         
+
          t->Fill();
-         
+
          if(debug && test==15)
-            cout << "Hit Ch=" << i  
+            cout << "Hit Ch=" << i
                  << " TDC_Acqu=" << TDC_Acqu[i]
                  << " TDC_TRB3=" << TDC_TRB3[i]
                  << " ADC_Acqu=" << ADC_Acqu[i]
                  << " ADC_TRB3=" << ADC_TRB3[i]
                  << endl;
-      }       
-      
+      }
+
       if(debug)
          cout << endl;
       //        if(matches>10)
       //            break;
-      
+
       if(matches % 1000 == 0)
-         cout << "Matched " << matches 
-              << " i1=" << i1 
-              << " i2=" << i2 
+         cout << "Matched " << matches
+              << " i1=" << i1
+              << " i2=" << i2
               << " id1=" << acqu_EventId_full
               << " id2=" << go4_EventId_full
               << endl;
       i1++;
       i2++;
    }
-   
+
    t->Write();
    f->Close();
-   
+
    cout << "Wrote " << matches << " to output." << endl;
 }

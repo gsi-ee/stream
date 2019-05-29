@@ -34,7 +34,7 @@ get4::MbsProcessor::MbsProcessor(unsigned get4mask, bool is32bit, unsigned totmu
 //   printf("Histo creation done\n");
 
    for (unsigned get4=0; (get4<16) && (get4mask!=0); get4++) {
-      GET4.push_back(Get4MbsRec());
+      GET4.emplace_back();
       GET4[get4].used = (get4mask & 1) == 1;
       get4mask = get4mask >> 1;
       if (!GET4[get4].used) continue;
@@ -85,9 +85,9 @@ bool get4::MbsProcessor::AddRef(unsigned g2, unsigned ch2, bool r2,
 
    char hname[100], htitle[100];
 
-   fRef.push_back(Get4MbsRef());
+   fRef.emplace_back();
 
-   Get4MbsRef& rec = fRef[fRef.size()-1];
+   auto &rec = fRef[fRef.size()-1];
 
    rec.g1 = g1;
    rec.g2 = g2;
@@ -96,9 +96,9 @@ bool get4::MbsProcessor::AddRef(unsigned g2, unsigned ch2, bool r2,
    rec.r1 = r1;
    rec.r2 = r2;
 
-   sprintf(hname,"G%u_Ch%u_%s_minus_G%u_Ch%u_%s", g2, ch2, (r2 ? "R" : "F"), g1, ch1, (r1 ? "R" : "F"));
+   snprintf(hname, sizeof(hname), "G%u_Ch%u_%s_minus_G%u_Ch%u_%s", g2, ch2, (r2 ? "R" : "F"), g1, ch1, (r1 ? "R" : "F"));
 
-   sprintf(htitle,"G%u Ch%u %s - G%u Ch%u %s", g2, ch2, (r2 ? "R" : "F"), g1, ch1, (r1 ? "R" : "F"));
+   snprintf(htitle, sizeof(htitle), "G%u Ch%u %s - G%u Ch%u %s", g2, ch2, (r2 ? "R" : "F"), g1, ch1, (r1 ? "R" : "F"));
 
    rec.fHist = MakeH1(hname, htitle, nbins, min, max, "ps");
 

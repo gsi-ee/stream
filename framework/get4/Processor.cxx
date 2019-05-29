@@ -38,7 +38,7 @@ get4::Processor::Processor(unsigned rocid, unsigned get4mask, base::OpticSplitte
    fMsgsKind = MakeH1("MsgKind", "kind of messages", 12, 0, 12, "xbin:NOP,-,EPOCH,SYNC,AUX,EPOCH2,GET4,SYS,EP32,SL32,ERR32,HIT32;kind");
    fSysTypes = MakeH1("SysTypes", "Distribution of system messages", 16, 0, 16, "systype");
    fMsgPerGet4 = MakeH1("PerGet4", "Distribution of hits between Get4", 16, 0, 16, "get4");
-   
+
    fSlMsgPerGet4  = MakeH2("SlPerGet4",  "Distribution of Slow control messages between Get4", 16, 0, 16, 4, 0, 4, "get4; SL type");
    fScalerPerGet4 = MakeH2("ScalerGet4", "Distribution of SL Scaler values between Get4", 16, 0, 16, 4096, 0, 8192, "get4");
    fDeadPerGet4   = MakeH2("DeadTmGet4", "Distribution of Dead Time values between Get4", 16, 0, 16, 2048, 0, 4096, "get4");
@@ -52,7 +52,7 @@ get4::Processor::Processor(unsigned rocid, unsigned get4mask, base::OpticSplitte
 //   printf("Histo creation done\n");
 
    for (unsigned get4=0; (get4<16) && (get4mask!=0); get4++) {
-      GET4.push_back(Get4Rec());
+      GET4.emplace_back();
       GET4[get4].used = (get4mask & 1) == 1;
       get4mask = get4mask >> 1;
       if (!GET4[get4].used) continue;
@@ -363,7 +363,7 @@ bool get4::Processor::FirstBufferScan(const base::Buffer& buf)
                         break;
                      default:
                         break;
-                  }   
+                  }
                }
 
             } else {

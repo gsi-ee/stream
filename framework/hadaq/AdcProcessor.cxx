@@ -19,25 +19,24 @@ hadaq::AdcProcessor::AdcProcessor(TrbProcessor* trb, unsigned subid, unsigned nu
    SubProcessor(trb, "ADC_%04X", subid),
    fSamplingPeriod(samplingPeriod),
    fStoreVect(),
-   pStoreVect(0)
+   pStoreVect(nullptr)
 {
    // Subprocessors need unique subids,
    // thus we attach a TDC with some special subid to it
    new TdcProcessor(trb, subid + 0xff0000, 2, 0);
 
-
-   fChannels = 0;
+   fKinds = nullptr;
+   fChannels = nullptr;
 
    if (HistFillLevel() > 1) {
       fKinds = MakeH1("ADCKinds", "Messages kinds", 16, 0, 16, "kinds");
       fChannels = MakeH1("ADCChannels", "Messages per channels", numchannels, 0, numchannels, "ch");
    }
 
+   // create records for channels
+   for (unsigned ch=0;ch<numchannels;ch++)
+      fCh.emplace_back();
 
-   for (unsigned ch=0;ch<numchannels;ch++) {
-      const ChannelRec rec;
-      fCh.push_back(rec);
-   }
    // histograms are created on demand
    // fCh.size() equals now numchannels...
 }

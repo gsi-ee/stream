@@ -88,7 +88,7 @@ namespace base {
          ~SubEventEx() {}
 
          /** Add new message to sub-event */
-         void AddMsg(const MsgClass& _msg) { fExtMessages.push_back(_msg); }
+         void AddMsg(const MsgClass &_msg) { fExtMessages.emplace_back(_msg); }
 
          /** Returns number of messages */
          unsigned Size() const { return fExtMessages.size(); }
@@ -100,7 +100,7 @@ namespace base {
          void SetCapacity(unsigned sz) { fExtMessages.reserve(sz); }
 
          /** Returns message with specified index */
-         MsgClass& msg(unsigned indx) { return fExtMessages[indx]; }
+         MsgClass &msg(unsigned indx) { return fExtMessages[indx]; }
 
          /** Returns pointer on vector with messages, used in the store */
          std::vector<MsgClass>* vect_ptr() { return &fExtMessages; }
