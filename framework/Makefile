@@ -3,11 +3,10 @@
 
 ROOT_VERSION = $(shell root-config --version 2>/dev/null)
 
-
 ifneq ($(ROOT_VERSION),)
 IS_ROOT=true
 ifneq ($(firstword $(subst ., ,$(ROOT_VERSION))),5)
-IS_ROOT6 = true
+IS_ROOT6=true
 endif
 endif
 
@@ -128,6 +127,9 @@ $(NEWLIBDICT_OBJ): $(NEWLIBDICT_SRC)
 	$(CXX) -c $< $(CXXOPT) -o $@
 
 ifeq ($(findstring $(MAKECMDGOALS), clean),)
--include $(NEWLIB_DEPS) $(NEWLIBROOT_DEPS)
+-include $(NEWLIB_DEPS) 
+ifdef IS_ROOT
+-include $(NEWLIBROOT_DEPS)
+endif
 endif
 
