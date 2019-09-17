@@ -26,7 +26,8 @@ hadaq::HldProcessor::HldProcessor(bool auto_create, const char* after_func) :
    fCalibrTriggerMask(0xFFFF),
    fMsg(),
    pMsg(0),
-   fLastEvHdr()
+   fLastEvHdr(),
+   fLastHadesTm(0)
 {
    mgr()->RegisterProc(this, base::proc_TRBEvent, 0);
 

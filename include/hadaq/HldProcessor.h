@@ -98,7 +98,7 @@ namespace hadaq {
 
          hadaqs::RawEvent  fLastEvHdr;    //! copy of last event header (without data)
 
-         long fLastHadesTm{0};
+         long fLastHadesTm;
 
          /** Returns true when processor used to select trigger signal
           * TRB3 not yet able to perform trigger selection */
@@ -114,7 +114,7 @@ namespace hadaq {
          void CreatePerTDCHisto();
 
          void DoHadesHistSummary();
-         
+
       public:
 
          HldProcessor(bool auto_create = false, const char* after_func = "");
