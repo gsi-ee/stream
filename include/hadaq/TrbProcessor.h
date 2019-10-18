@@ -310,6 +310,8 @@ namespace hadaq {
          void CreatePerTDCHistos();
 
          hadaqs::RawSubevent& GetLastSubeventHdr() { return fLastSubevHdr; }
+
+         hadaq::TrbMessage &GetTrbMsg() { return fMsg; }
    };
 }
 
