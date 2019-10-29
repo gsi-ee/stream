@@ -301,7 +301,7 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
       fCh[ch].fFallingCalibr = MakeH1("FallingCalibr", "Falling calibration function", fNumFineBins, 0, fNumFineBins, "fine;kind:F");
       fCh[ch].fFallingMult = MakeH1("FallingMult", "Falling event multiplicity", 128, 0, 128, "nhits");
       fCh[ch].fTot = MakeH1("Tot", "Time over threshold", gTotRange*100, 0, gTotRange, "ns");
-      fCh[ch].fTot0D = MakeH1("Tot0D", "Time over threshold with 0xD trigger", TotBins, fToThmin, fToThmax, "ns");
+      // fCh[ch].fTot0D = MakeH1("Tot0D", "Time over threshold with 0xD trigger", TotBins, fToThmin, fToThmax, "ns");
       // copy calibration only when histogram created
       CopyCalibration(fCh[ch].falling_calibr, fCh[ch].fFallingCalibr, ch, fFallingCalibr);
    }
@@ -2295,10 +2295,18 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
 
          if ((ch > 0) && DoFallingEdge() && (rec.tot0d_cnt > 100) && !preliminary) {
             CalibrateTot(ch, rec.tot0d_hist, rec.tot_shift, rec.tot_dev, 0.05);
-            for (unsigned n=0;n<TotBins;n++) {
-               double x = fToThmin + (n + 0.1) / TotBins * (fToThmax-fToThmin);
-               DefFillH1(rec.fTot0D, x, rec.tot0d_hist[n]);
+
+            if (!rec.fTot0D && (HistFillLevel() > 2)) {
+               SetSubPrefix2("Ch", ch);
+               rec.fTot0D = MakeH1("Tot0D", "Time over threshold with 0xD trigger", TotBins, fToThmin, fToThmax, "ns");
+               SetSubPrefix2();
             }
+
+            if (rec.fTot0D)
+               for (unsigned n=0;n<TotBins;n++) {
+                  double x = fToThmin + (n + 0.1) / TotBins * (fToThmax-fToThmin);
+                  DefFillH1(rec.fTot0D, x, rec.tot0d_hist[n]);
+               }
          }
 
          rec.hascalibr = res;
