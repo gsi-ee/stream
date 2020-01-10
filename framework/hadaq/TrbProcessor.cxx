@@ -635,14 +635,39 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
          if(fMsg.fTrigSyncIdFound)
             RAWPRINT("     Find SYNC %u\n", (unsigned) fMsg.fTrigSyncId);
 
+         // FIXME: workaround for latest data
+         if ((datalen > 1) && (sub->Data(ix) == 0x80000000)) {
+            ix++;
+            datalen--;
+         }
+
          // now ix should point to the first TDC word if datalen>0
          // if not, there is no TDC present
 
          // This is special TDC processor for data from CTS header
-         TdcProcessor* tdcproc = GetTDC(fHadaqCTSId, true);
-         if ((tdcproc!=nullptr) && (datalen>0)) {
-            // if TDC processor found, process such data as normal TDC data
-            AddBufferToTDC(sub, tdcproc, ix, datalen);
+
+         if (datalen > 0) {
+
+            TdcProcessor* tdcproc = GetTDC(fHadaqCTSId, true);
+            if (tdcproc) {
+               // if TDC processor found, process such data as normal TDC data
+               AddBufferToTDC(sub, tdcproc, ix, datalen);
+            } else if (fAutoCreate && (datalen > 2) && TdcMessage(sub->Data(ix)).isHeaderMsg()) {
+
+               unsigned numch = gNumChannels, edges = gEdgesMask;
+               // here should be channel/edge/min/max selection based on TDC design ID
+
+               tdcproc = new TdcProcessor(this, fHadaqCTSId, numch, edges);
+
+               tdcproc->SetCalibrTriggerMask(fCalibrTriggerMask);
+               tdcproc->SetStoreKind(GetStoreKind());
+
+               mgr()->UserPreLoop(tdcproc); // while loop already running, call it once again for new processor
+
+               did_create_tdc = true;
+
+               printf("%s: Create TDC in CTS 0x%04x nch:%u edges:%u\n", GetName(), dataid, numch, edges);
+            }
          }
 
          // don't forget to skip the words for the TDC (if any)
@@ -752,14 +777,8 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
             continue;
          } else if ((dataid >= gTDCMin) && (dataid <= gTDCMax)) {
 
-            bool is_tdc = (datalen == 0);
-            if (!is_tdc) {
-               TdcMessage msg(sub->Data(ix));
-               is_tdc = msg.isHeaderMsg();
-            }
-
             // suppose this is TDC data, first word should be TDC header
-            if (is_tdc) {
+            if ((datalen > 0) && TdcMessage(sub->Data(ix)).isHeaderMsg()) {
                unsigned numch = gNumChannels, edges = gEdgesMask;
                // here should be channel/edge/min/max selection based on TDC design ID
 
