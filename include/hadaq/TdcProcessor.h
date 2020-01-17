@@ -233,10 +233,10 @@ namespace hadaq {
          std::vector<hadaq::TdcMessageExt>  fDummyVect; //! dummy empty vector
          std::vector<hadaq::TdcMessageExt> *pStoreVect; //! pointer on store vector
 
-         std::vector<hadaq::MessageFloat> fStoreFloat;  //! vector with compact messages
+         std::vector<hadaq::MessageFloat> fDummyFloat;  //! vector with compact messages
          std::vector<hadaq::MessageFloat> *pStoreFloat; //! pointer on store vector
 
-         std::vector<hadaq::MessageDouble> fStoreDouble;  //! vector with compact messages
+         std::vector<hadaq::MessageDouble> fDummyDouble;  //! vector with compact messages
          std::vector<hadaq::MessageDouble> *pStoreDouble; //! pointer on store vector
 
          /** EdgeMask defines how TDC calibration for falling edge is performed

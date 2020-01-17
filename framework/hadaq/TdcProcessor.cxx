@@ -105,9 +105,9 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fCalibrTempSum2(0),
    fDummyVect(),
    pStoreVect(0),
-   fStoreFloat(),
+   fDummyFloat(),
    pStoreFloat(0),
-   fStoreDouble(),
+   fDummyDouble(),
    pStoreDouble(0),
    fEdgeMask(edge_mask),
    fCalibrCounts(0),
@@ -2528,11 +2528,11 @@ void hadaq::TdcProcessor::CreateBranch(TTree*)
          mgr()->CreateBranch(GetName(), "std::vector<hadaq::TdcMessageExt>", (void**) &pStoreVect);
          break;
       case 2:
-         pStoreFloat = &fStoreFloat;
+         pStoreFloat = &fDummyFloat;
          mgr()->CreateBranch(GetName(), "std::vector<hadaq::MessageFloat>", (void**) &pStoreFloat);
          break;
       case 3:
-         pStoreDouble = &fStoreDouble;
+         pStoreDouble = &fDummyDouble;
          mgr()->CreateBranch(GetName(), "std::vector<hadaq::MessageDouble>", (void**) &pStoreDouble);
          break;
       default:
@@ -2558,13 +2558,13 @@ void hadaq::TdcProcessor::Store(base::Event* ev)
       case 2: {
          hadaq::TdcSubEventFloat* sub = dynamic_cast<hadaq::TdcSubEventFloat*> (sub0);
          // when subevent exists, use directly pointer on messages vector
-         pStoreFloat = sub ? sub->vect_ptr() : &fStoreFloat;
+         pStoreFloat = sub ? sub->vect_ptr() : &fDummyFloat;
          break;
       }
       case 3: {
          hadaq::TdcSubEventDouble* sub = dynamic_cast<hadaq::TdcSubEventDouble*> (sub0);
          // when subevent exists, use directly pointer on messages vector
-         pStoreDouble = sub ? sub->vect_ptr() : &fStoreDouble;
+         pStoreDouble = sub ? sub->vect_ptr() : &fDummyDouble;
          break;
       }
    }
@@ -2573,7 +2573,7 @@ void hadaq::TdcProcessor::Store(base::Event* ev)
 void hadaq::TdcProcessor::ResetStore()
 {
    pStoreVect = &fDummyVect;
-   pStoreFloat = &fStoreFloat;
-   pStoreDouble = &fStoreDouble;
+   pStoreFloat = &fDummyFloat;
+   pStoreDouble = &fDummyDouble;
 }
 
