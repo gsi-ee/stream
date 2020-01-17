@@ -292,7 +292,7 @@ void hadaq::HldProcessor::DoHadesHistSummary()
 
 void hadaq::HldProcessor::Store(base::Event* ev)
 {
-   if (ev!=0) {
+   if (ev) {
       // only for stream analysis use special handling when many events could be produced at once
 
       hadaq::HldSubEvent* sub =
@@ -304,6 +304,11 @@ void hadaq::HldProcessor::Store(base::Event* ev)
       else
          pMsg = &fMsg;
    }
+}
+
+void hadaq::HldProcessor::ResetStore()
+{
+   pMsg = &fMsg;
 }
 
 

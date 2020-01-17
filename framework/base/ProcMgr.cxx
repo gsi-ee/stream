@@ -722,19 +722,30 @@ bool base::ProcMgr::ProduceNextEvent(base::Event* &evt)
 
 bool base::ProcMgr::ProcessEvent(base::Event* evt)
 {
-   // printf("base::ProcMgr::ProcessEvent %p\n", evt);
-
-   if (evt==0) return false;
+   if (!evt) return false;
 
    // call event processors one after another until event is discarded
    for (unsigned n=0;n<fEvProc.size();n++)
-      if (!fEvProc[n]->Process(evt)) return false;
+      if (!fEvProc[n]->Process(evt))
+         return false;
+
+   bool isanystore = false;
 
    for (unsigned n=0;n<fProc.size();n++)
-      if (fProc[n]->IsStoreEnabled())
+      if (fProc[n]->IsStoreEnabled()) {
          fProc[n]->Store(evt);
+         isanystore = true;
+      }
 
    StoreEvent();
+
+   if (isanystore) {
+      for (unsigned n=0;n<fProc.size();n++)
+         if (fProc[n]->IsStoreEnabled()) {
+            fProc[n]->ResetStore();
+         }
+   }
+
 
    return true;
 }

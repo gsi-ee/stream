@@ -229,6 +229,11 @@ namespace base {
           * which are mapped to the branch */
          virtual void Store(Event*) {}
 
+         /** Generic method to store processor data,
+          * In case of ROOT one should copy event data in temporary structures,
+          * which are mapped to the branch */
+         virtual void ResetStore() {}
+
          static void SetMarksQueueCapacity(unsigned sz) { fMarksQueueCapacity = sz; }
          static void SetBufsQueueCapacity(unsigned sz) { fBufsQueueCapacity = sz; }
 

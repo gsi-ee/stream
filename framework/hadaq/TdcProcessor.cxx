@@ -2569,3 +2569,11 @@ void hadaq::TdcProcessor::Store(base::Event* ev)
       }
    }
 }
+
+void hadaq::TdcProcessor::ResetStore()
+{
+   pStoreVect = &fDummyVect;
+   pStoreFloat = &fStoreFloat;
+   pStoreDouble = &fStoreDouble;
+}
+

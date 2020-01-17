@@ -110,6 +110,7 @@ namespace hadaq {
          virtual void CreateBranch(TTree*);
 
          virtual void Store(base::Event* ev);
+         virtual void ResetStore();
 
          void CreatePerTDCHisto();
 

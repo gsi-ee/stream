@@ -202,3 +202,9 @@ void hadaq::AdcProcessor::Store(base::Event* ev)
    else
       pStoreVect = &fStoreVect;
 }
+
+void hadaq::AdcProcessor::ResetStore()
+{
+   pStoreVect = &fStoreVect;
+}
+
