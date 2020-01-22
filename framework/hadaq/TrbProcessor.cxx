@@ -680,7 +680,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
       if (get_fast) {
          if ((dataid >= fMinTdc) && (dataid < fMaxTdc)) tdcproc = fTdcsVect[dataid-fMinTdc];
       } else {
-         tdcproc = GetTDC(dataid);
+         tdcproc = GetTDC(dataid, true);
       }
 
       //! ================= FPGA TDC header ========================
