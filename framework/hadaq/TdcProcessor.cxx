@@ -296,7 +296,7 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
       CopyCalibration(fCh[ch].rising_calibr, fCh[ch].fRisingCalibr, ch, fRisingCalibr);
    }
 
-   if (DoFallingEdge() && (fCh[ch].fFallingFine==0)) {
+   if (DoFallingEdge() && (fCh[ch].fFallingFine==0) && (ch>0)) {
       fCh[ch].fFallingFine = MakeH1("FallingFine", "Falling fine counter", fNumFineBins, 0, fNumFineBins, "fine");
       fCh[ch].fFallingCalibr = MakeH1("FallingCalibr", "Falling calibration function", fNumFineBins, 0, fNumFineBins, "fine;kind:F");
       fCh[ch].fFallingMult = MakeH1("FallingMult", "Falling event multiplicity", 128, 0, 128, "nhits");
