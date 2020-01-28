@@ -63,6 +63,7 @@ namespace hadaq {
 
          void SetPrintRawData(bool on = true) { fPrintRawData = on; }
          bool IsPrintRawData() const { return fPrintRawData; }
+         bool IsCrossProcess() const { return fCrossProcess; }
 
    };
 

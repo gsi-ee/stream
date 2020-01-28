@@ -116,6 +116,8 @@ namespace hadaq {
 
          void DoHadesHistSummary();
 
+         void SetCrossProcess(bool on);
+
       public:
 
          HldProcessor(bool auto_create = false, const char* after_func = "");

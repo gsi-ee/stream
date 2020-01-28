@@ -370,7 +370,7 @@ void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned re
    fCh[ch].refabs = ((reftdc & 0xf0000) == 0x70000);
 
    // if other TDC configured as ref channel, enable cross processing
-   if (fTrb) fTrb->SetCrossProcess(true);
+   if (fTrb) fTrb->SetCrossProcessAll();
 
    CreateChannelHistograms(ch);
    if (fCh[ch].reftdc == GetID()) CreateChannelHistograms(refch);
@@ -423,7 +423,7 @@ bool hadaq::TdcProcessor::SetDoubleRefChannel(unsigned ch1, unsigned ch2,
    } else {
       //if (reftdc > GetID())
       //   printf("WARNING - double ref channel from TDC with higher ID %u > %u\n", reftdc, GetID());
-      if (fTrb) fTrb->SetCrossProcess(true);
+      if (fTrb) fTrb->SetCrossProcessAll();
    }
 
    fCh[ch].doublerefch = refch;
@@ -543,9 +543,10 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
 
             double tm = fCh[ch].rising_hit_tm;
             double tm_ref = refproc->fCh[ref].rising_hit_tm;
+
             if ((refproc!=this) && (ch>0) && (ref>0) && !fCh[ch].refabs) {
-               tm -= fCh[0].rising_hit_tm;
-               tm_ref -= refproc->fCh[0].rising_hit_tm;
+               // tm -= fCh[0].rising_hit_tm;
+               // tm_ref -= refproc->fCh[0].rising_hit_tm;
             }
 
             fCh[ch].rising_ref_tm = tm - tm_ref;
@@ -553,7 +554,9 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
             double diff = fCh[ch].rising_ref_tm*1e9;
 
             // when refch is 0 on same board, histogram already filled
-            if ((ref!=0) || (refproc != this)) DefFillH1(fCh[ch].fRisingRef, diff, 1.);
+            if ((ref!=0) || (refproc != this)) {
+               DefFillH1(fCh[ch].fRisingRef, diff, 1.);
+            }
 
             DefFillH2(fCh[ch].fRisingRef2D, diff, fCh[ch].rising_fine, 1.);
             DefFillH2(fCh[ch].fRisingRef2D, (diff-1.), refproc->fCh[ref].rising_fine, 1.);
@@ -1847,7 +1850,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          TestHitTime(LocalToGlobalTime(ch0time, &help_index), false, true);
    }
 
-   if (first_scan && !fCrossProcess) AfterFill();
+   // if no cross-processing required, can fill extra histograms directly
+   if (first_scan && !IsCrossProcess()) AfterFill();
 
    if (rawprint && first_scan) {
       printf("RAW data of %s\n", GetName());

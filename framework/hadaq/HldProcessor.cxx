@@ -162,8 +162,6 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
 
 //   RAWPRINT("TRB3 - first scan of buffer %u\n", buf().datalen);
 
-//   printf("Scan TRB buffer size %u\n", buf().datalen);
-
    hadaq::TrbIterator iter(buf().buf, buf().datalen);
 
    hadaqs::RawEvent* ev = nullptr;
@@ -228,6 +226,9 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
 
       for (TrbProcMap::iterator diter = fMap.begin(); diter != fMap.end(); diter++)
          diter->second->AfterEventScan();
+
+      for (TrbProcMap::iterator diter = fMap.begin(); diter != fMap.end(); diter++)
+         diter->second->AfterEventFill();
 
       if (fAutoCreate) {
          fAutoCreate = false; // with first event
@@ -463,5 +464,11 @@ void hadaq::HldProcessor::CreatePerTDCHisto()
    for (auto &&tdc : tdcs)
       tdc->AssignPerHldHistos(cnt++, &fHitsPerTDC, &fErrPerTDC, &fHitsPerTDCChannel, &fErrPerTDCChannel, &fCorrPerTDCChannel,
           &fQaFinePerTDCChannel, &fQaToTPerTDCChannel, &fQaEdgesPerTDCChannel, &fQaErrorsPerTDCChannel);
+}
 
+
+void hadaq::HldProcessor::SetCrossProcess(bool on)
+{
+   for (TrbProcMap::iterator diter = fMap.begin(); diter != fMap.end(); diter++)
+      diter->second->SetCrossProcess(on);
 }

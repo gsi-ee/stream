@@ -386,6 +386,8 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
       }
 
       AfterEventScan();
+
+      AfterEventFill();
    }
 
    return true;
@@ -401,15 +403,29 @@ void hadaq::TrbProcessor::BeforeEventScan()
 
 void hadaq::TrbProcessor::AfterEventScan()
 {
-   // we scan in all TDC processors newly add buffers
-   // this is required to
-   if (IsCrossProcess()) {
-      for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
-         iter->second->ScanNewBuffers();
+   // scan all new data
+   for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
+      iter->second->ScanNewBuffers();
+}
 
+
+void hadaq::TrbProcessor::AfterEventFill()
+{
+   // after scan data, fill extra histograms
+   if (IsCrossProcess()) {
       for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
          iter->second->AfterFill(&fMap);
    }
+}
+
+
+
+void hadaq::TrbProcessor::SetCrossProcessAll()
+{
+   if (fHldProc)
+      fHldProc->SetCrossProcess(true);
+   else
+      SetCrossProcess(true);
 }
 
 

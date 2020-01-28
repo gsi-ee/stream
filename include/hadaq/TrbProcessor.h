@@ -127,6 +127,7 @@ namespace hadaq {
          void BeforeEventScan();
 
          void AfterEventScan();
+         void AfterEventFill();
 
          void BuildFastTDCVector();
 
@@ -134,6 +135,8 @@ namespace hadaq {
 
          void EventError(const char *msg);
          void EventLog(const char *msg);
+
+         void SetCrossProcessAll();
 
       public:
 
