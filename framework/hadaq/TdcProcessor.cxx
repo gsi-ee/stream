@@ -541,12 +541,12 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
       if ((refproc!=0) && ((ref>0) || (refproc!=this)) && (ref<refproc->NumChannels()) && ((ref!=ch) || (refproc!=this))) {
          if (DoRisingEdge() && (fCh[ch].rising_hit_tm != 0) && (refproc->fCh[ref].rising_hit_tm != 0)) {
 
-            double tm = fCh[ch].rising_hit_tm;
-            double tm_ref = refproc->fCh[ref].rising_hit_tm;
+            double tm = fCh[ch].rising_hit_tm; // relative time to ch0 on same TDC
+            double tm_ref = refproc->fCh[ref].rising_hit_tm; // relative time to ch0 on referenced TDC
 
-            if ((refproc!=this) && (ch>0) && (ref>0) && !fCh[ch].refabs) {
-               // tm -= fCh[0].rising_hit_tm;
-               // tm_ref -= refproc->fCh[0].rising_hit_tm;
+            if ((refproc!=this) && (ch>0) && (ref>0) && fCh[ch].refabs) {
+               tm += fCh[0].rising_hit_tm; // produce again absolute time for channel
+               tm_ref += refproc->fCh[0].rising_hit_tm; // produce again absolute time for reference channel
             }
 
             fCh[ch].rising_ref_tm = tm - tm_ref;
