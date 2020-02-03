@@ -40,7 +40,13 @@ TFirstStepProcessor::TFirstStepProcessor(const char* name) :
 
    SetSortedOrder(true);
 
-   if (gSystem->AccessPathName("first.C") == 0) {
+   if (gSystem->AccessPathName("first.C") != 0) {
+      TGo4Log::Error("Cannot find first.C script");
+      throw TGo4EventErrorException(this);
+   }
+
+   if (ExecuteScript("first.C+") == -1) {
+      TGo4Log::Warn("Compiled mode of first.C fails, may have a problem to relaunch analysis");
       if (ExecuteScript("first.C") == -1) {
          TGo4Log::Error("Cannot setup analysis with first.C script");
          throw TGo4EventErrorException(this);
