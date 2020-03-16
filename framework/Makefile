@@ -17,8 +17,10 @@ CXXOPT       += $(CPPVERS) -O2 -fPIC $(CXXPLATFORMFLAGS) -Wall $(INCLUDES:%=-I%)
 
 ifeq ($(shell uname -m),aarch64)
 CXXPLATFORMFLAGS := 
-DEFINITIONS += STREAM_AARCH64
+NOLIBF_HDR = $(STREAMSYS)/include/base/Profiler.h
+NOLIBF_SRC = base/Profiler.cxx
 endif
+
 
 ifeq ($(shell uname),Darwin)
 CXX           = clang++
@@ -43,18 +45,20 @@ INCLUDES  = $(STREAMSYS)/include
 
 NEWLIB = $(STREAMSYS)/lib/libStream.so
 
-NEWLIB_HEADERS = $(wildcard $(STREAMSYS)/include/base/*.h) \
+NEWLIB_HEADERS = $(filter-out $(NOLIBF_HDR), \
+                 $(wildcard $(STREAMSYS)/include/base/*.h) \
                  $(wildcard $(STREAMSYS)/include/nx/*.h) \
                  $(wildcard $(STREAMSYS)/include/get4/*.h) \
                  $(wildcard $(STREAMSYS)/include/hadaq/*.h) \
                  $(wildcard $(STREAMSYS)/include/mbs/*.h) \
-                 $(STREAMSYS)/include/dabc/BinaryFile.h
+                 $(STREAMSYS)/include/dabc/BinaryFile.h)
 
-NEWLIB_SRCS =    $(wildcard base/*.cxx) \
+NEWLIB_SRCS =    $(filter-out $(NOLIBF_SRC), \
+                 $(wildcard base/*.cxx) \
                  $(wildcard nx/*.cxx) \
                  $(wildcard get4/*.cxx) \
                  $(wildcard hadaq/*.cxx) \
-                 $(wildcard mbs/*.cxx)
+                 $(wildcard mbs/*.cxx))
 
 NEWLIB_OBJS = $(patsubst %.cxx, %.o, $(NEWLIB_SRCS))
 NEWLIB_DEPS = $(patsubst %.cxx, %.d, $(NEWLIB_SRCS))
@@ -103,10 +107,10 @@ endif
 $(NEWLIBDICT_SRC): $(NEWLIBDICT_LINKDEF) $(NEWLIB_HEADERS) $(NEWLIBROOT_HEADERS)
 ifdef IS_ROOT6
 	@echo 'Creating root6 dictionary: $@'
-	@rootcling -f $@ -s $(NEWLIBDICT_LIBNAME).so -c $(CXXOPT) $(NEWLIB_HEADERS) $(NEWLIBROOT_HEADERS) $(NEWLIBDICT_LINKDEF)
+	rootcling -f $@ -s $(NEWLIBDICT_LIBNAME).so -c $(CXXOPT) $(NEWLIB_HEADERS) $(NEWLIBROOT_HEADERS) $(NEWLIBDICT_LINKDEF)
 else
 	@echo 'Creating root5 dictionary: $@'
-	@rootcint -f $@ -c -p -I../include $(NEWLIB_HEADERS) $(NEWLIBROOT_HEADERS) $(NEWLIBDICT_LINKDEF)
+	rootcint -f $@ -c -p -I../include $(NEWLIB_HEADERS) $(NEWLIBROOT_HEADERS) $(NEWLIBDICT_LINKDEF)
 endif
 
 $(NEWLIBDICT_LIB): $(NEWLIBDICT_OBJ) $(NEWLIBROOT_OBJS) $(NEWLIBDICT_LINKDEF)
