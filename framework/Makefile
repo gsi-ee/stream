@@ -12,7 +12,12 @@ endif
 
 CPPVERS      = -std=c++11
 
-CXXOPT       += $(CPPVERS) -O2 -fPIC -m64 -Wall $(INCLUDES:%=-I%) $(DEFINITIONS:%=-D%)
+CXXPLATFORMFLAGS   = -m64
+CXXOPT       += $(CPPVERS) -O2 -fPIC $(CXXPLATFORMFLAGS) -Wall $(INCLUDES:%=-I%) $(DEFINITIONS:%=-D%)
+
+ifeq ($(shell uname -m),aarch64)
+CXXPLATFORMFLAGS := 
+endif
 
 ifeq ($(shell uname),Darwin)
 CXX           = clang++
