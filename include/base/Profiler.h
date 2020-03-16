@@ -22,9 +22,16 @@ namespace base {
 
       clock_t GetClock()
       {
+
+#ifdef STREAM_AARCH64
+         uint64_t virtual_timer_value;
+         asm volatile("mrs %0, cntvct_el0" : "=r"(virtual_timer_value));
+         return virtual_timer_value;
+#else
          unsigned low, high;
          asm volatile ("rdtsc" : "=a" (low), "=d" (high));
          return (clock_t(high) << 32) | low;
+#endif
       }
 
       clock_t fLast{0};

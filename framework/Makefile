@@ -17,6 +17,7 @@ CXXOPT       += $(CPPVERS) -O2 -fPIC $(CXXPLATFORMFLAGS) -Wall $(INCLUDES:%=-I%)
 
 ifeq ($(shell uname -m),aarch64)
 CXXPLATFORMFLAGS := 
+DEFINITIONS += STREAM_AARCH64
 endif
 
 ifeq ($(shell uname),Darwin)
