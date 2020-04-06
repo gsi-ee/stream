@@ -722,10 +722,19 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
          RAWPRINT("   Dummy header: 0x%x, size=%d\n", (unsigned) data, datalen);
          //hTrbTriggerCount->Fill(4);          //! TRB - DUMMY
          //hTrbTriggerCount->Fill(0);          //! TRB TOTAL
+         bool first = true;
          while (datalen-- > 0) {
             //! In theory here must be only one word - termination package with the status
             data = sub->Data(ix++);
             RAWPRINT("      word: 0x%08x\n", (unsigned) data);
+
+            if (first) {
+               for(int bit=0; bit<32; ++bit)
+                  if(data & (1 << bit))
+                     DefFastFillH1(fErrBits, bit, 1.);
+            }
+            first = false;
+
             //uint32_t fSubeventStatus = data;
             //if (fSubeventStatus != 0x00000001) { bad events}
          }
@@ -932,11 +941,9 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent *sub, void *
 
    // JAM2018: add errorbit statistics
    uint32_t error_word = sub->GetErrBits();
-   for(int bit=0; bit<32;++bit)
-   {
-     uint32_t mask = (bit << 1);
-     if((error_word & mask) == mask) DefFastFillH1(fErrBits, bit, 1.);
-   }
+   for(int bit=0; bit<32; ++bit)
+      if(error_word & (1 << bit))
+         DefFastFillH1(fErrBits, bit, 1.);
 
    // only fill histograms
    if (only_hist) return 0;
