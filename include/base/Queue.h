@@ -1,7 +1,7 @@
 #ifndef BASE_QUEUE_H
 #define BASE_QUEUE_H
 
-#include <string.h>
+#include <cstring>
 
 #include <stdexcept>
 

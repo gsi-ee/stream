@@ -1,6 +1,6 @@
 #include "base/SysCoreProc.h"
 
-#include <stdio.h>
+#include <cstdio>
 
 #include "base/OpticSplitter.h"
 

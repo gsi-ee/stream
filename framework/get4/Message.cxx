@@ -1,6 +1,6 @@
 #include "get4/Message.h"
 
-#include <stdio.h>
+#include <cstdio>
 
 //----------------------------------------------------------------------------
 //! Print message in human readable format to \a cout.

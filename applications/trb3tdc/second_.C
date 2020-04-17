@@ -1,7 +1,7 @@
 
 // example of post-processor, which is called once at the analysis end
 
-#include <stdio.h>
+#include <cstdio>
 
 #include "TTree.h"
 #include "TH1.h"

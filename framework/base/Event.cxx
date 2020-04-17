@@ -1,8 +1,8 @@
 #include "base/Event.h"
 
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstring>
+#include <cstdio>
+#include <cstdlib>
 
 base::SubEvent* base::Event::GetSubEvent(const std::string& name, unsigned subindx) const
 {

@@ -1,7 +1,7 @@
 #include "hadaq/HldProcessor.h"
 
-#include <string.h>
-#include <stdio.h>
+#include <cstring>
+#include <cstdio>
 #include <cmath>
 #include <time.h>
 #include <iostream>

@@ -1,6 +1,6 @@
 #include "hadaq/TrbProcessor.h"
 
-#include <string.h>
+#include <cstring>
 #include <algorithm>
 
 #include "base/defines.h"

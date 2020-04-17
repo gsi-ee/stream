@@ -1,9 +1,9 @@
 #ifndef HADAQ_TDCMESSAGE_H
 #define HADAQ_TDCMESSAGE_H
 
-#include <stdint.h>
+#include <cstdint>
 
-#include <stdio.h>
+#include <cstdio>
 
 namespace hadaq {
 

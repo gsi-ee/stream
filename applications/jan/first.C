@@ -1,6 +1,6 @@
 // this is example for
 
-#include <stdlib.h>
+#include <cstdlib>
 
 void first()
 {

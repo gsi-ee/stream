@@ -2,7 +2,7 @@
 #define BASE_TIMESTAMP_H
 
 
-#include <stdint.h>
+#include <cstdint>
 
 
 namespace base {

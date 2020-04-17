@@ -1,7 +1,7 @@
 #include "get4/MbsProcessor.h"
 
-#include <stdlib.h>
-#include <stdio.h>
+#include <cstdlib>
+#include <cstdio>
 #include <cmath>
 
 #include "base/ProcMgr.h"

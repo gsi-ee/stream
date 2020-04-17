@@ -1,6 +1,6 @@
 #include "mbs/Processor.h"
 
-#include <stdio.h>
+#include <cstdio>
 
 #include "base/defines.h"
 #include "base/ProcMgr.h"

@@ -1,7 +1,7 @@
 #ifndef HADAQ_DEFINESS_H
 #define HADAQ_DEFINESS_H
 
-#include <stdint.h>
+#include <cstdint>
 
 /*
 //Description of the Event Structure

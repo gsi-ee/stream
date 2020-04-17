@@ -1,8 +1,8 @@
 #include "hadaq/TdcProcessor.h"
 
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
+#include <cstdlib>
+#include <cstring>
+#include <cstdio>
 #include <cmath>
 #include <stdarg.h>
 

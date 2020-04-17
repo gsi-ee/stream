@@ -1,8 +1,8 @@
 #include "hadaq/AdcProcessor.h"
 
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
+#include <cstdlib>
+#include <cstring>
+#include <cstdio>
 #include <bitset>
 
 #include "base/defines.h"

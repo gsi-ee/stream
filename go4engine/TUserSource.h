@@ -5,7 +5,7 @@
 
 #include "hadaq/HldFile.h"
 
-#include <stdio.h>
+#include <cstdio>
 
 class TGo4UserSourceParameter;
 class TGo4MbsEvent;

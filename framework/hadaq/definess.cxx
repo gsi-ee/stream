@@ -1,6 +1,6 @@
 #include "hadaq/definess.h"
 
-#include <stdio.h>
+#include <cstdio>
 #include <sys/time.h>
 #include <time.h>
 

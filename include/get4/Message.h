@@ -3,7 +3,7 @@
 
 #include "base/Message.h"
 
-#include <string.h>
+#include <cstring>
 
 namespace get4 {
 

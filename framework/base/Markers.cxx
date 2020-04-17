@@ -1,7 +1,7 @@
 #include "base/Markers.h"
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 
 void base::GlobalMarker::SetInterval(double left, double right)
 {

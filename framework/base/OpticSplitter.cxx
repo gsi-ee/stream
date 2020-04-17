@@ -1,6 +1,6 @@
 #include "base/OpticSplitter.h"
 
-#include <string.h>
+#include <cstring>
 
 #include "base/ProcMgr.h"
 

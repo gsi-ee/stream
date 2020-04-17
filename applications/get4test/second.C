@@ -1,4 +1,4 @@
-#include <stdio.h>
+#include <cstdio>
 
 #include "base/EventProc.h"
 #include "base/Event.h"

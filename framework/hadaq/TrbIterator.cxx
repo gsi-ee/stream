@@ -1,6 +1,6 @@
 #include "hadaq/TrbIterator.h"
 
-#include <stdio.h>
+#include <cstdio>
 
 hadaq::TrbIterator::TrbIterator(void* data, unsigned datalen) :
    fData(data),
