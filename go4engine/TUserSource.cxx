@@ -3,9 +3,10 @@
 #include "TClass.h"
 #include "TList.h"
 #include "TString.h"
+#include "TObjString.h"
 
-#include <stdlib.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstring>
 
 #include "TGo4EventErrorException.h"
 #include "TGo4EventEndException.h"
