@@ -5,8 +5,6 @@
 
 #include "hadaq/TdcMessage.h"
 
-#include "base/TimeStamp.h"
-
 namespace hadaq {
 
    class TdcIterator {

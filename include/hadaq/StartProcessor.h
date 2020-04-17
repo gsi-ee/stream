@@ -3,8 +3,6 @@
 
 #include "base/StreamProc.h"
 
-#include "base/EventProc.h"
-
 namespace hadaq {
 
 /** This is specialized process for spill structures  */

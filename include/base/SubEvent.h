@@ -3,7 +3,6 @@
 
 #include <algorithm>
 #include <vector>
-#include <exception>
 
 namespace base {
 

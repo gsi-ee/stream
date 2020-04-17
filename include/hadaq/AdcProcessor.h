@@ -2,7 +2,6 @@
 #define HADAQ_ADCPROCESSOR_H
 
 #include "hadaq/SubProcessor.h"
-#include "hadaq/TdcProcessor.h"
 
 #include "hadaq/AdcMessage.h"
 #include "hadaq/AdcSubEvent.h"
@@ -46,7 +45,6 @@ protected:
    const double fSamplingPeriod; // ADC sampling period in seconds
 
    static std::vector<double> storage;
-
 
    base::H1handle fKinds;        //! kinds of messages
    base::H1handle fChannels;     //! histogram with messages per channel

@@ -3,10 +3,6 @@
 
 #include <string>
 
-#include "base/Buffer.h"
-
-#include "base/Markers.h"
-
 #include "base/Processor.h"
 
 namespace base {
@@ -236,8 +232,6 @@ namespace base {
 
          static void SetMarksQueueCapacity(unsigned sz) { fMarksQueueCapacity = sz; }
          static void SetBufsQueueCapacity(unsigned sz) { fBufsQueueCapacity = sz; }
-
-
 
    };
 

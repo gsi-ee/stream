@@ -1,8 +1,6 @@
 #ifndef BASE_OPTICSPLITTER_H
 #define BASE_OPTICSPLITTER_H
 
-#include "base/StreamProc.h"
-
 #include "base/SysCoreProc.h"
 
 #include "base/defines.h"

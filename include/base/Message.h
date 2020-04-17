@@ -1,7 +1,7 @@
 #ifndef BASE_MESSAGE_H
 #define BASE_MESSAGE_H
 
-#include <stdint.h>
+#include <cstdint>
 #include <iostream>
 
 #include "base/defines.h"

@@ -1,8 +1,6 @@
 #ifndef HADAQ_HLDPROCESSOR_H
 #define HADAQ_HLDPROCESSOR_H
 
-#include "base/StreamProc.h"
-
 #include "base/EventProc.h"
 
 #include "hadaq/definess.h"

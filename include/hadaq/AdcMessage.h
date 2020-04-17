@@ -1,8 +1,8 @@
 #ifndef HADAQ_ADCMESSAGE_H
 #define HADAQ_ADCMESSAGE_H
 
-#include <stdint.h>
-#include <stdio.h>
+#include <cstdint>
+#include <cstdio>
 #include <limits>
 
 namespace hadaq {
