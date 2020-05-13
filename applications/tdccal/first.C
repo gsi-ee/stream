@@ -126,7 +126,7 @@ extern "C" void after_create(hadaq::HldProcessor* hld)
       printf("Configure %s!\n", tdc->GetName());
 
       // configure 0xD trigger width and hmin/hmax histogram range for 0xD trigger ToT
-      tdc->SetToTRange(30, 50., 80.);
+      tdc->SetToTRange(20, 15., 60.);
 
       // tdc->SetUseLastHit(true);
       for (unsigned nch=2;nch<tdc->NumChannels();nch++)

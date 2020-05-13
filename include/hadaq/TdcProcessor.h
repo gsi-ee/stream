@@ -9,7 +9,7 @@
 
 namespace hadaq {
 
-   enum { FineCounterBins = 600, TotBins = 3000, ToTvalue = 30, ToThmin = 50, ToThmax = 80 };
+   enum { FineCounterBins = 600, TotBins = 3000, ToTvalue = 20, ToThmin = 15, ToThmax = 60 };
 
    /** This is specialized sub-processor for FPGA-TDC.
     * Normally it should be used together with TrbProcessor,
