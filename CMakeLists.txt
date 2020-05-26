@@ -25,3 +25,7 @@ configure_file(${CMAKE_SOURCE_DIR}/cmake/scripts/StreamConfig.cmake.in
 
 add_subdirectory(framework)
 
+if(Go4_FOUND)
+   add_subdirectory(go4engine)
+endif()
+
