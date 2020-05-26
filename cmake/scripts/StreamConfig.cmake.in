@@ -1,0 +1,15 @@
+# Stream CMake Configuration File for External Projects
+
+# Stream configured for use from the build tree - absolute paths are used.
+set(STREAM_INCLUDE_DIR ${CMAKE_CURRENT_LIST_DIR}/include)
+
+# Stream configured for use from the build tree - absolute paths are used.
+set(STREAM_LIBRARY_DIR ${CMAKE_CURRENT_LIST_DIR}/lib)
+
+# search for stream libraries
+foreach(_cpt Stream)
+  find_library(${_cpt}_LIBRARY ${_cpt} HINTS ${STREAM_LIBRARY_DIR})
+  if(${_cpt}_LIBRARY)
+    mark_as_advanced(${_cpt}_LIBRARY)
+  endif()
+endforeach()
