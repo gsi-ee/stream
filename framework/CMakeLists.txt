@@ -109,7 +109,7 @@ STREAM_LINK_LIBRARY(Stream
    nx/Processor.cxx   
 )
 
-if(ROOT_FOUND OR Go4_FOUND)
+if(ROOT_FOUND)
 
    set(root_hdrs
        root/THookProc.h
@@ -118,11 +118,7 @@ if(ROOT_FOUND OR Go4_FOUND)
 
    STREAM_INSTALL_HEADERS(root ${root_hdrs})
 
-   if(Go4_FOUND)
-      include(${GO4_USE_FILE})
-   else()
-      include(${ROOT_USE_FILE})
-   endif()
+   include(${ROOT_USE_FILE})
    
    STREAM_LINK_LIBRARY(StreamDict
       SOURCES

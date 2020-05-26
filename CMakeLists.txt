@@ -20,6 +20,34 @@ if(NOT Go4_FOUND)
    find_package(ROOT QUIET)
 endif()
 
+# ====== check ROOT and its c++ standard ==========
+
+if(ROOT_FOUND AND NOT ROOT_CXX_FLAGS STREQUAL "")
+   if(APPLE)
+      string(FIND ${ROOT_CXX_FLAGS} "-std=c++11" _check_c11)
+      string(FIND ${ROOT_CXX_FLAGS} "-std=c++1y" _check_c14)
+      string(FIND ${ROOT_CXX_FLAGS} "-std=c++1z" _check_c17)
+   else()
+      string(FIND ${ROOT_CXX_FLAGS} "-std=c++11" _check_c11)
+      string(FIND ${ROOT_CXX_FLAGS} "-std=c++14" _check_c14)
+      string(FIND ${ROOT_CXX_FLAGS} "-std=c++17" _check_c17)
+   endif()
+   if(NOT ${_check_c11} EQUAL -1)
+      set(CMAKE_CXX_STANDARD 11)
+   elseif(NOT ${_check_c14} EQUAL -1)
+      set(CMAKE_CXX_STANDARD 14)
+   elseif(NOT ${_check_c17} EQUAL -1)
+      set(CMAKE_CXX_STANDARD 17)
+   endif()
+   message("FOUND ROOT with flags ${ROOT_CXX_FLAGS} stream take standard ${CMAKE_CXX_STANDARD}")
+endif()
+
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 11)
+endif()
+
+
+
 configure_file(${CMAKE_SOURCE_DIR}/cmake/scripts/StreamConfig.cmake.in
                ${CMAKE_BINARY_DIR}/StreamConfig.cmake COPYONLY)
 
