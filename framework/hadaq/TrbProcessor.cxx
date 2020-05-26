@@ -1081,5 +1081,10 @@ void hadaq::TrbProcessor::ClearDAQHistos()
    ClearH1(fLostRate);
    ClearH1(fTrigType);
    ClearH1(fErrBits);
+
+   ClearH1(fMsgPerBrd);
+   ClearH1(fErrPerBrd);
+   ClearH1(fHitsPerBrd);
+
 }
 
