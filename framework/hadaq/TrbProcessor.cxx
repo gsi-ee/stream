@@ -1071,7 +1071,15 @@ unsigned hadaq::TrbProcessor::EmulateTransform(hadaqs::RawSubevent *sub, int dum
       tdc->EmulateTransform(dummycnt);
    }
 
-
    return 0;
+}
+
+void hadaq::TrbProcessor::ClearDAQHistos()
+{
+   ClearH1(fEvSize);
+   ClearH1(fSubevSize);
+   ClearH1(fLostRate);
+   ClearH1(fTrigType);
+   ClearH1(fErrBits);
 }
 

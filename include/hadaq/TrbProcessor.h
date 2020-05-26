@@ -308,6 +308,9 @@ namespace hadaq {
          /** Create TDC-specific histograms */
          void CreatePerTDCHistos();
 
+         /** Create histograms filled in HADES DAQ, when module used for HADES TDC calibration */
+         void ClearDAQHistos();
+
          hadaqs::RawSubevent& GetLastSubeventHdr() { return fLastSubevHdr; }
 
          hadaq::TrbMessage &GetTrbMsg() { return fMsg; }
