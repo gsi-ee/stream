@@ -3,6 +3,9 @@
 .\#*
 *~
 
+# ignore eclipse
+.project
+
 # compiled stuff
 *.d
 *.o
