@@ -1,0 +1,8 @@
+# this is generated file, use it to configure environment
+# just type '. ./streamlogin' in shell, not forget space in between
+
+echo Configure stream v0.10.0 at @CMAKE_BINARY_DIR@
+
+export STREAMSYS=@CMAKE_BINARY_DIR@
+export GO4EXTRAINCLUDE=$STREAMSYS/include
+export LD_LIBRARY_PATH=.:$STREAMSYS/lib:$LD_LIBRARY_PATH

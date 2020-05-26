@@ -23,6 +23,10 @@ endif()
 configure_file(${CMAKE_SOURCE_DIR}/cmake/scripts/StreamConfig.cmake.in
                ${CMAKE_BINARY_DIR}/StreamConfig.cmake COPYONLY)
 
+configure_file(${CMAKE_SOURCE_DIR}/cmake/scripts/streamlogin.in
+               ${CMAKE_BINARY_DIR}/streamlogin  @ONLY NEWLINE_STYLE UNIX)
+
+
 add_subdirectory(framework)
 
 if(Go4_FOUND)
