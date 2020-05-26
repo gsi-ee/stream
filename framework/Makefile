@@ -16,7 +16,7 @@ CXXPLATFORMFLAGS   = -m64
 CXXOPT       += $(CPPVERS) -O2 -fPIC $(CXXPLATFORMFLAGS) -Wall $(INCLUDES:%=-I%) $(DEFINITIONS:%=-D%)
 
 ifeq ($(shell uname -m),aarch64)
-CXXPLATFORMFLAGS := 
+CXXPLATFORMFLAGS :=
 NOLIBF_HDR = $(STREAMSYS)/include/base/Profiler.h
 NOLIBF_SRC = base/Profiler.cxx
 endif
@@ -125,7 +125,7 @@ $(NEWLIB) : $(NEWLIB_OBJS)
 	@echo 'Building: $@'
 	$(LD) -shared $(LDFLAGSPRE) -O $(NEWLIB_OBJS) -o $@
 
-# rules	
+# rules
 %.d: %.cxx
 	@echo "Build dependency for $< ..."
 	@$(CXX) $(CXXOPT) $< -o $@ -MM -MT "$*.o $*.d"
@@ -137,7 +137,7 @@ $(NEWLIBDICT_OBJ): $(NEWLIBDICT_SRC)
 	$(CXX) -c $< $(CXXOPT) -o $@
 
 ifeq ($(findstring $(MAKECMDGOALS), clean),)
--include $(NEWLIB_DEPS) 
+-include $(NEWLIB_DEPS)
 ifdef IS_ROOT
 -include $(NEWLIBROOT_DEPS)
 endif
