@@ -1,68 +1,78 @@
-STREAM_INSTALL_HEADERS(base
-   Buffer.h
-   defines.h
-   Event.h
-   EventProc.h
-   Iterator.h
-   Markers.h
-   Message.h
-   OpticSplitter.h
-   Processor.h
-   ProcMgr.h
-   Profiler.h
-   Queue.h
-   StreamProc.h
-   SubEvent.h
-   SysCoreProc.h
-   TimeStamp.h
+set(base_hdrs
+   base/Buffer.h
+   base/defines.h
+   base/Event.h
+   base/EventProc.h
+   base/Iterator.h
+   base/Markers.h
+   base/Message.h
+   base/OpticSplitter.h
+   base/Processor.h
+   base/ProcMgr.h
+   base/Profiler.h
+   base/Queue.h
+   base/StreamProc.h
+   base/SubEvent.h
+   base/SysCoreProc.h
+   base/TimeStamp.h
 )
 
-STREAM_INSTALL_HEADERS(get4
-   Iterator.h
-   MbsProcessor.h
-   Message.h
-   Processor.h
-   SubEvent.h
+STREAM_INSTALL_HEADERS(base ${base_hdrs})
+
+set(get4_hdrs
+   get4/Iterator.h
+   get4/MbsProcessor.h
+   get4/Message.h
+   get4/Processor.h
+   get4/SubEvent.h
 )
 
-STREAM_INSTALL_HEADERS(dabc
-   BinaryFile.h
+STREAM_INSTALL_HEADERS(get4 ${get4_hdrs})
+
+set(dabc_hdrs
+   dabc/BinaryFile.h
 )
 
-STREAM_INSTALL_HEADERS(hadaq
-   AdcMessage.h
-   AdcProcessor.h
-   AdcSubEvent.h
-   definess.h
-   HldFile.h
-   HldProcessor.h
-   SpillProcessor.h
-   StartProcessor.h
-   SubProcessor.h
-   TdcIterator.h
-   TdcMessage.h
-   TdcProcessor.h
-   TdcSubEvent.h
-   TrbIterator.h
-   TrbProcessor.h
+STREAM_INSTALL_HEADERS(dabc ${dabc_hdrs})
+
+set(hadaq_hdrs
+   hadaq/AdcMessage.h
+   hadaq/AdcProcessor.h
+   hadaq/AdcSubEvent.h
+   hadaq/definess.h
+   hadaq/HldFile.h
+   hadaq/HldProcessor.h
+   hadaq/SpillProcessor.h
+   hadaq/StartProcessor.h
+   hadaq/SubProcessor.h
+   hadaq/TdcIterator.h
+   hadaq/TdcMessage.h
+   hadaq/TdcProcessor.h
+   hadaq/TdcSubEvent.h
+   hadaq/TrbIterator.h
+   hadaq/TrbProcessor.h
 )
 
-STREAM_INSTALL_HEADERS(mbs
-   Processor.h
-   SubEvent.h
+STREAM_INSTALL_HEADERS(hadaq ${hadaq_hdrs})
+
+
+set(mbs_hdrs
+   mbs/Processor.h
+   mbs/SubEvent.h
 )
 
-STREAM_INSTALL_HEADERS(nx
-   Iterator.h
-   Message.h
-   Processor.h
-   SubEvent.h
+STREAM_INSTALL_HEADERS(mbs ${mbs_hdrs})
+
+set(nx_hdrs
+   nx/Iterator.h
+   nx/Message.h
+   nx/Processor.h
+   nx/SubEvent.h
 )
+
+STREAM_INSTALL_HEADERS(nx ${nx_hdrs})
 
 # ================== Produce Stream headers ==========
-
-get_property(__allHeaders GLOBAL PROPERTY STREAM_HEADER_TARGETS)
-add_custom_target(move_headers ALL DEPENDS ${__allHeaders})
 
 STREAM_LINK_LIBRARY(Stream
    SOURCES
@@ -98,3 +108,37 @@ STREAM_LINK_LIBRARY(Stream
    nx/Message.cxx
    nx/Processor.cxx   
 )
+
+if(ROOT_FOUND OR Go4_FOUND)
+
+   set(root_hdrs
+       root/THookProc.h
+       root/TRootProcMgr.h
+   )
+
+   STREAM_INSTALL_HEADERS(root ${root_hdrs})
+
+   if(Go4_FOUND)
+      include(${GO4_USE_FILE})
+   else()
+      include(${ROOT_USE_FILE})
+   endif()
+   
+   STREAM_LINK_LIBRARY(StreamDict
+      SOURCES
+         root/THookProc.cxx
+         root/TRootProcMgr.cxx
+      LIBRARIES
+         Stream
+   )
+   
+   ROOT_GENERATE_DICTIONARY(G__StreamDict ${base_hdrs} ${dabc_hdrs} ${get4_hdrs} ${hadaq_hdrs} ${mbs_hdrs} ${nx_hdrs} ${root_hdrs}
+                            LINKDEF LinkDef.h
+                            MODULE StreamDict
+                            DEPENDENCIES Stream
+                            NOINSTALL)
+   
+endif()
+
+get_property(__allHeaders GLOBAL PROPERTY STREAM_HEADER_TARGETS)
+add_custom_target(move_headers ALL DEPENDS ${__allHeaders})

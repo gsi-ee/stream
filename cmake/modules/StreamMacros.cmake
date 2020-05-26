@@ -23,12 +23,12 @@ set(STREAM_LIBRARY_PROPERTIES
 function(STREAM_INSTALL_HEADERS subdir)
   cmake_parse_arguments(ARG "" "" "" ${ARGN})
   foreach (include_file ${ARG_UNPARSED_ARGUMENTS})
-    set (src ${CMAKE_SOURCE_DIR}/include/${subdir}/${include_file})
-    set (dst ${CMAKE_BINARY_DIR}/include/${subdir}/${include_file})
+    set(src ${CMAKE_SOURCE_DIR}/include/${include_file})
+    set(dst ${CMAKE_BINARY_DIR}/include/${include_file})
     add_custom_command(
       OUTPUT ${dst}
       COMMAND ${CMAKE_COMMAND} -E copy ${src} ${dst}
-      COMMENT "Copying header ${src} to ${CMAKE_BINARY_DIR}/include"
+      COMMENT "Copying header ${include_file} to ${CMAKE_BINARY_DIR}/include"
       DEPENDS ${src})
     list(APPEND dst_list ${dst})
   endforeach()
@@ -41,7 +41,6 @@ endfunction()
 #                       SOURCES src1 src2          : 
 #                       LIBRARIES lib1 lib2        : direct linked libraries
 #                       DEFINITIONS def1 def2      : library definitions
-#                       DEPENDENCIES lib1 lib2     : dependend go4 libraries
 #)
 function(STREAM_LINK_LIBRARY libname)
    cmake_parse_arguments(ARG "NOEXPORT" "" "SOURCES;LIBRARIES;DEFINITIONS;DEPENDENCIES" ${ARGN})
@@ -54,7 +53,7 @@ function(STREAM_LINK_LIBRARY libname)
 
    target_link_libraries(${libname} ${ARG_LIBRARIES})
    
-   add_dependencies(${libname} move_headers ${ARG_DEPENDENCIES})
+   # add_dependencies(${libname} move_headers ${ARG_DEPENDENCIES})
    
-   target_include_directories(${libname} PRIVATE ${CMAKE_BINARY_DIR}/include)
+   target_include_directories(${libname} PRIVATE ${CMAKE_SOURCE_DIR}/include)
 endfunction()
