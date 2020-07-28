@@ -104,6 +104,9 @@ namespace hadaq {
          /** Return error bits of header message */
          inline uint32_t getHeaderErr() const { return fData & 0xFFFF; }
 
+         /** Return hardware type coded in header message */
+         inline uint32_t getHeaderHwType() const { return (fData >> 8) & 0xFF; }
+
          /** Return reserved bits of header message */
          inline uint32_t getHeaderRes() const { return (fData >> 16) & 0xFF; }
 

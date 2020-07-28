@@ -200,18 +200,19 @@ namespace hadaq {
          base::H2handle *fQaEdgesPerHld;  //! QA Edges per TDC channel - from HLD
          base::H2handle *fQaErrorsPerHld;  //! QA Errors per TDC channel - from HLD
 
-         unsigned                 fNumChannels; //! number of channels
-         unsigned                 fNumFineBins; //! number of fine-counter bins
-         std::vector<ChannelRec>  fCh;          //! full description for each channels
-         float                    fCalibrTemp;  //! temperature when calibration was performed
-         float                    fCalibrTempCoef; //! coefficient to scale calibration curve (real value -1)
-         bool                     fCalibrUseTemp;  //! when true, use temperature adjustment for calibration
+         unsigned                 fNumChannels;       //! number of channels
+         unsigned                 fNumFineBins;       //! number of fine-counter bins
+         std::vector<ChannelRec>  fCh;                //! full description for each channels
+         float                    fCalibrTemp;        //! temperature when calibration was performed
+         float                    fCalibrTempCoef;    //! coefficient to scale calibration curve (real value -1)
+         bool                     fCalibrUseTemp;     //! when true, use temperature adjustment for calibration
          unsigned                 fCalibrTriggerMask; //! mask with enabled for trigger events ids, default all
 
-         double                   fToTvalue;         //! ToT of 0xd trigger
+         bool                     fToTdflt;        //! indicate if default setting used, which can be adjusted after seeing first event
+         double                   fToTvalue;       //! ToT of 0xd trigger
          double                   fToThmin;        //! histogram min
          double                   fToThmax;        //! histogram max
-         double                   fTotUpperLimit; ///<! upper limit for ToT range check
+         double                   fTotUpperLimit;  //! upper limit for ToT range check
 
          long   fCalibrAmount;        //! current accumulated calibr data
          double fCalibrProgress;      //! current progress in calibration
@@ -552,6 +553,9 @@ namespace hadaq {
 
          /** Configure 0xD trigger ToT length and min/max values for histogram */
          void SetToTRange(double tot_0xd, double hmin, double hmax);
+
+         /** Configure 0xD trigger ToT based on hwtype */
+         void ConfigureToTByHwType(unsigned hwtype);
 
          /** When enabled, last hit time in the channel used for reference time calculations
           * By default, first hit time is used

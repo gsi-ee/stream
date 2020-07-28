@@ -1,3 +1,9 @@
+28.07.20
+1. Add support of standalone sub-sub-event in hld print. Such sub-sub-event
+   does not have typical header and uses full data of sub-event, inheriting its ID
+2. Configure ToT value for 0xD trigger and hmin/hmax value for histograms based on
+   hardware type from TDC header. Applied only if value was not set before explicitely.
+
 26.05.2020
 1. Add cmake support for compilation of Stream library
 
@@ -9,7 +15,7 @@
 
 28.01.2019
 1. Change interpretation of hit1 and hit2 message
-     hit0 (0x8) from hardware, normal hit message 
+     hit0 (0x8) from hardware, normal hit message
      hit1 (0xa) from hardware, produced instead of 0x3ff
      hit2 (0xe) software, is planned for replaced hit0 messages
 2. Initial commit from Semen Lebedev for HADES raw data quality monitoring
@@ -24,32 +30,32 @@
 
 
 28.06.2018
-1. Special mode for ToT calibration during beamtime. 
+1. Special mode for ToT calibration during beamtime.
    Use half of the statistic for preliminary calibrations and then calculate ToT and calibrate to 30 ns.
 
 
 22.06.2018
-1. In hadaq::SpillProcessor introduce fast (20 us binning) and slow (40 ms binning) histogramming 
-   of hits counts. Fast histograms will be used to calculate quality 
+1. In hadaq::SpillProcessor introduce fast (20 us binning) and slow (40 ms binning) histogramming
+   of hits counts. Fast histograms will be used to calculate quality
 
 
 20.06.2018
-1. Implement implicit calibration mode for DABC. In this case calibration is started by 
-   the command from the control GUI and all hits are accumulated for calibration. 
+1. Implement implicit calibration mode for DABC. In this case calibration is started by
+   the command from the control GUI and all hits are accumulated for calibration.
 
 
 18.05.2018
-1. Introduce hadaq::SpillProcessor to provide analysis of spill structures 
+1. Introduce hadaq::SpillProcessor to provide analysis of spill structures
    Done independent from normal TDC processors to speedup the code.
 
 
 4.05.2018
-1. Provide hadaq::TdcProcessor::SetUseDTrigForRef() to allow use D 
+1. Provide hadaq::TdcProcessor::SetUseDTrigForRef() to allow use D
    trigger in ref calculations
 
 
 23.03.2018
-1. Extract special data from CTS header, keep support of TDC inside  
+1. Extract special data from CTS header, keep support of TDC inside
 
 
 29.11.2017
@@ -67,7 +73,7 @@
 
 30.10.2017
 1. Let configure window for 0xD trigger hits, which should be accepted for calibrations.
-   Like hadaq::TdcProcessor::SetTriggerDWindow(-10, 40); 
+   Like hadaq::TdcProcessor::SetTriggerDWindow(-10, 40);
 
 
 27.10.2017
@@ -78,7 +84,7 @@
 4.08.2017
 1. Implement hadaq::TdcProcessor::SetChannelTotShift
    It allows to directly set shifts for each channel (in nanoseconds).
-   Can be used if automatically ToT calibration does not work. 
+   Can be used if automatically ToT calibration does not work.
    This shift applied in the histograms and in data, stored in output event
 
 
@@ -95,16 +101,16 @@
 
 18.05.2017
 1. Bugfix - corrupted value of fine counter leads to analysis crash. Now checked.
-2. Bugfix - also check earlier if channel id is invalid 
+2. Bugfix - also check earlier if channel id is invalid
 
 
 9.03.2017
-1. When configure autocalibration, one can specify value > 1e9. 
+1. When configure autocalibration, one can specify value > 1e9.
    In such case calibration will be executed only once.
    For instance, when specify 1000100000, calibration will be produced once after 100000 hits
 2. One can change number of fine-counter bins via hadaq::TdcProcessor::SetDefaults(550).
    This should be done before creating any TDC processor and loading calibration files.
-    
+
 
 7.11.2016
 1. Provide access to HLD event/subevent headers (without data). Like:
@@ -118,7 +124,7 @@
 
 31.08.2016
 1. Provide new method of bubbles decoding. It uses same lookup table as FPGA code.
-2. Also try to optimize such lookup table    
+2. Also try to optimize such lookup table
 
 
 25.07.2016
@@ -128,38 +134,38 @@
 
 14.03.2016
 1. Support of raw chain data from TDC. In such case original chain is readout and send
-   in HLD subevents. Primiary analysis of bubbles and other errors are implemented 
- 
+   in HLD subevents. Primiary analysis of bubbles and other errors are implemented
+
 
 3.02.2016
-1. When filling RisingRf histogram, do not use special calibration trigger 0xD 
+1. When filling RisingRf histogram, do not use special calibration trigger 0xD
 2. Introduce time shift compensation for each channel depending from temperature.
-   From current measurements about 5..30 ps/C could be observed. 
+   From current measurements about 5..30 ps/C could be observed.
    Problem of such compensation - there is no clear 0 point. Therefore channels inside
    single FPGA could be consistently shifted, but that to do with channels from different FPGA?
    Let use following agreement - maximal compensation for some channel is 5 times
-   bigger then compensation of minimal channel. Any better idea?  
+   bigger then compensation of minimal channel. Any better idea?
 
 
 2.02.2016
 1. Fix small problems with TOT calibration
-2. When use 0xD trigger for calibration, take into account only last hit 
+2. When use 0xD trigger for calibration, take into account only last hit
 3. When configuring triggers mask one could enable temperature correction,
-   setting 0x80000000 bit in the mask. 
+   setting 0x80000000 bit in the mask.
 
 
 25.01.2016
 1. Use trigger mask, when assign type of events for calibration.
 2. Use temperature, provided in status even. Calculate average temperature during calibration.
 3. Let use measured temperature to adjust calibration function. Use scaling factor,
-   which should be defined separately.  
- 
+   which should be defined separately.
+
 
 17.11.2015
-1. Store TDC data always in subevent - this let use different formats with go4 
-   output event. One also can use second.C in same way with all store kinds. 
+1. Store TDC data always in subevent - this let use different formats with go4
+   output event. One also can use second.C in same way with all store kinds.
 2. When call ConfigureCalibration, specify trigger type as well.
- 
+
 
 16.11.2015
 1. Differentiate btween raw and raw-only analysis kind. In first case one could switch
@@ -173,53 +179,53 @@
 1. Simplify logic of triggered analysis. Output structures can be created already during
    first buffer scan - one do not needs any artificial sync and trigger marks.
 2. Create central ProcMgr::AnalyzeNewData() function, which correctly handles
-   new data in different situations. Use in both go4 and DABC run engines.   
+   new data in different situations. Use in both go4 and DABC run engines.
 3. For processors, created "on-the-fly", explicitely call pre-loop methods.
 4. In TDC processor use tot_shift correction for all falling edges, including storage
    in output tree.
 5. With Processor::SetStoreKind() one could specify different store formats.
-   It is extenstion of SetStoreEnabled() function, replaced with SetStoreKind(on?1:0) 
+   It is extenstion of SetStoreEnabled() function, replaced with SetStoreKind(on?1:0)
 6. Provide compact (SetStoreKind(2)) format for TDC data. It is MessageFloat struct with
-   channel id and float time stamp relative to ch0 in ns. Channel 0 is excluded.    
+   channel id and float time stamp relative to ch0 in ns. Channel 0 is excluded.
 7. Implement also double (SetStoreKind(3)) format for TDC data. It is MessageDouble
    struct, using double for absolute time stamp in s. Channel 0 is included.
-8. Store trigger type in HLD file - one could add more info later into HldMessage. 
-9. Store HLD message also in output triggered event, let filter results base on trigger type  
+8. Store trigger type in HLD file - one could add more info later into HldMessage.
+9. Store HLD message also in output triggered event, let filter results base on trigger type
 10.Implement hadaq::HldFilter, useful when one want to store data only of special trigger.
-    
+
 
 9.11.2015
 1. First steps toward automatic TRB/TDC configuration when processing HLD data.
-2. When autocreate property configured, TRB and TDC created automatically. 
+2. When autocreate property configured, TRB and TDC created automatically.
 3. One could configure defualt hist filling level for proc manager - it used for
    every new created histogram.
 4. Cross-processing configured automatically when reference to other TDC channel
-   is configured          
-5. Central ConfigureCalibration() method setup whole calibration. One provides 
-   file prefix and count for automatic calibration. If count == 0, no calibration done 
-   at all (only load files if exists). If count == -1, calibration will be written at the 
+   is configured
+5. Central ConfigureCalibration() method setup whole calibration. One provides
+   file prefix and count for automatic calibration. If count == 0, no calibration done
+   at all (only load files if exists). If count == -1, calibration will be written at the
    end of files processing.
 6. Allow to call function from ProcMgr - it could be interpreted function from
    ROOT CINT or compiled function when running with DABC
-7. Call function after components were created in HLD processor   
+7. Call function after components were created in HLD processor
 8. Let configure default TDC and HUB ranges, used when auto-create option is on
 9. Add enumeration of TRB and TDC processors from HldProcessor. Simplify configuration scripts.
- 
+
 
 6.11.2015
-1. Show TOT shifts in special histograms.  
+1. Show TOT shifts in special histograms.
 2. When store calibrated value for falling edge in calibr message,
    use 10 times larger range (50 ns insted of 5 ns). This allows to take into
-   account TOT shifts which are typically between 29 and 41 ns.     
+   account TOT shifts which are typically between 29 and 41 ns.
 
 
 5.11.2015
 1. First attempt to use 0xD trigger for calibration of TOT value.
    Activated when 0xD trigger specified as source for calibration data.
-2. Store calibrated TOT shift in the files.     
+2. Store calibrated TOT shift in the files.
 3. Use calibrated TOT shift when set fine-counter value for falling edge hit.
    It uses 10ps binning, while most significant bit of new fine counter
-   used to check overflow of the coarse-counter  
+   used to check overflow of the coarse-counter
 
 
 3.11.2015
@@ -230,10 +236,10 @@
 29.10.2015
 1. Introduce new message type in for the TDC - calibration.
    It contains two corrected values for fine time for next two hit messages
-2. Implement transformation of HLD events/subevents in the way, 
+2. Implement transformation of HLD events/subevents in the way,
    that one could either replace hit messages or insert new calibration messages
 3. Use such feature in recalibration module in DABC
-   
+
 
 5.10.2015
 1. Correctly clear all TDC processors before each event
@@ -242,11 +248,11 @@
 23.09.2015
 1. If hadaq::TdcProcessor::CreateRateHisto method called,
    fill hits rate histogram for that TDC
-2. Let configure multiple HUBs for each TRB processor. 
+2. Let configure multiple HUBs for each TRB processor.
 
 
 21.09.2015
-1. Provide access to last TDC header from hadaq::TdcProcessor. 
+1. Provide access to last TDC header from hadaq::TdcProcessor.
 
 
 3.09.2015
@@ -263,31 +269,31 @@
 6.07.2015
 1. Provide merging of histograms, produced in parallel by several workers.
    When producing ROOT files, remove empty histograms (if any)
-   
+
 
 3.07.2015
 1. In dabcengine introduce data storage in autosave file. It is binary buffer
    with all histograms. In DABC special conversion utility will be introduced to
-   convert such file into ROOT histograms.  
+   convert such file into ROOT histograms.
 2. One could disable sync-message appending to each TDC buffer. This allows to
-   work without TDC data copying in new buffer, gives ~5% performance increase  
-3. Use defines for histogram filling methods. This let increase performance 
+   work without TDC data copying in new buffer, gives ~5% performance increase
+3. Use defines for histogram filling methods. This let increase performance
    of dabcengine (where build-in histogram format used) by ~40%.
-   
+
 
 2.07.2015
 1. Introduce dabcengine, which allows to run code in DABC environment
    Code is still experimental, data can be only accessed via web server
    while application running.
 2. Change internal histogram format - add underflow/overflow bins.
-   Let use such histogram later for better analysis. 
+   Let use such histogram later for better analysis.
 
 
 18.02.2015
-1. When loading TDC calibrations, one could specify scaling factor 
+1. When loading TDC calibrations, one could specify scaling factor
    (should be grater than 1). This could allow to use calibration,
-   measured with lower temperature for higher temperature. 
-   Factor should be calculated with other tools  
+   measured with lower temperature for higher temperature.
+   Factor should be calculated with other tools
 
 17.02.2015
 1. Introduce internal histogram format for the framework. It is just plain
@@ -296,14 +302,14 @@
 2. Provide fast methods for histogram filling without range checks and
    with bin index.
 3. Use FastFillH1/H2 functions in hadaq::TdcProcessor::TransformTdcData,
-   speed up TDC calibration by factor 4 when all histograms are filled.    
+   speed up TDC calibration by factor 4 when all histograms are filled.
 
 4.02.2015
 1. In hadaq::TrbProcessor::CheckAutoCalibration handle each TDC separately.
    Return negative value when some TDCs not yet ready
 2. When calibrating TDC, write value which should be subtracted from the coarse
-   time stamp - like original fine counter 
-3. Implement different modes for calibration of falling edge. 
+   time stamp - like original fine counter
+3. Implement different modes for calibration of falling edge.
    Mode can be specified by edge mask.
       1 - use only rising edge
       2 - edges considered fully independent
@@ -312,24 +318,24 @@
 
 3.02.2015
 1. From now one should always use full TDC ids like 0xc001.
-   This allow to have different IDs in same TRB 
+   This allow to have different IDs in same TRB
 2. When calculating time-over-threshold, try to avoid fake TOT values if
-   leading edge was missed and several trailing edges comes one after another  
+   leading edge was missed and several trailing edges comes one after another
 3. Do not account modified hits in the calibration statistic,
-   allow to build full-range histogram for fine-counter histograms 
+   allow to build full-range histogram for fine-counter histograms
 4. Try to avoid dynamic_cast<TdcProcessor*> as much as possible,
    while it could be very time-expensive operation
 5. Provide calibration progress and status information individually for each TDC
 
 22.01.2015
-1. In hadaq::TrbProcessor::CheckAutoCalibration calculate progress information 
-   about accumulated statistic for automatic TDC calibration. 
-   When value >=1, calibration will be automatically performed. 
+1. In hadaq::TrbProcessor::CheckAutoCalibration calculate progress information
+   about accumulated statistic for automatic TDC calibration.
+   When value >=1, calibration will be automatically performed.
 
 19.01.2015
 1. Provide extra method to calibrate data in TDC subevents
-2. Rename hadaq/defines.h to hadaq/definess.h to avoid duplication with DABC  
-3. Provide possibility for auto-calibration for DABC-kind of work 
+2. Rename hadaq/defines.h to hadaq/definess.h to avoid duplication with DABC
+3. Provide possibility for auto-calibration for DABC-kind of work
 
 16.01.2015
 1. Fully remove ROOT dependency from libStream itself. All ROOT-specific
@@ -339,9 +345,9 @@
 2.12.2014
 1. Introduce hadaq::SubProcessor which combines common functionality
    of different front-ends, which can be used with Trb
-2. Use it as base class for existing TdcProcessor and new AdcProcessor   
+2. Use it as base class for existing TdcProcessor and new AdcProcessor
 3. Introduce dummy code for processing ADC data,
-   need to be intensively tested 
+   need to be intensively tested
 
 12.11.2014
 1. Implement user source for dat files, produced by GET4 simulation.
@@ -350,12 +356,12 @@
 1. Add statistic over rising/falling edges per TDC (when falling edges are enabled)
 
 7.10.2014
-1. If redtdc contains 0x70000 (like 0x7c010), than direct difference 
+1. If redtdc contains 0x70000 (like 0x7c010), than direct difference
    without channel 0 will be calculated.
 
 23.09.2014
 1. Add possibility to calculate time reference between different TRBs,
-   before only TDC on the same TRB could be used  
+   before only TDC on the same TRB could be used
 
 2.09.2014
 1. Process hits not as rising and falling edges but as leading and trailing.
@@ -366,38 +372,38 @@
 
 11.07.2014
 1. Add support of 32bit mode in get4::MbsProcessor.
-2. Implement calibration for GET4. Calibration provides 3-4 ps better resolution.   
+2. Implement calibration for GET4. Calibration provides 3-4 ps better resolution.
 
 9.07.2014
 1. Add get4::MbsProcessor for debugging of Get4 with MBS readout.
-   Also simple example is provided. 
+   Also simple example is provided.
 
 21.05.2014
-1. Add 2-D histogram in hadaq::TdcProcessor for fine counter, coarse counter and 
+1. Add 2-D histogram in hadaq::TdcProcessor for fine counter, coarse counter and
    calibrations.
 
 29.04.2014
-1. Via hadaq::HldProcessor::SetEventTypeSelect() allow to specify the only 
+1. Via hadaq::HldProcessor::SetEventTypeSelect() allow to specify the only
    event type id, used in the analysis.
 
 2.04.2014
 1. Allow to specify wildcard in HLD file names when starting go4. Like:
       go4analysis -user '/path/file*.hld'
-   It is important to specify quotes around file name. 
+   It is important to specify quotes around file name.
 
 10.03.2014
 1. When TDC created with CTS id, it will be used to process data from CTS header.
-   Andreas should test and provide code for corect location of such TDC data. 
+   Andreas should test and provide code for corect location of such TDC data.
 
 24.02.2014
-1. Use TDC id as the axis label of statistic histograms 
+1. Use TDC id as the axis label of statistic histograms
 
 14.02.2014
 1. When trigger window not specified, in triggered mode all hits will be accepted.
 2. Introduce hadaq::HldProcessor, which responsible to process generic HLD data.
-   One can add several TRB processors to it and it delivers correct 
-3. Provide applications/giessen example of usage of HldProcessor.     
-4. Implement storage of TDC data in the tree. 
+   One can add several TRB processors to it and it delivers correct
+3. Provide applications/giessen example of usage of HldProcessor.
+4. Implement storage of TDC data in the tree.
    For each TDC vector of extended messages are created.
 
 27.01.2014
@@ -405,12 +411,12 @@
 2. Provide example how calibration can be produced directly - calibr.C
 
 17.01.2014
-1. Use TTree directly when create storage for events data. 
-   Of course, works only when compiled with ROOT. 
+1. Use TTree directly when create storage for events data.
+   Of course, works only when compiled with ROOT.
 2. Use full 2-byte in TDC numbering, allow to specify how id appears in the name.
 3. Provide several common methods in hadaq::TrbProcessor to create TDCs
    and load calibrations - make it analouge to hydra2 code.
-4. Register store tree in the go4 - one could see tree structure in the browser  
+4. Register store tree in the go4 - one could see tree structure in the browser
 
 16.01.2014
 1. Introduce EventStore class, which should be used to store events and (or)
@@ -421,11 +427,11 @@
 4. Refactorize cern-gem12 and get4test applications, move complete code
    into second.C script.
 5. In mami-jan14 application provide example how event store can be used.
-   Produced tree can be directly used in go4 or ROOT.   
+   Produced tree can be directly used in go4 or ROOT.
 6. Move ROOT-relevant classes to main library, later one could provide
    ROOT-engine (without go4), using such classes.
 7. Provide different levels of histograms filling. For hadaq::TdcProcessor
-   use such level to exclude complex histograms when such histograms not required. 
+   use such level to exclude complex histograms when such histograms not required.
 8. Implement triggered mode, when all input data must be processed at once and flushed.
    Use such mode for TRB3/TDC processing.
 
@@ -434,30 +440,30 @@
 2. Implement three different ways to recalculate time from local to global:
    interpolation, left sync marker, right sync marker. Last used for tdc
    processing, where trigger time is used as sync marker.
-3. Introduce EventProc class, which is base class for all kinds of 
-   event processing. One can create many of such objects.   
-4. Provide example for mami-jan14 beamtime. There are two PadiwaProc and 
-   final TestProc, which do exactely the job.  
+3. Introduce EventProc class, which is base class for all kinds of
+   event processing. One can create many of such objects.
+4. Provide example for mami-jan14 beamtime. There are two PadiwaProc and
+   final TestProc, which do exactely the job.
 
 14.01.2014
-1. Allow to use normal TRB3 trigger as timer marker for the events. 
-   At the same time use trigger time for time synchronisation between TDCs.   
+1. Allow to use normal TRB3 trigger as timer marker for the events.
+   At the same time use trigger time for time synchronisation between TDCs.
 2. Provide possibility to artificially compensate epoch counter reset by TRB3.
    In sych case epoch counter will be contigious and complete logic of
-   stream framework can be used. 
+   stream framework can be used.
 
 8.01.2014
 1. Provide TdcProcessor::SetUseLastHit(), which allow to use last hit for ref time
    calculations
 
 3.01.2014
-1. Implement double-reference also with channels from other TDCs. 
+1. Implement double-reference also with channels from other TDCs.
 
 12.12.2013
-1. Implement conditional print when time difference to refchannel belong to 
+1. Implement conditional print when time difference to refchannel belong to
    specified interval. Works only when reference channel from same TDC and
    when ref channel smaller than specified. Conditions can be seen and adjusted
-   from the go4 gui. 
+   from the go4 gui.
 
 6.12.2013
 1. When channel 0 used as reference, try to account all hits in channel when
@@ -468,7 +474,7 @@
 
 28.11.2013
 1. Always recreate histograms even when same histogram already exists.
-   To avoid ROOT warnings, one should delete auto-save file before starting go4. 
+   To avoid ROOT warnings, one should delete auto-save file before starting go4.
 
 27.11.2013
 1. Suppress TDC errors after specified number of error shown (default 1000)
@@ -480,8 +486,8 @@
    Can be used to ensure order how histograms folders are appeared in browser.
 
 20.11.2013
-1. Create 2-D histograms in TDC analysis only optionally and one can provide 
-   range and bins number for such histograms. 
+1. Create 2-D histograms in TDC analysis only optionally and one can provide
+   range and bins number for such histograms.
 2. In TDC calibration set center of bin as calibration value.
 
 31.10.2013
@@ -492,34 +498,34 @@
 8.10.2013
 1. In applications/trb3tdc/first.C in clear form provide hardware ids for the TDCs.
    Check that all ids conform to the coding convention.
-   
+
 2.10.2013
 1. In hadaq::TdcProcessor substract time of channel 0 when calculating difference
    between two channels on different TDCs. For instance, when channel 5 on TDC 3 should
    be compared whith channel 7 on TDC 9, following calculation will be done:
       diff = (tdc[3].ch[5] - tdc[3].ch[0]) - (tdc[9].ch[7] - tdc[9].ch[0]);
 2. Modify trb3tdc example to show how non subsequent ids can be specified.
-   Increase number of bins in "TdcDistr" overview histogram.    
-   
+   Increase number of bins in "TdcDistr" overview histogram.
+
 17.09.2013
 1. In hadaq::TrbProcessor add identifier for HUB header. Seems to be, in some
    configuration FPGA which is working as HUB can add its header (was not so before).
-   This header can be just ignored, while it only marks portion of data, which is 
+   This header can be just ignored, while it only marks portion of data, which is
    produced by HUB, but all identifiers like TDC are remained as before.
 
 8.07.2013
 1. In hadaq::TdcProcessor add possibility to create pictures with all histograms.
    This is done in first.C script, where one can detect if script runs from the go4.
-   In this case one can get access to histograms from TdcProcessor and create pictures 
+   In this case one can get access to histograms from TdcProcessor and create pictures
    with that histograms. Example in applications/trb3tdc/first.C file.
-   
+
 13.06.2013
 1. Implement work-around for callculating references between TRB3 TDC channels from
-   different TDCs. Normally such analysis should be implemented in second stept, 
-   but now do it at the level of TrbProcessor at the end of event unpacking. 
+   different TDCs. Normally such analysis should be implemented in second stept,
+   but now do it at the level of TrbProcessor at the end of event unpacking.
 
 10.06.2013
-1. Add support of the 32-bit Get4 readout. 
+1. Add support of the 32-bit Get4 readout.
    For the moment it is done via SYS messages.
    No any special configuration needed. Not yet tested.
 
@@ -532,46 +538,46 @@
 1. Fix several problems with hld files usage. Mainly problem was due to 8-bytes padding
    of hadaq events/subevents, which was not takes into account. In DABC similar code was
    implemented correctly from beginning.
-   
+
 12.04.2013
 1. Provide user source for hld files. Later one could extend it to any other user sources,
-   mainly for different files formats. 
+   mainly for different files formats.
 2. Strange results with UDP generators - show wrong alignment of subevents. Must
-   be checked with real TRB3 data.    
-   
+   be checked with real TRB3 data.
+
 19.03.2013
-1. Analyze fine counter of TDC hit message if it was missed hit or counter out of allowed 
+1. Analyze fine counter of TDC hit message if it was missed hit or counter out of allowed
    range. Let configure subevents ID for CTS and TDC.
-   
+
 18.03.2013
 1. Implement nxyter ADC baseline compensation, using old text files. Can be used for beamtime
    analysis. Implementing of baseline measurement should be done.
 2. Fix several problems in cern-oct12 analysis, where NXYTER and FPGA TDC should be
-   correctly synchronized.    
-   
+   correctly synchronized.
+
 14.03.2013
 1. Provide automatic calibration mode for FPGA TDC, allow to process only rising or only
    falling edges. Optimize internal data structures and performance.
-   
+
 13.03.2013
-1. Add new application for FPGA TDC testing on TRB3. 
+1. Add new application for FPGA TDC testing on TRB3.
    First provide possibility for raw printout of the data.
 2. Fill different per-channel raw histograms for FPGA TDC (of course, optionally)
 3. Implement manual calibration mode for FPGA TDC. Manual means one could generate calibration
    once (in form of binary file) and than reuse it for analysis of other data
 4. Allow to disable some TDC channels, also allow to disable calibration of some channels
- 
+
 12.02.2013
 1) Add possibility to switch on/off histogram filling
 2) Copy and modify Queue and RecordsQueue classes from DABC.
    They allow to allocate and use fixed-space queue for complex
    data types.
-3) Replacement of std::vectors by Queue class gave significant 
+3) Replacement of std::vectors by Queue class gave significant
    improvement in get4test, where long markers queue (~2000 items) are used.
-   Each vector::erase() operation is too expensive, where Queue::pop() 
+   Each vector::erase() operation is too expensive, where Queue::pop()
    does mostly nothing.
-4) As last change, RecordsQueue used for buffers queue. 
-   Probably not important for performance, but unified all queues.  
+4) As last change, RecordsQueue used for buffers queue.
+   Probably not important for performance, but unified all queues.
 
 8.02.2013
 1) Support of raw data format for Get4 and nXYTER. Simple modification, while
@@ -584,132 +590,132 @@
 2) Make correct calculations of signal width in get4test
 3) Add leading edge difference to next channel in get4test
 4) Add possibility to ignore 250MHz times in get4 processor
-   to avoid problems with unsynchronized clocks 
-   
+   to avoid problems with unsynchronized clocks
+
 21.12.2012
 1) Shift all time stamp classes into base/TimeStamp.h file
 2) Change NX and GET4 timing concept in messages/iterators/processors
-   Now everywhere LocalStampConverter is used to convert timestamps 
+   Now everywhere LocalStampConverter is used to convert timestamps
    to local time in seconds. Change to seconds have consequence in
    most places - time conditions, safety margins and some other constants
    have been changed.
-3) Really separate functionality of nx::Message/Iterator and 
-   get4::Message/Iterator classes.  
-4) Change hadaq::TdcIterator and hadaq::TdcProcessor to use 
+3) Really separate functionality of nx::Message/Iterator and
+   get4::Message/Iterator classes.
+4) Change hadaq::TdcIterator and hadaq::TdcProcessor to use
    LocalStampConverter class and seconds as time units.
 5) In mbs::Processor use LocalStampConverter just to emulate time scale.
-   Every sync is just new second and LocalStampConverter prevents wrap 
+   Every sync is just new second and LocalStampConverter prevents wrap
    of such artificial time scale
-            
+
 20.12.2012
 1) Use only valid syncs for synchronization - in case of TRB some SYNCs are dropped
    while one could not extract time stamp for them.
-2) Take into account that hits from TDC channels are not sorted and 
-   therefore event closing should be done by mean of channel 0 time - channel 0 is 
+2) Take into account that hits from TDC channels are not sorted and
+   therefore event closing should be done by mean of channel 0 time - channel 0 is
    always with bigger time stamp.
-3) Account event multiplicity direct in TestHitTime() method - anyway it is just 
+3) Account event multiplicity direct in TestHitTime() method - anyway it is just
    informational value.
-4) Event data for FPGA TDC 
-5) Define base::SubEvent::Sort() method for time sorting, implement in all subclasses    
+4) Event data for FPGA TDC
+5) Define base::SubEvent::Sort() method for time sorting, implement in all subclasses
 6) Declare template classes - base::MessageExt and base::SubEventExt.
-   Many common and special virtual methods defined - like message access or Sort() or Clear().   
+   Many common and special virtual methods defined - like message access or Sort() or Clear().
    Event and message structures for NX, GET4 and TDC now based on such template classes
-7) Introduce templated method base::StreamProc::AddMessage, which uses 
+7) Introduce templated method base::StreamProc::AddMessage, which uses
    event/message class as parameter to add hit to specific subevent
-8) Simple mbs::Processor and empty mbs::SubEvent classes. 
+8) Simple mbs::Processor and empty mbs::SubEvent classes.
    For the moment specialized for cern-oct12 beamtime, later one could
    think about more generic way to integrate MBS data in such framework
 9) Introduce base::LocalStampConverter which should help to convert local stamps
    to double value, taking into account all possible wraps. Class should be
    used in all places where so-called local time is produced. Such local time
-   will not wrap any longer and more smart calibration could be used for the 
-   local/global time calculations. 
+   will not wrap any longer and more smart calibration could be used for the
+   local/global time calculations.
 
 19.12.2012
-1) First try of synchronization with processor/subprocessor approach. 
-   Problem here that SYNC number registered by TRB3 itself, 
-   while SYNC time is recorded by every TDC individually. 
+1) First try of synchronization with processor/subprocessor approach.
+   Problem here that SYNC number registered by TRB3 itself,
+   while SYNC time is recorded by every TDC individually.
    In such case TrbProcessor just split raw data between TdcProcessor's.
    If found, SYNC messages placed in begin of raw data.
-2) RawScan mode introduced in StreamProc class. 
+2) RawScan mode introduced in StreamProc class.
    It indicates, than only raw data scan is performed - no any output data should
    be expected from such processor. Such mode required for TrbProcessor which works
-   just like splitter.  
-3) If error found in the buffer (FirstBufferScan() returns false), 
-   buffer will be ignored in all consequent stages.    
+   just like splitter.
+3) If error found in the buffer (FirstBufferScan() returns false),
+   buffer will be ignored in all consequent stages.
 
 18.12.2012
 1) Introduce TdcMessage and TdcIterator classes. These are basic classes
-   for navigation via FPGA-TDC raw data.      
+   for navigation via FPGA-TDC raw data.
 
 17.12.2012
 1) Preliminary HADAQ code - only raw data scan at the moment
-2) Distribute code between TrbProcessor and TdcProcessor.  
+2) Distribute code between TrbProcessor and TdcProcessor.
 3) TrbProcessor navigates over TRB events-subevents and CTS data,
-4) TdcProcessor is special treatment of data from FPGA-TDC. 
+4) TdcProcessor is special treatment of data from FPGA-TDC.
    It is sub-sub-processor relative to central manager. It is done while
    for each TDC time synchronization should be performed separately.
 5) One can only see statistic over TDC channels, next step is TdcHit and TdcEvent
-   structures 
-   
+   structures
+
 14.12.2012
 1) Avoid local-trigger duplication or very close distance between them.
    Is a case with corrupted GET4 data. Now one can set minimal margin between
    two consequent events. Implemented for both GET4 and NX.
 2) In get4test create summary histogram to see which channels have problems
 3) Ensure that cern-gem12 analysis works without SYNC usage.
-   Data flushing was activated for such case. Results histograms are the same. 
-4) Implement cern-gem12 code.    
+   Data flushing was activated for such case. Results histograms are the same.
+4) Implement cern-gem12 code.
 
 13.12.2012
-1) Create message and iterator classes for nx and get4 analysis. 
-   These were last connection to ROClib. Therefore from this point:     
+1) Create message and iterator classes for nx and get4 analysis.
+   These were last connection to ROClib. Therefore from this point:
 2) Move further development from ROClib to go4/app repository.
    Main motivation - there are parts which could be interesting not only for CBM/ROC users.
-3) Rename to "stream" project. Name will probably change, but main idea - 
+3) Rename to "stream" project. Name will probably change, but main idea -
    it is flexible stream-based analysis.
 4) Reorganize folder structure. Separate framework, go4engine and application.
    Introduce project-wide build rules and Makefiles.
-5) In get4test application make analysis of selected hits. 
+5) In get4test application make analysis of selected hits.
    First produce only widths. Cleanup code of basic get4::Processor class.
-   Implement printing for get4, handle it via central SysCoreProc class  
+   Implement printing for get4, handle it via central SysCoreProc class
 
 12.12.2012
-1) Reorganize libraries and code in newmonitor - introduce second step in analysis chain. 
-   At the moment this step will be go4-based code, one could make later same logic as with 
+1) Reorganize libraries and code in newmonitor - introduce second step in analysis chain.
+   At the moment this step will be go4-based code, one could make later same logic as with
    first step. Major difference to first step that in second step events are already defined
    and one do not require any complex queueing of input data.
    Second step also should be reinitialized via separate macro - named second.C.
-   There all sub-processors should be instantiated.  
-2) Introduce skeleton for get4test code, based on two-step approach.      
+   There all sub-processors should be instantiated.
+2) Introduce skeleton for get4test code, based on two-step approach.
 3) Introduce SysCoreProc class, which should be base for all kind of ROC-based analysis.
    Aim not to introduce common message loop (as in very first go4monitor) but
    rather common structures and histograms.
 4) Add possibility to skip time synchronization for some streams. It is
    useful when the only stream is used or when streams synchronized anyway,
    like in optic case.
-5) Add possibility to define regions-of-interests in get4 based on some ref channel. 
-   For a now primitive (only single channel), later one could apply trigger-like 
-   logic to several Get4 channels (like in GSI beamtime nov-2012). 
-   Very preliminary, seems to be work with latest test data.  
-   
+5) Add possibility to define regions-of-interests in get4 based on some ref channel.
+   For a now primitive (only single channel), later one could apply trigger-like
+   logic to several Get4 channels (like in GSI beamtime nov-2012).
+   Very preliminary, seems to be work with latest test data.
+
 11.12.2012
 First step to non-synchronized data streams. Any number of SYNCs can be
 produced now, simple algorithm looks for the same SYNC id to set global
 times and introduce time calibrations. Works with run87 of CERN/SPS beamtime.
 Fix problem with time uncertainty parameter for NX processing.
 Implement two-dimensional histograms. Add such in NX processing.
-One need to make histogram filling optional - can take significant amount of time. 
+One need to make histogram filling optional - can take significant amount of time.
 Without filling current NX code works 2x times faster
 
 10.12.2012
 One another method for last-epoch correction.
 While main problem is CERN/SPS beamtime, make heuristic for exactly
 this data. Seems to be, MSB bits gives us the best possibility for selection.
-With some other checks 99.5% of corrupted data can be repaired. 
-Rest are other errors (next-epoch problem or wrong bits is time stamp) 
-do not have any chance to be correctly fixed. My estimation gives 
-about 0.1% of such nasty messages.  
+With some other checks 99.5% of corrupted data can be repaired.
+Rest are other errors (next-epoch problem or wrong bits is time stamp)
+do not have any chance to be correctly fixed. My estimation gives
+about 0.1% of such nasty messages.
 
 7.12.2012
 Add reference channel for simple reference calculations
@@ -717,67 +723,66 @@ in GET4 processor.
 Add second level for histogram prefixes like ROC0/GET4_2/Ch2
 
 3.12.2012
-First test with running GET4 v1.0 setup. 
+First test with running GET4 v1.0 setup.
 Implement several basic histograms for GET4.
 
 30.11.2012
 Attempt to implement last-epoch bit correction, many other side-effects are discovered
 with nXYTER/Optic readout, especially for CERN/SPS 2012 beamtime. Many open questions
-are remained. Allow to specify initialization script name - like setup_get4.C or 
+are remained. Allow to specify initialization script name - like setup_get4.C or
 setup_cern_oct12.C. Calling arguments are:
 go4analysis -file file.lmd -args setup_get4.C
-Primary classes for GET4 analysis. 
+Primary classes for GET4 analysis.
 Possibility of raw analysis only.
 
-29.11.2012 
+29.11.2012
 Define trigger marker as time interval - first step direction Region-of-Interest
 concept. Later one could not only select events, but rather intervals which are
 than delivered to next steps. As next iteration, forwarding of complete data stream
-with regular time intervals (like 1 ms) should be implemented. 
-Message time sorting is implemented.  
+with regular time intervals (like 1 ms) should be implemented.
+Message time sorting is implemented.
 
 28.11.2012
-Master time now can be assigned, by default processor with trigger source is used. 
-Flush trigger is implemented, it allows to avoid situation when many data without 
-trigger must be accumulated in the queues. Flush trigger generated about once 
+Master time now can be assigned, by default processor with trigger source is used.
+Flush trigger is implemented, it allows to avoid situation when many data without
+trigger must be accumulated in the queues. Flush trigger generated about once
 per buffer in master processor. cern-gem12 starts to look very reasonable. As next
 step, normal region-of-interest selection should be implemented, no-trigger-mode and
-configurable message sorting.    
+configurable message sorting.
 
 27.11.2012
 First test with cern-gem12 data, where aux2 on ROC4 was used as trigger.
-One need to implement special kind of "flush" trigger when no reference signals 
-for long time to avoid over-fill of all queues. Anyhow, first reasonable results! 
+One need to implement special kind of "flush" trigger when no reference signals
+for long time to avoid over-fill of all queues. Anyhow, first reasonable results!
 
 27.11.2012
 Introduce simple typedefs for GlobalStamp_t and LocalStamp_t
 Provide local/global time for each buffer, liner interpolation of
-time between two sync markers, helper index to locate faster region 
+time between two sync markers, helper index to locate faster region
 between two syncs.
 
-27.11.2012 
-Remove user source class from go4wrapper. 
-Now event production works inside normal processor of the first 
+27.11.2012
+Remove user source class from go4wrapper.
+Now event production works inside normal processor of the first
 step and one can normally configure it with all available go4 sources.
 Many input events can be queued internally, many output events can
-be produced via SetKeepInputEvent() logic. 
-Thus N->M problematic is fully implemented! 
+be produced via SetKeepInputEvent() logic.
+Thus N->M problematic is fully implemented!
 
-27.11.2012 
+27.11.2012
 Change to the two-scan algorithm. Exactly two full scan of data are required.
-This simplifies logic how all kind of intermediate data can be processed.  
+This simplifies logic how all kind of intermediate data can be processed.
 As consequence, many events can be produced by scan of next buffer.
-Each processor fills its own subevent, which are than collected together in 
+Each processor fills its own subevent, which are than collected together in
 common event.
 Provide Event and SubEvent classes. Implement event building.
 Code shows reasonable results with ROC data from CERN beamtime.
 
 26.11.2012
-Group all new classes in one directory and one library 
+Group all new classes in one directory and one library
 
-23.11.2012 
+23.11.2012
 First checkin in repository
 
-21.11.2012  
+21.11.2012
 Start of project, first line of code
-          

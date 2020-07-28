@@ -172,6 +172,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fQaEdgesPerHld = nullptr;  //! QA Edges per TDC channel - from HLD
    fQaErrorsPerHld = nullptr;  //! QA Errors per TDC channel - from HLD
 
+   fToTdflt = true;
    fToTvalue = ToTvalue;
    fToThmin = ToThmin;
    fToThmax = ToThmax;
@@ -325,9 +326,19 @@ void hadaq::TdcProcessor::SetToTRange(double tot, double hmin, double hmax)
    // set real ToT value for 0xD trigger and min/max for histogram accumulation
    // default is 30ns, and 50ns - 80ns range
 
+   fToTdflt = false;
    fToTvalue = tot;
    fToThmin = hmin;
    fToThmax = hmax;
+}
+
+
+void hadaq::TdcProcessor::ConfigureToTByHwType(unsigned hwtype)
+{
+   switch(hwtype) {
+      case 0x96: SetToTRange(20., 15., 60.); break; // DiRich
+      default: fToTdflt = false; // keep as is but mark as not default value
+   }
 }
 
 void hadaq::TdcProcessor::UserPostLoop()
@@ -1389,6 +1400,9 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          } else {
 
             if (first_scan) fLastTdcHeader = msg;
+
+            if (fToTdflt && first_scan)
+               ConfigureToTByHwType(msg.getHeaderHwType());
             //unsigned errbits = msg.getHeaderErr();
             //if (errbits && first_scan)
             //   if (CheckPrintError()) printf("%5s found error bits: 0x%x\n", GetName(), errbits);
