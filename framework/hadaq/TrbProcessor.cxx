@@ -532,9 +532,9 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
       uint32_t data;
       unsigned datalen, dataid;
 
-      if (sub->GetDecoding() & hadaqs::EvtDecoding_AloneSubevt) {
+      if((sub->GetDecoding() & hadaqs::EvtDecoding_AloneSubevt) && (ix == 0)) {
          data = 0; // unused
-         datalen = trbSubEvSize; // whole sub event
+         datalen = trbSubEvSize - 2; // whole sub event beside last 2 words which should be 0xx5555
          dataid = sub->GetId();  // inherit ID
       } else {
          //! Extract data portion from the whole packet (in a loop)
@@ -994,9 +994,9 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent *sub, void *
 
 //      grd.Next("sub", 5);
 
-      if (standalone_subevnt) {
+      if (standalone_subevnt && (ix == 0)) {
          data = 0; // unused
-         datalen = trbSubEvSize;
+         datalen = trbSubEvSize - 2; // whole subevent beside last two word which should be 0x5555
          id = sub->GetId();
       } else {
          data = rawdata[ix++];
@@ -1034,8 +1034,8 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent *sub, void *
 
       if (subproc) {
 //         grd.Next("trans");
-         
-         if (standalone_subevnt) {
+
+         if (standalone_subevnt && (ix==0)) {
             unsigned newlen = subproc->TransformTdcData(sub, rawdata, ix, datalen, tgt, tgtix);
             if (tgt) tgtix += newlen;
          } else {
@@ -1056,14 +1056,14 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent *sub, void *
 
       // copy unrecognized data to the target
       if (tgt) {
-         if (!standalone_subevnt)
+         if (!standalone_subevnt || (ix != 0))
             tgt->SetData(tgtix++, data);
          memcpy(tgt->RawData(tgtix), sub->RawData(ix), datalen*4);
          tgtix += datalen;
       }
 
       // all other blocks are ignored
-      ix+=datalen;
+      ix += datalen;
    }
 
 //   grd.Next("finish", 15);
