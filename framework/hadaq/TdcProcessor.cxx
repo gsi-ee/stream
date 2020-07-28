@@ -335,10 +335,14 @@ void hadaq::TdcProcessor::SetToTRange(double tot, double hmin, double hmax)
 
 void hadaq::TdcProcessor::ConfigureToTByHwType(unsigned hwtype)
 {
+   bool recognized = true;
    switch(hwtype) {
       case 0x96: SetToTRange(20., 15., 60.); break; // DiRich
-      default: fToTdflt = false; // keep as is but mark as not default value
+      default: fToTdflt = false; recognized = false; // keep as is but mark as not default value
    }
+
+   if (recognized)
+      printf("%s assign ToT config len:%5.3f hmin:%5.3f hmax:%5.3f\n", GetName(), fToTvalue, fToThmin, fToThmax);
 }
 
 void hadaq::TdcProcessor::UserPostLoop()
