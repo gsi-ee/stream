@@ -985,30 +985,37 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent *sub, void *
 
    uint32_t *rawdata = (uint32_t *) sub->RawData();
 
+   uint32_t data;
+   unsigned datalen, id;
+
+   bool standalone_subevnt = (sub->GetDecoding() & hadaqs::EvtDecoding_AloneSubevt) != 0;
+
    while (ix < trbSubEvSize) {
 
 //      grd.Next("sub", 5);
 
-      //! Extract data portion from the whole packet (in a loop)
-      // uint32_t data = sub->Data(ix++);
-
-      uint32_t data = rawdata[ix++];
-      data = HADAQ_SWAP4(data);
+      if (standalone_subevnt) {
+         data = 0; // unused
+         datalen = trbSubEvSize;
+         id = sub->GetId();
+      } else {
+         data = rawdata[ix++];
+         data = HADAQ_SWAP4(data);
+         datalen = (data >> 16) & 0xFFFF;
+         id = data & 0xFFFF;
+      }
 
       if (tgt && (tgtix >= tgtlen)) {
          fprintf(stderr,"TrbProcessor::TransformSubEvent not enough space in output buffer\n");
          return 0;
       }
 
-      unsigned datalen = (data >> 16) & 0xFFFF;
-      unsigned id = data & 0xFFFF;
-
       if (fHadaqHUBId.size() > 0)
          if (std::find(fHadaqHUBId.begin(), fHadaqHUBId.end(), id) != fHadaqHUBId.end()) {
             // ix+=datalen;  // WORKAROUND !!!
 
             // copy hub header to the target
-            if (tgt) tgt->SetData(tgtix++, data);
+            if (tgt && !standalone_subevnt) tgt->SetData(tgtix++, data);
 
             // TODO: formally we should analyze HUB subevent as real subevent but
             // we just skip header and continue to analyze data
@@ -1027,10 +1034,16 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent *sub, void *
 
       if (subproc) {
 //         grd.Next("trans");
-         unsigned newlen = subproc->TransformTdcData(sub, rawdata, ix, datalen, tgt, tgtix+1);
-         if (tgt) {
-            tgt->SetData(tgtix++, id | ((newlen & 0xffff) << 16));
-            tgtix += newlen;
+         
+         if (standalone_subevnt) {
+            unsigned newlen = subproc->TransformTdcData(sub, rawdata, ix, datalen, tgt, tgtix);
+            if (tgt) tgtix += newlen;
+         } else {
+            unsigned newlen = subproc->TransformTdcData(sub, rawdata, ix, datalen, tgt, tgtix+1);
+            if (tgt) {
+               tgt->SetData(tgtix++, id | ((newlen & 0xffff) << 16)); // set sub-sub header
+               tgtix += newlen;
+            }
          }
          ix += datalen;
          continue; // go to next block
@@ -1043,9 +1056,10 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent *sub, void *
 
       // copy unrecognized data to the target
       if (tgt) {
-         tgt->SetData(tgtix++, data);
+         if (!standalone_subevnt)
+            tgt->SetData(tgtix++, data);
          memcpy(tgt->RawData(tgtix), sub->RawData(ix), datalen*4);
-         tgtix+=datalen;
+         tgtix += datalen;
       }
 
       // all other blocks are ignored
