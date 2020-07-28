@@ -528,11 +528,20 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
 //   RAWPRINT("Scan TRB3 raw event 4-bytes size %u\n", trbSubEvSize);
 
    while (ix < trbSubEvSize) {
-      //! Extract data portion from the whole packet (in a loop)
-      uint32_t data = sub->Data(ix++);
 
-      unsigned datalen = (data >> 16) & 0xFFFF;
-      unsigned dataid = data & 0xFFFF;
+      uint32_t data;
+      unsigned datalen, dataid;
+
+      if (sub->GetDecoding() & hadaqs::EvtDecoding_AloneSubevt) {
+         data = 0; // unused
+         datalen = trbSubEvSize; // whole sub event
+         dataid = sub->GetId();  // inherit ID
+      } else {
+         //! Extract data portion from the whole packet (in a loop)
+         data = sub->Data(ix++);
+         datalen = (data >> 16) & 0xFFFF;
+         dataid = data & 0xFFFF;
+      }
 
 //      RAWPRINT("Subevent id 0x%04x len %u\n", (data & 0xFFFF), datalen);
 
@@ -562,7 +571,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
          continue;
       }
 
-      if (maxhublen>0) {
+      if (maxhublen > 0) {
          if (datalen >= maxhublen) {
             if (CheckPrintError()) printf("error: sub-sub event %04x inside HUB %04x exceed size limit\n", dataid, lasthubid);
             datalen = maxhublen-1;

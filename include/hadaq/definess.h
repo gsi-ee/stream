@@ -110,6 +110,7 @@ namespace hadaqs {
 
    enum EvtDecoding {
       EvtDecoding_default = 1,
+      EvtDecoding_AloneSubevt = 0x8,   // subevent contains the only subsubevent, taking same id
       EvtDecoding_64bitAligned = (0x03 << 16) | 0x0001
    };
 
