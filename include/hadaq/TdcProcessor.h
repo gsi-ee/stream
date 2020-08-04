@@ -75,7 +75,7 @@ namespace hadaq {
             float* falling_calibr;
             float last_tot;
             long tot0d_cnt;                 //! counter of tot0d statistic for calibration
-            long tot0d_hist[TotBins];       //! histogram for TOT calibration
+            long* tot0d_hist;               //! histogram used for TOT calibration, allocated only when required
             float tot_shift;                //! calibrated tot shift
             float tot_dev;                  //! tot shift deviation after calibration
             float time_shift_per_grad;      //! delay in channel (ns/C), caused by temperature change
@@ -126,6 +126,7 @@ namespace hadaq {
                falling_calibr(nullptr),
                last_tot(0.),
                tot0d_cnt(0),
+               tot0d_hist(nullptr),
                tot_shift(0.),
                tot_dev(0.),
                time_shift_per_grad(0.),
@@ -136,9 +137,6 @@ namespace hadaq {
                calibr_stat_rising(0),
                calibr_stat_falling(0)
             {
-               for (unsigned n=0;n<TotBins;n++) {
-                  tot0d_hist[n] = 0;
-               }
             }
 
             void CreateCalibr(unsigned numfine)
@@ -164,6 +162,20 @@ namespace hadaq {
                if (rising_calibr) { delete [] rising_calibr; rising_calibr = nullptr; }
                if (falling_stat) { delete [] falling_stat; falling_stat = nullptr; }
                if (falling_calibr) { delete [] falling_calibr; falling_calibr = nullptr; }
+            }
+
+            void CreateToTHist()
+            {
+               if (!tot0d_hist)
+                  tot0d_hist = new long[TotBins];
+               for (unsigned n=0;n<TotBins;n++)
+                  tot0d_hist[n] = 0;
+            }
+
+            void ReleaseToTHist()
+            {
+               if (tot0d_hist) { delete [] tot0d_hist; tot0d_hist = nullptr; }
+
             }
          };
 

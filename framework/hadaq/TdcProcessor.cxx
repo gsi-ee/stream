@@ -226,8 +226,10 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
 
 hadaq::TdcProcessor::~TdcProcessor()
 {
-   for (unsigned ch=0;ch<NumChannels();ch++)
+   for (unsigned ch=0;ch<NumChannels();ch++) {
       fCh[ch].ReleaseCalibr();
+      fCh[ch].ReleaseToTHist();
+   }
 }
 
 void hadaq::TdcProcessor::Set400Mhz(bool on)
@@ -833,6 +835,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
       }
 
       // double corr = hard_failure ? 0. : ExtractCalibr(isrising ? rec.rising_calibr : rec.falling_calibr, fine);
+
       corr = hard_failure ? 0. : (isrising ? rec.rising_calibr[fine] : rec.falling_calibr[fine]);
 
       if (!tgt) {
@@ -1015,6 +1018,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
 
          if (rec.hascalibr && (rec.last_tot >= fToThmin) && (rec.last_tot < fToThmax)) {
             int bin = (int) ((rec.last_tot - fToThmin) / (fToThmax - fToThmin) * TotBins);
+            if (!rec.tot0d_hist) rec.CreateToTHist();
             rec.tot0d_hist[bin]++;
             rec.tot0d_cnt++;
          }
@@ -2315,7 +2319,7 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
             if (rec.calibr_quality_falling <= 0.5) res = false;
          }
 
-         if ((ch > 0) && DoFallingEdge() && (rec.tot0d_cnt > 100) && !preliminary) {
+         if ((ch > 0) && DoFallingEdge() && (rec.tot0d_cnt > 100) && !preliminary && rec.tot0d_hist) {
             CalibrateTot(ch, rec.tot0d_hist, rec.tot_shift, rec.tot_dev, 0.05);
 
             if (!rec.fTot0D && (HistFillLevel() > 2)) {
@@ -2363,9 +2367,7 @@ void hadaq::TdcProcessor::ClearChannelStat(unsigned ch)
    fCh[ch].all_falling_stat = 0;
    fCh[ch].all_rising_stat = 0;
    fCh[ch].tot0d_cnt = 0;
-   for (unsigned n=0;n<TotBins;n++)
-      fCh[ch].tot0d_hist[n] = 0;
-
+   fCh[ch].ReleaseToTHist();
 }
 
 void hadaq::TdcProcessor::StoreCalibration(const std::string& fprefix, unsigned fileid)
