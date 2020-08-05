@@ -71,9 +71,9 @@ namespace hadaq {
             unsigned last_falling_fine;
             long all_rising_stat;
             long all_falling_stat;
-            long* rising_stat;
+            std::vector<uint32_t> rising_stat;
             std::vector<float> rising_calibr;
-            long* falling_stat;
+            std::vector<uint32_t> falling_stat;
             std::vector<float> falling_calibr;
             float last_tot;
             long tot0d_cnt;                 //! counter of tot0d statistic for calibration
@@ -122,9 +122,9 @@ namespace hadaq {
                last_falling_fine(0),
                all_rising_stat(0),
                all_falling_stat(0),
-               rising_stat(nullptr),
+               rising_stat(),
                rising_calibr(),
-               falling_stat(nullptr),
+               falling_stat(),
                falling_calibr(),
                last_tot(0.),
                tot0d_cnt(0),
@@ -143,8 +143,8 @@ namespace hadaq {
 
             void CreateCalibr(unsigned numfine)
             {
-               rising_stat = new long[numfine];
-               falling_stat = new long[numfine];
+               rising_stat.resize(numfine);
+               falling_stat.resize(numfine);
                FillCalibr(numfine, 1.0);
             }
 
@@ -174,9 +174,9 @@ namespace hadaq {
 
             void ReleaseCalibr()
             {
-               if (rising_stat) { delete [] rising_stat; rising_stat = nullptr; }
+               rising_stat.clear();
                rising_calibr.clear();
-               if (falling_stat) { delete [] falling_stat; falling_stat = nullptr; }
+               falling_stat.clear();
                falling_calibr.clear();
             }
 
@@ -345,7 +345,7 @@ namespace hadaq {
 
          long CheckChannelStat(unsigned ch);
 
-         double CalibrateChannel(unsigned nch, long* statistic, std::vector<float> &calibr, bool use_linear = false, bool preliminary = false);
+         double CalibrateChannel(unsigned nch, const std::vector<uint32_t> &statistic, std::vector<float> &calibr, bool use_linear = false, bool preliminary = false);
          void CopyCalibration(const std::vector<float> &calibr, base::H1handle hcalibr, unsigned ch = 0, base::H2handle h2calibr = 0);
 
          bool CalibrateTot(unsigned ch, std::vector<uint32_t> &hist, float &tot_shift, float &tot_dev, float cut = 0.);

@@ -2085,7 +2085,7 @@ void hadaq::TdcProcessor::SetLinearCalibration(unsigned nch, unsigned finemin, u
 }
 
 
-double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, long* statistic, std::vector<float> &calibr, bool use_linear, bool preliminary)
+double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, const std::vector<uint32_t> &statistic, std::vector<float> &calibr, bool use_linear, bool preliminary)
 {
    double sum(0.), limits(use_linear ? 100 : 1000);
    unsigned finemin(0), finemax(0);
