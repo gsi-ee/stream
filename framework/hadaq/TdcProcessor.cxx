@@ -1026,7 +1026,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
 
          if (rec.hascalibr && (rec.last_tot >= fToThmin) && (rec.last_tot < fToThmax)) {
             int bin = (int) ((rec.last_tot - fToThmin) / (fToThmax - fToThmin) * TotBins);
-            if (!rec.tot0d_hist) rec.CreateToTHist();
+            if (rec.tot0d_hist.empty()) rec.CreateToTHist();
             rec.tot0d_hist[bin]++;
             rec.tot0d_cnt++;
          }
@@ -1800,6 +1800,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       if (do_tot)
          for (unsigned ch=1;ch<NumChannels();ch++) {
             if (fCh[ch].hascalibr && (fCh[ch].last_tot >= fToThmin) && (fCh[ch].last_tot < fToThmax)) {
+               if (fCh[ch].tot0d_hist.empty()) fCh[ch].CreateToTHist();
                int bin = (int) ((fCh[ch].last_tot - fToThmin) / (fToThmax - fToThmin) * TotBins);
                fCh[ch].tot0d_hist[bin]++;
                fCh[ch].tot0d_cnt++;
@@ -2189,7 +2190,7 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, long* statistic, std:
    return quality;
 }
 
-bool hadaq::TdcProcessor::CalibrateTot(unsigned nch, long *hist, float &tot_shift, float &tot_dev, float cut)
+bool hadaq::TdcProcessor::CalibrateTot(unsigned nch, std::vector<uint32_t> &hist, float &tot_shift, float &tot_dev, float cut)
 {
    int left(0), right(TotBins);
    double sum0(0), sum1(0), sum2(0);
@@ -2330,7 +2331,9 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
             if (rec.calibr_quality_falling <= 0.5) res = false;
          }
 
-         if ((ch > 0) && DoFallingEdge() && (rec.tot0d_cnt > 100) && !preliminary && rec.tot0d_hist) {
+//         printf("%s:%u Check Tot dofaliing: %d tot0d_cnt:%ld prelim:%d tot0d_hist:%p \n", GetName(), ch, DoFallingEdge(), rec.tot0d_cnt, preliminary, rec.tot0d_hist);
+
+         if ((ch > 0) && DoFallingEdge() && (rec.tot0d_cnt > 100) && !preliminary && !rec.tot0d_hist.empty()) {
             CalibrateTot(ch, rec.tot0d_hist, rec.tot_shift, rec.tot_dev, 0.05);
 
             if (!rec.fTot0D && (HistFillLevel() > 2)) {

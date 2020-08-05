@@ -77,7 +77,7 @@ namespace hadaq {
             std::vector<float> falling_calibr;
             float last_tot;
             long tot0d_cnt;                 //! counter of tot0d statistic for calibration
-            long* tot0d_hist;               //! histogram used for TOT calibration, allocated only when required
+            std::vector<uint32_t> tot0d_hist;  //! histogram used for TOT calibration, allocated only when required
             float tot_shift;                //! calibrated tot shift
             float tot_dev;                  //! tot shift deviation after calibration
             float time_shift_per_grad;      //! delay in channel (ns/C), caused by temperature change
@@ -128,7 +128,7 @@ namespace hadaq {
                falling_calibr(),
                last_tot(0.),
                tot0d_cnt(0),
-               tot0d_hist(nullptr),
+               tot0d_hist(),
                tot_shift(0.),
                tot_dev(0.),
                time_shift_per_grad(0.),
@@ -182,15 +182,14 @@ namespace hadaq {
 
             void CreateToTHist()
             {
-               if (!tot0d_hist)
-                  tot0d_hist = new long[TotBins];
+               tot0d_hist.resize(TotBins);
                for (unsigned n=0;n<TotBins;n++)
                   tot0d_hist[n] = 0;
             }
 
             void ReleaseToTHist()
             {
-               if (tot0d_hist) { delete [] tot0d_hist; tot0d_hist = nullptr; }
+               tot0d_hist.clear();
 
             }
          };
@@ -349,7 +348,7 @@ namespace hadaq {
          double CalibrateChannel(unsigned nch, long* statistic, std::vector<float> &calibr, bool use_linear = false, bool preliminary = false);
          void CopyCalibration(const std::vector<float> &calibr, base::H1handle hcalibr, unsigned ch = 0, base::H2handle h2calibr = 0);
 
-         bool CalibrateTot(unsigned ch, long* hist, float &tot_shift, float &tot_dev, float cut = 0.);
+         bool CalibrateTot(unsigned ch, std::vector<uint32_t> &hist, float &tot_shift, float &tot_dev, float cut = 0.);
 
          bool CheckPrintError();
 
