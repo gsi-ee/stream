@@ -1,4 +1,12 @@
-28.07.20
+5.08.2020
+1. Implement real liner calibration function. Instead of stroing full look-up table,
+   only two points for linear function are stored. Reduced dramatically usage of the memory,
+   especially when applying such calibration. Support both formats when storing and redaing
+   calibration files. Improve speed of HADES calibration procedure in multithreaded environment.
+2. Use std::vector instead of plain arrays for calibration function.
+
+
+28.07.2020
 1. Add support of standalone sub-sub-event in hld print. Such sub-sub-event
    does not have typical header and uses full data of sub-event, inheriting its ID
 2. Configure ToT value for 0xD trigger and hmin/hmax value for histograms based on

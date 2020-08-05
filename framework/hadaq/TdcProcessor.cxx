@@ -660,7 +660,7 @@ double hadaq::TdcProcessor::TestCanCalibrate()
 
 bool hadaq::TdcProcessor::PerformAutoCalibrate()
 {
-   ProduceCalibration(true, fUseLinear || ((fCalibrCounts>0) && (fCalibrCounts % 10000 == 77)));
+   ProduceCalibration(true, fUseLinear || ((fCalibrCounts > 0) && (fCalibrCounts % 10000 == 77)));
    if (!fWriteCalibr.empty() && fWriteEveryTime)
       StoreCalibration(fWriteCalibr);
    if (fAutoCalibrOnce && (fCalibrCounts>0)) {
@@ -707,21 +707,28 @@ void hadaq::TdcProcessor::CompleteCalibration(bool dummy, const std::string &fil
 }
 
 
-void hadaq::TdcProcessor::FindFMinMax(float *func, int nbin, int &fmin, int &fmax)
+void hadaq::TdcProcessor::FindFMinMax(const std::vector<float> &func, int nbin, int &fmin, int &fmax)
 {
-   fmin = 0;
-   fmax = nbin-1;
-   float min = hadaq::TdcMessage::CoarseUnit()*1e-6;
-   float max = hadaq::TdcMessage::CoarseUnit()*0.999999;
-   while ((fmin<nbin) && (func[fmin]<min)) fmin++;
-   while ((fmax>fmin) && (func[fmax]>max)) fmax--;
+   if (func.size() != 5) {
+      fmin = 0;
+      fmax = nbin-1;
+      float min = hadaq::TdcMessage::CoarseUnit()*1e-6;
+      float max = hadaq::TdcMessage::CoarseUnit()*0.999999;
+      while ((fmin<nbin) && (func[fmin]<min)) fmin++;
+      while ((fmax>fmin) && (func[fmax]>max)) fmax--;
+   } else {
+      fmin = (int) func[1];
+      fmax = (int) func[3];
+   }
 }
 
 
-float hadaq::TdcProcessor::ExtractCalibr(float* func, unsigned bin)
+float hadaq::TdcProcessor::ExtractCalibr(const std::vector<float> &func, unsigned bin)
 {
-   if (!fCalibrUseTemp || (fCalibrTemp <= 0) || (fCurrentTemp <= 0) || (fCalibrTempCoef<=0)) return func[bin];
+   if (!fCalibrUseTemp || (fCalibrTemp <= 0) || (fCurrentTemp <= 0) || (fCalibrTempCoef<=0))
+      return ExtractCalibrDirect(func, bin);
 
+   // TODO: if using temperature, also extrapolate linear approximation
    float temp = fCurrentTemp + fTempCorrection;
 
    float val = func[bin] * (1+fCalibrTempCoef*(temp-fCalibrTemp));
@@ -834,9 +841,10 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
          errcnt++;
       }
 
-      // double corr = hard_failure ? 0. : ExtractCalibr(isrising ? rec.rising_calibr : rec.falling_calibr, fine);
+      // ignore temperature compensation
+      corr = hard_failure ? 0. : ExtractCalibrDirect(isrising ? rec.rising_calibr : rec.falling_calibr, fine);
 
-      corr = hard_failure ? 0. : (isrising ? rec.rising_calibr[fine] : rec.falling_calibr[fine]);
+      // corr = hard_failure ? 0. : (isrising ? rec.rising_calibr[fine] : rec.falling_calibr[fine]);
 
       if (!tgt) {
          coarse = msg.getHitTmCoarse();
@@ -2071,30 +2079,23 @@ void hadaq::TdcProcessor::AppendTrbSync(uint32_t syncid)
 
 void hadaq::TdcProcessor::SetLinearCalibration(unsigned nch, unsigned finemin, unsigned finemax)
 {
-   if (nch>=NumChannels()) return;
-
-   for (unsigned fine=0;fine<fNumFineBins;++fine) {
-      float value = 0;
-      if (fine<=finemin) value = 0; else
-      if (fine>=finemax) value = hadaq::TdcMessage::CoarseUnit(); else
-      value = hadaq::TdcMessage::CoarseUnit() * (fine - finemin) / (0. + finemax - finemin);
-      fCh[nch].rising_calibr[fine] = value;
-      fCh[nch].falling_calibr[fine] = value;
-   }
+   if (nch<NumChannels())
+      fCh[nch].SetLinearCalibr(finemin, finemax);
 }
 
 
-double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, long* statistic, float* calibr, bool use_linear, bool preliminary)
+double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, long* statistic, std::vector<float> &calibr, bool use_linear, bool preliminary)
 {
    double sum(0.), limits(use_linear ? 100 : 1000);
    unsigned finemin(0), finemax(0);
+   std::vector<double> integral(fNumFineBins, 0.);
    for (unsigned n=0;n<fNumFineBins;n++) {
       if (statistic[n]) {
          if (sum == 0.) finemin = n; else finemax = n;
       }
 
       sum += statistic[n];
-      calibr[n] = sum;
+      integral[n] = sum;
    }
 
 /*   if (sum <= limits) {
@@ -2124,6 +2125,9 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, long* statistic, floa
       }
    }
 
+   double coarse_unit = hadaq::TdcMessage::CoarseUnit();
+   if (f400Mhz) coarse_unit *= 200. / fCustomMhz;
+
    if (sum <= limits) {
 
       if (quality > 0.15) quality = 0.15;
@@ -2133,44 +2137,51 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, long* statistic, floa
          fCalibrQuality = 0.15;
       }
 
-      double factor = 200. / fCustomMhz;
+      calibr.resize(5);
 
-      for (unsigned n=0;n<fNumFineBins;n++)
-         calibr[n] = factor * hadaq::TdcMessage::SimpleFineCalibr(n);
+      calibr[0] = 2; // 2 values
+      calibr[1] = hadaq::TdcMessage::GetFineMinValue();
+      calibr[2] = 0.;
+      calibr[3] = hadaq::TdcMessage::GetFineMaxValue();
+      calibr[4] = coarse_unit;
 
       return quality;
    }
 
-   double sum1 = 0., sum2 = 0., linear = 0, exact = 0.,
-          coarse_unit = hadaq::TdcMessage::CoarseUnit();
 
-   if (f400Mhz) coarse_unit *= 200. / fCustomMhz;
+   if (use_linear) {
+      calibr.resize(5);
+      calibr[0] = 2; // 2 values
+      calibr[1] = finemin;
+      calibr[2] = 0.;
+      calibr[3] = finemax;
+      calibr[4] = coarse_unit;
+   } else {
+      calibr.resize(fNumFineBins);
 
-   for (unsigned n=0;n<fNumFineBins;n++) {
-      if (n<=finemin) linear = 0.; else
-         if (n>=finemax) linear = 1.; else linear = (n - finemin) / (0. + finemax - finemin);
+      double sum1 = 0., sum2 = 0., linear = 0, exact = 0.;
 
-      sum1 += 1.;
+      for (unsigned n=0;n<fNumFineBins;n++) {
+         if (n<=finemin) linear = 0.; else
+            if (n>=finemax) linear = 1.; else
+               linear = (n - finemin) / (0. + finemax - finemin);
 
-      if (use_linear) {
-         exact = linear;
-      } else {
-         exact = (calibr[n] - statistic[n]/2) / sum;
+         sum1 += 1.;
+
+         exact = (integral[n] - statistic[n]/2) / sum;
          sum2 += (exact - linear) * (exact - linear);
+         calibr[n] = exact * coarse_unit;
       }
 
-      calibr[n] = exact * coarse_unit;
-   }
-
-
-   if (!preliminary && !use_linear && (sum1>100)) {
-      double dev = sqrt(sum2/sum1); // average deviation
-      printf("%s ch %u cnts %5.0f deviation %5.4f\n", GetName(), nch, sum, dev);
-      if (dev > 0.05) {
-         if (quality > 0.6) quality = 0.6;
-         if (fCalibrQuality > 0.6) {
-            fCalibrStatus = std::string(GetName()) + "_NonLinear";
-            fCalibrQuality = 0.6;
+      if (!preliminary && (sum1>100)) {
+         double dev = sqrt(sum2/sum1); // average deviation
+         printf("%s ch %u cnts %5.0f deviation %5.4f\n", GetName(), nch, sum, dev);
+         if (dev > 0.05) {
+            if (quality > 0.6) quality = 0.6;
+            if (fCalibrQuality > 0.6) {
+               fCalibrStatus = std::string(GetName()) + "_NonLinear";
+               fCalibrQuality = 0.6;
+            }
          }
       }
    }
@@ -2232,13 +2243,13 @@ bool hadaq::TdcProcessor::CalibrateTot(unsigned nch, long *hist, float &tot_shif
 }
 
 
-void hadaq::TdcProcessor::CopyCalibration(float* calibr, base::H1handle hcalibr, unsigned ch, base::H2handle h2calibr)
+void hadaq::TdcProcessor::CopyCalibration(const std::vector<float> &calibr, base::H1handle hcalibr, unsigned ch, base::H2handle h2calibr)
 {
    ClearH1(hcalibr);
 
    for (unsigned n=0;n<fNumFineBins;n++) {
-      SetH1Content(hcalibr, n, calibr[n]*1e12);
-      SetH2Content(h2calibr, ch, n, calibr[n]*1e12);
+      SetH1Content(hcalibr, n, ExtractCalibrDirect(calibr, n)*1e12);
+      SetH2Content(h2calibr, ch, n, ExtractCalibrDirect(calibr,n)*1e12);
    }
 }
 
@@ -2338,8 +2349,7 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
          rec.hascalibr = res;
 
          if ((fEdgeMask == edge_CommonStatistic) || (fEdgeMask == edge_ForceRising)) {
-            for (unsigned n=0;n<fNumFineBins;n++)
-               rec.falling_calibr[n] = rec.rising_calibr[n];
+            rec.falling_calibr = rec.rising_calibr;
             rec.calibr_stat_falling = rec.calibr_stat_rising;
             rec.calibr_quality_falling = rec.calibr_quality_rising;
          }
@@ -2390,8 +2400,8 @@ void hadaq::TdcProcessor::StoreCalibration(const std::string& fprefix, unsigned 
 
    // calibration curves
    for (unsigned ch=0;ch<NumChannels();ch++) {
-      fwrite(fCh[ch].rising_calibr, sizeof(float)*fNumFineBins, 1, f);
-      fwrite(fCh[ch].falling_calibr, sizeof(float)*fNumFineBins, 1, f);
+      fwrite(fCh[ch].rising_calibr.data(), sizeof(float)*fCh[ch].rising_calibr.size(), 1, f);
+      fwrite(fCh[ch].falling_calibr.data(), sizeof(float)*fCh[ch].falling_calibr.size(), 1, f);
    }
 
    // tot shifts
@@ -2471,9 +2481,31 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
         continue;
      }
 
-     fCh[ch].hascalibr =
-        (fread(fCh[ch].rising_calibr, sizeof(float)*fNumFineBins, 1, f) == 1) &&
-        (fread(fCh[ch].falling_calibr, sizeof(float)*fNumFineBins, 1, f) == 1);
+     fCh[ch].rising_calibr.clear();
+     fCh[ch].falling_calibr.clear();
+
+     float val0 = 0.;
+     if (fread(&val0, sizeof(float), 1, f) == 1) {
+        if (val0) {
+           fCh[ch].rising_calibr.resize(1 + ((int)val0)*2);
+        } else{
+           fCh[ch].rising_calibr.resize(fNumFineBins);
+        }
+        fCh[ch].rising_calibr[0] = val0;
+        fread(fCh[ch].rising_calibr.data()+1, sizeof(float)*(fCh[ch].rising_calibr.size()-1), 1, f);
+     }
+
+     if (fread(&val0, sizeof(float), 1, f) == 1) {
+        if (val0) {
+           fCh[ch].falling_calibr.resize(1 + ((int)val0)*2);
+        } else{
+           fCh[ch].falling_calibr.resize(fNumFineBins);
+        }
+        fCh[ch].falling_calibr[0] = val0;
+        fread(fCh[ch].falling_calibr.data()+1, sizeof(float)*(fCh[ch].falling_calibr.size()-1), 1, f);
+     }
+
+     fCh[ch].hascalibr = (fCh[ch].rising_calibr.size() > 4) && (fCh[ch].falling_calibr.size() > 4);
 
      CopyCalibration(fCh[ch].rising_calibr, fCh[ch].fRisingCalibr, ch, fRisingCalibr);
 

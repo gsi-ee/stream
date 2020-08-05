@@ -139,6 +139,9 @@ namespace hadaq {
             gFineMinValue = min;
             gFineMaxValue = max;
          }
+
+         static unsigned GetFineMinValue() { return gFineMinValue; }
+         static unsigned GetFineMaxValue() { return gFineMaxValue; }
    };
 
 }

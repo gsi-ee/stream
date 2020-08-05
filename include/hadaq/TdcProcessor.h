@@ -7,6 +7,8 @@
 #include "hadaq/TdcIterator.h"
 #include "hadaq/TdcSubEvent.h"
 
+#include <vector>
+
 namespace hadaq {
 
    enum { FineCounterBins = 600, TotBins = 3000, ToTvalue = 20, ToThmin = 15, ToThmax = 60 };
@@ -70,9 +72,9 @@ namespace hadaq {
             long all_rising_stat;
             long all_falling_stat;
             long* rising_stat;
-            float* rising_calibr;
+            std::vector<float> rising_calibr;
             long* falling_stat;
-            float* falling_calibr;
+            std::vector<float> falling_calibr;
             float last_tot;
             long tot0d_cnt;                 //! counter of tot0d statistic for calibration
             long* tot0d_hist;               //! histogram used for TOT calibration, allocated only when required
@@ -121,9 +123,9 @@ namespace hadaq {
                all_rising_stat(0),
                all_falling_stat(0),
                rising_stat(nullptr),
-               rising_calibr(nullptr),
+               rising_calibr(),
                falling_stat(nullptr),
-               falling_calibr(nullptr),
+               falling_calibr(),
                last_tot(0.),
                tot0d_cnt(0),
                tot0d_hist(nullptr),
@@ -142,26 +144,40 @@ namespace hadaq {
             void CreateCalibr(unsigned numfine)
             {
                rising_stat = new long[numfine];
-               rising_calibr = new float[numfine];
                falling_stat = new long[numfine];
-               falling_calibr = new float[numfine];
                FillCalibr(numfine, 1.0);
             }
 
             void FillCalibr(unsigned numfine, double factor = 1.)
             {
-               for (unsigned n=0;n<numfine;n++) {
+               for (unsigned n=0;n<numfine;n++)
                   falling_stat[n] = rising_stat[n] = 0;
-                  falling_calibr[n] = rising_calibr[n] = factor * hadaq::TdcMessage::SimpleFineCalibr(n);
-               }
+
+               SetLinearCalibr(hadaq::TdcMessage::GetFineMinValue(), hadaq::TdcMessage::GetFineMaxValue(), factor);
             }
+
+            void SetLinearCalibr(unsigned finemin, unsigned finemax, double factor = 1.)
+            {
+               rising_calibr.resize(5,0);
+               falling_calibr.resize(5,0);
+
+               rising_calibr[0] = 2; // 2 values
+               rising_calibr[1] = finemin;
+               rising_calibr[2] = 0.;
+               rising_calibr[3] = finemax;
+               rising_calibr[4] = factor * hadaq::TdcMessage::CoarseUnit();
+
+               for (int n=0;n<5;++n)
+                  falling_calibr[n] = rising_calibr[n];
+            }
+
 
             void ReleaseCalibr()
             {
                if (rising_stat) { delete [] rising_stat; rising_stat = nullptr; }
-               if (rising_calibr) { delete [] rising_calibr; rising_calibr = nullptr; }
+               rising_calibr.clear();
                if (falling_stat) { delete [] falling_stat; falling_stat = nullptr; }
-               if (falling_calibr) { delete [] falling_calibr; falling_calibr = nullptr; }
+               falling_calibr.clear();
             }
 
             void CreateToTHist()
@@ -330,8 +346,8 @@ namespace hadaq {
 
          long CheckChannelStat(unsigned ch);
 
-         double CalibrateChannel(unsigned nch, long* statistic, float* calibr, bool use_linear = false, bool preliminary = false);
-         void CopyCalibration(float* calibr, base::H1handle hcalibr, unsigned ch = 0, base::H2handle h2calibr = 0);
+         double CalibrateChannel(unsigned nch, long* statistic, std::vector<float> &calibr, bool use_linear = false, bool preliminary = false);
+         void CopyCalibration(const std::vector<float> &calibr, base::H1handle hcalibr, unsigned ch = 0, base::H2handle h2calibr = 0);
 
          bool CalibrateTot(unsigned ch, long* hist, float &tot_shift, float &tot_dev, float cut = 0.);
 
@@ -349,9 +365,20 @@ namespace hadaq {
          void ClearChannelStat(unsigned ch);
 
          /** Extract calibration value */
-         float ExtractCalibr(float* func, unsigned bin);
+         float ExtractCalibr(const std::vector<float> &func, unsigned bin);
 
-         void FindFMinMax(float *func, int nbin, int &fmin, int &fmax);
+         inline float ExtractCalibrDirect(const std::vector<float> &func, unsigned bin)
+         {
+            if (func.size() != 5) return func[bin];
+
+            // here only two-point linear approximation is supported
+            // later one can extend approximation for N-points linear function
+            if (bin <= func[1]) return func[2];
+            if (bin >= func[3]) return func[4];
+            return func[2] + (bin - func[1]) / (func[3] - func[1]) * (func[4] - func[2]);
+         }
+
+         void FindFMinMax(const std::vector<float> &func, int nbin, int &fmin, int &fmax);
 
          virtual void CreateBranch(TTree*);
 
