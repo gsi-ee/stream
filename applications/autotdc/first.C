@@ -36,8 +36,10 @@ void first()
    // second parameter is hits count for autocalibration
    //     0 - only load calibration
    //    -1 - accumulate data and store calibrations only at the end
+   //    -77 - accumulate data and store linear calibrations only at the end
    //    >0 - automatic calibration after N hits in each active channel
-   //    >1000000000 - automatic calibration after N hits only once
+   //         if value ends with 77 like 10077 linear calibration will be calculated
+   //    >1000000000 - automatic calibration after N hits only once, 1e9 excluding
    // third parameter is trigger type mask used for calibration
    //   (1 << 0xD) - special 0XD trigger with internal pulser, used also for TOT calibration
    //    0x3FFF - all kinds of trigger types will be used for calibration (excluding 0xE and 0xF)
