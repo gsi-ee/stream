@@ -1,5 +1,7 @@
-// this is example for
-
+#include "base/ProcMgr.h"
+#include "hadaq/HldProcessor.h"
+#include "hadaq/TdcProcessor.h"
+#include "hadaq/TrbProcessor.h"
 
 void first()
 {

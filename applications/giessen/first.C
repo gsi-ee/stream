@@ -1,3 +1,8 @@
+#include "base/ProcMgr.h"
+#include "hadaq/HldProcessor.h"
+#include "hadaq/TdcProcessor.h"
+#include "hadaq/TrbProcessor.h"
+
 void first()
 {
    // analysis will work as triggerred -

@@ -1,4 +1,7 @@
-// this is example for
+#include "base/ProcMgr.h"
+#include "hadaq/HldProcessor.h"
+#include "hadaq/TdcProcessor.h"
+#include "hadaq/TrbProcessor.h"
 
 #include <cstdlib>
 
@@ -6,8 +9,8 @@ void first()
 {
   //base::ProcMgr::instance()->SetRawAnalysis(true);
     base::ProcMgr::instance()->SetTriggeredAnalysis(true);
-    
-    
+
+
 
 
    // all new instances get this value
@@ -19,13 +22,13 @@ void first()
    // First is range of fine time
    // Second parameter determines the range of the ToT histograms in ns
    // Third is reduction factor of bins for 2D histogram
-   hadaq::TdcProcessor::SetDefaults(600, 200, 1); 
+   hadaq::TdcProcessor::SetDefaults(600, 200, 1);
 
    // default channel numbers and edges mask
    // 1 - use only rising edge, falling edge is ignore
    // 2   - falling edge enabled and fully independent from rising edge
    // 3   - falling edge enabled and uses calibration from rising edge
-   // 4   - falling edge enabled and common statistic is used for calibration 
+   // 4   - falling edge enabled and common statistic is used for calibration
    // default channel numbers and edges mask
    hadaq::TrbProcessor::SetDefaults(53, 3);
    // hadaq::TdcProcessor::SetDefaults(1024);
@@ -66,7 +69,7 @@ void first()
    //    0x3FFF - all kinds of trigger types will be used for calibration (excluding 0xE and 0xF)
    //   0x80000000 in mask enables usage of temperature correction
    hld->ConfigureCalibration(calname, cnt, (1 << trig) | use_temp);
- 
+
 
    // only accept trigger type 0x1 when storing file
    //new hadaq::HldFilter(0x1);
@@ -77,9 +80,9 @@ void first()
    // 0 - disable store
    // 1 - std::vector<hadaq::TdcMessageExt> - includes original TDC message
    // 2 - std::vector<hadaq::MessageFloat>  - compact form, without channel 0, stamp as float (relative to ch0)
-   // 3 - std::vector<hadaq::MessageDouble> - compact form, with channel 0, absolute time stamp as double    
-    base::ProcMgr::instance()->SetStoreKind(1); 
-    
+   // 3 - std::vector<hadaq::MessageDouble> - compact form, with channel 0, absolute time stamp as double
+    base::ProcMgr::instance()->SetStoreKind(1);
+
 
    // when configured as output in DABC, one specifies:
    // <OutputPort name="Output2" url="stream://file.root?maxsize=5000&kind=3"/>
@@ -140,9 +143,9 @@ extern "C" void after_create(hadaq::HldProcessor* hld)
 */
       // }
   for (int i=2;i<52;i++) {
-    tdc->SetRefChannel(i,i-1, tdc->GetID(), 30000, -50, 50); // LED DIFF      
+    tdc->SetRefChannel(i,i-1, tdc->GetID(), 30000, -50, 50); // LED DIFF
     }
-      
+
   if (tdc->GetID() == 0x0507) {
     tdc->SetToTRange(20, 15., 60.);
   }
@@ -163,7 +166,7 @@ extern "C" void after_create(hadaq::HldProcessor* hld)
 //         for (int i=2;i<33;i++) {
 // //	        tdc->SetRefChannel(i,i-1, 0xf3d1, 20000, -150, 150); // LED DIFF
 // 	       tdc->SetRefChannel(i,1, 0x0123, 3000, -15, 15); // LED DIFF
-// 
+//
 //         }
        //    printf("Configure ref ******************\n");
 	     //   tdc->SetRefChannel(3,2, 0x1001, 3000, -150, 150); // LED DIFF
