@@ -2109,7 +2109,6 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, const std::vector<uin
 
    double quality = 1.;
 
-
    if (!preliminary && (finemin > 50)) {
       if (quality > 0.4) quality = 0.4;
       if (fCalibrQuality>0.4) {
@@ -2149,14 +2148,61 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, const std::vector<uin
       return quality;
    }
 
+   int n_linear_points = 2; // TODO - configurable parameter
 
    if (use_linear) {
-      calibr.resize(5);
-      calibr[0] = 2; // 2 values
+
+      calibr.resize(1 + n_linear_points*2);
+      calibr[0] = n_linear_points; // how many points, minimum 2
       calibr[1] = finemin;
       calibr[2] = 0.;
-      calibr[3] = finemax;
-      calibr[4] = coarse_unit;
+      int indx = 1, fine_last = finemin; // current point to use
+
+//      printf("%s first %f %g\n", GetName(), calibr[indx], calibr[indx+1]);
+
+      for (int pnt = 1; pnt < n_linear_points-1; pnt++) {
+
+         int fine_next = finemin + (int) std::round((finemax-finemin+0.)*pnt/(n_linear_points-1.));
+         double ksum1 = 0., ksum2 = 0.;
+
+         for (int fine = fine_last+1; fine <= fine_next; fine++) {
+            double exact = ((integral[fine] - statistic[fine]/2) / sum) * coarse_unit;
+            ksum1 = (fine - fine_last) * (exact - calibr[indx+1]); // sum (dx*dy)
+            ksum2 = (fine - fine_last) * (fine - fine_last);       // sum (dx*dx)
+         }
+
+         double k = ksum1 / ksum2;
+
+         float value_next = calibr[indx+1] + k*(fine_next-fine_last);
+
+         indx+=2;
+         calibr[indx] = fine_next;
+         calibr[indx+1] = value_next;
+         fine_last = fine_next;
+
+//         printf("%s next %f %g k = %g\n", GetName(), calibr[indx], calibr[indx+1], k);
+      }
+
+      // last point is finemax
+      indx += 2;
+      calibr[indx] = finemax;
+      calibr[indx+1] = coarse_unit;
+
+//      printf("%s last %f %g\n", GetName(), calibr[indx], calibr[indx+1]);
+
+/*
+      // now check several points
+      for (int fine = 10; fine < 580; fine += 50) {
+         int segm = -1, pnt = -1;
+         if ((fine > finemin) && (fine < finemax)) {
+            pnt = calibr.size() - 2;
+            segm = std::ceil((fine - calibr[1]) / (calibr[pnt] - calibr[1]) * (calibr[0] - 1)); // segment in linear approx
+            pnt = 1 + segm*2; // first segment should have pnt = 3, second segment pnt = 5 and so on
+         }
+         printf("%s fine %d nsegm = %d pnt %d value %g\n", GetName(), fine, segm, pnt, ExtractCalibrDirect(calibr, fine));
+      }
+*/
+
    } else {
       calibr.resize(fNumFineBins);
 

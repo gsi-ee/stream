@@ -1,3 +1,9 @@
+6.08.2020
+1. Implement N-points linear calibration. One can configure N points instead of 2.
+   Take more memory, but improve precision for channels where linear approximation
+   is not precise enough, but full look-up table takes too much performance.
+
+
 5.08.2020
 1. Implement real liner calibration function. Instead of stroing full look-up table,
    only two points for linear function are stored. Reduced dramatically usage of the memory,

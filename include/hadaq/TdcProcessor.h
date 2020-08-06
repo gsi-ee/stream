@@ -8,6 +8,7 @@
 #include "hadaq/TdcSubEvent.h"
 
 #include <vector>
+#include <cmath>
 
 namespace hadaq {
 
@@ -368,13 +369,20 @@ namespace hadaq {
 
          inline float ExtractCalibrDirect(const std::vector<float> &func, unsigned bin)
          {
-            if (func.size() != 5) return func[bin];
+            if (func.size() > 100) return func[bin];
 
             // here only two-point linear approximation is supported
             // later one can extend approximation for N-points linear function
             if (bin <= func[1]) return func[2];
-            if (bin >= func[3]) return func[4];
-            return func[2] + (bin - func[1]) / (func[3] - func[1]) * (func[4] - func[2]);
+            int pnt = func.size() - 2;  // 3 for simple linear point
+            if (bin >= func[pnt]) return func[pnt+1];
+
+            if (pnt > 3) {
+               int segm = std::ceil((bin - func[1]) / (func[pnt] - func[1]) * (func[0] - 1)); // segment in linear approx
+               pnt = 1 + segm*2; // first segment should have pnt = 3, second segment pnt = 5 and so on
+            }
+
+            return func[pnt-1] + (bin - func[pnt-2]) / (func[pnt] - func[pnt-2]) * (func[pnt+1] - func[pnt-1]);
          }
 
          void FindFMinMax(const std::vector<float> &func, int nbin, int &fmin, int &fmax);
