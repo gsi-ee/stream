@@ -284,6 +284,7 @@ namespace hadaq {
          std::string fWriteCalibr;    //! file which should be written at the end of data processing
          bool        fWriteEveryTime; //! write calibration every time automatic calibration performed
          bool        fUseLinear;      //! create linear calibrations for the channel
+         int         fLinearNumPoints; //! number of linear points
 
          bool      fEveryEpoch;       //! if true, each hit must be supplied with epoch
 
@@ -322,6 +323,7 @@ namespace hadaq {
          static int gHadesMonitorInterval; //! how often special HADES monitoring procedure called
          static int gTotStatLimit;         //! how much statistic required for ToT calibration
          static double gTotRMSLimit;       //! allowed RMS value
+         static int gDefaultLinearNumPoints;      //! number of points when linear calibration is used
 
          /** Method will be called by TRB processor if SYNC message was found
           * One should change 4 first bytes in the last buffer in the queue */
@@ -414,6 +416,8 @@ namespace hadaq {
 
          /** Configure Tot calibration parameters */
          static void SetToTCalibr(int minstat = 100, double rms = 0.15);
+
+         static void SetDefaultLinearNumPoints(int cnt = 2);
 
          /** Set number of TDC messages, which should be skipped from subevent before analyzing it */
          void SetSkipTdcMessages(unsigned cnt = 0) { fSkipTdcMessages = cnt; }
@@ -596,6 +600,9 @@ namespace hadaq {
 
          /** Returns true is linear calibrations are configured */
          bool IsUseLinear() const { return fUseLinear; }
+
+         void SetLinearNumPoints(int cnt = 2) { fLinearNumPoints = (cnt < 2) ? 2 : ((cnt > 100) ? 100 : cnt); }
+         int GetLinearNumPoints() const { return fLinearNumPoints; }
 
          /** Configure 0xD trigger ToT length and min/max values for histogram */
          void SetToTRange(double tot_0xd, double hmin, double hmax);

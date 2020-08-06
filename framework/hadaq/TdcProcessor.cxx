@@ -31,6 +31,8 @@ bool hadaq::TdcProcessor::gUseDTrigForRef = false;
 int hadaq::TdcProcessor::gHadesMonitorInterval = -111;
 int hadaq::TdcProcessor::gTotStatLimit = 100;
 double hadaq::TdcProcessor::gTotRMSLimit = 0.15;
+int hadaq::TdcProcessor::gDefaultLinearNumPoints = 2;
+
 
 unsigned BUBBLE_SIZE = 19;
 
@@ -63,6 +65,11 @@ void hadaq::TdcProcessor::SetToTCalibr(int minstat, double rms)
 {
    gTotStatLimit = minstat;
    gTotRMSLimit = rms;
+}
+
+void hadaq::TdcProcessor::SetDefaultLinearNumPoints(int cnt)
+{
+   gDefaultLinearNumPoints = (cnt < 2) ? 2 : ((cnt > 100) ? 100 : cnt);
 }
 
 void hadaq::TdcProcessor::SetUseDTrigForRef(bool on)
@@ -177,6 +184,8 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fToThmin = ToThmin;
    fToThmax = ToThmax;
    fTotUpperLimit = 20;
+
+   fLinearNumPoints = gDefaultLinearNumPoints;
 
    if (HistFillLevel() > 1) {
       fChannels = MakeH1("Channels", "Messages per TDC channels", numchannels, 0, numchannels, "ch");
@@ -2148,21 +2157,19 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, const std::vector<uin
       return quality;
    }
 
-   int n_linear_points = 2; // TODO - configurable parameter
-
    if (use_linear) {
 
-      calibr.resize(1 + n_linear_points*2);
-      calibr[0] = n_linear_points; // how many points, minimum 2
+      calibr.resize(1 + fLinearNumPoints*2);
+      calibr[0] = fLinearNumPoints; // how many points, minimum 2
       calibr[1] = finemin;
       calibr[2] = 0.;
       int indx = 1, fine_last = finemin; // current point to use
 
 //      printf("%s first %f %g\n", GetName(), calibr[indx], calibr[indx+1]);
 
-      for (int pnt = 1; pnt < n_linear_points-1; pnt++) {
+      for (int pnt = 1; pnt < fLinearNumPoints-1; pnt++) {
 
-         int fine_next = finemin + (int) std::round((finemax-finemin+0.)*pnt/(n_linear_points-1.));
+         int fine_next = finemin + (int) std::round((finemax-finemin+0.)*pnt/(fLinearNumPoints-1.));
          double ksum1 = 0., ksum2 = 0.;
 
          for (int fine = fine_last+1; fine <= fine_next; fine++) {
