@@ -346,9 +346,14 @@ void hadaq::TdcProcessor::SetToTRange(double tot, double hmin, double hmax)
 
 void hadaq::TdcProcessor::ConfigureToTByHwType(unsigned hwtype)
 {
+   // ID table according to TRB3 manual, page 15
    bool recognized = true;
    switch(hwtype) {
+      case 0x90: SetToTRange(30., 50., 80.); break; // TRB3 central FPGA
+      case 0x91: SetToTRange(30., 50., 80.); break; // TRB3 peripheral FPGA
+      case 0x95: SetToTRange(30., 50., 80.); break; // TRB3sc
       case 0x96: SetToTRange(20., 15., 60.); break; // DiRich
+      case 0xA5: SetToTRange(20., 15., 60.); break; // TRB5sc
       default: fToTdflt = false; recognized = false; // keep as is but mark as not default value
    }
 
