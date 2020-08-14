@@ -2126,7 +2126,7 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, const std::vector<uin
    if (!preliminary && (finemin > 50)) {
       if (quality > 0.4) quality = 0.4;
       if (fCalibrQuality>0.4) {
-         fCalibrStatus = std::string(GetName()) + std::string("_BadFineMin_") + std::to_string(finemin);
+         fCalibrStatus = std::string(GetName()) + std::string("_ch_") + std::to_string(nch) + std::string("_BadFineMin_") + std::to_string(finemin);
          fCalibrQuality = 0.4;
       }
    }
@@ -2134,7 +2134,7 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, const std::vector<uin
    if (!preliminary && (finemax < (f400Mhz ? 200 : 400))) {
       if (quality > 0.4) quality = 0.4;
       if (fCalibrQuality > 0.4) {
-         fCalibrStatus = std::string(GetName()) + std::string("_BadFineMin_") + std::to_string(finemax);
+         fCalibrStatus = std::string(GetName()) + std::string("_ch_") + std::to_string(nch) + std::string("_BadFineMax_") + std::to_string(finemax);
          fCalibrQuality = 0.4;
       }
    }
