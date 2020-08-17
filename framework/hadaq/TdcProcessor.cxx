@@ -632,7 +632,7 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
       }
    }
 
-   fCalibrProgress = TestCanCalibrate();
+   fCalibrProgress = TestCanCalibrate(false);
    if ((fCalibrProgress>=1.) && fAutoCalibr) PerformAutoCalibrate();
 }
 
@@ -654,7 +654,7 @@ long hadaq::TdcProcessor::CheckChannelStat(unsigned ch)
    return stat;
 }
 
-double hadaq::TdcProcessor::TestCanCalibrate()
+double hadaq::TdcProcessor::TestCanCalibrate(bool fillhist)
 {
    if (fCalibrCounts<=0) return 0.;
 
@@ -667,6 +667,7 @@ double hadaq::TdcProcessor::TestCanCalibrate()
          isany = true;
          if (stat<min) min = stat;
       }
+      if (fillhist && fCalHitsPerBrd) SetH2Content(*fCalHitsPerBrd, fSeqeunceId, ch, stat);
    }
 
    return isany ? 1.*min/fCalibrCounts : 0.;
@@ -937,15 +938,15 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
          double tm = ((epoch << 11) | coarse) * 5e-9 - corr;
          bool usehit = true;
 
-         if ((chid>0) && ch0tm && (gTrigDWindowLow < gTrigDWindowHigh-1.)) {
+         if ((chid > 0) && ch0tm && (gTrigDWindowLow < gTrigDWindowHigh-1.)) {
             double localtm = (tm - ch0tm)*1e9;
             usehit = (gTrigDWindowLow <= localtm) && (localtm <= gTrigDWindowHigh);
          }
 
          if (isrising) {
-            if (chid==0) ch0tm = tm;
+            if (chid == 0) ch0tm = tm;
             if (usehit) {
-               if (chid>0) {
+               if (chid > 0) {
                   if (nmatches+1 == chid*2) nmatches++; else nmatches = 0;
                   nrising++;
                } else {
@@ -977,6 +978,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
          // done only once for specified channel
          if (!check_calibr_progress && rec.docalibr && !rec.check_calibr && (fCalibrCounts > 0)) {
             long stat = CheckChannelStat(chid);
+
             // if ToT mode enabled, make first check at half of the statistic to make preliminary calibrations
             if (stat >= fCalibrCounts * ((fAllTotMode==0) ? 0.5 : 1.)) {
                rec.check_calibr = true;
@@ -1050,7 +1052,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
       }
 
    if (check_calibr_progress) {
-      fCalibrProgress = TestCanCalibrate();
+      fCalibrProgress = TestCanCalibrate(true);
       fCalibrQuality = (fCalibrProgress > 2) ? 0.9 : 0.7 + fCalibrProgress*0.1;
 
       if ((fAllTotMode == 0) && (fCalibrProgress >= 0.5)) {
@@ -1614,6 +1616,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                      case 3:
                         rec.rising_stat[fine]++;
                         rec.all_rising_stat++;
+                        if (fCalHitsPerBrd) DefFillH2(*fCalHitsPerBrd, fSeqeunceId, chid, 1.); // accumulate only rising edges
                         break;
                      case 2:
                         rec.last_rising_fine = fine;
@@ -1802,6 +1805,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                rec.rising_stat[rec.last_rising_fine]++;
                rec.all_rising_stat++;
                rec.last_rising_fine = 0;
+               if (fCalHitsPerBrd) DefFillH2(*fCalHitsPerBrd, fSeqeunceId, ch, 1.); // accumulate only rising edges
             }
             if (rec.last_falling_fine > 0) {
                rec.falling_stat[rec.last_falling_fine]++;
@@ -2366,6 +2370,7 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
          // special case - use common statistic
          if (fEdgeMask == edge_CommonStatistic) {
             rec.all_rising_stat += rec.all_falling_stat;
+            if (fCalHitsPerBrd) DefFillH2(*fCalHitsPerBrd, fSeqeunceId, ch, rec.all_falling_stat); // add all falling edges
             rec.all_falling_stat = 0;
             for (unsigned n=0;n<fNumFineBins;n++) {
                rec.rising_stat[n] += rec.falling_stat[n];

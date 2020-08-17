@@ -302,7 +302,7 @@ base::H2handle TFirstStepProcessor::MakeH2(const char* name, const char* title, 
    char kind = 'I';
    Bool_t useexisting = kFALSE;
 
-   for (int n=0; n<= (arr ? arr->GetLast() : -1);n++) {
+   for (int n = 0; n <= (arr ? arr->GetLast() : -1); n++) {
       TString part = arr->At(n)->GetName();
       if (part.Index("xbin:")==0) { xbins = part; xbins.Remove(0, 5); } else
       if (part.Index("ybin:")==0) { ybins = part; ybins.Remove(0, 5); } else

@@ -10,6 +10,7 @@ hadaq::SubProcessor::SubProcessor(TrbProcessor *trb, const char* nameprefix, uns
    fMsgPerBrd(nullptr),
    fErrPerBrd(nullptr),
    fHitsPerBrd(nullptr),
+   fCalHitsPerBrd(nullptr),
    fNewDataFlag(false),
    fPrintRawData(false),
    fCrossProcess(false)
@@ -41,6 +42,7 @@ void hadaq::SubProcessor::AssignPerBrdHistos(TrbProcessor* trb, unsigned seqid)
    fMsgPerBrd = &trb->fMsgPerBrd;
    fErrPerBrd = &trb->fErrPerBrd;
    fHitsPerBrd = &trb->fHitsPerBrd;
+   fCalHitsPerBrd = &trb->fCalHitsPerBrd;
 }
 
 void hadaq::SubProcessor::UserPreLoop()

@@ -65,9 +65,10 @@ namespace hadaq {
          base::H1handle fTrigType;   ///< trigger type
          base::H1handle fErrBits;    ///< error bit statistics
 
-         base::H1handle fMsgPerBrd;  //! messages per board - from TRB
-         base::H1handle fErrPerBrd;  //! errors per board - from TRB
-         base::H1handle fHitsPerBrd; //! data hits per board - from TRB
+         base::H1handle fMsgPerBrd;  //! messages per board
+         base::H1handle fErrPerBrd;  //! errors per board
+         base::H1handle fHitsPerBrd; //! data hits per board
+         base::H2handle fCalHitsPerBrd; //! calibration hits per board, used only in HADES
 
          bool fPrintRawData;         ///< true when raw data should be printed
          bool fCrossProcess;         ///< if true, cross-processing will be enabled
