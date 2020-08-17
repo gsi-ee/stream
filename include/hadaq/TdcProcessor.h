@@ -358,7 +358,7 @@ namespace hadaq {
          bool CreateChannelHistograms(unsigned ch);
 
          /** Check if automatic calibration can be performed - enough statistic is accumulated */
-         double TestCanCalibrate(bool fillhist = false);
+         double TestCanCalibrate(bool fillhist = false, std::string *status = nullptr);
 
          /** Perform automatic calibration of channels */
          bool PerformAutoCalibrate();

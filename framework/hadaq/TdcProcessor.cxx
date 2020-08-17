@@ -654,23 +654,40 @@ long hadaq::TdcProcessor::CheckChannelStat(unsigned ch)
    return stat;
 }
 
-double hadaq::TdcProcessor::TestCanCalibrate(bool fillhist)
+double hadaq::TdcProcessor::TestCanCalibrate(bool fillhist, std::string *status)
 {
    if (fCalibrCounts<=0) return 0.;
 
    bool isany = false;
-   long min = 1000000000L;
+   long min = 1000000000L, max = 0;
+   unsigned minch = 0;
 
-   for (unsigned ch=0;ch<NumChannels();ch++) {
+   for (unsigned ch = 0; ch < NumChannels(); ch++) {
       long stat = CheckChannelStat(ch);
-      if (stat>0) {
+      if (stat > 0) {
          isany = true;
-         if (stat<min) min = stat;
+         if (stat < min) {
+            min = stat;
+            minch = ch;
+         } else if (stat > max) {
+            max = stat;
+         }
+
       }
       if (fillhist && fCalHitsPerBrd) SetH2Content(*fCalHitsPerBrd, fSeqeunceId, ch, stat);
    }
 
-   return isany ? 1.*min/fCalibrCounts : 0.;
+   double min_progress = isany ? 1.*min/fCalibrCounts : 0.,
+          max_progress = isany ? 1.*max/fCalibrCounts : 0.;
+
+   if (status) {
+      if ((max_progress < 0.5) || (min_progress > 0.5*max_progress))
+         *status = "Accumulating";
+      else
+         *status = std::string(GetName()) + std::string("_AccDiff_ch") + std::to_string(minch);
+   }
+
+   return min_progress;
 }
 
 bool hadaq::TdcProcessor::PerformAutoCalibrate()
@@ -1052,7 +1069,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
       }
 
    if (check_calibr_progress) {
-      fCalibrProgress = TestCanCalibrate(true);
+      fCalibrProgress = TestCanCalibrate(true, &fCalibrStatus);
       fCalibrQuality = (fCalibrProgress > 2) ? 0.9 : 0.7 + fCalibrProgress*0.1;
 
       if ((fAllTotMode == 0) && (fCalibrProgress >= 0.5)) {
