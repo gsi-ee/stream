@@ -659,7 +659,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
                ix += 5;
                datalen -= 5;
             } else {
-               RAWPRINT("Error: Unknown value in CTS header found: %x\n", sub->Data(ix));
+               RAWPRINT("Error: Unknown nExtTrigFlag 0x%x in CTS subevent\n", nExtTrigFlag);
             }
          } else {
             RAWPRINT("Error: Unknown ETM in CTS header found: %x\n", nExtTrigFlag);
