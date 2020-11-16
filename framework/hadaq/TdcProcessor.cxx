@@ -2188,6 +2188,8 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, bool rising, const st
       calibr[3] = hadaq::TdcMessage::GetFineMaxValue();
       calibr[4] = coarse_unit;
 
+      fCalibrLog.push_back(name_prefix + err_log);
+
       return quality;
    }
 
