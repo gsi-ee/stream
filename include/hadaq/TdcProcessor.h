@@ -9,6 +9,7 @@
 
 #include <vector>
 #include <cmath>
+#include <string>
 
 namespace hadaq {
 
@@ -30,7 +31,6 @@ namespace hadaq {
       friend class TrbProcessor;
 
       protected:
-
 
          enum { errNoHeader, errChId, errEpoch, errFine, err3ff, errCh0, errMismatchDouble, errUncknHdr, errDesignId, errMisc };
 
@@ -305,8 +305,10 @@ namespace hadaq {
          double    fLastRateTm;          //! last ch0 time when rate was calculated
 
          unsigned  fSkipTdcMessages;     ///<! number of first messages, skipped from analysis
-         bool f400Mhz;                   ///<! is 400Mhz mode (debug)
-         double fCustomMhz;              ///<! new design Mhz
+         bool      f400Mhz;              ///<! is 400Mhz mode (debug)
+         double    fCustomMhz;           ///<! new design Mhz
+
+         std::vector<std::string> fCalibrLog; ///<! error log messages during calibration
 
          /** Returns true when processor used to select trigger signal
           * TDC not yet able to perform trigger selection */
@@ -348,7 +350,7 @@ namespace hadaq {
 
          long CheckChannelStat(unsigned ch);
 
-         double CalibrateChannel(unsigned nch, const std::vector<uint32_t> &statistic, std::vector<float> &calibr, bool use_linear = false, bool preliminary = false);
+         double CalibrateChannel(unsigned nch, bool rising, const std::vector<uint32_t> &statistic, std::vector<float> &calibr, bool use_linear = false, bool preliminary = false);
          void CopyCalibration(const std::vector<float> &calibr, base::H1handle hcalibr, unsigned ch = 0, base::H2handle h2calibr = 0);
 
          bool CalibrateTot(unsigned ch, std::vector<uint32_t> &hist, float &tot_shift, float &tot_dev, float cut = 0.);
@@ -434,6 +436,7 @@ namespace hadaq {
          double GetCalibrProgress() const { return fCalibrProgress; }
          std::string GetCalibrStatus() const { return fCalibrStatus; }
          double GetCalibrQuality() const { return fCalibrQuality; }
+         void AppendCalibrLog(std::vector<std::string> &vect) { vect.insert(vect.end(), fCalibrLog.begin(), fCalibrLog.end()); }
 
          int GetNumHist() const { return 8; }
 

@@ -2120,7 +2120,7 @@ void hadaq::TdcProcessor::SetLinearCalibration(unsigned nch, unsigned finemin, u
 }
 
 
-double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, const std::vector<uint32_t> &statistic, std::vector<float> &calibr, bool use_linear, bool preliminary)
+double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, bool rising, const std::vector<uint32_t> &statistic, std::vector<float> &calibr, bool use_linear, bool preliminary)
 {
    double sum(0.), limits(use_linear ? 100 : 1000);
    unsigned finemin(0), finemax(0);
@@ -2144,18 +2144,25 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, const std::vector<uin
 
    double quality = 1.;
 
+   std::string name_prefix = std::string(GetName()) + (rising ? "_rch" : "_fch") + std::to_string(nch);
+   std::string err_log;
+
    if (!preliminary && (finemin > 50)) {
+      std::string log_finemin = std::string("_BadFineMin_") + std::to_string(finemin);
+      err_log.append(log_finemin);
       if (quality > 0.4) quality = 0.4;
-      if (fCalibrQuality>0.4) {
-         fCalibrStatus = std::string(GetName()) + std::string("_ch_") + std::to_string(nch) + std::string("_BadFineMin_") + std::to_string(finemin);
+      if (fCalibrQuality > 0.4) {
+         fCalibrStatus = name_prefix + log_finemin;
          fCalibrQuality = 0.4;
       }
    }
 
    if (!preliminary && (finemax < (f400Mhz ? 200 : 400))) {
+      std::string log_finemax = std::string("_BadFineMax_") + std::to_string(finemax);
+      err_log.append(log_finemax);
       if (quality > 0.4) quality = 0.4;
       if (fCalibrQuality > 0.4) {
-         fCalibrStatus = std::string(GetName()) + std::string("_ch_") + std::to_string(nch) + std::string("_BadFineMax_") + std::to_string(finemax);
+         fCalibrStatus = name_prefix + log_finemax;
          fCalibrQuality = 0.4;
       }
    }
@@ -2166,9 +2173,10 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, const std::vector<uin
    if (sum <= limits) {
 
       if (quality > 0.15) quality = 0.15;
+      err_log.append("_LowStat");
 
-      if ((fCalibrQuality>0.15) && !preliminary)  {
-         fCalibrStatus = std::string(GetName()) + "_LowStat";
+      if ((fCalibrQuality > 0.15) && !preliminary)  {
+         fCalibrStatus = name_prefix + "_LowStat";
          fCalibrQuality = 0.15;
       }
 
@@ -2257,14 +2265,18 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, const std::vector<uin
          double dev = sqrt(sum2/sum1); // average deviation
          printf("%s ch %u cnts %5.0f deviation %5.4f\n", GetName(), nch, sum, dev);
          if (dev > 0.05) {
+            err_log.append("_NonLinear");
             if (quality > 0.6) quality = 0.6;
             if (fCalibrQuality > 0.6) {
-               fCalibrStatus = std::string(GetName()) + "_NonLinear";
+               fCalibrStatus = name_prefix + "_NonLinear";
                fCalibrQuality = 0.6;
             }
          }
       }
    }
+
+   // add problematic channels to the full list
+   if (!err_log.empty()) fCalibrLog.push_back(name_prefix + err_log);
 
    return quality;
 }
@@ -2350,6 +2362,8 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
 
    if (dummy) return;
 
+   fCalibrLog.clear();
+
    if (!preliminary)
       printf("%s produce %s calibrations \n", GetName(), (use_linear ? "linear" : "normal"));
 
@@ -2400,13 +2414,13 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
          bool res = false;
 
          if (DoRisingEdge() && (rec.all_rising_stat > 0)) {
-            rec.calibr_quality_rising = CalibrateChannel(ch, rec.rising_stat, rec.rising_calibr, use_linear, preliminary);
+            rec.calibr_quality_rising = CalibrateChannel(ch, true, rec.rising_stat, rec.rising_calibr, use_linear, preliminary);
             rec.calibr_stat_rising = rec.all_rising_stat;
             res = (rec.calibr_quality_rising > 0.5);
          }
 
          if (DoFallingEdge() && (rec.all_falling_stat > 0) && (fEdgeMask == edge_BothIndepend)) {
-            rec.calibr_quality_falling = CalibrateChannel(ch, rec.falling_stat, rec.falling_calibr, use_linear, preliminary);
+            rec.calibr_quality_falling = CalibrateChannel(ch, false, rec.falling_stat, rec.falling_calibr, use_linear, preliminary);
             rec.calibr_stat_falling = rec.all_falling_stat;
             if (rec.calibr_quality_falling <= 0.5) res = false;
          }
