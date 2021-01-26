@@ -950,7 +950,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
 
       if (hard_failure) continue;
 
-      if (use_in_calibr && (cnt == 1) && (kind == hadaq::tdckind_Header) && fToTdflt) {
+      if (use_in_calibr && (cnt == 1) && (kind == hadaq::tdckind_Header) && DoFallingEdge() && fToTdflt) {
          ConfigureToTByHwType(msg.getHeaderHwType());
       }
 
