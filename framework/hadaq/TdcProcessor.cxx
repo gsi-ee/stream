@@ -950,6 +950,10 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
 
       if (hard_failure) continue;
 
+      if (use_in_calibr && (cnt == 1) && (kind == hadaq::tdckind_Header) && fToTdflt) {
+         ConfigureToTByHwType(msg.getHeaderHwType());
+      }
+
       if (use_in_calibr && (kind == hadaq::tdckind_Hit)) {
          coarse = msg.getHitTmCoarse();
          double tm = ((epoch << 11) | coarse) * 5e-9 - corr;
