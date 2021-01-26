@@ -248,7 +248,7 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
       if (fLastHadesTm <= 0) fLastHadesTm = tm;
       if (tm - fLastHadesTm > hadaq::TdcProcessor::GetHadesMonitorInterval()) {
          fLastHadesTm = tm;
-         for (auto&& item : fMap) {
+         for (auto &item : fMap) {
             unsigned num = item.second->NumberOfTDC();
             for (unsigned indx=0;indx<num;++indx)
                item.second->GetTDCWithIndex(indx)->DoHadesHistAnalysis();
@@ -397,7 +397,7 @@ void hadaq::HldProcessor::CreatePerTDCHisto()
 
    std::string lbl = "xbin:";
    unsigned cnt = 0;
-   for (auto &&tdc : tdcs) {
+   for (auto &tdc : tdcs) {
       if (cnt++>0) lbl.append(",");
       char sbuf[50];
       snprintf(sbuf, sizeof(sbuf), "0x%04X", tdc->GetID());
@@ -461,7 +461,7 @@ void hadaq::HldProcessor::CreatePerTDCHisto()
           fQaSummary = MakeH1("QaSummary", "QA summary", 4, -0.5, 3.5, "QA histogram;# bad channels");
    }
    cnt = 0;
-   for (auto &&tdc : tdcs)
+   for (auto &tdc : tdcs)
       tdc->AssignPerHldHistos(cnt++, &fHitsPerTDC, &fErrPerTDC, &fHitsPerTDCChannel, &fErrPerTDCChannel, &fCorrPerTDCChannel,
           &fQaFinePerTDCChannel, &fQaToTPerTDCChannel, &fQaEdgesPerTDCChannel, &fQaErrorsPerTDCChannel);
 }

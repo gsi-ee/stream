@@ -10,7 +10,7 @@ void base::Profiler::MakeStatistic()
    clock_t diff = fLast ? now - fLast : 0;
 
    if (diff) {
-      for (auto &&entry : fEntries) {
+      for (auto &entry : fEntries) {
          entry.fRatio = 1.*entry.fSum/diff;
          entry.fSum = 0;
       }
@@ -27,7 +27,7 @@ std::string base::Profiler::Format()
    double total{0.};
    int cnt{0};
 
-   for (auto &&entry : fEntries) {
+   for (auto &entry : fEntries) {
       if (entry.fRatio > 0) {
          if (!res.empty()) res.append(" ");
          total += entry.fRatio;

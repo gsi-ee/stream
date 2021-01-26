@@ -147,7 +147,7 @@ void hadaq::TrbProcessor::CreatePerTDCHistos()
       fToTPerBrd = MakeH2("ToTPerTDC", "ToT in each TDC channel", numtdc, 0, numtdc, maxnumch, 0, maxnumch, lbl2.c_str());
 
    cnt = 0;
-   for (auto &&tdc : tdcs)
+   for (auto &tdc : tdcs)
       tdc->AssignPerBrdHistos(this, cnt++);
 }
 
@@ -912,7 +912,7 @@ void hadaq::TrbProcessor::BuildFastTDCVector()
    fMinTdc = 0xffffff;
    fMaxTdc = 0;
 
-   for (auto &&entry : fMap) {
+   for (auto &entry : fMap) {
       if (entry.second->IsTDC()) {
          isany = true;
          if (entry.first > fMaxTdc) fMaxTdc = entry.first;
@@ -925,7 +925,7 @@ void hadaq::TrbProcessor::BuildFastTDCVector()
    } else {
       fMaxTdc++;
       fTdcsVect.resize(fMaxTdc - fMinTdc, nullptr);
-      for (auto &&entry : fMap)
+      for (auto &entry : fMap)
          if (entry.second->IsTDC())
             fTdcsVect[entry.first - fMinTdc] = static_cast<hadaq::TdcProcessor *>(entry.second);
    }
