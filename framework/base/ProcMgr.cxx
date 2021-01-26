@@ -65,24 +65,24 @@ void base::ProcMgr::DeleteAllProcessors()
 void base::ProcMgr::SetHistFilling(int lvl)
 {
    fDfltHistLevel = lvl;
-   for (unsigned n=0;n<fProc.size();n++)
-      fProc[n]->SetHistFilling(lvl);
-   for (unsigned n=0;n<fEvProc.size();n++)
-      fEvProc[n]->SetHistFilling(lvl);
+   for (auto &proc : fProc)
+      proc->SetHistFilling(lvl);
+   for (auto &evproc : fEvProc)
+      evproc->SetHistFilling(lvl);
 }
 
 void base::ProcMgr::SetStoreKind(unsigned kind)
 {
    fDfltStoreKind = kind;
-   for (unsigned n=0;n<fProc.size();n++)
-      fProc[n]->SetStoreKind(kind);
-   for (unsigned n=0;n<fEvProc.size();n++)
-      fEvProc[n]->SetStoreKind(kind);
+   for (auto &proc : fProc)
+      proc->SetStoreKind(kind);
+   for (auto &evproc : fEvProc)
+      evproc->SetStoreKind(kind);
 }
 
 base::H1handle base::ProcMgr::MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle)
 {
-   if (!InternalHistFormat()) return 0;
+   if (!InternalHistFormat()) return nullptr;
 
    double* arr = new double[nbins+5];
    arr[0] = nbins;
@@ -318,7 +318,7 @@ base::ProcMgr* base::ProcMgr::AddProcessor(Processor* proc)
 {
    StreamProc* sproc = dynamic_cast<StreamProc*> (proc);
    EventProc* eproc = dynamic_cast<EventProc*> (proc);
-   if (proc && (proc->mgr()!=this)) proc->SetManager(this);
+   if (proc && (proc->mgr() != this)) proc->SetManager(this);
    if (sproc) fProc.emplace_back(sproc);
    if (eproc) fEvProc.emplace_back(eproc);
    return this;

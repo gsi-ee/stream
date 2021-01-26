@@ -38,11 +38,11 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc, int hfi
    fMap(),
    fHadaqHUBId()
 {
-   if (hldproc==0) {
+   if (!hldproc) {
       mgr()->RegisterProc(this, base::proc_TRBEvent, brdid & 0xFF);
    } else {
       hldproc->AddTrb(this, brdid);
-      if ((mgr()==0) && (hldproc->mgr()!=0)) hldproc->mgr()->AddProcessor(this);
+      if (!mgr() && hldproc->mgr()) hldproc->mgr()->AddProcessor(this);
    }
 
    if (hfill >= 0) SetHistFilling(hfill);
