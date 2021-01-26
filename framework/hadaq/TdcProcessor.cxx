@@ -2432,6 +2432,8 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
          if ((ch > 0) && DoFallingEdge() && (rec.tot0d_cnt > 100) && !preliminary && !rec.tot0d_hist.empty()) {
             CalibrateTot(ch, rec.tot0d_hist, rec.tot_shift, rec.tot_dev, 0.05);
 
+            if (fToTPerBrd) SetH2Content(*fToTPerBrd, fSeqeunceId, ch, rec.tot_shift);
+
             if (!rec.fTot0D && (HistFillLevel() > 2)) {
                SetSubPrefix2("Ch", ch);
                rec.fTot0D = MakeH1("Tot0D", "Time over threshold with 0xD trigger", TotBins, fToThmin, fToThmax, "ns");

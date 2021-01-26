@@ -33,6 +33,7 @@ namespace hadaq {
          base::H1handle *fErrPerBrd;  //! errors per board - from TRB
          base::H1handle *fHitsPerBrd; //! data hits per board - from TRB
          base::H2handle *fCalHitsPerBrd; //! calibration hits per board - from TRB
+         base::H2handle *fToTPerBrd;  //! ToT per board - from TRB
 
          bool fNewDataFlag;  //! flag used by TRB processor to indicate if new data was added
          bool fPrintRawData; //! if true, raw data will be printed

@@ -69,6 +69,8 @@ namespace hadaq {
          base::H1handle fErrPerBrd;  //! errors per board
          base::H1handle fHitsPerBrd; //! data hits per board
          base::H2handle fCalHitsPerBrd; //! calibration hits per board, used only in HADES
+         base::H2handle fToTPerBrd;  //! ToT values for each TDC channel
+
 
          bool fPrintRawData;         ///< true when raw data should be printed
          bool fCrossProcess;         ///< if true, cross-processing will be enabled

@@ -53,10 +53,11 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc, int hfi
    fCurrentRunId = 0;
    fCurrentEventId = 0;
 
-   fMsgPerBrd = 0;
-   fErrPerBrd = 0;
-   fHitsPerBrd = 0;
-   fCalHitsPerBrd = 0;
+   fMsgPerBrd = nullptr;
+   fErrPerBrd = nullptr;
+   fHitsPerBrd = nullptr;
+   fCalHitsPerBrd = nullptr;
+   fToTPerBrd = nullptr;
 
    fEvSize = MakeH1("EvSize", "Event size", 500, 0, 50000, "bytes");
    fSubevHLen = 5000;
@@ -110,7 +111,6 @@ hadaq::TdcProcessor* hadaq::TrbProcessor::FindTDC(unsigned tdcid) const
 
 void hadaq::TrbProcessor::CreatePerTDCHistos()
 {
-
    std::vector<TdcProcessor *> tdcs;
 
    unsigned numtdc = NumberOfTDC();
@@ -135,8 +135,6 @@ void hadaq::TrbProcessor::CreatePerTDCHistos()
 
    std::string lbl2 = lbl + ";channels";
 
-
-
    if (!fMsgPerBrd)
       fMsgPerBrd = MakeH1("MsgPerTDC", "Number of messages per TDC", numtdc, 0, numtdc, lbl.c_str());
    if (!fErrPerBrd)
@@ -145,6 +143,8 @@ void hadaq::TrbProcessor::CreatePerTDCHistos()
       fHitsPerBrd = MakeH1("HitsPerTDC", "Number of data hits per TDC", numtdc, 0, numtdc, lbl.c_str());
    if (!fCalHitsPerBrd)
       fCalHitsPerBrd = MakeH2("CalHitsPerTDC", "Number of calibration data hits per TDC", numtdc, 0, numtdc, maxnumch, 0, maxnumch, lbl2.c_str());
+   if (!fToTPerBrd)
+      fToTPerBrd = MakeH2("ToTPerTDC", "ToT in each TDC channel", numtdc, 0, numtdc, maxnumch, 0, maxnumch, lbl2.c_str());
 
    cnt = 0;
    for (auto &&tdc : tdcs)
@@ -1118,5 +1118,6 @@ void hadaq::TrbProcessor::ClearDAQHistos()
    ClearH1(fErrPerBrd);
    ClearH1(fHitsPerBrd);
    ClearH2(fCalHitsPerBrd);
+   ClearH2(fToTPerBrd);
 }
 
