@@ -222,29 +222,27 @@ int hadaq::TrbProcessor::CreateTDC(unsigned id1, unsigned id2, unsigned id3, uns
 
 void hadaq::TrbProcessor::SetAutoCalibrations(long cnt)
 {
-   for (SubProcMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
-      if (iter->second->IsTDC())
-        ((TdcProcessor*)iter->second)->SetAutoCalibration(cnt);
+   for (auto &entry : fMap) {
+      if (entry.second->IsTDC())
+        ((TdcProcessor*)entry.second)->SetAutoCalibration(cnt);
    }
 }
 
 
 void hadaq::TrbProcessor::DisableCalibrationFor(unsigned firstch, unsigned lastch)
 {
-   for (SubProcMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
-      if (iter->second->IsTDC())
-         ((TdcProcessor*)iter->second)->DisableCalibrationFor(firstch, lastch);
+   for (auto &entry : fMap) {
+      if (entry.second->IsTDC())
+         ((TdcProcessor*)entry.second)->DisableCalibrationFor(firstch, lastch);
    }
 }
 
 
 void hadaq::TrbProcessor::SetWriteCalibrations(const char* fileprefix, bool every_time, bool use_linear)
 {
-   for (SubProcMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
-      if (!iter->second->IsTDC()) continue;
-      TdcProcessor* tdc = (TdcProcessor*) iter->second;
-
-      tdc->SetWriteCalibration(fileprefix, every_time, use_linear);
+   for (auto &entry : fMap) {
+      if (entry.second->IsTDC())
+         ((TdcProcessor*)entry.second)->SetWriteCalibration(fileprefix, every_time, use_linear);
    }
 }
 
@@ -253,9 +251,9 @@ bool hadaq::TrbProcessor::LoadCalibrations(const char* fileprefix)
 {
    bool res = true;
 
-   for (SubProcMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
-      if (!iter->second->IsTDC()) continue;
-      TdcProcessor* tdc = (TdcProcessor*) iter->second;
+   for (auto &entry : fMap) {
+      if (!entry.second->IsTDC()) continue;
+      TdcProcessor* tdc = (TdcProcessor*) entry.second;
       if (!tdc->LoadCalibration(fileprefix)) res = false;
    }
 
@@ -281,9 +279,9 @@ void hadaq::TrbProcessor::SetCalibrTriggerMask(unsigned trigmask)
 {
    fCalibrTriggerMask = trigmask;
 
-   for (SubProcMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
-      if (!iter->second->IsTDC()) continue;
-      TdcProcessor* tdc = (TdcProcessor*) iter->second;
+   for (auto &entry : fMap) {
+      if (!entry.second->IsTDC()) continue;
+      TdcProcessor* tdc = (TdcProcessor*) entry.second;
       tdc->SetCalibrTriggerMask(fCalibrTriggerMask);
    }
 }
@@ -297,15 +295,15 @@ void hadaq::TrbProcessor::SetStoreKind(unsigned kind)
 {
    base::StreamProc::SetStoreKind(kind);
 
-   for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
-      iter->second->SetStoreKind(kind);
+   for (auto &entry : fMap)
+      entry.second->SetStoreKind(kind);
 }
 
 void hadaq::TrbProcessor::SetCh0Enabled(bool on)
 {
-   for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++) {
-      if (iter->second->IsTDC())
-         ((TdcProcessor*)iter->second)->SetCh0Enabled(on);
+   for (auto &entry : fMap) {
+      if (entry.second->IsTDC())
+         ((TdcProcessor*)entry.second)->SetCh0Enabled(on);
    }
 }
 
@@ -313,9 +311,9 @@ void hadaq::TrbProcessor::SetTriggerWindow(double left, double right)
 {
    base::StreamProc::SetTriggerWindow(left, right);
 
-   for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++) {
-      iter->second->SetTriggerWindow(left, right);
-      iter->second->CreateTriggerHist(16, 3000, -2e-6, 2e-6);
+   for (auto &entry : fMap) {
+      entry.second->SetTriggerWindow(left, right);
+      entry.second->CreateTriggerHist(16, 3000, -2e-6, 2e-6);
    }
 }
 
@@ -405,16 +403,16 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
 
 void hadaq::TrbProcessor::BeforeEventScan()
 {
-   for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
-      iter->second->BeforeFill();
+   for (auto &entry : fMap)
+      entry.second->BeforeFill();
 }
 
 
 void hadaq::TrbProcessor::AfterEventScan()
 {
    // scan all new data
-   for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
-      iter->second->ScanNewBuffers();
+   for (auto &entry : fMap)
+      entry.second->ScanNewBuffers();
 }
 
 
@@ -422,8 +420,8 @@ void hadaq::TrbProcessor::AfterEventFill()
 {
    // after scan data, fill extra histograms
    if (IsCrossProcess()) {
-      for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
-         iter->second->AfterFill(&fMap);
+      for (auto &entry : fMap)
+         entry.second->AfterFill(&fMap);
    }
 }
 
@@ -441,8 +439,8 @@ void hadaq::TrbProcessor::SetCrossProcessAll()
 void hadaq::TrbProcessor::SetCrossProcess(bool on)
 {
    fCrossProcess = on;
-   for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
-      iter->second->fCrossProcess = on;
+   for (auto &entry : fMap)
+      entry.second->fCrossProcess = on;
 }
 
 
@@ -513,8 +511,8 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
 
    DefFillH1(fSubevSize, sub->GetSize(), 1.);
 
-   for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
-      iter->second->SetNewDataFlag(false);
+   for (auto &entry : fMap)
+      entry.second->SetNewDataFlag(false);
 
    unsigned ix = 0;           // cursor
 
@@ -760,7 +758,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
          continue;
       }
 
-      SubProcMap::const_iterator iter = fMap.find(dataid);
+      auto iter = fMap.find(dataid);
       SubProcessor* subproc = iter != fMap.end() ? iter->second : nullptr;
 
       //! ================= any other header ========================
@@ -774,7 +772,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
 
          // check if this processor has some attached TDC
          unsigned  offset = 0;
-         SubProcMap::const_iterator iter_tdc = fMap.find(dataid | 0xff0000);
+         auto iter_tdc = fMap.find(dataid | 0xff0000);
          if(iter_tdc != fMap.end()) {
             // pre-scan for begin marker of non-TDC data
             for(unsigned i=0;i<datalen;i++) {
@@ -864,9 +862,9 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
    }
 
    if (fMsg.fTrigSyncIdFound && !gIgnoreSync) {
-      for (SubProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++) {
-         if (iter->second->IsNewDataFlag())
-            iter->second->AppendTrbSync(fMsg.fTrigSyncId);
+      for (auto &entry : fMap) {
+         if (entry.second->IsNewDataFlag())
+            entry.second->AppendTrbSync(fMsg.fTrigSyncId);
       }
    }
 }
