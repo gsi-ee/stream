@@ -2304,9 +2304,20 @@ bool hadaq::TdcProcessor::CalibrateTot(unsigned nch, std::vector<uint32_t> &hist
    double sum0(0), sum1(0), sum2(0);
    tot_dev = 0.;
 
+   std::string name_prefix = std::string(GetName()) + "_ch" + std::to_string(nch) + "_ToT";
+   std::string err_log;
+
    for (int n=left;n<right;n++) sum0 += hist[n];
    if (sum0 < gTotStatLimit) {
       printf("%s Ch:%u TOT failed - not enough statistic %5.0f\n", GetName(), nch, sum0);
+
+      err_log = "_lowstat";
+      if (fCalibrQuality > 0.4) {
+         fCalibrStatus = name_prefix + err_log;
+         fCalibrQuality = 0.4;
+      }
+      fCalibrLog.push_back(name_prefix + err_log);
+
       return false; // no statistic for small number of counts
    }
 
@@ -2334,6 +2345,13 @@ bool hadaq::TdcProcessor::CalibrateTot(unsigned nch, std::vector<uint32_t> &hist
    double rms = sum2/sum0 - mean*mean;
    if (rms < 0) {
       printf("%s Ch:%u TOT failed - error in RMS calculation\n", GetName(), nch);
+
+      err_log = "_wrongrms";
+      if (fCalibrQuality > 0.4) {
+         fCalibrStatus = name_prefix + err_log;
+         fCalibrQuality = 0.4;
+      }
+      fCalibrLog.push_back(name_prefix + err_log);
       return false;
    }
    rms = sqrt(rms);
@@ -2341,6 +2359,13 @@ bool hadaq::TdcProcessor::CalibrateTot(unsigned nch, std::vector<uint32_t> &hist
 
    if (rms > gTotRMSLimit) {
       printf("%s Ch:%u TOT failed - RMS %5.3f too high\n", GetName(), nch, rms);
+
+      err_log = "_highrms";
+      if (fCalibrQuality > 0.4) {
+         fCalibrStatus = name_prefix + err_log;
+         fCalibrQuality = 0.4;
+      }
+      fCalibrLog.push_back(name_prefix + err_log);
       return false;
    }
 
