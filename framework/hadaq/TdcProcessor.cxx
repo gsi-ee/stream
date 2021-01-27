@@ -28,6 +28,7 @@ bool hadaq::TdcProcessor::gAllHistos = false;
 double hadaq::TdcProcessor::gTrigDWindowLow = 0;
 double hadaq::TdcProcessor::gTrigDWindowHigh = 0;
 bool hadaq::TdcProcessor::gUseDTrigForRef = false;
+bool hadaq::TdcProcessor::gUseAsDTrig = false;
 int hadaq::TdcProcessor::gHadesMonitorInterval = -111;
 int hadaq::TdcProcessor::gTotStatLimit = 100;
 double hadaq::TdcProcessor::gTotRMSLimit = 0.15;
@@ -75,6 +76,11 @@ void hadaq::TdcProcessor::SetDefaultLinearNumPoints(int cnt)
 void hadaq::TdcProcessor::SetUseDTrigForRef(bool on)
 {
    gUseDTrigForRef = on;
+}
+
+void hadaq::TdcProcessor::SetUseAsDTrig(bool on)
+{
+   gUseAsDTrig = on;
 }
 
 void hadaq::TdcProcessor::SetHadesMonitorInterval(int tm)
@@ -1364,13 +1370,13 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    bool use_for_ref = buf().kind < (gUseDTrigForRef ? 0xE : 0xD);
 
    // disable taking last hit for trigger DD
-   if ((use_for_calibr > 0) && (buf().kind == 0xD)) {
+   if ((use_for_calibr > 0) && ((buf().kind == 0xD) || gUseAsDTrig)) {
       if (IsTriggeredAnalysis() &&  (gTrigDWindowLow < gTrigDWindowHigh)) use_for_calibr = 3; // accept time stamps only for inside window
       // use_for_calibr = 2; // always use only last hit
    }
 
    // if data could be used for TOT calibration
-   bool do_tot = (use_for_calibr>0) && (buf().kind == 0xD) && DoFallingEdge();
+   bool do_tot = (use_for_calibr > 0) && ((buf().kind == 0xD) || gUseAsDTrig) && DoFallingEdge();
 
    // use temperature compensation only when temperature available
    bool do_temp_comp = fCalibrUseTemp && (fCurrentTemp > 0) && (fCalibrTemp > 0) && (fabs(fCurrentTemp - fCalibrTemp) < 30.);
@@ -1482,8 +1488,11 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       }
 
       if (msg.isCalibrMsg()) {
-         ncalibr = 0;
-         calibr = msg;
+         if (use_for_calibr == 0) {
+            // take into account calibration messages only when data not used for calibration
+            ncalibr = 0;
+            calibr = msg;
+         }
          continue;
       }
 
@@ -1838,6 +1847,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       // when doing TOT calibration, use only last TOT value - before one could find other signals
       if (do_tot)
          for (unsigned ch=1;ch<NumChannels();ch++) {
+            // printf("%s Channel %d last_tot %5.3f has_calibr %d min %5.2f max %5.2f \n", GetName(), ch, fCh[ch].last_tot, fCh[ch].hascalibr, fToThmin, fToThmax);
+
             if (fCh[ch].hascalibr && (fCh[ch].last_tot >= fToThmin) && (fCh[ch].last_tot < fToThmax)) {
                if (fCh[ch].tot0d_hist.empty()) fCh[ch].CreateToTHist();
                int bin = (int) ((fCh[ch].last_tot - fToThmin) / (fToThmax - fToThmin) * TotBins);
@@ -2431,7 +2442,7 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
             if (rec.calibr_quality_falling <= 0.5) res = false;
          }
 
-//         printf("%s:%u Check Tot dofaliing: %d tot0d_cnt:%ld prelim:%d tot0d_hist:%p \n", GetName(), ch, DoFallingEdge(), rec.tot0d_cnt, preliminary, rec.tot0d_hist);
+         // printf("%s:%u Check Tot dofaliing: %d tot0d_cnt:%ld prelim:%d tot0d_hist:%d \n", GetName(), ch, DoFallingEdge(), rec.tot0d_cnt, preliminary, (int) rec.tot0d_hist.size());
 
          if ((ch > 0) && DoFallingEdge() && (rec.tot0d_cnt > 100) && !preliminary && !rec.tot0d_hist.empty()) {
             CalibrateTot(ch, rec.tot0d_hist, rec.tot_shift, rec.tot_dev, 0.05);

@@ -322,6 +322,7 @@ namespace hadaq {
          static double gTrigDWindowLow;  //! low limit of time stamps for 0xD trigger used for calibration
          static double gTrigDWindowHigh; //! high limit of time stamps for 0xD trigger used for calibration
          static bool gUseDTrigForRef;    //! when true, use special triggers for ref calculations
+         static bool gUseAsDTrig;        //! when true, all events are analyzed as 0xD trigger
          static int gHadesMonitorInterval; //! how often special HADES monitoring procedure called
          static int gTotStatLimit;         //! how much statistic required for ToT calibration
          static double gTotRMSLimit;       //! allowed RMS value
@@ -420,6 +421,8 @@ namespace hadaq {
          static void SetToTCalibr(int minstat = 100, double rms = 0.15);
 
          static void SetDefaultLinearNumPoints(int cnt = 2);
+
+         static void SetUseAsDTrig(bool on = true);
 
          /** Set number of TDC messages, which should be skipped from subevent before analyzing it */
          void SetSkipTdcMessages(unsigned cnt = 0) { fSkipTdcMessages = cnt; }
