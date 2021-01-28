@@ -44,10 +44,10 @@ namespace base {
          GlobalMarksQueue         fTriggers;        //!< list of current triggers
          unsigned                 fTimeMasterIndex; //!< processor index, which time is used for all other subsystems
          AnalysisKind             fAnalysisKind;    //!< ignore all events, only single scan, not output events
-         TTree                   *fTree;            //!< abstract tree pointer, will be used in ROOT implementation
+         TTree                   *fTree{nullptr};   //!< abstract tree pointer, will be used in ROOT implementation
          int                      fDfltHistLevel;   //!< default histogram fill level for any new created processor
          int                      fDfltStoreKind;   //!< default store kind for any new created processor
-         base::Event             *fTrigEvent;       //!< current event, filled when performing triggered analysis
+         base::Event             *fTrigEvent{nullptr}; //!< current event, filled when performing triggered analysis
 
          static ProcMgr* fInstance;                 //!
 
@@ -66,7 +66,7 @@ namespace base {
 
          static ProcMgr* instance();
 
-         static void ClearInstancePointer();
+         static void ClearInstancePointer(ProcMgr *mgr = nullptr);
 
          ProcMgr* AddProcessor(Processor* proc);
 

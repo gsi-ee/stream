@@ -29,7 +29,7 @@ base::ProcMgr::~ProcMgr()
    DeleteAllProcessors();
    // printf("Delete processors done\n");
 
-   if (fInstance == this) fInstance = 0;
+   ClearInstancePointer(this);
 }
 
 base::ProcMgr* base::ProcMgr::instance()
@@ -37,9 +37,10 @@ base::ProcMgr* base::ProcMgr::instance()
    return fInstance;
 }
 
-void base::ProcMgr::ClearInstancePointer()
+void base::ProcMgr::ClearInstancePointer(ProcMgr *mgr)
 {
-   fInstance = 0;
+   if (!mgr || (fInstance == mgr))
+      fInstance = nullptr;
 }
 
 base::StreamProc* base::ProcMgr::FindProc(const char* name) const
