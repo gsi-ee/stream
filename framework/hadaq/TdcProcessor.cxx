@@ -2321,19 +2321,19 @@ bool hadaq::TdcProcessor::CalibrateTot(unsigned nch, std::vector<uint32_t> &hist
       return false; // no statistic for small number of counts
    }
 
-   if ((cut>0) && (cut<0.3)) {
-      double suml(0.), sumr(0.);
+   if ((cut > 0) && (cut < 0.3)) {
+      double suml = 0., sumr = 0.;
 
-      while ((left<right-1) && (suml < sum0*cut))
-         suml+=hist[left++];
+      while ((left < right-3) && (suml < sum0*cut))
+         suml += hist[left++];
 
-      while ((right > left+1) && (sumr < sum0*cut))
-         sumr+=hist[--right];
+      while ((right > left+3) && (sumr < sum0*cut))
+         sumr += hist[--right];
    }
 
    sum0 = 0;
 
-   for (int n=left;n<right;n++) {
+   for (int n = left; n < right; n++) {
       double x = fToThmin + (n + 0.5) / TotBins * (fToThmax-fToThmin); // x coordinate of center bin
 
       sum0 += hist[n];
@@ -2344,7 +2344,7 @@ bool hadaq::TdcProcessor::CalibrateTot(unsigned nch, std::vector<uint32_t> &hist
    double mean = sum1/sum0;
    double rms = sum2/sum0 - mean*mean;
    if (rms < 0) {
-      printf("%s Ch:%u TOT failed - error in RMS calculation\n", GetName(), nch);
+      printf("%s Ch:%u TOT failed - error in RMS calculation  mean: %5.3f rms2: %5.3f \n", GetName(), nch, mean, rms);
 
       err_log = "_wrongrms";
       if (fCalibrQuality > 0.4) {
