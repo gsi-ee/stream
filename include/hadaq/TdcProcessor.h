@@ -679,6 +679,8 @@ namespace hadaq {
 
          /** Special hades histograms creation */
          void DoHadesHistAnalysis();
+
+         void FillToTHistogram();
    };
 
 }

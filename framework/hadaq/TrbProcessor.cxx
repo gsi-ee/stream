@@ -114,7 +114,7 @@ void hadaq::TrbProcessor::CreatePerTDCHistos()
    std::vector<TdcProcessor *> tdcs;
 
    unsigned numtdc = NumberOfTDC();
-   for (unsigned indx=0;indx<numtdc;++indx)
+   for (unsigned indx = 0; indx < numtdc; ++indx)
       tdcs.emplace_back(GetTDCWithIndex(indx));
 
    std::string lbl = "tdc;xbin:";
@@ -144,11 +144,13 @@ void hadaq::TrbProcessor::CreatePerTDCHistos()
    if (!fCalHitsPerBrd)
       fCalHitsPerBrd = MakeH2("CalHitsPerTDC", "Number of calibration data hits per TDC", numtdc, 0, numtdc, maxnumch, 0, maxnumch, lbl2.c_str());
    if (!fToTPerBrd)
-      fToTPerBrd = MakeH2("ToTPerTDC", "ToT in each TDC channel", numtdc, 0, numtdc, maxnumch, 0, maxnumch, lbl2.c_str());
+      fToTPerBrd = MakeH2("ToTPerTDC", "ToT in each TDC channel", numtdc, 0, numtdc, maxnumch-1, 0, maxnumch-1, lbl2.c_str());
 
    cnt = 0;
-   for (auto &tdc : tdcs)
+   for (auto &tdc : tdcs) {
       tdc->AssignPerBrdHistos(this, cnt++);
+      tdc->FillToTHistogram();
+   }
 }
 
 void hadaq::TrbProcessor::UserPreLoop()
