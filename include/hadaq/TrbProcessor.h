@@ -46,30 +46,30 @@ namespace hadaq {
 
       protected:
 
-         HldProcessor *fHldProc;     ///< pointer on HLD processor
+         HldProcessor *fHldProc{nullptr};     ///< pointer on HLD processor
 
          SubProcMap fMap;            ///< map of sub-processors
 
-         unsigned fHadaqCTSId;       ///< identifier of CTS header in HADAQ event
+         unsigned fHadaqCTSId{0};       ///< identifier of CTS header in HADAQ event
          std::vector<unsigned> fHadaqHUBId;   ///< identifier of HUB header in HADQ event
 
-         unsigned fLastTriggerId;    ///< last seen trigger id
-         unsigned fLostTriggerCnt;   ///< lost trigger counts
-         unsigned fTakenTriggerCnt;  ///< registered trigger counts
+         unsigned fLastTriggerId{0};    ///< last seen trigger id
+         unsigned fLostTriggerCnt{0};   ///< lost trigger counts
+         unsigned fTakenTriggerCnt{0};  ///< registered trigger counts
 
-         base::H1handle fEvSize;     ///< HADAQ event size
-         unsigned fSubevHLen;        ///< maximal length of subevent in bytes
-         unsigned fSubevHDiv;        ///< integer division for subevent
-         base::H1handle fSubevSize;  ///< HADAQ subevent size
-         base::H1handle fLostRate;   ///< lost rate
-         base::H1handle fTrigType;   ///< trigger type
-         base::H1handle fErrBits;    ///< error bit statistics
+         base::H1handle fEvSize{nullptr};     ///< HADAQ event size
+         unsigned fSubevHLen{0};        ///< maximal length of subevent in bytes
+         unsigned fSubevHDiv{0};        ///< integer division for subevent
+         base::H1handle fSubevSize{nullptr};  ///< HADAQ subevent size
+         base::H1handle fLostRate{nullptr};   ///< lost rate
+         base::H1handle fTrigType{nullptr};   ///< trigger type
+         base::H1handle fErrBits{nullptr};    ///< error bit statistics
 
-         base::H1handle fMsgPerBrd;  //! messages per board
-         base::H1handle fErrPerBrd;  //! errors per board
-         base::H1handle fHitsPerBrd; //! data hits per board
-         base::H2handle fCalHitsPerBrd; //! calibration hits per board, used only in HADES
-         base::H2handle fToTPerBrd;  //! ToT values for each TDC channel
+         base::H1handle fMsgPerBrd{nullptr};  //! messages per board
+         base::H1handle fErrPerBrd{nullptr};  //! errors per board
+         base::H1handle fHitsPerBrd{nullptr}; //! data hits per board
+         base::H2handle fCalHitsPerBrd{nullptr}; //! calibration hits per board, used only in HADES
+         base::H2handle fToTPerBrd{nullptr};  //! ToT values for each TDC channel
 
 
          bool fPrintRawData;         ///< true when raw data should be printed
@@ -87,7 +87,7 @@ namespace hadaq {
          bool fAutoCreate;            ///< when true, automatically crates TDC processors
 
          TrbMessage  fMsg;            ///< used for TTree store
-         TrbMessage* pMsg;            ///< used for TTree store
+         TrbMessage* pMsg{nullptr};    ///< used for TTree store
 
 //         base::Profiler  fProfiler;   ///< profiler
 
@@ -139,7 +139,7 @@ namespace hadaq {
 
       public:
 
-         TrbProcessor(unsigned brdid = 0, HldProcessor* hld = 0, int hfill = -1);
+         TrbProcessor(unsigned brdid = 0, HldProcessor *hld = nullptr, int hfill = -1);
          virtual ~TrbProcessor();
 
          void SetHadaqCTSId(unsigned id) { fHadaqCTSId = id; }
@@ -310,6 +310,8 @@ namespace hadaq {
 
          /** Create TDC-specific histograms */
          void CreatePerTDCHistos();
+
+         bool HasPerTDCHistos() const { return (fHitsPerBrd != nullptr) && (fToTPerBrd != nullptr); }
 
          /** Create histograms filled in HADES DAQ, when module used for HADES TDC calibration */
          void ClearDAQHistos();

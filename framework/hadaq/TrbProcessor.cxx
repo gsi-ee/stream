@@ -153,7 +153,7 @@ void hadaq::TrbProcessor::CreatePerTDCHistos()
 
 void hadaq::TrbProcessor::UserPreLoop()
 {
-   if (fMap.size()>0)
+   if (fMap.size() > 0)
       CreatePerTDCHistos();
 
    // fProfiler.MakeStatistic();
