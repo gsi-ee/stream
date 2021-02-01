@@ -433,11 +433,8 @@ namespace hadaq {
 
          void SetCustomMhz(float freq = 400.);
 
-         void SetIndividualToTCalibr(int minstat = 100, double rms = 0.15)
-         {
-            fTotStatLimit = minstat;
-            fTotRMSLimit = rms;
-         }
+         void SetTotStatLimit(int minstat = 100) { fTotStatLimit = minstat; }
+         void SetTotRMSLimit(double rms = 0.15) { fTotRMSLimit = rms; }
 
          inline unsigned NumChannels() const { return fNumChannels; }
          inline bool DoRisingEdge() const { return true; }
