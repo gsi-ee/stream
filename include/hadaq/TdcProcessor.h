@@ -241,6 +241,8 @@ namespace hadaq {
          double                   fToThmin;        //! histogram min
          double                   fToThmax;        //! histogram max
          double                   fTotUpperLimit;  //! upper limit for ToT range check
+         int                      fTotStatLimit;   //! how much statistic required for ToT calibration
+         double                   fTotRMSLimit;    //! maximal RMS valus for complete calibration
 
          long   fCalibrAmount;        //! current accumulated calibr data
          double fCalibrProgress;      //! current progress in calibration
@@ -430,6 +432,12 @@ namespace hadaq {
          void Set400Mhz(bool on = true);
 
          void SetCustomMhz(float freq = 400.);
+
+         void SetIndividualToTCalibr(int minstat = 100, double rms = 0.15)
+         {
+            fTotStatLimit = minstat;
+            fTotRMSLimit = rms;
+         }
 
          inline unsigned NumChannels() const { return fNumChannels; }
          inline bool DoRisingEdge() const { return true; }

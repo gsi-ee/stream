@@ -190,6 +190,8 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fToThmin = ToThmin;
    fToThmax = ToThmax;
    fTotUpperLimit = 20;
+   fTotStatLimit = gTotStatLimit;
+   fTotRMSLimit = gTotRMSLimit;
 
    fLinearNumPoints = gDefaultLinearNumPoints;
 
@@ -2309,8 +2311,8 @@ bool hadaq::TdcProcessor::CalibrateTot(unsigned nch, std::vector<uint32_t> &hist
    std::string name_prefix = std::string(GetName()) + "_ch" + std::to_string(nch) + "_ToT";
    std::string err_log;
 
-   for (int n=left;n<right;n++) sum0 += hist[n];
-   if (sum0 < gTotStatLimit) {
+   for (int n = left; n < right; n++) sum0 += hist[n];
+   if (sum0 < fTotStatLimit) {
       printf("%s Ch:%u TOT failed - not enough statistic %5.0f\n", GetName(), nch, sum0);
 
       err_log = "_lowstat";
@@ -2359,7 +2361,7 @@ bool hadaq::TdcProcessor::CalibrateTot(unsigned nch, std::vector<uint32_t> &hist
    rms = sqrt(rms);
    tot_dev = rms;
 
-   if (rms > gTotRMSLimit) {
+   if (rms > fTotRMSLimit) {
       printf("%s Ch:%u TOT failed - RMS %5.3f too high\n", GetName(), nch, rms);
 
       err_log = "_highrms";
