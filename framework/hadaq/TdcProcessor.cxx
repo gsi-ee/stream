@@ -2315,12 +2315,11 @@ bool hadaq::TdcProcessor::CalibrateTot(unsigned nch, std::vector<uint32_t> &hist
    if (sum0 < fTotStatLimit) {
       printf("%s Ch:%u TOT failed - not enough statistic %5.0f\n", GetName(), nch, sum0);
 
-      err_log = "_lowstat";
       if (fCalibrQuality > 0.4) {
-         fCalibrStatus = name_prefix + err_log;
+         fCalibrStatus = name_prefix + "_lowstat";
          fCalibrQuality = 0.4;
       }
-      fCalibrLog.push_back(name_prefix + err_log);
+      fCalibrLog.push_back(name_prefix + "_lowstat_cnt" + std::to_string((int) sum0));
 
       return false; // no statistic for small number of counts
    }
@@ -2350,12 +2349,11 @@ bool hadaq::TdcProcessor::CalibrateTot(unsigned nch, std::vector<uint32_t> &hist
    if (rms < 0) {
       printf("%s Ch:%u TOT failed - error in RMS calculation  mean: %5.3f rms2: %5.3f \n", GetName(), nch, mean, rms);
 
-      err_log = "_wrongrms";
       if (fCalibrQuality > 0.4) {
-         fCalibrStatus = name_prefix + err_log;
+         fCalibrStatus = name_prefix + "_negativerms";
          fCalibrQuality = 0.4;
       }
-      fCalibrLog.push_back(name_prefix + err_log);
+      fCalibrLog.push_back(name_prefix + "_negativerms");
       return false;
    }
    rms = sqrt(rms);
@@ -2364,12 +2362,15 @@ bool hadaq::TdcProcessor::CalibrateTot(unsigned nch, std::vector<uint32_t> &hist
    if (rms > fTotRMSLimit) {
       printf("%s Ch:%u TOT failed - RMS %5.3f too high\n", GetName(), nch, rms);
 
-      err_log = "_highrms";
       if (fCalibrQuality > 0.4) {
-         fCalibrStatus = name_prefix + err_log;
+         fCalibrStatus = name_prefix + "_highrms";
          fCalibrQuality = 0.4;
       }
-      fCalibrLog.push_back(name_prefix + err_log);
+
+      char sbuf[100];
+      sprintf(sbuf,"%5.3fns", rms);
+
+      fCalibrLog.push_back(name_prefix + "_highrms_" + sbuf);
       return false;
    }
 
@@ -2410,8 +2411,12 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
    if (dummy) return;
 
    fCalibrLog.clear();
-   if (!log_msg.empty())
+   if (!log_msg.empty()) {
+      log_msg.append("_");
+      log_msg.append(std::to_string((int) (fCalibrProgress * 100.)));
+      log_msg.append("pcnt");
       fCalibrLog.push_back(log_msg);
+   }
 
    if (!preliminary)
       printf("%s produce %s calibrations \n", GetName(), (use_linear ? "linear" : "normal"));
