@@ -1547,8 +1547,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
          ChannelRec& rec = fCh[chid];
 
-         double corr(0.);
-         bool raw_hit(true);
+         double corr = 0.;
+         bool raw_hit = false;
 
          if (msg.getKind() == tdckind_Hit2) {
             if (isrising) {
@@ -1557,8 +1557,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                corr = (fine & 0x1FF) * 10e-12;
                if (fine & 0x200) corr += 0x800 * 5e-9; // complete epoch should be subtracted
             }
-            raw_hit = false;
          } else {
+
             if (fine >= fNumFineBins) {
                FastFillH1(fErrors, chid);
                if (fChErrPerHld) DefFillH2(*fChErrPerHld, fHldId, chid, 1);
@@ -1566,6 +1566,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                iserr = true;
                continue;
             }
+
+            raw_hit = msg.isHit0Msg();
 
             if (ncalibr < 2) {
                // use correction from special message
