@@ -439,7 +439,12 @@ namespace hadaq {
          double GetCalibrProgress() const { return fCalibrProgress; }
          std::string GetCalibrStatus() const { return fCalibrStatus; }
          double GetCalibrQuality() const { return fCalibrQuality; }
-         void AppendCalibrLog(std::vector<std::string> &vect) { vect.insert(vect.end(), fCalibrLog.begin(), fCalibrLog.end()); }
+         std::vector<std::string> TakeCalibrLog()
+         {
+            std::vector<std::string> res;
+            std::swap(res, fCalibrLog);
+            return res;
+         }
 
          int GetNumHist() const { return 8; }
 
