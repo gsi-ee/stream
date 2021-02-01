@@ -2391,15 +2391,16 @@ void hadaq::TdcProcessor::CopyCalibration(const std::vector<float> &calibr, base
 
 void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, bool dummy, bool preliminary)
 {
+   std::string log_msg;
    if (!preliminary) {
       if (fCalibrProgress >= 1) {
          fCalibrStatus = "Ready";
          fCalibrQuality = 1.;
       } else if (fCalibrProgress >= 0.3) {
-         fCalibrStatus = std::string(GetName()) + "_LowStat";
+         fCalibrStatus = log_msg = std::string(GetName()) + "_LowStat";
          fCalibrQuality = 0.5;
       } else {
-         fCalibrStatus = std::string(GetName()) + "_BadStat";
+         fCalibrStatus = log_msg = std::string(GetName()) + "_BadStat";
          fCalibrQuality = 0.2;
       }
    }
@@ -2407,6 +2408,8 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
    if (dummy) return;
 
    fCalibrLog.clear();
+   if (!log_msg.empty())
+      fCalibrLog.push_back(log_msg);
 
    if (!preliminary)
       printf("%s produce %s calibrations \n", GetName(), (use_linear ? "linear" : "normal"));
