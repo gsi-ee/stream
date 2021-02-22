@@ -859,9 +859,14 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
             calibr.assign(msg.getData()); // copy message into
             calibr_indx = tgtindx;
             calibr_num = 0;
+         } else if (kind == hadaq::tdckind_Header) {
+            DefFastFillH1(fMsgsKind, kind >> 29, 1);
+            if (use_in_calibr && fToTdflt && DoFallingEdge())
+               ConfigureToTByHwType(msg.getHeaderHwType());
          } else {
             DefFastFillH1(fMsgsKind, kind >> 29, 1);
          }
+
          if (tgtraw) tgtraw[tgtindx++] = idata; // tgt->SetData(tgtindx++, msg.getData());
          continue;
       }
@@ -964,10 +969,6 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
       }
 
       if (hard_failure) continue;
-
-      if (use_in_calibr && (cnt == 1) && (kind == hadaq::tdckind_Header) && DoFallingEdge() && fToTdflt) {
-         ConfigureToTByHwType(msg.getHeaderHwType());
-      }
 
       if (use_in_calibr && (kind == hadaq::tdckind_Hit)) {
          coarse = msg.getHitTmCoarse();
