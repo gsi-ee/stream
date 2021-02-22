@@ -329,6 +329,7 @@ namespace hadaq {
          static int gTotStatLimit;         //! how much statistic required for ToT calibration
          static double gTotRMSLimit;       //! allowed RMS value
          static int gDefaultLinearNumPoints;      //! number of points when linear calibration is used
+         static bool gIgnoreCalibrMsgs;    //! ignore calibration messages
 
          /** Method will be called by TRB processor if SYNC message was found
           * One should change 4 first bytes in the last buffer in the queue */
@@ -410,6 +411,8 @@ namespace hadaq {
          static void SetErrorMask(unsigned mask = 0xffffffffU);
 
          static void SetAllHistos(bool on = true);
+
+         static void SetIgnoreCalibrMsgs(bool on = true);
 
          static void SetHadesMonitorInterval(int tm = -1);
          static int GetHadesMonitorInterval();

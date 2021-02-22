@@ -25,6 +25,7 @@ unsigned hadaq::TdcProcessor::gHist2dReduce = 10;  //! reduce factor for points 
 
 unsigned hadaq::TdcProcessor::gErrorMask = 0xffffffffU;
 bool hadaq::TdcProcessor::gAllHistos = false;
+bool hadaq::TdcProcessor::gIgnoreCalibrMsgs = false;
 double hadaq::TdcProcessor::gTrigDWindowLow = 0;
 double hadaq::TdcProcessor::gTrigDWindowHigh = 0;
 bool hadaq::TdcProcessor::gUseDTrigForRef = false;
@@ -55,6 +56,12 @@ void hadaq::TdcProcessor::SetAllHistos(bool on)
 {
    gAllHistos = on;
 }
+
+void hadaq::TdcProcessor::SetIgnoreCalibrMsgs(bool on)
+{
+   gIgnoreCalibrMsgs = on;
+}
+
 
 void hadaq::TdcProcessor::SetTriggerDWindow(double low, double high)
 {
@@ -1490,7 +1497,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       }
 
       if (msg.isCalibrMsg()) {
-         if (use_for_calibr == 0) {
+         if ((use_for_calibr == 0) && !gIgnoreCalibrMsgs) {
             // take into account calibration messages only when data not used for calibration
             ncalibr = 0;
             calibr = msg;
