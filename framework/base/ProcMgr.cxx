@@ -21,7 +21,7 @@ base::ProcMgr::ProcMgr() :
    fDfltStoreKind(0),
    fTrigEvent(0)
 {
-   if (fInstance==0) fInstance = this;
+   if (!fInstance) fInstance = this;
 }
 
 base::ProcMgr::~ProcMgr()
@@ -42,6 +42,12 @@ void base::ProcMgr::ClearInstancePointer(ProcMgr *mgr)
    if (!mgr || (fInstance == mgr))
       fInstance = nullptr;
 }
+
+void base::ProcMgr::PrintLog(const char *msg)
+{
+   printf(msg);
+}
+
 
 base::StreamProc* base::ProcMgr::FindProc(const char* name) const
 {

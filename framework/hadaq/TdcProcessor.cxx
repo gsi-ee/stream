@@ -372,8 +372,11 @@ void hadaq::TdcProcessor::ConfigureToTByHwType(unsigned hwtype)
       default: fToTdflt = false; recognized = false; // keep as is but mark as not default value
    }
 
-   if (recognized)
-      printf("%s assign ToT config len:%5.3f hmin:%5.3f hmax:%5.3f\n", GetName(), fToTvalue, fToThmin, fToThmax);
+   if (recognized) {
+      char msg[1000];
+      snprintf(msg, sizeof(msg), "%s assign ToT config len:%4.1f hmin:%4.1f hmax:%4.1f\n", GetName(), fToTvalue, fToThmin, fToThmax);
+      mgr()->PrintLog(msg);
+   }
 }
 
 void hadaq::TdcProcessor::UserPostLoop()

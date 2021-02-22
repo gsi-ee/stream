@@ -76,7 +76,7 @@ namespace base {
          bool RegisterProc(StreamProc* proc, unsigned kind, unsigned brdid);
 
          unsigned NumProc() const { return fProc.size(); }
-         StreamProc* GetProc(unsigned n) const { return n<NumProc() ? fProc[n] : 0; }
+         StreamProc* GetProc(unsigned n) const { return n<NumProc() ? fProc[n] : nullptr; }
          StreamProc* FindProc(const char* name) const;
 
          /** Set histogram fill level for all processors */
@@ -91,6 +91,7 @@ namespace base {
          virtual void AddRunLog(const char *msg) {}
          virtual void AddErrLog(const char *msg) {}
          virtual bool DoLog() { return false; }
+         virtual void PrintLog(const char *msg);
 
          virtual void SetSortedOrder(bool = true) {}
          virtual bool IsSortedOrder() { return false; }
@@ -180,9 +181,9 @@ namespace base {
          /** Process event - consequently calls all event processors */
          virtual bool ProcessEvent(base::Event* evt);
 
-         void UserPreLoop(Processor* only_proc = 0, bool call_when_running = false);
+         void UserPreLoop(Processor* only_proc = nullptr, bool call_when_running = false);
 
-         void UserPostLoop(Processor* only_proc = 0);
+         void UserPostLoop(Processor* only_proc = nullptr);
    };
 }
 
