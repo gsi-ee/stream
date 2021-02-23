@@ -2413,9 +2413,12 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
       } else if (fCalibrProgress >= 0.3) {
          fCalibrStatus = log_msg = std::string(GetName()) + "_LowStat";
          fCalibrQuality = 0.5;
-      } else {
+      } else if (fCalibrProgress > 0) {
          fCalibrStatus = log_msg = std::string(GetName()) + "_BadStat";
          fCalibrQuality = 0.2;
+      } else {
+         fCalibrStatus = log_msg = std::string(GetName()) + "_NoData";
+         fCalibrQuality = 0.51; // mark such situation as warning, LowStat is worse
       }
    }
 
@@ -2423,9 +2426,11 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
 
    fCalibrLog.clear();
    if (!log_msg.empty()) {
-      log_msg.append("_");
-      log_msg.append(std::to_string((int) (fCalibrProgress * 100.)));
-      log_msg.append("pcnt");
+      if (fCalibrProgress > 0) {
+         log_msg.append("_");
+         log_msg.append(std::to_string((int) (fCalibrProgress * 100.)));
+         log_msg.append("pcnt");
+      }
       fCalibrLog.push_back(log_msg);
    }
 
