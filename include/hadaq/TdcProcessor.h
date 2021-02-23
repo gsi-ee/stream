@@ -447,6 +447,14 @@ namespace hadaq {
          double GetCalibrProgress() const { return fCalibrProgress; }
          std::string GetCalibrStatus() const { return fCalibrStatus; }
          double GetCalibrQuality() const { return fCalibrQuality; }
+         void AcknowledgeCalibrQuality(double lvl = 1.)
+         {
+            if (fCalibrQuality < lvl) {
+               fCalibrQuality = lvl;
+               fCalibrProgress = 1.;
+               fCalibrStatus = "Ready";
+            }
+         }
          std::vector<std::string> TakeCalibrLog()
          {
             std::vector<std::string> res;
