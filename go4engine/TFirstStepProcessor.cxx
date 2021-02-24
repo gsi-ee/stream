@@ -17,6 +17,7 @@
 #include "TGo4MbsSubEvent.h"
 #include "TGo4Parameter.h"
 #include "TGo4Picture.h"
+#include "TGo4Status.h"
 #include "TGo4Analysis.h"
 
 #include "TStreamEvent.h"
@@ -193,7 +194,7 @@ base::H1handle TFirstStepProcessor::MakeH1(const char* name, const char* title, 
    TString xbins;
 
    char kind = 'I';
-   Bool_t useexisting = kFALSE;
+   Bool_t useexisting = kFALSE, clear_protect = kFALSE;
 
    TObjArray* arr = (xtitle!=0) && strlen(xtitle)!=0 ? TString(xtitle).Tokenize(";") : 0;
 
@@ -202,6 +203,7 @@ base::H1handle TFirstStepProcessor::MakeH1(const char* name, const char* title, 
       if (part.Index("xbin:")==0) { xbins = part; xbins.Remove(0, 5); } else
       if (part.Index("kind:")==0) { kind = part[5]; } else
       if (part.Index("reuse")==0) { useexisting = kTRUE; } else
+      if (part.Index("clear_protect")==0) { clear_protect = kTRUE; } else
       if (newxtitle.Length()>0) newytitle = part;
                            else newxtitle = part;
    }
@@ -217,6 +219,8 @@ base::H1handle TFirstStepProcessor::MakeH1(const char* name, const char* title, 
          histo1->GetXaxis()->SetBinLabel(1 + n, arr->At(n)->GetName());
       delete arr;
    }
+
+   if (clear_protect) histo1->SetBit(TGo4Status::kGo4NoReset);
 
    return (base::H1handle) histo1;
 }
@@ -300,7 +304,7 @@ base::H2handle TFirstStepProcessor::MakeH2(const char* name, const char* title, 
    TObjArray* arr = (options && *options) ? TString(options).Tokenize(";") : 0;
 
    char kind = 'I';
-   Bool_t useexisting = kFALSE;
+   Bool_t useexisting = kFALSE, clear_protect = kFALSE;
 
    for (int n = 0; n <= (arr ? arr->GetLast() : -1); n++) {
       TString part = arr->At(n)->GetName();
@@ -308,6 +312,7 @@ base::H2handle TFirstStepProcessor::MakeH2(const char* name, const char* title, 
       if (part.Index("ybin:")==0) { ybins = part; ybins.Remove(0, 5); } else
       if (part.Index("kind:")==0) { kind = part[5]; } else
       if (part.Index("reuse")==0) { useexisting = kTRUE; } else
+      if (part.Index("clear_protect")==0) { clear_protect = kTRUE; } else
       if (xtitle.Length()==0) xtitle = part;
                          else ytitle = part;
    }
@@ -317,19 +322,21 @@ base::H2handle TFirstStepProcessor::MakeH2(const char* name, const char* title, 
 
    TH2* histo2 = MakeTH2(kind, name, title, nbins1, left1, right1, nbins2, left2, right2, xtitle.Data(), ytitle.Data());
 
-   if (xbins.Length()>0) {
+   if (xbins.Length() > 0) {
       arr = xbins.Tokenize(",");
       for (int n=0; n<=(arr ? arr->GetLast():-1); n++)
          histo2->GetXaxis()->SetBinLabel(1 + n, arr->At(n)->GetName());
       delete arr;
    }
 
-   if (ybins.Length()>0) {
+   if (ybins.Length() > 0) {
       arr = ybins.Tokenize(",");
       for (int n=0; n<=(arr ? arr->GetLast():-1); n++)
          histo2->GetYaxis()->SetBinLabel(1 + n, arr->At(n)->GetName());
       delete arr;
    }
+
+   if (clear_protect) histo2->SetBit(TGo4Status::kGo4NoReset);
 
    return (base::H2handle) histo2;
 }
