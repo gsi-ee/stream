@@ -134,6 +134,7 @@ void hadaq::TrbProcessor::CreatePerTDCHistos()
    }
 
    std::string lbl2 = lbl + ";channels";
+   std::string lbltot = std::string("clear_protect;") + lbl2;
 
    if (!fMsgPerBrd)
       fMsgPerBrd = MakeH1("MsgPerTDC", "Number of messages per TDC", numtdc, 0, numtdc, lbl.c_str());
@@ -144,7 +145,7 @@ void hadaq::TrbProcessor::CreatePerTDCHistos()
    if (!fCalHitsPerBrd)
       fCalHitsPerBrd = MakeH2("CalHitsPerTDC", "Number of calibration data hits per TDC", numtdc, 0, numtdc, maxnumch, 0, maxnumch, lbl2.c_str());
    if (!fToTPerBrd)
-      fToTPerBrd = MakeH2("ToTPerTDC", "Calibrated delay value of falling edge", numtdc, 0, numtdc, maxnumch-1, 0, maxnumch-1, lbl2.c_str());
+      fToTPerBrd = MakeH2("ToTPerTDC", "Calibrated delay value of falling edge", numtdc, 0, numtdc, maxnumch-1, 0, maxnumch-1, lbltot.c_str());
 
    cnt = 0;
    for (auto &tdc : tdcs) {
