@@ -1119,6 +1119,6 @@ void hadaq::TrbProcessor::ClearDAQHistos()
    ClearH1(fErrPerBrd);
    ClearH1(fHitsPerBrd);
    ClearH2(fCalHitsPerBrd);
-   ClearH2(fToTPerBrd);
+   // ClearH2(fToTPerBrd); // do not clear ToT histogram
 }
 
