@@ -401,4 +401,13 @@ void Correlate(const char* fname = "scratch/CBTaggTAPS_9227.dat", const bool deb
    f->Close();
 
    cout << "Wrote " << matches << " to output." << endl;
+
+   delete t;
+   delete f;
+
+   delete t1;
+   delete f1;
+
+   delete t2;
+   delete f2;
 }
