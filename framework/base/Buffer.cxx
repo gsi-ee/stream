@@ -2,6 +2,7 @@
 
 #include <cstdlib>
 #include <cstring>
+#include <cstdio>
 
 void base::Buffer::reset()
 {
@@ -32,6 +33,10 @@ void base::Buffer::makenew(unsigned datalen)
    if (datalen==0) return;
 
    fRec = (RawDataRec*) malloc(sizeof(RawDataRec) + datalen);
+   if (!fRec) {
+      printf("Buffer allocation error makenew sz %ld\n", (long) (sizeof(RawDataRec) + datalen));
+      return;
+   }
 
    fRec->reset();
 
@@ -51,6 +56,12 @@ void base::Buffer::makecopyof(void* buf, unsigned datalen)
 
    fRec = (RawDataRec*) malloc(sizeof(RawDataRec) + datalen);
 
+   fRec = (RawDataRec*) malloc(sizeof(RawDataRec));
+   if (!fRec) {
+      printf("Buffer allocation error makecopyof sz %ld\n", (long) (sizeof(RawDataRec) + datalen));
+      return;
+   }
+
    fRec->reset();
 
    fRec->refcnt = 1;
@@ -68,6 +79,10 @@ void base::Buffer::makereferenceof(void* buf, unsigned datalen)
    if ((buf==0) || (datalen==0)) return;
 
    fRec = (RawDataRec*) malloc(sizeof(RawDataRec));
+   if (!fRec) {
+      printf("Buffer allocation error makereference of sz %ld\n", (long) sizeof(RawDataRec));
+      return;
+   }
 
    fRec->reset();
 
