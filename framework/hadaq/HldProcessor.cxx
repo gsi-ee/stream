@@ -393,7 +393,7 @@ void hadaq::HldProcessor::CreatePerTDCHisto()
          tdcs.emplace_back(item.second->GetTDCWithIndex(indx));
    }
 
-   if (tdcs.size() == 0) return;
+   if (tdcs.empty()) return;
 
    std::string lbl = "xbin:";
    unsigned cnt = 0;

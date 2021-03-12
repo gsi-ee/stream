@@ -412,9 +412,8 @@ namespace hadaqs {
             switch (Alignment()) {
                case 4:  return datasize / sizeof(uint32_t);
                case 2:  return datasize / sizeof(uint16_t);
-               default: return datasize / sizeof(uint8_t);
             }
-            return datasize;
+            return datasize / sizeof(uint8_t);
          }
 
          /** swap-save access to any data. stolen from hadtu.h */
