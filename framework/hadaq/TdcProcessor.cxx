@@ -485,11 +485,11 @@ bool hadaq::TdcProcessor::SetDoubleRefChannel(unsigned ch1, unsigned ch2,
 
       if ((fCh[ch].fRisingRefRef == 0) && (npy == 0)) {
          if (reftdc == GetID()) {
-            sprintf(sbuf, "double reference with Ch%u", refch);
-            sprintf(saxis, "(ch%u-ch%u) - (refch%u) ns", ch, fCh[ch].refch, refch);
+            snprintf(sbuf, sizeof(sbuf), "double reference with Ch%u", refch);
+            snprintf(saxis, sizeof(saxis), "(ch%u-ch%u) - (refch%u) ns", ch, fCh[ch].refch, refch);
          } else {
-            sprintf(sbuf, "double reference with TDC 0x%04x Ch%u", reftdc, refch);
-            sprintf(saxis, "(ch%u-ch%u)  - (tdc 0x%04x refch%u) ns", ch, fCh[ch].refch, reftdc, refch);
+            snprintf(sbuf, sizeof(sbuf), "double reference with TDC 0x%04x Ch%u", reftdc, refch);
+            snprintf(saxis, sizeof(saxis), "(ch%u-ch%u)  - (tdc 0x%04x refch%u) ns", ch, fCh[ch].refch, reftdc, refch);
          }
 
          SetSubPrefix2("Ch", ch);
@@ -500,11 +500,11 @@ bool hadaq::TdcProcessor::SetDoubleRefChannel(unsigned ch1, unsigned ch2,
 
       if ((fCh[ch].fRisingDoubleRef == 0) && (npy>0)) {
          if (reftdc == GetID()) {
-            sprintf(sbuf, "double correlation to Ch%u", refch);
-            sprintf(saxis, "ch%u-ch%u ns;ch%u-ch%u ns", ch, fCh[ch].refch, refch, fCh[refch].refch);
+            snprintf(sbuf, sizeof(sbuf), "double correlation to Ch%u", refch);
+            snprintf(saxis, sizeof(saxis), "ch%u-ch%u ns;ch%u-ch%u ns", ch, fCh[ch].refch, refch, fCh[refch].refch);
          } else {
-            sprintf(sbuf, "double correlation to TDC 0x%04x Ch%u", reftdc, refch);
-            sprintf(saxis, "ch%u-ch%u ns;tdc 0x%04x refch%u ns", ch, fCh[ch].refch, reftdc, refch);
+            snprintf(sbuf, sizeof(sbuf), "double correlation to TDC 0x%04x Ch%u", reftdc, refch);
+            snprintf(saxis, sizeof(saxis), "ch%u-ch%u ns;tdc 0x%04x refch%u ns", ch, fCh[ch].refch, reftdc, refch);
          }
 
          SetSubPrefix2("Ch", ch);
@@ -2379,7 +2379,7 @@ bool hadaq::TdcProcessor::CalibrateTot(unsigned nch, std::vector<uint32_t> &hist
       }
 
       char sbuf[100];
-      sprintf(sbuf,"%5.3fns", rms);
+      snprintf(sbuf, sizeof(sbuf), "%5.3fns", rms);
 
       fCalibrLog.push_back(name_prefix + "_highrms_" + sbuf);
       return false;
