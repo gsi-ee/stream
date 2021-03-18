@@ -187,6 +187,8 @@ namespace hadaq {
 
          static double CoarseUnit() { return 5e-9; }
 
+         static double CoarseUnit280() { return 1/2.8e8; }
+
          static double SimpleFineCalibr(unsigned fine)
          {
             if (fine<=gFineMinValue) return 0.;

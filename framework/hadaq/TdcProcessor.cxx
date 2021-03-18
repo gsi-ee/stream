@@ -239,7 +239,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
       fCh.emplace_back();
 
    for (unsigned ch=0;ch<numchannels;ch++)
-      fCh[ch].CreateCalibr(fNumFineBins);
+      fCh[ch].CreateCalibr(fNumFineBins, fVersion4 ? hadaq::TdcMessage::CoarseUnit280() : hadaq::TdcMessage::CoarseUnit());
 
    // always create histograms for channel 0
    CreateChannelHistograms(0);
@@ -266,7 +266,7 @@ void hadaq::TdcProcessor::Set400Mhz(bool on)
    fCustomMhz = on ? 400. : 200.;
 
    for (unsigned ch=0;ch<fNumChannels;ch++)
-      fCh[ch].FillCalibr(fNumFineBins, 200. / fCustomMhz);
+      fCh[ch].FillCalibr(fNumFineBins, 200. / fCustomMhz * hadaq::TdcMessage::CoarseUnit());
 }
 
 void hadaq::TdcProcessor::SetCustomMhz(float freq)
@@ -275,7 +275,7 @@ void hadaq::TdcProcessor::SetCustomMhz(float freq)
    fCustomMhz = freq;
 
    for (unsigned ch=0;ch<fNumChannels;ch++)
-      fCh[ch].FillCalibr(fNumFineBins, 200. / fCustomMhz);
+      fCh[ch].FillCalibr(fNumFineBins, 200. / fCustomMhz * hadaq::TdcMessage::CoarseUnit());
 }
 
 
@@ -2137,7 +2137,7 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
 
          // localtm = iter.getMsgTimeCoarse();
 
-         localtm = (((uint64_t) iter.getCurEpoch()) << 11 | coarse) / 2.8e8; // 280 MHz
+         localtm = (((uint64_t) iter.getCurEpoch()) << 11 | coarse) * hadaq::TdcMessage::CoarseUnit280(); // 280 MHz
 
          if (chid >= NumChannels()) {
             ADDERROR(errChId, "Channel number %u bigger than configured %u", chid, NumChannels());
@@ -2737,7 +2737,7 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, bool rising, const st
 
    double coarse_unit = hadaq::TdcMessage::CoarseUnit();
    if (f400Mhz) coarse_unit *= 200. / fCustomMhz;
-   if (fVersion4) coarse_unit = 1/2.8e8;
+   if (fVersion4) coarse_unit = hadaq::TdcMessage::CoarseUnit280();
 
    if (sum <= limits) {
 

@@ -142,31 +142,38 @@ namespace hadaq {
             {
             }
 
-            void CreateCalibr(unsigned numfine)
+            void CreateCalibr(unsigned numfine, double coarse_unit = -1.)
             {
                rising_stat.resize(numfine);
                falling_stat.resize(numfine);
-               FillCalibr(numfine, 1.0);
+
+               FillCalibr(numfine, coarse_unit);
             }
 
-            void FillCalibr(unsigned numfine, double factor = 1.)
+            void FillCalibr(unsigned numfine, double coarse_unit = -1.)
             {
                for (unsigned n=0;n<numfine;n++)
                   falling_stat[n] = rising_stat[n] = 0;
 
-               SetLinearCalibr(hadaq::TdcMessage::GetFineMinValue(), hadaq::TdcMessage::GetFineMaxValue(), factor);
+               SetLinearCalibr(hadaq::TdcMessage::GetFineMinValue(), hadaq::TdcMessage::GetFineMaxValue(), coarse_unit);
             }
 
-            void SetLinearCalibr(unsigned finemin, unsigned finemax, double factor = 1.)
+            void SetLinearCalibr(unsigned finemin, unsigned finemax, double coarse_unit = -1)
             {
                rising_calibr.resize(5,0);
                falling_calibr.resize(5,0);
+
+               // to support old API where factor for default coarse unit was possible to specify
+               if (coarse_unit < 0)
+                  coarse_unit = hadaq::TdcMessage::CoarseUnit();
+               else if (coarse_unit > 0.01)
+                  coarse_unit = coarse_unit * hadaq::TdcMessage::CoarseUnit();
 
                rising_calibr[0] = 2; // 2 values
                rising_calibr[1] = finemin;
                rising_calibr[2] = 0.;
                rising_calibr[3] = finemax;
-               rising_calibr[4] = factor * hadaq::TdcMessage::CoarseUnit();
+               rising_calibr[4] = coarse_unit;
 
                for (int n=0;n<5;++n)
                   falling_calibr[n] = rising_calibr[n];
