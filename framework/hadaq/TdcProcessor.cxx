@@ -211,7 +211,10 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
       fUndHits = MakeH1("UndetectedHits", "Undetected hits in TDC channels", numchannels, 0, numchannels, "ch");
       fCorrHits = MakeH1("CorrectedHits", "Corrected hits in TDC channels", numchannels, 0, numchannels, "ch");
 
-      fMsgsKind = MakeH1("MsgKind", "kind of messages", 8, 0, 8, "xbin:Trailer,Header,Debug,Epoch,Hit,-,-,Calibr;kind");
+      if (!fVersion4)
+         fMsgsKind = MakeH1("MsgKind", "kind of messages", 8, 0, 8, "xbin:Trailer,Header,Debug,Epoch,Hit,-,-,Calibr;kind");
+      else
+         fMsgsKind = MakeH1("MsgKind", "kind of messages", 8, 0, 8, "xbin:HDR,EPOC,TMDR,TMDT,-,-,-,-;kind");
 
       fAllFine = MakeH2("FineTm", "fine counter value", numchannels, 0, numchannels, (fNumFineBins==1000 ? 100 : fNumFineBins), 0, fNumFineBins, "ch;fine");
       fhRaisingFineCalibr = MakeH2("RaisingFineTmCalibr", "raising calibrated fine counter value", numchannels, 0, numchannels, (fNumFineBins==1000 ? 100 : fNumFineBins), 0, fNumFineBins, "ch;calibrated fine");
@@ -324,7 +327,7 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
       CopyCalibration(fCh[ch].rising_calibr, fCh[ch].fRisingCalibr, ch, fRisingCalibr);
    }
 
-   if (DoFallingEdge() && (fCh[ch].fFallingFine==0) && (ch>0)) {
+   if (DoFallingEdge() && (fCh[ch].fFallingFine==0) && ((ch>0) || fVersion4)) {
       fCh[ch].fFallingFine = MakeH1("FallingFine", "Falling fine counter", fNumFineBins, 0, fNumFineBins, "fine");
       fCh[ch].fFallingCalibr = MakeH1("FallingCalibr", "Falling calibration function", fNumFineBins, 0, fNumFineBins, "fine;kind:F");
       fCh[ch].fFallingMult = MakeH1("FallingMult", "Falling event multiplicity", 128, 0, 128, "nhits");
@@ -2062,9 +2065,6 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
 
       cnt++;
 
-      if (first_scan)
-         FastFillH1(fMsgsKind, msg.getKind() >> 29);
-
       if (cnt==1) {
          if (!msg.isHDR()) {
             iserr = true;
@@ -2083,6 +2083,9 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
       }
 
       if (msg.isEPOC()) {
+
+         if (first_scan && fMsgsKind)
+            FastFillH1(fMsgsKind, 1);
 
          uint32_t ep = iter.getCurEpoch();
 
@@ -2114,11 +2117,17 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
          bool isrising;
 
          if (msg.isTMDR()) {
+            if (first_scan && fMsgsKind)
+               FastFillH1(fMsgsKind, 2);
+
             chid = 0;
             isrising = msg.getTMDRMode() != 1;
             coarse = msg.getTMDRCoarse();
             fine = msg.getTMDRFine();
          } else {
+            if (first_scan && fMsgsKind)
+               FastFillH1(fMsgsKind, 3);
+
             chid = msg.getTMDTChannel() + 1;
             isrising = msg.getTMDTMode() != 1;
             coarse = msg.getTMDTCoarse();
@@ -2728,6 +2737,7 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, bool rising, const st
 
    double coarse_unit = hadaq::TdcMessage::CoarseUnit();
    if (f400Mhz) coarse_unit *= 200. / fCustomMhz;
+   if (fVersion4) coarse_unit = 1/2.8e8;
 
    if (sum <= limits) {
 
