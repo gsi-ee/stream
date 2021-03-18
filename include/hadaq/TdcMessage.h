@@ -168,6 +168,16 @@ namespace hadaq {
          /** Return Epoch for EPOC marker, 28 bit */
          inline uint32_t getEPOC() const { return fData & 0xFFFFFFF; }
 
+         // methods for TMDT - hist message
+         inline uint32_t getTMDTMode() const { return (fData >> 27) & 0xF; }
+         inline uint32_t getTMDTChannel() const { return (fData >> 21) & 0x3F; }
+         inline uint32_t getTMDTCoarse() const { return (fData >> 9) & 0xFFF; }
+         inline uint32_t getTMDTFine() const { return fData & 0x1FF; }
+
+         // methods for TMDR - ref channel message
+         inline uint32_t getTMDRMode() const { return (fData >> 21) & 0xF; }
+         inline uint32_t getTMDRCoarse() const { return (fData >> 9) & 0xFFF; }
+         inline uint32_t getTMDRFine() const { return fData & 0x1FF; }
 
 
 

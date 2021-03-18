@@ -2048,7 +2048,7 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
 
    hadaq::TdcMessage& msg = iter.msg();
    hadaq::TdcMessage calibr;
-   unsigned ncalibr(20), temp(0), lowid(0), highid(0); // clear indicate that no calibration data present
+   unsigned ncalibr(20), lowid(0), highid(0); // clear indicate that no calibration data present
 
    if (fSkipTdcMessages > 0) {
       unsigned skipcnt = fSkipTdcMessages;
@@ -2110,32 +2110,25 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
 
       if (msg.isTMDR() || msg.isTMDT()) {
 
-         unsigned chid = 0, fine = 0, coarse = 0, bad_fine = 0x3FF;
+         unsigned chid = 0, fine = 0, coarse = 0;
          bool isrising;
 
          if (msg.isTMDR()) {
             chid = 0;
-
+            isrising = msg.getTMDRMode() != 1;
+            coarse = msg.getTMDRCoarse();
+            fine = msg.getTMDRFine();
          } else {
+            chid = msg.getTMDTChannel() + 1;
+            isrising = msg.getTMDTMode() != 1;
+            coarse = msg.getTMDTCoarse();
+            fine = msg.getTMDTFine();
 
          }
 
-         //unsigned chid = msg.getHitChannel();
-         //unsigned fine = msg.getHitTmFine();
-         //unsigned coarse = msg.getHitTmCoarse();
-         //bool isrising = msg.isHitRisingEdge();
-         //unsigned bad_fine = 0x3FF;
+         // localtm = iter.getMsgTimeCoarse();
 
-         if (f400Mhz) {
-            unsigned coarse25 = (coarse << 1) | ((fine & 0x200) ? 1 : 0);
-            fine = fine & 0x1FF;
-            bad_fine = 0x1ff;
-            unsigned epoch = iter.isCurEpoch() ? iter.getCurEpoch() : 0;
-
-            localtm = ((epoch << 12) | coarse25) * 1000. / fCustomMhz * 1e-9;
-         } else {
-            localtm = iter.getMsgTimeCoarse();
-         }
+         localtm = (((uint64_t) iter.getCurEpoch()) << 11 | coarse) / 2.8e8; // 280 MHz
 
          if (chid >= NumChannels()) {
             ADDERROR(errChId, "Channel number %u bigger than configured %u", chid, NumChannels());
@@ -2143,73 +2136,35 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
             continue;
          }
 
-         if (!iter.isCurEpoch()) {
-            // one expects epoch before each hit message, if not data are corrupted and we can ignore it
-            ADDERROR(errEpoch, "Missing epoch for hit from channel %u", chid);
-            iserr = true;
-            if (fChErrPerHld) DefFillH2(*fChErrPerHld, fHldId, chid, 1);
-            continue;
-         }
-
-         if (IsEveryEpoch())
-            iter.clearCurEpoch();
-
-         if (fine == bad_fine) {
-            if (first_scan) {
-               // special case - missing hit, just ignore such value
-               ADDERROR(err3ff, "Missing hit in channel %u fine counter is %x", chid, fine);
-
-               missinghit = true;
-               FastFillH1(fChannels, chid);
-               FastFillH1(fUndHits, chid);
-
-               if (fChErrPerHld) DefFillH2(*fChErrPerHld, fHldId, chid, 1);
-            }
-            continue;
-         }
 
          ChannelRec& rec = fCh[chid];
 
          double corr = 0.;
-         bool raw_hit = false;
 
-         if (msg.getKind() == tdckind_Hit2) {
-            if (isrising) {
-               corr = fine * 5e-12;
-            } else {
-               corr = (fine & 0x1FF) * 10e-12;
-               if (fine & 0x200) corr += 0x800 * 5e-9; // complete epoch should be subtracted
-            }
+         if (fine >= fNumFineBins) {
+            FastFillH1(fErrors, chid);
+            if (fChErrPerHld) DefFillH2(*fChErrPerHld, fHldId, chid, 1);
+            ADDERROR(errFine, "Fine counter %u out of allowed range 0..%u in channel %u", fine, fNumFineBins, chid);
+            iserr = true;
+            continue;
+         }
+
+         if (ncalibr < 2) {
+            // use correction from special message
+            uint32_t calibr_fine = calibr.getCalibrFine(ncalibr++);
+            corr = calibr_fine*5e-9/0x3ffe;
+            if (isrising) DefFillH2(fhRaisingFineCalibr, chid, calibr_fine, 1.);
+            if (!isrising) corr *= 10.; // range for falling edge is 50 ns.
          } else {
 
-            if (fine >= fNumFineBins) {
-               FastFillH1(fErrors, chid);
-               if (fChErrPerHld) DefFillH2(*fChErrPerHld, fHldId, chid, 1);
-               ADDERROR(errFine, "Fine counter %u out of allowed range 0..%u in channel %u", fine, fNumFineBins, chid);
-               iserr = true;
-               continue;
-            }
+            // main calibration for fine counter
+            corr = ExtractCalibr(isrising ? rec.rising_calibr : rec.falling_calibr, fine);
 
-            raw_hit = msg.isHit0Msg();
+            // apply TOT shift for falling edge (should it be also temp dependent)?
+            if (!isrising) corr += rec.tot_shift*1e-9;
 
-            if (ncalibr < 2) {
-               // use correction from special message
-
-               uint32_t calibr_fine = calibr.getCalibrFine(ncalibr++);
-               corr = calibr_fine*5e-9/0x3ffe;
-               if (isrising) DefFillH2(fhRaisingFineCalibr, chid, calibr_fine, 1.);
-               if (!isrising) corr *= 10.; // range for falling edge is 50 ns.
-            } else {
-
-               // main calibration for fine counter
-               corr = ExtractCalibr(isrising ? rec.rising_calibr : rec.falling_calibr, fine);
-
-               // apply TOT shift for falling edge (should it be also temp dependent)?
-               if (!isrising) corr += rec.tot_shift*1e-9;
-
-               // negative while value should be add to the stamp
-               if (do_temp_comp) corr -= (fCurrentTemp + fTempCorrection - fCalibrTemp) * rec.time_shift_per_grad * 1e-9;
-            }
+            // negative while value should be add to the stamp
+            if (do_temp_comp) corr -= (fCurrentTemp + fTempCorrection - fCalibrTemp) * rec.time_shift_per_grad * 1e-9;
          }
 
          // apply correction
@@ -2246,10 +2201,9 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
             if ((HistFillLevel()>2) && (rec.fRisingFine == 0))
                CreateChannelHistograms(chid);
 
+            bool raw_hit = true;
             bool use_fine_for_stat = true;
-            if (!f400Mhz && !msg.isHit0Msg())
-               use_fine_for_stat = false;
-            else if (use_for_calibr == 3)
+            if (use_for_calibr == 3)
                use_fine_for_stat = (gTrigDWindowLow <= localtm*1e9) && (localtm*1e9 <= gTrigDWindowHigh);
 
             FastFillH1(fChannels, chid);
@@ -2258,10 +2212,6 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
             DefFillH2(fAllCoarse, chid, coarse, 1.);
             if (fChHitsPerHld) DefFillH2(*fChHitsPerHld, fHldId, chid, 1);
 
-            if (msg.isHit1Msg()) {
-               DefFillH1(fCorrHits, chid, 1);
-               if (fChCorrPerHld) DefFillH2(*fChCorrPerHld, fHldId, chid, 1);
-            }
 
             if (isrising) {
                // processing of rising edge
@@ -2408,37 +2358,6 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
 
       // process other messages kinds
 
-      switch (msg.getKind()) {
-        case tdckind_Trailer:
-           if (first_scan) fLastTdcTrailer = msg;
-           break;
-        case tdckind_Header: {
-           // never come here - handle in very begin
-           if (first_scan) fLastTdcHeader = msg;
-           /*unsigned errbits = msg.getHeaderErr();
-           if (errbits && first_scan) {
-              if (CheckPrintError())
-                 printf("%5s found error bits: 0x%x\n", GetName(), errbits);
-           }
-           */
-
-           break;
-        }
-        case tdckind_Debug: {
-           switch (msg.getDebugKind()) {
-              case 0x0E: temp = msg.getDebugValue();  break;
-              case 0x10: lowid = msg.getDebugValue(); break;
-              case 0x11: highid = msg.getDebugValue(); break;
-           }
-
-           break;
-        }
-        case tdckind_Epoch:
-           break;
-        default:
-           ADDERROR(errUncknHdr, "Unknown message header 0x%x", msg.getKind());
-           break;
-      }
    }
 
    if (isfirstepoch && !iserr) {
@@ -2492,7 +2411,8 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
          fDesignId = id;
       }
 
-      if ((temp!=0) && (temp < 2400)) {
+      /*
+      if ((temp != 0) && (temp < 2400)) {
          fCurrentTemp = temp/16.;
 
          if ((HistFillLevel() > 1) && (fTempDistr == 0))  {
@@ -2511,20 +2431,17 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
          fCalibrTempSum2 += fCurrentTemp*fCurrentTemp;
       }
 
+      */
+
       // if we use trigger as time marker
       if (fUseNativeTrigger && (ch0time!=0)) {
          base::LocalTimeMarker marker;
          marker.localid = 1;
          marker.localtm = ch0time;
-
-         // printf("%s Create TRIGGER %11.9f\n", GetName(), ch0time);
-
          AddTriggerMarker(marker);
       }
 
       if ((syncid != 0xffffffff) && (ch0time!=0)) {
-
-         // printf("%s Create SYNC %u tm %12.9f\n", GetName(), syncid, ch0time);
          base::SyncMarker marker;
          marker.uniqueid = syncid;
          marker.localid = 0;
