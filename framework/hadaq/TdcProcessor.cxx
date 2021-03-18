@@ -763,11 +763,13 @@ void hadaq::TdcProcessor::CompleteCalibration(bool dummy, const std::string &fil
 
 void hadaq::TdcProcessor::FindFMinMax(const std::vector<float> &func, int nbin, int &fmin, int &fmax)
 {
+   double coarse_unit = fVersion4 ? hadaq::TdcMessage::CoarseUnit280() : hadaq::TdcMessage::CoarseUnit();
+
    if (func.size() != 5) {
       fmin = 0;
       fmax = nbin-1;
-      float min = hadaq::TdcMessage::CoarseUnit()*1e-6;
-      float max = hadaq::TdcMessage::CoarseUnit()*0.999999;
+      float min = coarse_unit*1e-6;
+      float max = coarse_unit*0.999999;
       while ((fmin<nbin) && (func[fmin]<min)) fmin++;
       while ((fmax>fmin) && (func[fmax]>max)) fmax--;
    } else {
@@ -787,7 +789,9 @@ float hadaq::TdcProcessor::ExtractCalibr(const std::vector<float> &func, unsigne
 
    float val = func[bin] * (1+fCalibrTempCoef*(temp-fCalibrTemp));
 
-   if ((temp < fCalibrTemp) && (func[bin] >= hadaq::TdcMessage::CoarseUnit()*0.9999)) {
+   double coarse_unit = fVersion4 ? hadaq::TdcMessage::CoarseUnit280() : hadaq::TdcMessage::CoarseUnit();
+
+   if ((temp < fCalibrTemp) && (func[bin] >= coarse_unit*0.9999)) {
       // special case - lower temperature and bin which was not observed during calibration
       // just take linear extrapolation, using points bin-30 and bin-80
 
@@ -796,7 +800,7 @@ float hadaq::TdcProcessor::ExtractCalibr(const std::vector<float> &func, unsigne
       val = val0 * (1+fCalibrTempCoef*(temp-fCalibrTemp));
    }
 
-   return val < hadaq::TdcMessage::CoarseUnit() ? val : hadaq::TdcMessage::CoarseUnit();
+   return val < coarse_unit ? val : coarse_unit;
 }
 
 unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_t *rawdata, unsigned indx, unsigned datalen, hadaqs::RawSubevent* tgt, unsigned tgtindx)
