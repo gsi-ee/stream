@@ -23,6 +23,40 @@ namespace hadaq {
       MaxNumTdcChannels = 65
    };
 
+   enum TdcNewMessageKinds {
+      newkind_TMDT     = 0x80000000,
+      // with mask 3
+      newkind_Mask3    = 0xE0000000,
+      newkind_HDR      = 0x20000000,
+      newkind_TRL      = 0x00000000,
+      newkind_EPOC     = 0x60000000,
+      // with mask 4
+      newkind_Mask4    = 0xF0000000,
+      newkind_TMDS     = 0x40000000,
+      // with mask 6
+      newkind_Mask6    = 0xFC000000,
+      newkind_TBD      = 0x50000000,
+      // with mask 8
+      newkind_Mask8    = 0xFF000000,
+      newkind_HSTM     = 0x54000000,
+      newkind_HSTL     = 0x55000000,
+      newkind_HSDA     = 0x56000000,
+      newkind_HSDB     = 0x57000000,
+      newkind_CTA      = 0x58000000,
+      newkind_CTB      = 0x59000000,
+      newkind_TEMP     = 0x5A000000,
+      newkind_BAD      = 0x5B000000,
+      // with mask 9
+      newkind_Mask9    = 0xFF800000,
+      newkind_TTRM     = 0x5C000000,
+      newkind_TTRL     = 0x5C800000,
+      newkind_TTCM     = 0x5D000000,
+      newkind_TTCL     = 0x5D800000,
+      // with mask 7
+      newkind_Mask7    = 0xFE000000,
+      newkind_TMDR     = 0x5E000000
+   };
+
    /** TdcMessage is wrapper for data, produced by FPGA-TDC
     * struct is used to avoid any potential overhead */
 
@@ -124,7 +158,22 @@ namespace hadaq {
          inline uint32_t getDebugValue() const { return fData  & 0xFFFFFF; }
 
 
+         // methods for ver4 messages
+
+         inline bool isHDR() const { return (fData & newkind_Mask3) == newkind_HDR; }
+         inline bool isEPOC() const { return (fData & newkind_Mask3) == newkind_EPOC; }
+         inline bool isTMDR() const { return (fData & newkind_Mask7) == newkind_TMDR; }
+         inline bool isTMDT() const { return (fData & newkind_TMDT) == newkind_TMDT; }
+
+         /** Return Epoch for EPOC marker, 28 bit */
+         inline uint32_t getEPOC() const { return fData & 0xFFFFFFF; }
+
+
+
+
+
          void print(double tm = -1.);
+         void print4(double tm = -1.);
 
          static double CoarseUnit() { return 5e-9; }
 

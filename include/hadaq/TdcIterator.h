@@ -64,7 +64,7 @@ namespace hadaq {
 
          bool next()
          {
-            if (fBuf==0) return false;
+            if (!fBuf) return false;
 
             if (fSwapped)
                fMsg.assign((((uint8_t *) fBuf)[0] << 24) | (((uint8_t *) fBuf)[1] << 16) | (((uint8_t *) fBuf)[2] << 8) | (((uint8_t *) fBuf)[3]));
@@ -74,7 +74,24 @@ namespace hadaq {
             if (fMsg.isEpochMsg()) fCurEpoch = fMsg.getEpochValue();
 
             fLastBuf = fBuf++;
-            if (--fBuflen == 0) fBuf = 0;
+            if (--fBuflen == 0) fBuf = nullptr;
+
+            return true;
+         }
+
+         bool next4()
+         {
+            if (!fBuf) return false;
+
+            if (fSwapped)
+               fMsg.assign((((uint8_t *) fBuf)[0] << 24) | (((uint8_t *) fBuf)[1] << 16) | (((uint8_t *) fBuf)[2] << 8) | (((uint8_t *) fBuf)[3]));
+            else
+               fMsg.assign(*fBuf);
+
+            if (fMsg.isEPOC()) fCurEpoch = fMsg.getEPOC();
+
+            fLastBuf = fBuf++;
+            if (--fBuflen == 0) fBuf = nullptr;
 
             return true;
          }
@@ -125,6 +142,12 @@ namespace hadaq {
             if (msg().isHitMsg() || msg().isEpochMsg())
                tm = getMsgTimeCoarse() - getMsgTimeFine();
             msg().print(tm);
+         }
+
+         void printmsg4()
+         {
+            double tm = -1.;
+            msg().print4(tm);
          }
    };
 }

@@ -2053,10 +2053,10 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
    if (fSkipTdcMessages > 0) {
       unsigned skipcnt = fSkipTdcMessages;
       while (skipcnt-- > 0)
-         if (!iter.next()) break;
+         if (!iter.next4()) break;
    }
 
-   while (iter.next()) {
+   while (iter.next4()) {
 
       // if (!first_scan) msg.print();
 
@@ -2066,24 +2066,23 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
          FastFillH1(fMsgsKind, msg.getKind() >> 29);
 
       if (cnt==1) {
-         if (!msg.isHeaderMsg()) {
+         if (!msg.isHDR()) {
             iserr = true;
             ADDERROR(errNoHeader, "Missing header message");
          } else {
 
             if (first_scan) fLastTdcHeader = msg;
 
-            if (fToTdflt && first_scan)
-               ConfigureToTByHwType(msg.getHeaderHwType());
-            //unsigned errbits = msg.getHeaderErr();
-            //if (errbits && first_scan)
-            //   if (CheckPrintError()) printf("%5s found error bits: 0x%x\n", GetName(), errbits);
+            // TODO: ToT configuring by header, now should be stored in footer
+
+            // if (fToTdflt && first_scan)
+            //   ConfigureToTByHwType(msg.getHeaderHwType());
          }
 
          continue;
       }
 
-      if (msg.isEpochMsg()) {
+      if (msg.isEPOC()) {
 
          uint32_t ep = iter.getCurEpoch();
 
@@ -2093,7 +2092,7 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
          }
 
          // second message always should be epoch of channel 0
-         if (cnt==2) {
+         if (cnt == 2) {
             isfirstepoch = true;
             first_epoch = ep;
          }
@@ -2109,12 +2108,23 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
          continue;
       }
 
-      if (msg.isHitMsg()) {
-         unsigned chid = msg.getHitChannel();
-         unsigned fine = msg.getHitTmFine();
-         unsigned coarse = msg.getHitTmCoarse();
-         bool isrising = msg.isHitRisingEdge();
-         unsigned bad_fine = 0x3FF;
+      if (msg.isTMDR() || msg.isTMDT()) {
+
+         unsigned chid = 0, fine = 0, coarse = 0, bad_fine = 0x3FF;
+         bool isrising;
+
+         if (msg.isTMDR()) {
+            chid = 0;
+
+         } else {
+
+         }
+
+         //unsigned chid = msg.getHitChannel();
+         //unsigned fine = msg.getHitTmFine();
+         //unsigned coarse = msg.getHitTmCoarse();
+         //bool isrising = msg.isHitRisingEdge();
+         //unsigned bad_fine = 0x3FF;
 
          if (f400Mhz) {
             unsigned coarse25 = (coarse << 1) | ((fine & 0x200) ? 1 : 0);
@@ -2556,7 +2566,7 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
          iter.assign((uint32_t*) buf.ptr(4), buf.datalen()/4-1, false);
       else
          iter.assign((uint32_t*) buf.ptr(0), buf.datalen()/4, buf().format==2);
-      while (iter.next()) iter.printmsg();
+      while (iter.next4()) iter.printmsg4();
    }
 
    return !iserr;
