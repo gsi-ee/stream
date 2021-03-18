@@ -113,6 +113,8 @@ namespace hadaq {
          /** Return data format: 0 - normal, 1 - double edges for each hit */
          inline uint32_t getHeaderFmt() const { return (fData >> 24) & 0xF; }
 
+         inline bool IsVer4Header() const { return isHeaderMsg() && (getHeaderFmt() == 4); }
+
          // methods for debug message
 
          /** Return error bits of header message */

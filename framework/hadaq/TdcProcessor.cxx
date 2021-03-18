@@ -102,8 +102,9 @@ int hadaq::TdcProcessor::GetHadesMonitorInterval()
 
 ///////////////////////////////////////////////////////////////////////////
 
-hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels, unsigned edge_mask) :
+hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels, unsigned edge_mask, bool ver4) :
    SubProcessor(trb, "TDC_%04X", tdcid),
+   fVersion4(ver4),
    fIter1(),
    fIter2(),
    fNumChannels(numchannels),
@@ -1961,6 +1962,607 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
    return !iserr;
 }
+
+
+bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan)
+{
+   if (buf.null()) {
+      if (first_scan) printf("Something wrong - empty buffer should not appear in the first scan/n");
+      return false;
+   }
+
+   uint32_t syncid(0xffffffff);
+   // copy first 4 bytes - it is syncid
+   if (buf().format==0)
+      memcpy(&syncid, buf.ptr(), 4);
+
+   // if data could be used for calibration
+   int use_for_calibr = first_scan && (((1 << buf().kind) & fCalibrTriggerMask) != 0) ? 1 : 0;
+
+   // use in ref calculations only physical trigger, exclude 0xD or 0xE
+   bool use_for_ref = buf().kind < (gUseDTrigForRef ? 0xE : 0xD);
+
+   // disable taking last hit for trigger DD
+   if ((use_for_calibr > 0) && ((buf().kind == 0xD) || gUseAsDTrig)) {
+      if (IsTriggeredAnalysis() &&  (gTrigDWindowLow < gTrigDWindowHigh)) use_for_calibr = 3; // accept time stamps only for inside window
+      // use_for_calibr = 2; // always use only last hit
+   }
+
+   // if data could be used for TOT calibration
+   bool do_tot = (use_for_calibr > 0) && ((buf().kind == 0xD) || gUseAsDTrig) && DoFallingEdge();
+
+   // use temperature compensation only when temperature available
+   bool do_temp_comp = fCalibrUseTemp && (fCurrentTemp > 0) && (fCalibrTemp > 0) && (fabs(fCurrentTemp - fCalibrTemp) < 30.);
+
+   unsigned cnt(0), hitcnt(0);
+
+   bool iserr(false), isfirstepoch(false), rawprint(false), missinghit(false), dostore(false);
+
+   if (first_scan && IsTriggeredAnalysis() && IsStoreEnabled() && mgr()->HasTrigEvent()) {
+      dostore = true;
+      switch (GetStoreKind()) {
+         case 1: {
+            hadaq::TdcSubEvent* subevnt = new hadaq::TdcSubEvent(buf.datalen()/6);
+            mgr()->AddToTrigEvent(GetName(), subevnt);
+            pStoreVect = subevnt->vect_ptr();
+            break;
+         }
+         case 2: {
+            hadaq::TdcSubEventFloat* subevnt = new hadaq::TdcSubEventFloat(buf.datalen()/6);
+            mgr()->AddToTrigEvent(GetName(), subevnt);
+            pStoreFloat = subevnt->vect_ptr();
+            break;
+         }
+         case 3: {
+            hadaq::TdcSubEventDouble* subevnt = new hadaq::TdcSubEventDouble(buf.datalen()/6);
+            mgr()->AddToTrigEvent(GetName(), subevnt);
+            pStoreDouble = subevnt->vect_ptr();
+            break;
+         }
+
+         default: break; // not supported
+      }
+   }
+
+   //static int ddd = 0;
+   //if (ddd++ % 10000 == 0) printf("%s dostore %d istriggered %d hasevt %d kind %d\n", GetName(), dostore, IsTriggeredAnalysis(), mgr()->HasTrigEvent(), GetStoreKind());
+
+   uint32_t first_epoch(0);
+
+   unsigned epoch_shift = 0;
+   if (fCompensateEpochReset) {
+      if (first_scan) buf().user_tag = fCompensateEpochCounter;
+      epoch_shift = buf().user_tag;
+   }
+
+   TdcIterator& iter = first_scan ? fIter1 : fIter2;
+
+   if (buf().format==0)
+      iter.assign((uint32_t*) buf.ptr(4), buf.datalen()/4-1, false);
+   else
+      iter.assign((uint32_t*) buf.ptr(0), buf.datalen()/4, buf().format==2);
+
+   unsigned help_index(0);
+
+   double localtm(0.), minimtm(0), ch0time(0);
+
+   hadaq::TdcMessage& msg = iter.msg();
+   hadaq::TdcMessage calibr;
+   unsigned ncalibr(20), temp(0), lowid(0), highid(0); // clear indicate that no calibration data present
+
+   if (fSkipTdcMessages > 0) {
+      unsigned skipcnt = fSkipTdcMessages;
+      while (skipcnt-- > 0)
+         if (!iter.next()) break;
+   }
+
+   while (iter.next()) {
+
+      // if (!first_scan) msg.print();
+
+      cnt++;
+
+      if (first_scan)
+         FastFillH1(fMsgsKind, msg.getKind() >> 29);
+
+      if (cnt==1) {
+         if (!msg.isHeaderMsg()) {
+            iserr = true;
+            ADDERROR(errNoHeader, "Missing header message");
+         } else {
+
+            if (first_scan) fLastTdcHeader = msg;
+
+            if (fToTdflt && first_scan)
+               ConfigureToTByHwType(msg.getHeaderHwType());
+            //unsigned errbits = msg.getHeaderErr();
+            //if (errbits && first_scan)
+            //   if (CheckPrintError()) printf("%5s found error bits: 0x%x\n", GetName(), errbits);
+         }
+
+         continue;
+      }
+
+      if (msg.isEpochMsg()) {
+
+         uint32_t ep = iter.getCurEpoch();
+
+         if (fCompensateEpochReset) {
+            ep += epoch_shift;
+            iter.setCurEpoch(ep);
+         }
+
+         // second message always should be epoch of channel 0
+         if (cnt==2) {
+            isfirstepoch = true;
+            first_epoch = ep;
+         }
+         continue;
+      }
+
+      if (msg.isCalibrMsg()) {
+         if ((use_for_calibr == 0) && !gIgnoreCalibrMsgs) {
+            // take into account calibration messages only when data not used for calibration
+            ncalibr = 0;
+            calibr = msg;
+         }
+         continue;
+      }
+
+      if (msg.isHitMsg()) {
+         unsigned chid = msg.getHitChannel();
+         unsigned fine = msg.getHitTmFine();
+         unsigned coarse = msg.getHitTmCoarse();
+         bool isrising = msg.isHitRisingEdge();
+         unsigned bad_fine = 0x3FF;
+
+         if (f400Mhz) {
+            unsigned coarse25 = (coarse << 1) | ((fine & 0x200) ? 1 : 0);
+            fine = fine & 0x1FF;
+            bad_fine = 0x1ff;
+            unsigned epoch = iter.isCurEpoch() ? iter.getCurEpoch() : 0;
+
+            localtm = ((epoch << 12) | coarse25) * 1000. / fCustomMhz * 1e-9;
+         } else {
+            localtm = iter.getMsgTimeCoarse();
+         }
+
+         if (chid >= NumChannels()) {
+            ADDERROR(errChId, "Channel number %u bigger than configured %u", chid, NumChannels());
+            iserr = true;
+            continue;
+         }
+
+         if (!iter.isCurEpoch()) {
+            // one expects epoch before each hit message, if not data are corrupted and we can ignore it
+            ADDERROR(errEpoch, "Missing epoch for hit from channel %u", chid);
+            iserr = true;
+            if (fChErrPerHld) DefFillH2(*fChErrPerHld, fHldId, chid, 1);
+            continue;
+         }
+
+         if (IsEveryEpoch())
+            iter.clearCurEpoch();
+
+         if (fine == bad_fine) {
+            if (first_scan) {
+               // special case - missing hit, just ignore such value
+               ADDERROR(err3ff, "Missing hit in channel %u fine counter is %x", chid, fine);
+
+               missinghit = true;
+               FastFillH1(fChannels, chid);
+               FastFillH1(fUndHits, chid);
+
+               if (fChErrPerHld) DefFillH2(*fChErrPerHld, fHldId, chid, 1);
+            }
+            continue;
+         }
+
+         ChannelRec& rec = fCh[chid];
+
+         double corr = 0.;
+         bool raw_hit = false;
+
+         if (msg.getKind() == tdckind_Hit2) {
+            if (isrising) {
+               corr = fine * 5e-12;
+            } else {
+               corr = (fine & 0x1FF) * 10e-12;
+               if (fine & 0x200) corr += 0x800 * 5e-9; // complete epoch should be subtracted
+            }
+         } else {
+
+            if (fine >= fNumFineBins) {
+               FastFillH1(fErrors, chid);
+               if (fChErrPerHld) DefFillH2(*fChErrPerHld, fHldId, chid, 1);
+               ADDERROR(errFine, "Fine counter %u out of allowed range 0..%u in channel %u", fine, fNumFineBins, chid);
+               iserr = true;
+               continue;
+            }
+
+            raw_hit = msg.isHit0Msg();
+
+            if (ncalibr < 2) {
+               // use correction from special message
+
+               uint32_t calibr_fine = calibr.getCalibrFine(ncalibr++);
+               corr = calibr_fine*5e-9/0x3ffe;
+               if (isrising) DefFillH2(fhRaisingFineCalibr, chid, calibr_fine, 1.);
+               if (!isrising) corr *= 10.; // range for falling edge is 50 ns.
+            } else {
+
+               // main calibration for fine counter
+               corr = ExtractCalibr(isrising ? rec.rising_calibr : rec.falling_calibr, fine);
+
+               // apply TOT shift for falling edge (should it be also temp dependent)?
+               if (!isrising) corr += rec.tot_shift*1e-9;
+
+               // negative while value should be add to the stamp
+               if (do_temp_comp) corr -= (fCurrentTemp + fTempCorrection - fCalibrTemp) * rec.time_shift_per_grad * 1e-9;
+            }
+         }
+
+         // apply correction
+         localtm -= corr;
+
+         if ((chid==0) && (ch0time==0)) ch0time = localtm;
+
+         if (IsTriggeredAnalysis()) {
+            if (ch0time==0)
+               ADDERROR(errCh0, "channel 0 time not found when first HIT in channel %u appears", chid);
+
+            localtm -= ch0time;
+         }
+
+         // printf("%s first %d ch %3u tm %12.9f\n", GetName(), first_scan, chid, localtm);
+
+         // fill histograms only for normal channels
+         if (first_scan) {
+
+            // if (chid>0) printf("%s HIT ch %u tm %12.9f diff %12.9f\n", GetName(), chid, localtm, localtm - ch0time);
+
+            if (chid==0) {
+               if (fLastRateTm < 0) fLastRateTm = ch0time;
+               if (ch0time - fLastRateTm > 1) {
+                  FillH1(fHitsRate, fRateCnt / (ch0time - fLastRateTm));
+                  fLastRateTm = ch0time;
+                  fRateCnt = 0;
+               }
+            } else {
+               fRateCnt++;
+            }
+
+            // ensure that histograms are created
+            if ((HistFillLevel()>2) && (rec.fRisingFine == 0))
+               CreateChannelHistograms(chid);
+
+            bool use_fine_for_stat = true;
+            if (!f400Mhz && !msg.isHit0Msg())
+               use_fine_for_stat = false;
+            else if (use_for_calibr == 3)
+               use_fine_for_stat = (gTrigDWindowLow <= localtm*1e9) && (localtm*1e9 <= gTrigDWindowHigh);
+
+            FastFillH1(fChannels, chid);
+            DefFillH1(fHits, (chid + (isrising ? 0.25 : 0.75)), 1.);
+            if (raw_hit) DefFillH2(fAllFine, chid, fine, 1.);
+            DefFillH2(fAllCoarse, chid, coarse, 1.);
+            if (fChHitsPerHld) DefFillH2(*fChHitsPerHld, fHldId, chid, 1);
+
+            if (msg.isHit1Msg()) {
+               DefFillH1(fCorrHits, chid, 1);
+               if (fChCorrPerHld) DefFillH2(*fChCorrPerHld, fHldId, chid, 1);
+            }
+
+            if (isrising) {
+               // processing of rising edge
+               if (raw_hit && use_fine_for_stat) {
+                  switch (use_for_calibr) {
+                     case 1:
+                     case 3:
+                        rec.rising_stat[fine]++;
+                        rec.all_rising_stat++;
+                        if (fCalHitsPerBrd) DefFillH2(*fCalHitsPerBrd, fSeqeunceId, chid, 1.); // accumulate only rising edges
+                        break;
+                     case 2:
+                        rec.last_rising_fine = fine;
+                        break;
+                  }
+               }
+
+               if (raw_hit) FastFillH1(rec.fRisingFine, fine);
+
+               rec.rising_cnt++;
+
+               bool print_cond = false;
+
+               rec.rising_last_tm = localtm;
+               rec.rising_new_value = true;
+
+               if (use_for_ref && ((rec.rising_hit_tm == 0.) || fUseLastHit)) {
+                  rec.rising_hit_tm = (chid > 0) ? localtm : ch0time;
+                  rec.rising_coarse = coarse;
+                  rec.rising_fine = fine;
+
+                  if ((rec.rising_cond_prnt > 0) && (rec.reftdc == GetID()) &&
+                      (rec.refch < NumChannels()) && (fCh[rec.refch].rising_hit_tm!=0)) {
+                     double diff = (localtm - fCh[rec.refch].rising_hit_tm) * 1e9;
+                     if (TestC1(rec.fRisingRefCond, diff) == 0) {
+                        rec.rising_cond_prnt--;
+                        print_cond = true;
+                     }
+                  }
+               }
+
+               if (print_cond) rawprint = true;
+
+               // special case - when ref channel defined as 0, fill all hits
+               if ((chid!=0) && (rec.refch==0) && (rec.reftdc == GetID()) && use_for_ref) {
+                  rec.rising_ref_tm = localtm;
+
+                  DefFillH1(rec.fRisingRef, (localtm*1e9), 1.);
+
+                  if (IsPrintRawData() || print_cond)
+                  printf("Difference rising %04x:%02u\t %04x:%02u\t %12.3f\t %12.3f\t %7.3f  coarse %03x - %03x = %4d  fine %03x %03x \n",
+                          GetID(), chid, rec.reftdc, rec.refch,
+                          localtm*1e9,  fCh[0].rising_hit_tm*1e9, localtm*1e9,
+                          coarse, fCh[0].rising_coarse, (int) (coarse - fCh[0].rising_coarse),
+                          fine, fCh[0].rising_fine);
+               }
+
+            } else {
+               // processing of falling edge
+               if (raw_hit && use_fine_for_stat) {
+                  switch (use_for_calibr) {
+                     case 1:
+                     case 3:
+                        rec.falling_stat[fine]++;
+                        rec.all_falling_stat++;
+                        break;
+                     case 2:
+                        rec.last_falling_fine = fine;
+                        break;
+                  }
+               }
+
+               if (raw_hit) FastFillH1(rec.fFallingFine, fine);
+
+               rec.falling_cnt++;
+
+               if (rec.rising_new_value && (rec.rising_last_tm!=0)) {
+                  double tot = (localtm - rec.rising_last_tm)*1e9;
+                  // TODO chid
+                  DefFillH2(fhTotVsChannel, chid, tot, 1.);
+                  if (tot < 0. ) {
+                      DefFillH1(fhTotMinusCounter, chid, 1.);
+                  }
+                  if (tot > fTotUpperLimit) {
+                      DefFillH1(fhTotMoreCounter, chid, 1.);
+                  }
+                  DefFillH1(rec.fTot, tot, 1.);
+                  rec.rising_new_value = false;
+
+                  // use only raw hit
+                  if (raw_hit && do_tot) rec.last_tot = tot + rec.tot_shift;
+               }
+            }
+
+            if (!iserr) {
+               hitcnt++;
+               if ((minimtm==0) || (localtm < minimtm)) minimtm = localtm;
+
+               if (dostore)
+                  switch(GetStoreKind()) {
+                     case 1:
+                        pStoreVect->emplace_back(msg, (chid>0) ? localtm : ch0time);
+                        break;
+                     case 2:
+                        if (chid>0)
+                           pStoreFloat->emplace_back(chid, isrising, localtm*1e9);
+                        break;
+                     case 3:
+                        pStoreDouble->emplace_back(chid, isrising, ch0time + localtm);
+                        break;
+                     default: break;
+                  }
+            }
+         } else
+
+         // for second scan we check if hit can be assigned to the events
+         if (((chid>0) || fCh0Enabled) && !iserr) {
+
+            base::GlobalTime_t globaltm = LocalToGlobalTime(localtm, &help_index);
+
+            // printf("TDC%u Test TDC message local:%11.9f global:%11.9f\n", GetID(), localtm, globaltm);
+
+            // we test hits, but do not allow to close events
+            unsigned indx = TestHitTime(globaltm, true, false);
+
+            if (indx < fGlobalMarks.size()) {
+               switch(GetStoreKind()) {
+                  case 1:
+                     AddMessage(indx, (hadaq::TdcSubEvent*) fGlobalMarks.item(indx).subev, hadaq::TdcMessageExt(msg, chid>0 ? globaltm : ch0time));
+                     break;
+                  case 2:
+                     if (chid>0)
+                        AddMessage(indx, (hadaq::TdcSubEventFloat*) fGlobalMarks.item(indx).subev, hadaq::MessageFloat(chid, isrising, (globaltm - ch0time)*1e9));
+                     break;
+                  case 3:
+                     AddMessage(indx, (hadaq::TdcSubEventDouble*) fGlobalMarks.item(indx).subev, hadaq::MessageDouble(chid, isrising, globaltm));
+                     break;
+               }
+            }
+         }
+
+         continue;
+      }
+
+      // process other messages kinds
+
+      switch (msg.getKind()) {
+        case tdckind_Trailer:
+           if (first_scan) fLastTdcTrailer = msg;
+           break;
+        case tdckind_Header: {
+           // never come here - handle in very begin
+           if (first_scan) fLastTdcHeader = msg;
+           /*unsigned errbits = msg.getHeaderErr();
+           if (errbits && first_scan) {
+              if (CheckPrintError())
+                 printf("%5s found error bits: 0x%x\n", GetName(), errbits);
+           }
+           */
+
+           break;
+        }
+        case tdckind_Debug: {
+           switch (msg.getDebugKind()) {
+              case 0x0E: temp = msg.getDebugValue();  break;
+              case 0x10: lowid = msg.getDebugValue(); break;
+              case 0x11: highid = msg.getDebugValue(); break;
+           }
+
+           break;
+        }
+        case tdckind_Epoch:
+           break;
+        default:
+           ADDERROR(errUncknHdr, "Unknown message header 0x%x", msg.getKind());
+           break;
+      }
+   }
+
+   if (isfirstepoch && !iserr) {
+      // if we want to compensate epoch reset, use epoch of trigger channel+1
+      // +1 to exclude small probability of hits after trigger with epoch+1 value
+      if (fCompensateEpochReset && first_scan)
+         fCompensateEpochCounter = first_epoch+1;
+
+      iter.setRefEpoch(first_epoch);
+   }
+
+   if (first_scan) {
+
+      // special case for 0xD trigger - use only last hit messages for accumulating statistic
+      if (use_for_calibr == 2)
+         for (unsigned ch=0;ch<NumChannels();ch++) {
+            ChannelRec& rec = fCh[ch];
+            if (rec.last_rising_fine > 0) {
+               rec.rising_stat[rec.last_rising_fine]++;
+               rec.all_rising_stat++;
+               rec.last_rising_fine = 0;
+               if (fCalHitsPerBrd) DefFillH2(*fCalHitsPerBrd, fSeqeunceId, ch, 1.); // accumulate only rising edges
+            }
+            if (rec.last_falling_fine > 0) {
+               rec.falling_stat[rec.last_falling_fine]++;
+               rec.all_falling_stat++;
+               rec.last_falling_fine = 0;
+            }
+         }
+
+      // when doing TOT calibration, use only last TOT value - before one could find other signals
+      if (do_tot)
+         for (unsigned ch=1;ch<NumChannels();ch++) {
+            // printf("%s Channel %d last_tot %5.3f has_calibr %d min %5.2f max %5.2f \n", GetName(), ch, fCh[ch].last_tot, fCh[ch].hascalibr, fToThmin, fToThmax);
+
+            if (fCh[ch].hascalibr && (fCh[ch].last_tot >= fToThmin) && (fCh[ch].last_tot < fToThmax)) {
+               if (fCh[ch].tot0d_hist.empty()) fCh[ch].CreateToTHist();
+               int bin = (int) ((fCh[ch].last_tot - fToThmin) / (fToThmax - fToThmin) * TotBins);
+               fCh[ch].tot0d_hist[bin]++;
+               fCh[ch].tot0d_cnt++;
+            }
+            fCh[ch].last_tot = 0.;
+         }
+
+      if (lowid || highid) {
+         unsigned id = (highid << 16) | lowid;
+
+         if ((fDesignId != 0) && (fDesignId != id))
+            ADDERROR(errDesignId, "mismatch in design id before:0x%x now:0x%x", fDesignId, id);
+
+         fDesignId = id;
+      }
+
+      if ((temp!=0) && (temp < 2400)) {
+         fCurrentTemp = temp/16.;
+
+         if ((HistFillLevel() > 1) && (fTempDistr == 0))  {
+            printf("%s FirstTemp:%5.2f CalibrTemp:%5.2f UseTemp:%d\n", GetName(), fCurrentTemp, fCalibrTemp, fCalibrUseTemp);
+
+            int mid = round(fCurrentTemp);
+            SetSubPrefix2();
+            fTempDistr = MakeH1("Temperature", "Temperature distribution", 600, mid-30, mid+30, "C");
+         }
+         FillH1(fTempDistr, fCurrentTemp);
+      }
+
+      if ((hitcnt>0) && (use_for_calibr>0) && (fCurrentTemp>0)) {
+         fCalibrTempSum0 += 1.;
+         fCalibrTempSum1 += fCurrentTemp;
+         fCalibrTempSum2 += fCurrentTemp*fCurrentTemp;
+      }
+
+      // if we use trigger as time marker
+      if (fUseNativeTrigger && (ch0time!=0)) {
+         base::LocalTimeMarker marker;
+         marker.localid = 1;
+         marker.localtm = ch0time;
+
+         // printf("%s Create TRIGGER %11.9f\n", GetName(), ch0time);
+
+         AddTriggerMarker(marker);
+      }
+
+      if ((syncid != 0xffffffff) && (ch0time!=0)) {
+
+         // printf("%s Create SYNC %u tm %12.9f\n", GetName(), syncid, ch0time);
+         base::SyncMarker marker;
+         marker.uniqueid = syncid;
+         marker.localid = 0;
+         marker.local_stamp = ch0time;
+         marker.localtm = ch0time;
+         AddSyncMarker(marker);
+      }
+
+      buf().local_tm = minimtm;
+
+//      printf("Proc:%p first scan iserr:%d  minm: %12.9f\n", this, iserr, minimtm*1e-9);
+
+      if (fMsgPerBrd) DefFillH1(*fMsgPerBrd, fSeqeunceId, cnt);
+
+      // fill number of "good" hits
+      if (fHitsPerBrd) DefFillH1(*fHitsPerBrd, fSeqeunceId, hitcnt);
+
+      // number of hits per TDC in HLD
+      if (fHitsPerHld) DefFillH1(*fHitsPerHld, fHldId, hitcnt);
+
+      if (iserr || missinghit) {
+         if (fErrPerBrd) DefFillH1(*fErrPerBrd, fSeqeunceId, 1.);
+         if (fErrPerHld) DefFillH1(*fErrPerHld, fHldId, 1.);
+      }
+   } else {
+
+      // use first channel only for flushing
+      if (ch0time!=0)
+         TestHitTime(LocalToGlobalTime(ch0time, &help_index), false, true);
+   }
+
+   // if no cross-processing required, can fill extra histograms directly
+   if (first_scan && !IsCrossProcess()) AfterFill();
+
+   if (rawprint && first_scan) {
+      printf("RAW data of %s\n", GetName());
+      TdcIterator iter;
+      if (buf().format==0)
+         iter.assign((uint32_t*) buf.ptr(4), buf.datalen()/4-1, false);
+      else
+         iter.assign((uint32_t*) buf.ptr(0), buf.datalen()/4, buf().format==2);
+      while (iter.next()) iter.printmsg();
+   }
+
+   return !iserr;
+}
+
+
 
 void hadaq::TdcProcessor::DoHadesHistAnalysis()
 {

@@ -689,10 +689,11 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
                AddBufferToTDC(sub, tdcproc, ix, datalen);
             } else if (fAutoCreate && (datalen > 2) && TdcMessage(sub->Data(ix)).isHeaderMsg()) {
 
-               unsigned numch = gNumChannels, edges = gEdgesMask;
                // here should be channel/edge/min/max selection based on TDC design ID
+               bool ver4 = TdcMessage(sub->Data(ix)).IsVer4Header();
+               unsigned numch = gNumChannels, edges = gEdgesMask;
 
-               tdcproc = new TdcProcessor(this, fHadaqCTSId, numch, edges);
+               tdcproc = new TdcProcessor(this, fHadaqCTSId, numch, edges, ver4);
 
                tdcproc->SetCalibrTriggerMask(fCalibrTriggerMask);
                tdcproc->SetStoreKind(GetStoreKind());
@@ -701,7 +702,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
 
                did_create_tdc = true;
 
-               printf("%s: Create TDC in CTS 0x%04x nch:%u edges:%u\n", GetName(), dataid, numch, edges);
+               printf("%s: Create %s in CTS 0x%04x nch:%u edges:%u\n", GetName(), ver4 ? "TDC4" : "TDC", dataid, numch, edges);
             }
          }
 
@@ -823,10 +824,12 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
 
             // suppose this is TDC data, first word should be TDC header
             if ((datalen > 0) && TdcMessage(sub->Data(ix)).isHeaderMsg()) {
-               unsigned numch = gNumChannels, edges = gEdgesMask;
                // here should be channel/edge/min/max selection based on TDC design ID
+               bool ver4 = TdcMessage(sub->Data(ix)).IsVer4Header();
+               unsigned numch = gNumChannels, edges = gEdgesMask;
 
-               TdcProcessor* tdcproc = new TdcProcessor(this, dataid, numch, edges);
+               TdcProcessor* tdcproc = new TdcProcessor(this, dataid, numch, edges, ver4);
+
                tdcproc->SetCalibrTriggerMask(fCalibrTriggerMask);
                tdcproc->SetStoreKind(GetStoreKind());
 
@@ -834,7 +837,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
 
                did_create_tdc = true;
 
-               printf("%s: Create TDC 0x%04x nch:%u edges:%u\n", GetName(), dataid, numch, edges);
+               printf("%s: Create %s 0x%04x nch:%u edges:%u\n", GetName(), ver4 ? "TDC4" : "TDC", dataid, numch, edges);
 
                // in auto-create mode buffers are not processed - normally it is only first event
                // AddBufferToTDC(sub, tdcproc, ix, datalen);

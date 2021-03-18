@@ -195,6 +195,8 @@ namespace hadaq {
             }
          };
 
+         bool fVersion4{false};         ///< if version4 TDC is analyzed
+
          TdcIterator fIter1;         //! iterator for the first scan
          TdcIterator fIter2;         //! iterator for the second scan
 
@@ -340,7 +342,8 @@ namespace hadaq {
          virtual double MaximumDisorderTm() const { return 2e-6; }
 
          /** Scan all messages, find reference signals */
-         bool DoBufferScan(const base::Buffer& buf, bool isfirst);
+         bool DoBufferScan(const base::Buffer &buf, bool isfirst);
+         bool DoBuffer4Scan(const base::Buffer &buf, bool isfirst);
 
          double DoTestToT(int iCh);
          double DoTestErrors(int iCh);
@@ -401,7 +404,7 @@ namespace hadaq {
 
       public:
 
-         TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels = MaxNumTdcChannels, unsigned edge_mask = 1);
+         TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels = MaxNumTdcChannels, unsigned edge_mask = 1, bool ver4 = false);
          virtual ~TdcProcessor();
 
          static void SetMaxBoardId(unsigned) { }
@@ -665,13 +668,13 @@ namespace hadaq {
           * if returned false, buffer has error and must be discarded */
          virtual bool FirstBufferScan(const base::Buffer& buf)
          {
-            return DoBufferScan(buf, true);
+            return fVersion4 ? DoBuffer4Scan(buf, true) : DoBufferScan(buf, true);
          }
 
          /** Scan buffer for selecting messages inside trigger window */
          virtual bool SecondBufferScan(const base::Buffer& buf)
          {
-            return DoBufferScan(buf, false);
+            return fVersion4 ? DoBuffer4Scan(buf, false) : DoBufferScan(buf, false);
          }
 
          /** For expert use - artificially set calibration statistic */
