@@ -69,9 +69,12 @@ void first()
 
 extern "C" void after_create(hadaq::HldProcessor* hld)
 {
+   // do not configure ref channels, otherwise all histograms will be created
+   return;
+
    printf("Called after all sub-components are created\n");
 
-   if (hld==0) return;
+   if (!hld) return;
 
    for (unsigned k=0;k<hld->NumberOfTRB();k++) {
       hadaq::TrbProcessor* trb = hld->GetTRB(k);
