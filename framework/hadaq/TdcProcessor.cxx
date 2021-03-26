@@ -2118,14 +2118,14 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
       if (msg.isTMDR() || msg.isTMDT()) {
 
          unsigned chid = 0, fine = 0, coarse = 0;
-         bool isrising(false), isfalling(false);
+         bool isrising = false, isfalling = false;
 
          if (msg.isTMDR()) {
             if (first_scan && fMsgsKind)
                FastFillH1(fMsgsKind, 2);
 
             chid = 0;
-            isrising = (msg.getTMDRMode() == 0) || (msg.getTMDRMode() == 4);
+            isrising = (msg.getTMDRMode() == 0) || (msg.getTMDRMode() == 2);
             isfalling = (msg.getTMDRMode() == 1) || (msg.getTMDRMode() == 3);
             coarse = msg.getTMDRCoarse();
             fine = msg.getTMDRFine();
@@ -2134,7 +2134,7 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
                FastFillH1(fMsgsKind, 3);
 
             chid = msg.getTMDTChannel() + 1;
-            isrising = (msg.getTMDTMode() == 0) || (msg.getTMDTMode() == 4);
+            isrising = (msg.getTMDTMode() == 0) || (msg.getTMDTMode() == 2);
             isfalling = (msg.getTMDTMode() == 1) || (msg.getTMDTMode() == 3);
             coarse = msg.getTMDTCoarse();
             fine = msg.getTMDTFine();
