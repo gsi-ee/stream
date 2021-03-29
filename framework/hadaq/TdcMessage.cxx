@@ -58,11 +58,11 @@ void hadaq::TdcMessage::print4(uint32_t &ttype)
       printf("    0x%08x HDR version:%u.%u type:0x%x trigger:%u\n", fData, getHDRMajor(), getHDRMinor(), getHDRTType(), getHDRTrigger());
       ttype = getHDRTType();
    } else if(isEPOC())
-      printf("    0x%08x EPOC\n", fData);
+      printf("    0x%08x EPOC 0x%07x\n", fData, getEPOC());
    else if(isTMDR())
-      printf("    0x%08x TMDR\n", fData);
+      printf("    0x%08x TMDR mode:0x%x coarse:%u fine:%u\n", fData, getTMDRMode(), getTMDRCoarse(), getTMDRFine());
    else if(isTMDT())
-      printf("    0x%08x TMDT\n", fData);
+      printf("    0x%08x TMDT mode:0x%x ch:%u coarse:%u fine:%u\n", fData, getTMDTMode(), getTMDTChannel(), getTMDTCoarse(), getTMDTFine());
    else if (isTRL()) {
       switch (ttype) {
          case 0x4:
