@@ -21,6 +21,9 @@ void first()
    // 4   - falling edge enabled and common statistic is used for calibration
    hadaq::TrbProcessor::SetDefaults(33, 2);
 
+   // enable analysis of 0xD trigger for refs
+   hadaq::TdcProcessor::SetUseDTrigForRef(true);
+
    // [min..max] range for TDC ids
    hadaq::TrbProcessor::SetTDCRange(0x1600, 0x16FF);
 
@@ -77,18 +80,21 @@ extern "C" void after_create(hadaq::HldProcessor* hld)
       trb->SetPrintErrors(10);
    }
 
-   // do not configure ref channels, otherwise all histograms will be created
-   return;
-
    for (unsigned k=0;k<hld->NumberOfTDC();k++) {
       hadaq::TdcProcessor* tdc = hld->GetTDC(k);
       if (tdc==0) continue;
 
       printf("Configure %s!\n", tdc->GetName());
 
+      if (tdc->GetID() == 0x16f7) {
+         tdc->SetRefChannel(12, 14, 0xffff, 2000,  -10., 10.);
+         tdc->EnableRefCondPrint(12, 0.6, 0.65, 100);
+      }
+
       // tdc->SetUseLastHit(true);
-      for (unsigned nch=2;nch<tdc->NumChannels();nch++)
-        tdc->SetRefChannel(nch, 1, 0xffff, 2000,  -10., 10.);
+      // do not configure ref channels, otherwise all histograms will be created
+      //for (unsigned nch=2;nch<tdc->NumChannels();nch++)
+      //  tdc->SetRefChannel(nch, 1, 0xffff, 2000,  -10., 10.);
    }
 }
 

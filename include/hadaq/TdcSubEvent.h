@@ -15,6 +15,7 @@ namespace hadaq {
       uint8_t ch;    // channel and edge
       float   stamp; // time stamp minus channel0 time, ns
 
+      float getStamp() const { return stamp; }
       uint8_t getCh() const { return ch & 0x7F; }
       uint8_t getEdge() const { return ch >> 7; } // 0 - rising, 1 - falling
       bool isRising() const { return getEdge() == 0; }
@@ -39,6 +40,7 @@ namespace hadaq {
       uint8_t ch;    // channel and edge
       double  stamp; // full time stamp, s
 
+      double getStamp() const { return stamp; }
       uint8_t getCh() const { return ch & 0x7F; }
       uint8_t getEdge() const { return ch >> 7; } // 0 - rising, 1 - falling
       bool isRising() const { return getEdge() == 0; }

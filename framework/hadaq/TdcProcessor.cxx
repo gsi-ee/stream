@@ -564,6 +564,8 @@ void hadaq::TdcProcessor::BeforeFill()
 
 void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
 {
+
+
    // complete logic only when hist level is specified
    if (HistFillLevel()>=4)
    for (unsigned ch=0;ch<NumChannels();ch++) {
@@ -578,8 +580,10 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
       if (reftdc>=0xffff) reftdc = GetID();
 
       TdcProcessor* refproc = 0;
-      if (reftdc == GetID()) refproc = this; else
-      if (fTrb!=0) refproc = fTrb->FindTDC(reftdc);
+      if (reftdc == GetID())
+         refproc = this;
+      else if (fTrb)
+         refproc = fTrb->FindTDC(reftdc);
 
       if ((refproc==0) && (subprocmap!=0)) {
          SubProcMap::iterator iter = subprocmap->find(reftdc);
@@ -2512,7 +2516,8 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
          iter.assign((uint32_t*) buf.ptr(4), buf.datalen()/4-1, false);
       else
          iter.assign((uint32_t*) buf.ptr(0), buf.datalen()/4, buf().format==2);
-      while (iter.next4()) iter.printmsg4();
+      while (iter.next4())
+         iter.printmsg4();
    }
 
    return !iserr;
