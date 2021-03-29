@@ -2152,10 +2152,21 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
             continue;
          }
 
-
          ChannelRec& rec = fCh[chid];
 
-         double corr = 0.;
+         if ((fine == 0x1ff) || (fine == 0x1fe) || (fine == 0x1fd)) {
+            if (first_scan) {
+               // special case - missing hit, just ignore such value
+               ADDERROR(err3ff, "Missing hit in channel %u fine counter is %x", chid, fine);
+
+               missinghit = true;
+               FastFillH1(fChannels, chid);
+               FastFillH1(fUndHits, chid);
+
+               if (fChErrPerHld) DefFillH2(*fChErrPerHld, fHldId, chid, 1);
+            }
+            continue;
+         }
 
          if (fine >= fNumFineBins) {
             FastFillH1(fErrors, chid);
@@ -2164,6 +2175,8 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
             iserr = true;
             continue;
          }
+
+         double corr = 0.;
 
          if (ncalibr < 2) {
             // use correction from special message
