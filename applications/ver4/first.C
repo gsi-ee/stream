@@ -5,8 +5,8 @@
 
 void first()
 {
-   base::ProcMgr::instance()->SetRawAnalysis(true);
-   // base::ProcMgr::instance()->SetTriggeredAnalysis(true);
+   // base::ProcMgr::instance()->SetRawAnalysis(true);
+   base::ProcMgr::instance()->SetTriggeredAnalysis(true);
 
    // all new instances get this value
    base::ProcMgr::instance()->SetHistFilling(4);
@@ -56,22 +56,16 @@ void first()
    // 1 - std::vector<hadaq::TdcMessageExt> - includes original TDC message
    // 2 - std::vector<hadaq::MessageFloat>  - compact form, without channel 0, stamp as float (relative to ch0)
    // 3 - std::vector<hadaq::MessageDouble> - compact form, with channel 0, absolute time stamp as double
-   base::ProcMgr::instance()->SetStoreKind(0);
-
+   base::ProcMgr::instance()->SetStoreKind(2);
 
    // when configured as output in DABC, one specifies:
    // <OutputPort name="Output2" url="stream://file.root?maxsize=5000&kind=3"/>
-
-
 }
 
 // extern "C" required by DABC to find function from compiled code
 
 extern "C" void after_create(hadaq::HldProcessor* hld)
 {
-   // do not configure ref channels, otherwise all histograms will be created
-   return;
-
    printf("Called after all sub-components are created\n");
 
    if (!hld) return;
@@ -82,6 +76,9 @@ extern "C" void after_create(hadaq::HldProcessor* hld)
       printf("Configure %s!\n", trb->GetName());
       trb->SetPrintErrors(10);
    }
+
+   // do not configure ref channels, otherwise all histograms will be created
+   return;
 
    for (unsigned k=0;k<hld->NumberOfTDC();k++) {
       hadaq::TdcProcessor* tdc = hld->GetTDC(k);

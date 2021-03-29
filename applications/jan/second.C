@@ -18,7 +18,7 @@ protected:
   base::H2handle  hFineFallCh;
 
 public:
-	SecondProc(const char* procname, const char* _tdcid);
+   SecondProc(const char* procname, const char* _tdcid);
    virtual void CreateBranch(TTree* t);
    virtual bool Process(base::Event* ev);
 };
