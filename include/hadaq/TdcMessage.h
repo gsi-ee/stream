@@ -167,6 +167,14 @@ namespace hadaq {
          inline bool isTRL() const { return (fData & newkind_Mask3) == newkind_TRL; }
 
 
+         // method for HDR
+
+         inline uint32_t getHDRMajor() const { return (fData >> 24) & 0xF; }
+         inline uint32_t getHDRMinor() const { return (fData >> 20) & 0xF; }
+         inline uint32_t getHDRTType() const { return (fData >> 16) & 0xF; }
+         inline uint32_t getHDRTrigger() const { return (fData & 0xFFFF); }
+
+
          /** Return Epoch for EPOC marker, 28 bit */
          inline uint32_t getEPOC() const { return fData & 0xFFFFFFF; }
 
@@ -182,10 +190,29 @@ namespace hadaq {
          inline uint32_t getTMDRFine() const { return fData & 0x1FF; }
 
 
+         // methods for TRLA
+         inline uint32_t getTRLAPlatformId() const { return (fData  >> 20) & 0xff; }
+         inline uint32_t getTRLAMajor() const { return (fData >> 16) & 0xf; }
+         inline uint32_t getTRLAMinor() const { return (fData >> 12) & 0xf; }
+         inline uint32_t getTRLASub() const { return (fData >> 8) & 0xf; }
+         inline uint32_t getTRLANumCh() const { return (fData & 0x7F) + 1; }
+
+         // methods for TRLB
+         inline uint32_t getTRLBEflags() const { return (fData >> 24) & 0xF; }
+         inline uint32_t getTRLBMaxdc() const { return (fData >> 20) & 0xF; }
+         inline uint32_t getTRLBTptime() const { return (fData >> 16) & 0xF; }
+         inline uint32_t getTRLBFreq() const { return (fData & 0xFFFF); }
+
+
+         // methods for TRLC
+         inline uint32_t getTRLCCpc() const { return (fData >> 24) & 0x7; }
+         inline uint32_t getTRLCCcs() const { return (fData >> 20) & 0xF; }
+         inline uint32_t getTRLCCcdiv() const { return (fData >> 16) & 0xF; }
+         inline uint32_t getTRLCFreq() const { return (fData & 0xFFFF); }
 
 
          void print(double tm = -1.);
-         void print4(double tm = -1.);
+         void print4(uint32_t &ttype);
 
          static double CoarseUnit() { return 5e-9; }
 

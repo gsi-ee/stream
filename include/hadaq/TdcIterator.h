@@ -144,10 +144,11 @@ namespace hadaq {
             msg().print(tm);
          }
 
-         void printmsg4()
+         void printall4()
          {
-            double tm = -1.;
-            msg().print4(tm);
+            uint32_t ttype = 0;
+            while (next4())
+              msg().print4(ttype);
          }
    };
 }

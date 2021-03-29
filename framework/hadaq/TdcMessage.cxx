@@ -52,16 +52,39 @@ void hadaq::TdcMessage::print(double tm)
    }
 }
 
-void hadaq::TdcMessage::print4(double)
+void hadaq::TdcMessage::print4(uint32_t &ttype)
 {
-   if (isHDR())
-      printf("    0x%08x HDR\n", fData);
-   else if(isEPOC())
+   if (isHDR()) {
+      printf("    0x%08x HDR version:%u.%u type:0x%x trigger:%u\n", fData, getHDRMajor(), getHDRMinor(), getHDRTType(), getHDRTrigger());
+      ttype = getHDRTType();
+   } else if(isEPOC())
       printf("    0x%08x EPOC\n", fData);
    else if(isTMDR())
       printf("    0x%08x TMDR\n", fData);
    else if(isTMDT())
       printf("    0x%08x TMDT\n", fData);
-   else if (isTRL())
-      printf("    0x%08x TRL\n", fData);
+   else if (isTRL()) {
+      switch (ttype) {
+         case 0x4:
+         case 0x6:
+         case 0x7:
+         case 0x8:
+         case 0x9:
+         case 0xE: {
+            printf("    0x%08x TRLB eflags:0x%x maxdc:%u tptime:%u freq:%5.3fMHz\n", fData, getTRLBEflags(), getTRLBMaxdc(), getTRLBTptime(), getTRLBFreq()*1e-2);
+            break;
+         }
+         case 0xC: {
+            printf("    0x%08x TRLC cpc:0x%x ccs:0x%x ccdiv:%u freq:%5.3fMHz\n", fData, getTRLCCpc(), getTRLCCcs(), getTRLCCcdiv(), getTRLCFreq()*1e-2);
+            break;
+         }
+         case 0x0:
+         case 0x1:
+         case 0x2:
+         case 0xf:
+         default: {
+            printf("    0x%08x TRLA platform:0x%x version:%u.%u.%u numch:%u\n", fData, getTRLAPlatformId(), getTRLAMajor(), getTRLAMinor(), getTRLASub(), getTRLANumCh());
+         }
+      }
+   }
 }
