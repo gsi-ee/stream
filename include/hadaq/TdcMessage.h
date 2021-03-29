@@ -164,6 +164,8 @@ namespace hadaq {
          inline bool isEPOC() const { return (fData & newkind_Mask3) == newkind_EPOC; }
          inline bool isTMDR() const { return (fData & newkind_Mask7) == newkind_TMDR; }
          inline bool isTMDT() const { return (fData & newkind_TMDT) == newkind_TMDT; }
+         inline bool isTRL() const { return (fData & newkind_Mask3) == newkind_TRL; }
+
 
          /** Return Epoch for EPOC marker, 28 bit */
          inline uint32_t getEPOC() const { return fData & 0xFFFFFFF; }

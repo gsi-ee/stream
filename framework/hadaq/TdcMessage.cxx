@@ -55,11 +55,13 @@ void hadaq::TdcMessage::print(double tm)
 void hadaq::TdcMessage::print4(double)
 {
    if (isHDR())
-      printf("      HDR 0x%08x\n", fData);
+      printf("    0x%08x HDR\n", fData);
    else if(isEPOC())
-      printf("      EPOC 0x%08x\n", fData);
+      printf("    0x%08x EPOC\n", fData);
    else if(isTMDR())
-      printf("      TMDR 0x%08x\n", fData);
+      printf("    0x%08x TMDR\n", fData);
    else if(isTMDT())
-      printf("      TMDT 0x%08x\n", fData);
+      printf("    0x%08x TMDT\n", fData);
+   else if (isTRL())
+      printf("    0x%08x TRL\n", fData);
 }

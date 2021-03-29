@@ -2148,7 +2148,7 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
 
          // localtm = iter.getMsgTimeCoarse();
 
-         localtm = (((uint64_t) iter.getCurEpoch()) << 11 | coarse) * hadaq::TdcMessage::CoarseUnit280(); // 280 MHz
+         localtm = (((uint64_t) iter.getCurEpoch()) << 12 | coarse) * hadaq::TdcMessage::CoarseUnit280(); // 280 MHz
 
          if (chid >= NumChannels()) {
             ADDERROR(errChId, "Channel number %u bigger than configured %u", chid, NumChannels());
