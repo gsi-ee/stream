@@ -7,17 +7,24 @@
 
 namespace hadaq {
 
-   class MonitorSubEvent : public base::SubEvent {
-   public:
-      std::vector<uint32_t> addr0;
-      std::vector<uint32_t> addr;
-      std::vector<uint32_t> values;
+   struct MessageMonitor {
+      uint32_t addr0;    // first addr
+      uint32_t addr;    // second addr
+      uint32_t value;   // value
 
-      MonitorSubEvent() {}
-      virtual ~MonitorSubEvent() {}
+      MessageMonitor(uint32_t _addr0 = 0, uint32_t _addr = 0, uint32_t _value = 0)
+      {
+         addr0 = _addr0;
+         addr = _addr;
+         value = _value;
+      }
 
-      virtual unsigned Multiplicity() const { return values.size(); }
+      bool operator<(const MessageMonitor &rhs) const
+         { return (addr0 < rhs.addr0); }
+
    };
+
+   typedef base::SubEventEx<hadaq::MessageMonitor> MonitorSubEvent;
 }
 
 #endif

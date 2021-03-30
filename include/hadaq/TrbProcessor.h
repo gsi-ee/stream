@@ -6,6 +6,7 @@
 #include "hadaq/definess.h"
 #include "hadaq/TdcProcessor.h"
 #include "hadaq/SubProcessor.h"
+#include "hadaq/MonitorSubEvent.h"
 
 #include <vector>
 
@@ -100,6 +101,10 @@ namespace hadaq {
          hadaqs::RawSubevent   fLastSubevHdr; ///<! copy of last subevent header (without data)
          unsigned fCurrentRunId;           ///<! current runid
          unsigned fCurrentEventId;         ///<! current processed event id, used in log msg
+
+
+         std::vector<hadaq::MessageMonitor>  fDummyVect; //! dummy empty vector
+         std::vector<hadaq::MessageMonitor> *pStoreVect; //! pointer on store vector
 
          static unsigned gNumChannels;     ///< default number of channels
          static unsigned gEdgesMask;       ///< default edges mask
@@ -323,6 +328,10 @@ namespace hadaq {
 
          /** Create histograms filled in HADES DAQ, when module used for HADES TDC calibration */
          void ClearDAQHistos();
+
+         virtual void Store(base::Event*);
+
+         virtual void ResetStore();
 
          hadaqs::RawSubevent& GetLastSubeventHdr() { return fLastSubevHdr; }
 
