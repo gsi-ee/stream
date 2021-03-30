@@ -171,7 +171,7 @@ bool hadaq::HldFile::ReadBuffer(void* ptr, uint32_t* sz, bool onlyevent)
 
       // not possible to read event completely
       if ( readsz != (hdr->GetPaddedSize() - sizeof(hadaqs::HadTu))) {
-         fprintf(stderr, "Reading problem\n");
+         fprintf(stderr, "HLD file reading problem: readsz %u not matches with padded size %u, abort reading\n", readsz, hdr->GetPaddedSize() - sizeof(hadaqs::HadTu));
          fEOF = true;
          return false;
       }
