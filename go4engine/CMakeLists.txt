@@ -12,4 +12,6 @@ GO4_USER_ANALYSIS(
       TFirstStepProcessor.cxx
    INCLUDE_DIRS
       ${CMAKE_SOURCE_DIR}/include
+   TARGET_DIR
+      ${CMAKE_BINARY_DIR}/lib
 )

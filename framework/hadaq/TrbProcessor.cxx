@@ -86,6 +86,7 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc, int hfi
    fPrintErrCnt = 30;
 
    fAutoCreate = false;
+   fMonitorProcess = 0;
 
    pMsg = &fMsg;
 
@@ -500,6 +501,26 @@ void hadaq::TrbProcessor::EventLog(const char *msg)
    mgr()->AddRunLog(sbuf);
 }
 
+void hadaq::TrbProcessor::ScanMonitorSubevent(hadaqs::RawSubevent* sub)
+{
+   unsigned ix = 0, trbSubEvSize = sub->GetSize() / 4 - 4;
+
+   uint32_t addr0 = 0, addr, value;
+
+   while (ix < trbSubEvSize) {
+
+      if (fMonitorProcess == 3)
+         addr0 = sub->Data(ix++);
+
+      addr = sub->Data(ix++);
+      value = sub->Data(ix++);
+   }
+
+   printf("Did MONITOR PROCESS %s ix %u\n", GetName(), ix);
+
+}
+
+
 void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3runid, unsigned trb3seqid)
 {
    // this is first scan of subevent from TRB3 data
@@ -513,6 +534,11 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
    DefFillH1(fTrigType, sub->GetTrigTypeTrb3(), 1.);
 
    DefFillH1(fSubevSize, sub->GetSize(), 1.);
+
+   if (fMonitorProcess > 0) {
+      ScanMonitorSubevent(sub);
+      return;
+   }
 
    for (auto &entry : fMap)
       entry.second->SetNewDataFlag(false);

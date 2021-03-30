@@ -86,6 +86,8 @@ namespace hadaq {
 
          bool fAutoCreate;            ///< when true, automatically crates TDC processors
 
+         unsigned fMonitorProcess;        ///< when 2 or 3, processing data from hadaq::MonitorModule
+
          TrbMessage  fMsg;            ///< used for TTree store
          TrbMessage* pMsg{nullptr};    ///< used for TTree store
 
@@ -119,6 +121,9 @@ namespace hadaq {
 
          /** Way to register sub-processor, like for TDC */
          void AddSub(SubProcessor* tdc, unsigned id);
+
+         /** Scan data, produced by hadaq::MonitorModule */
+         void ScanMonitorSubevent(hadaqs::RawSubevent* sub);
 
          /** Scan FPGA-TDC data, distribute over sub-processors */
          void ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3runid, unsigned trb3seqid);
@@ -176,6 +181,9 @@ namespace hadaq {
 
          void SetCrossProcess(bool on = true);
          bool IsCrossProcess() const { return fCrossProcess; }
+
+         void SetProcessMonitor(unsigned nwords = 3) { fMonitorProcess = nwords; }
+         bool IsProcessMonitor() const { return fMonitorProcess > 0; }
 
          /** Enable/disable ch0 store in output event for all TDC processors */
          void SetCh0Enabled(bool on = true);

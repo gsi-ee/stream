@@ -83,6 +83,7 @@
 #pragma link C++ class std::vector<hadaq::MessageFloat>+;
 #pragma link C++ struct hadaq::MessageDouble+;
 #pragma link C++ class std::vector<hadaq::MessageDouble>+;
+#pragma link C++ class hadaq::MonitorSubEvent+;
 
 // MBS data processing
 #pragma link C++ namespace mbs;

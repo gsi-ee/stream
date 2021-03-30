@@ -51,10 +51,10 @@ set(hadaq_hdrs
    hadaq/TdcSubEvent.h
    hadaq/TrbIterator.h
    hadaq/TrbProcessor.h
+   hadaq/MonitorSubEvent.h
 )
 
 STREAM_INSTALL_HEADERS(hadaq ${hadaq_hdrs})
-
 
 set(mbs_hdrs
    mbs/Processor.h
@@ -106,7 +106,7 @@ STREAM_LINK_LIBRARY(Stream
    mbs/Processor.cxx
    nx/Iterator.cxx
    nx/Message.cxx
-   nx/Processor.cxx   
+   nx/Processor.cxx
 )
 
 if(ROOT_FOUND)
@@ -119,7 +119,7 @@ if(ROOT_FOUND)
    STREAM_INSTALL_HEADERS(root ${root_hdrs})
 
    include(${ROOT_USE_FILE})
-   
+
    STREAM_LINK_LIBRARY(StreamDict
       SOURCES
          root/THookProc.cxx
@@ -127,13 +127,13 @@ if(ROOT_FOUND)
       LIBRARIES
          Stream
    )
-   
+
    ROOT_GENERATE_DICTIONARY(G__StreamDict ${base_hdrs} ${dabc_hdrs} ${get4_hdrs} ${hadaq_hdrs} ${mbs_hdrs} ${nx_hdrs} ${root_hdrs}
                             LINKDEF LinkDef.h
                             MODULE StreamDict
                             DEPENDENCIES Stream
                             NOINSTALL)
-   
+
 endif()
 
 get_property(__allHeaders GLOBAL PROPERTY STREAM_HEADER_TARGETS)
