@@ -86,8 +86,6 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc, int hfi
    fPrintErrCnt = 30;
 
    fAutoCreate = false;
-   fMonitorProcess = 0;
-   pStoreVect = nullptr;
 
    pMsg = &fMsg;
 
@@ -451,34 +449,8 @@ void hadaq::TrbProcessor::SetCrossProcess(bool on)
 
 void hadaq::TrbProcessor::CreateBranch(TTree*)
 {
-   if(mgr()->IsTriggeredAnalysis()) {
-      if (fMonitorProcess > 0) {
-         pStoreVect = &fDummyVect;
-         mgr()->CreateBranch(GetName(), "std::vector<hadaq::MessageMonitor>", (void**) &pStoreVect);
-      } else {
-         mgr()->CreateBranch(GetName(), "hadaq::TrbMessage", (void**)&pMsg);
-      }
-   }
-}
-
-void hadaq::TrbProcessor::Store(base::Event* ev)
-{
-   // in case of triggered analysis all pointers already set
-   if (!ev || IsTriggeredAnalysis()) return;
-
-   base::SubEvent* sub0 = ev->GetSubEvent(GetName());
-   if (!sub0) return;
-
-   if ((GetStoreKind() > 0) && (fMonitorProcess > 0)) {
-      hadaq::MonitorSubEvent* sub = dynamic_cast<hadaq::MonitorSubEvent*> (sub0);
-      // when subevent exists, use directly pointer on messages vector
-      pStoreVect = sub ? sub->vect_ptr() : &fDummyVect;
-   }
-}
-
-void hadaq::TrbProcessor::ResetStore()
-{
-   pStoreVect = &fDummyVect;
+   if(mgr()->IsTriggeredAnalysis())
+      mgr()->CreateBranch(GetName(), "hadaq::TrbMessage", (void**)&pMsg);
 }
 
 void hadaq::TrbProcessor::AddBufferToTDC(hadaqs::RawSubevent* sub,
@@ -527,34 +499,6 @@ void hadaq::TrbProcessor::EventLog(const char *msg)
    mgr()->AddRunLog(sbuf);
 }
 
-void hadaq::TrbProcessor::ScanMonitorSubevent(hadaqs::RawSubevent* sub)
-{
-   unsigned ix = 0, trbSubEvSize = sub->GetSize() / 4 - 4;
-
-   bool dostore = false;
-
-   if (IsStoreEnabled() && mgr()->HasTrigEvent()) {
-      dostore = true;
-      hadaq::MonitorSubEvent* subevnt = new hadaq::MonitorSubEvent();
-      mgr()->AddToTrigEvent(GetName(), subevnt);
-      pStoreVect = subevnt->vect_ptr();
-   }
-
-   uint32_t addr0 = 0, addr, value;
-
-   while (ix < trbSubEvSize) {
-
-      if (fMonitorProcess == 3)
-         addr0 = sub->Data(ix++);
-
-      addr = sub->Data(ix++);
-      value = sub->Data(ix++);
-
-      if (dostore)
-         pStoreVect->emplace_back(addr0, addr, value);
-   }
-}
-
 
 void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3runid, unsigned trb3seqid)
 {
@@ -569,11 +513,6 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
    DefFillH1(fTrigType, sub->GetTrigTypeTrb3(), 1.);
 
    DefFillH1(fSubevSize, sub->GetSize(), 1.);
-
-   if (fMonitorProcess > 0) {
-      ScanMonitorSubevent(sub);
-      return;
-   }
 
    for (auto &entry : fMap)
       entry.second->SetNewDataFlag(false);

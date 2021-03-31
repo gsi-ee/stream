@@ -52,6 +52,7 @@ set(hadaq_hdrs
    hadaq/TrbIterator.h
    hadaq/TrbProcessor.h
    hadaq/MonitorSubEvent.h
+   hadaq/MonitorProcessor.h
 )
 
 STREAM_INSTALL_HEADERS(hadaq ${hadaq_hdrs})
@@ -103,6 +104,7 @@ STREAM_LINK_LIBRARY(Stream
    hadaq/TdcProcessor.cxx
    hadaq/TrbIterator.cxx
    hadaq/TrbProcessor.cxx
+   hadaq/MonitorProcessor.cxx
    mbs/Processor.cxx
    nx/Iterator.cxx
    nx/Message.cxx

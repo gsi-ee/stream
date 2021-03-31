@@ -2,6 +2,7 @@
 #include "hadaq/HldProcessor.h"
 #include "hadaq/TdcProcessor.h"
 #include "hadaq/TrbProcessor.h"
+#include "hadaq/MonitorProcessor.h"
 
 void first()
 {
@@ -50,8 +51,8 @@ void first()
    // new hadaq::HldFilter(0x1);
 
 
-   hadaq::TrbProcessor *monitor = new hadaq::TrbProcessor(0xaaaa, hld);
-   monitor->SetProcessMonitor(3); // configure to process monitor data, 3 words per data set
+   hadaq::MonitorProcessor *monitor = new hadaq::MonitorProcessor(0xaaaa, hld);
+   monitor->SetNWords(3); // configure 3 words per data set
 
 
    // create ROOT file store

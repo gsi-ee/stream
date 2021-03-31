@@ -6,7 +6,6 @@
 #include "hadaq/definess.h"
 #include "hadaq/TdcProcessor.h"
 #include "hadaq/SubProcessor.h"
-#include "hadaq/MonitorSubEvent.h"
 
 #include <vector>
 
@@ -87,8 +86,6 @@ namespace hadaq {
 
          bool fAutoCreate;            ///< when true, automatically crates TDC processors
 
-         unsigned fMonitorProcess;        ///< when 2 or 3, processing data from hadaq::MonitorModule
-
          TrbMessage  fMsg;            ///< used for TTree store
          TrbMessage* pMsg{nullptr};    ///< used for TTree store
 
@@ -101,10 +98,6 @@ namespace hadaq {
          hadaqs::RawSubevent   fLastSubevHdr; ///<! copy of last subevent header (without data)
          unsigned fCurrentRunId;           ///<! current runid
          unsigned fCurrentEventId;         ///<! current processed event id, used in log msg
-
-
-         std::vector<hadaq::MessageMonitor>  fDummyVect; //! dummy empty vector
-         std::vector<hadaq::MessageMonitor> *pStoreVect; //! pointer on store vector
 
          static unsigned gNumChannels;     ///< default number of channels
          static unsigned gEdgesMask;       ///< default edges mask
@@ -127,11 +120,8 @@ namespace hadaq {
          /** Way to register sub-processor, like for TDC */
          void AddSub(SubProcessor* tdc, unsigned id);
 
-         /** Scan data, produced by hadaq::MonitorModule */
-         void ScanMonitorSubevent(hadaqs::RawSubevent* sub);
-
          /** Scan FPGA-TDC data, distribute over sub-processors */
-         void ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3runid, unsigned trb3seqid);
+         virtual void ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3runid, unsigned trb3seqid);
 
          void BeforeEventScan();
 
@@ -186,9 +176,6 @@ namespace hadaq {
 
          void SetCrossProcess(bool on = true);
          bool IsCrossProcess() const { return fCrossProcess; }
-
-         void SetProcessMonitor(unsigned nwords = 3) { fMonitorProcess = nwords; }
-         bool IsProcessMonitor() const { return fMonitorProcess > 0; }
 
          /** Enable/disable ch0 store in output event for all TDC processors */
          void SetCh0Enabled(bool on = true);
@@ -328,10 +315,6 @@ namespace hadaq {
 
          /** Create histograms filled in HADES DAQ, when module used for HADES TDC calibration */
          void ClearDAQHistos();
-
-         virtual void Store(base::Event*);
-
-         virtual void ResetStore();
 
          hadaqs::RawSubevent& GetLastSubeventHdr() { return fLastSubevHdr; }
 
