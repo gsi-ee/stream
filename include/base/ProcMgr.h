@@ -38,6 +38,7 @@ namespace base {
 
          typedef std::map<unsigned,StreamProc*> StreamProcMap;
 
+         std::string              fSecondName;      //! name of second.C script
          std::vector<StreamProc*> fProc;            //! all stream processors
          StreamProcMap            fMap;             //! map for fast access
          std::vector<EventProc*>  fEvProc;          //! all event processors
@@ -71,6 +72,10 @@ namespace base {
          ProcMgr* AddProcessor(Processor* proc);
 
          static ProcMgr* AddProc(Processor* proc);
+
+         void SetSecondName(const std::string &name = "second.C") { fSecondName = name; }
+         void ClearSecondName() { SetSecondName(""); }
+         const std::string &GetSecondName() const { return fSecondName; }
 
          /** Enter processor for processing data of specified kind */
          bool RegisterProc(StreamProc* proc, unsigned kind, unsigned brdid);

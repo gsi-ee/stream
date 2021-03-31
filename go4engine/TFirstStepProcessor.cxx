@@ -54,7 +54,8 @@ TFirstStepProcessor::TFirstStepProcessor(const char* name) :
       }
    }
 
-   if (gSystem->AccessPathName("second.C") == 0) {
+   std::string second_name = GetSecondName();
+   if (!second_name.empty() && (gSystem->AccessPathName(second_name.c_str()) == 0)) {
 
       if (gSystem->Getenv("STREAMSYS")==0) {
          TGo4Log::Error("STREAMSYS shell variable not configured");
@@ -64,8 +65,9 @@ TFirstStepProcessor::TFirstStepProcessor(const char* name) :
       gROOT->ProcessLine(".include $STREAMSYS/include");
       gROOT->ProcessLine(".include $GO4SYS/include");
 
-      if (ExecuteScript("second.C+") == -1) {
-         TGo4Log::Error("Cannot setup analysis with second.C script");
+      std::string exec = second_name + "+";
+      if (ExecuteScript(exec.c_str()) == -1) {
+         TGo4Log::Error("Cannot setup analysis with %s script", second_name.c_str());
          throw TGo4EventErrorException(this);
       }
    }

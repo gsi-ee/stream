@@ -1,3 +1,17 @@
+31.3.2021
+1. Let configure name of second script with base::ProcMgr::instance()->SetSecondName("any.C")
+
+
+30.3.2021
+1. Let analyze data produced with hadaq::MonitorModule of DABC. One can use
+   hadaq::MonitorProcessor, see application/monitor/ subdir
+
+
+18.3.2021
+1. Implement preliminary TDC v4 support. It should be automatically recognized and
+   processed.
+
+
 6.08.2020
 1. Implement N-points linear calibration. One can configure N points instead of 2.
    Take more memory, but improve precision for channels where linear approximation
