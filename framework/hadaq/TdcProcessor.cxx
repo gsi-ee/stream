@@ -2060,6 +2060,7 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
    hadaq::TdcMessage& msg = iter.msg();
    hadaq::TdcMessage calibr;
    unsigned ncalibr(20), lowid(0), highid(0); // clear indicate that no calibration data present
+   bool nextTMDTfailure = false;
 
    if (fSkipTdcMessages > 0) {
       unsigned skipcnt = fSkipTdcMessages;
@@ -2096,6 +2097,7 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
             FastFillH1(fMsgsKind, 1);
 
          uint32_t ep = iter.getCurEpoch();
+         nextTMDTfailure = msg.getEPOCError();
 
          if (fCompensateEpochReset) {
             ep += epoch_shift;
@@ -2142,6 +2144,11 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
             isfalling = (msg.getTMDTMode() == 1) || (msg.getTMDTMode() == 3);
             coarse = msg.getTMDTCoarse();
             fine = msg.getTMDTFine();
+
+            if (nextTMDTfailure) {
+               FastFillH1(fErrors, chid);
+               nextTMDTfailure = false;
+            }
          }
 
          if (!isrising && !isfalling) continue;

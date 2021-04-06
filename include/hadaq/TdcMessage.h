@@ -177,6 +177,7 @@ namespace hadaq {
 
          /** Return Epoch for EPOC marker, 28 bit */
          inline uint32_t getEPOC() const { return fData & 0xFFFFFFF; }
+         inline bool getEPOCError() const { return (fData & 0x10000000) != 0; }
 
          // methods for TMDT - hist message
          inline uint32_t getTMDTMode() const { return (fData >> 27) & 0xF; }
