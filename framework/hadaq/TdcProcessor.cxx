@@ -2148,6 +2148,7 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
             if (nextTMDTfailure) {
                FastFillH1(fErrors, chid);
                nextTMDTfailure = false;
+               continue;
             }
          }
 
