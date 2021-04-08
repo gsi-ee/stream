@@ -22,6 +22,8 @@ base::ProcMgr::ProcMgr() :
    fTrigEvent(0)
 {
    if (!fInstance) fInstance = this;
+
+   fSecondName = "second.C";
 }
 
 base::ProcMgr::~ProcMgr()
