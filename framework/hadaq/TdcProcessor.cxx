@@ -2329,7 +2329,7 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
 
                rec.falling_cnt++;
 
-               if (rec.rising_new_value && (rec.rising_last_tm!=0)) {
+               if (rec.rising_new_value && (rec.rising_last_tm != 0)) {
                   double tot = (localtm - rec.rising_last_tm)*1e9;
                   // TODO chid
                   DefFillH2(fhTotVsChannel, chid, tot, 1.);
