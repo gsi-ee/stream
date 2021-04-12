@@ -12,6 +12,7 @@ namespace hadaq {
 
    class SubProcessor;
    class TrbProcessor;
+   class HldProcessor;
 
    typedef std::map<unsigned,SubProcessor*> SubProcMap;
 
@@ -66,6 +67,8 @@ namespace hadaq {
          void SetPrintRawData(bool on = true) { fPrintRawData = on; }
          bool IsPrintRawData() const { return fPrintRawData; }
          bool IsCrossProcess() const { return fCrossProcess; }
+
+         HldProcessor *GetHLD() const;
 
    };
 

@@ -121,6 +121,9 @@ namespace hadaq {
          HldProcessor(bool auto_create = false, const char* after_func = "");
          virtual ~HldProcessor();
 
+         uint32_t GetEventId() const { return fMsg.seq_nr; }
+         uint32_t GetRunId() const { return fMsg.run_nr; }
+
          /** Search for specified TDC in all subprocessors */
          TdcProcessor* FindTDC(unsigned tdcid) const;
 

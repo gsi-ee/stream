@@ -56,3 +56,9 @@ void hadaq::SubProcessor::UserPreLoop()
          cnt++;
       }
 }
+
+hadaq::HldProcessor *hadaq::SubProcessor::GetHLD() const
+{
+   return fTrb ? fTrb->GetHLD() : nullptr;
+}
+

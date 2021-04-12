@@ -10,6 +10,7 @@
 #include "base/ProcMgr.h"
 
 #include "hadaq/TrbProcessor.h"
+#include "hadaq/HldProcessor.h"
 #include "hadaq/TdcSubEvent.h"
 #include <iostream>
 
@@ -1962,7 +1963,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    if (first_scan && !IsCrossProcess()) AfterFill();
 
    if (rawprint && first_scan) {
-      printf("RAW data of %s\n", GetName());
+      printf("%s RAW data event 0x%x\n", GetName(), (unsigned) (GetHLD() ? GetHLD()->GetEventId() : 0));
       TdcIterator iter;
       if (buf().format==0)
          iter.assign((uint32_t*) buf.ptr(4), buf.datalen()/4-1, false);
@@ -2518,7 +2519,7 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
    if (first_scan && !IsCrossProcess()) AfterFill();
 
    if (rawprint && first_scan) {
-      printf("RAW data of %s\n", GetName());
+      printf("%s RAW data event 0x%x\n", GetName(), (unsigned) (GetHLD() ? GetHLD()->GetEventId() : 0));
       TdcIterator iter;
       if (buf().format==0)
          iter.assign((uint32_t*) buf.ptr(4), buf.datalen()/4-1, false);

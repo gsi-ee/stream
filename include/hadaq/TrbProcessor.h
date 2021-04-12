@@ -142,6 +142,8 @@ namespace hadaq {
          TrbProcessor(unsigned brdid = 0, HldProcessor *hld = nullptr, int hfill = -1);
          virtual ~TrbProcessor();
 
+         HldProcessor *GetHLD() const { return fHldProc; }
+
          void SetHadaqCTSId(unsigned id) { fHadaqCTSId = id; }
          void SetHadaqHUBId(unsigned id1, unsigned id2=0, unsigned id3=0, unsigned id4=0)
          {
