@@ -1,10 +1,12 @@
 #include <cstdio>
 
 #include "TTree.h"
+#include "TH1.h"
 
 #include "base/EventProc.h"
 #include "base/Event.h"
 #include "hadaq/TdcSubEvent.h"
+#include "hadaq/TdcProcessor.h"
 
 const int NumChannels = 33;
 
@@ -79,11 +81,57 @@ class DebugProc : public base::EventProc {
 };
 
 
+class PrintProc : public base::EventProc {
+   protected:
+
+      std::string fTdcId;    //!< tdc id where channels will be selected "TDC_8a00"
+
+      int fCounter;
+
+   public:
+      PrintProc(const char* procname, const char* _tdcid) :
+         base::EventProc(procname),
+         fTdcId(_tdcid)
+      {
+         printf("Create %s for %s\n", GetName(), fTdcId.c_str());
+
+         fCounter = 0;
+
+         // enable storing already in constructor
+         SetStoreEnabled();
+      }
+
+
+      virtual bool Process(base::Event* ev)
+      {
+         fCounter++;
+         if (fCounter % 10000 == 0) {
+            int kRisingRefId = 2, kTotId = 5;
+
+            hadaq::TdcProcessor *tdc = dynamic_cast<hadaq::TdcProcessor *>(mgr()->FindProc(fTdcId.c_str()));
+            TH1 *hist = tdc ? (TH1 *) tdc->GetHist(1, kRisingRefId) : 0; // rising ref for channel 1
+            if (hist) printf("%s channel 1 ref mean %f rms %f\n", fTdcId.c_str(), hist->GetMean(), hist->GetRMS());
+            hist = tdc ? (TH1 *) tdc->GetHist(1, kTotId) : 0; // Tot for channel 1
+            if (hist) printf("%s channel 1 ToT mean %f rms %f\n", fTdcId.c_str(), hist->GetMean(), hist->GetRMS());
+            hist = tdc ? (TH1 *) tdc->GetHist(5, kRisingRefId) : 0; // rising ref for channel 5
+            if (hist) printf("%s channel 5 ref mean %f rms %f\n", fTdcId.c_str(), hist->GetMean(), hist->GetRMS());
+            hist = tdc ? (TH1 *) tdc->GetHist(5, kTotId) : 0; // Tot for channel 5
+            if (hist) printf("%s channel 5 ToT mean %f rms %f\n", fTdcId.c_str(), hist->GetMean(), hist->GetRMS());
+            //hist = tdc ? (TH1 *) tdc->GetHist(14, kRisingRefId) : 0; // rising ref for channel 14
+            //if (hist) printf("TDC %s channel 14 mean %f rms %f\n", fTdcId.c_str(), hist->GetMean(), hist->GetRMS());
+         }
+
+         return true;
+      }
+};
+
+
 void second()
 {
    // uncomment line to create tree for the events storage
    // base::ProcMgr::instance()->CreateStore("file.root");
 
-   new DebugProc("Debug1", "TDC_16F7");
+   // new DebugProc("Debug1", "TDC_16F7");
 
+   new PrintProc("Print", "TDC_16F7");
 }
