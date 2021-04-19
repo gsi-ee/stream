@@ -3,6 +3,27 @@
 #include "hadaq/TdcProcessor.h"
 #include "hadaq/TrbProcessor.h"
 
+
+class ClearProcessor : public base::EventProc {
+protected:
+   int fLimit;
+   int fCounter;
+public:
+
+   ClearProcessor(int limit = 10000) : base::EventProc(), fLimit(limit), fCounter(0) {}
+   virtual ~ClearProcessor() {}
+
+   virtual bool Process(base::Event* ev)
+   {
+      if (fCounter++ >= fLimit) {
+         fCounter = 0;
+         base::ProcMgr::instance()->ClearAllHistograms();
+      }
+      return true;
+   }
+};
+
+
 void first()
 {
    // base::ProcMgr::instance()->SetRawAnalysis(true);
@@ -13,6 +34,9 @@ void first()
 
    // this limits used for liner calibrations when nothing else is available
    hadaq::TdcMessage::SetFineLimits(28, 350);
+
+   // clear all histograms every 10000 events
+   // new ClearProcessor(10000);
 
    // default channel numbers and edges mask
    // 1 - use only rising edge, falling edge is ignore
