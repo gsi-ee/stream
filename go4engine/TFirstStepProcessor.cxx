@@ -401,6 +401,12 @@ void TFirstStepProcessor::SetH2Title(base::H2handle h2, const char* title)
    histo2->SetTitle(title);
 }
 
+void TFirstStepProcessor::ClearAllHistograms()
+{
+   TGo4Analysis* an = TGo4Analysis::Instance();
+   if (an)
+      an->ClearObjects("Histograms");
+}
 
 base::C1handle TFirstStepProcessor::MakeC1(const char* name, double left, double right, base::H1handle h1)
 {
@@ -467,6 +473,7 @@ bool TFirstStepProcessor::RegisterObject(TObject* tobj, const char* subfolder)
 
    return false;
 }
+
 
 // =============================================================================
 

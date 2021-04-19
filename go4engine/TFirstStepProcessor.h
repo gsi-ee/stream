@@ -44,6 +44,8 @@ class TFirstStepProcessor : public TGo4EventProcessor,
       virtual void ClearH2(base::H2handle h2);
       virtual void SetH2Title(base::H2handle h2, const char* title);
 
+      virtual void ClearAllHistograms();
+
       virtual base::C1handle MakeC1(const char* name, double left, double right, base::H1handle h1 = 0);
       virtual void ChangeC1(base::C1handle c1, double left, double right);
       virtual int TestC1(base::C1handle c1, double value, double* dist = 0);

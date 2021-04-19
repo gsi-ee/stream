@@ -120,6 +120,8 @@ namespace base {
          virtual void SetH2Title(H2handle h1, const char* title) {}
          virtual void TagH2Time(H2handle h2) {}
 
+         virtual void ClearAllHistograms() {}
+
          virtual C1handle MakeC1(const char* name, double left, double right, base::H1handle h1 = nullptr);
          virtual void ChangeC1(C1handle c1, double left, double right);
          /** Condition check 0 - inside, -1 left , +1 - right
