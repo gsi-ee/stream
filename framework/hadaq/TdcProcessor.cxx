@@ -3257,10 +3257,10 @@ void hadaq::TdcProcessor::SetTable(uint32_t *table, unsigned addr, uint32_t valu
 
 #define CRC16 0x8005
 
-uint16_t gen_crc16(const uint32_t *data, unsigned size)
+uint16_t gen_crc16(const uint32_t *data, unsigned size, unsigned last_bitlen)
 {
     uint16_t out = 0;
-    int bits_read = 0, bit_flag;
+    int bits_read = 0, bit_flag, bitlen = 32;
 
     /* Sanity check: */
     if(data == NULL)
@@ -3276,11 +3276,12 @@ uint16_t gen_crc16(const uint32_t *data, unsigned size)
 
         /* Increment bit counter: */
         bits_read++;
-        if(bits_read > 31)
+        if(bits_read >= bitlen)
         {
             bits_read = 0;
             data++;
             size--;
+            if (size == 1) bitlen = last_bitlen;
         }
 
         /* Cycle check: */
@@ -3314,6 +3315,8 @@ void hadaq::TdcProcessor::CreateV4CalibrTable(unsigned ch, uint32_t *table)
 
    for (int i=0; i<256; i++)
       table[i] = 0;
+
+   // user data 0x00 .. 0x1F empty for the moment
 
    double corse_unit = hadaq::TdcMessage::CoarseUnit280();
 
@@ -3357,7 +3360,7 @@ void hadaq::TdcProcessor::CreateV4CalibrTable(unsigned ch, uint32_t *table)
    SetTable(table, 0x1EC, res.tm_mon);    /* Month (0-11) */
    SetTable(table, 0x1ED, res.tm_year-100);  /* Year - 1900 */
 
-   uint16_t crc16 = gen_crc16(table, 0xF7);
+   uint16_t crc16 = gen_crc16(table, 0xF8, 2);
 
    SetTable(table, 0x1EF, (crc16 & 0x3F) << 2);  // first 7 bits of CRC16
    SetTable(table, 0x1EF, (crc16 >> 7) & 0x1FF);  // higher 9 bits of CRC16
@@ -3365,8 +3368,6 @@ void hadaq::TdcProcessor::CreateV4CalibrTable(unsigned ch, uint32_t *table)
    // default values on top
    for (unsigned addr = 0x1F0; addr <= 0x1FF; ++addr)
       SetTable(table, addr, addr);
-
-
 }
 
 
