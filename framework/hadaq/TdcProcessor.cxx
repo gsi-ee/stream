@@ -2219,7 +2219,7 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
          // apply correction
          localtm -= corr;
 
-         if ((chid==0) && (ch0time==0)) ch0time = localtm;
+         if ((chid==0) && (ch0time==0) && isrising) ch0time = localtm;
 
          if (IsTriggeredAnalysis()) {
             if (ch0time==0)
