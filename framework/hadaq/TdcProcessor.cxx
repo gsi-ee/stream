@@ -5,6 +5,8 @@
 #include <cstdio>
 #include <cmath>
 #include <stdarg.h>
+#include <unistd.h>
+#include <ctime>
 
 #include "base/defines.h"
 #include "base/ProcMgr.h"
@@ -26,7 +28,6 @@ unsigned hadaq::TdcProcessor::gHist2dReduce = 10;  //! reduce factor for points 
 
 unsigned hadaq::TdcProcessor::gErrorMask = 0xffffffffU;
 bool hadaq::TdcProcessor::gAllHistos = false;
-bool hadaq::TdcProcessor::gIgnoreCalibrMsgs = false;
 double hadaq::TdcProcessor::gTrigDWindowLow = 0;
 double hadaq::TdcProcessor::gTrigDWindowHigh = 0;
 bool hadaq::TdcProcessor::gUseDTrigForRef = false;
@@ -35,7 +36,8 @@ int hadaq::TdcProcessor::gHadesMonitorInterval = -111;
 int hadaq::TdcProcessor::gTotStatLimit = 100;
 double hadaq::TdcProcessor::gTotRMSLimit = 0.15;
 int hadaq::TdcProcessor::gDefaultLinearNumPoints = 2;
-
+bool hadaq::TdcProcessor::gIgnoreCalibrMsgs = false;
+bool hadaq::TdcProcessor::gStoreCalibrTables = false;
 
 unsigned BUBBLE_SIZE = 19;
 
@@ -99,6 +101,11 @@ void hadaq::TdcProcessor::SetHadesMonitorInterval(int tm)
 int hadaq::TdcProcessor::GetHadesMonitorInterval()
 {
    return gHadesMonitorInterval;
+}
+
+void hadaq::TdcProcessor::SetStoreCalibrTables(bool on)
+{
+   gStoreCalibrTables = on;
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -2855,9 +2862,12 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, bool rising, const st
       double sum1 = 0., sum2 = 0., linear = 0, exact = 0.;
 
       for (unsigned n=0;n<fNumFineBins;n++) {
-         if (n<=finemin) linear = 0.; else
-            if (n>=finemax) linear = 1.; else
-               linear = (n - finemin) / (0. + finemax - finemin);
+         if (n <= finemin)
+            linear = 0.;
+         else if (n >= finemax)
+            linear = 1.;
+         else
+            linear = (n - finemin) / (0. + finemax - finemin);
 
          sum1 += 1.;
 
@@ -3178,6 +3188,8 @@ void hadaq::TdcProcessor::StoreCalibration(const std::string& fprefix, unsigned 
 
    fclose(f);
 
+   printf("%s storing calibration in %s\n", GetName(), fname);
+
    snprintf(fname, sizeof(fname), "%s%04x.cal.info", fprefix.c_str(), fileid);
    f = fopen(fname,"w");
 
@@ -3199,8 +3211,164 @@ void hadaq::TdcProcessor::StoreCalibration(const std::string& fprefix, unsigned 
 
    fclose(f);
 
-   printf("%s storing calibration in %s\n", GetName(), fname);
+   printf("%s storing calibration info %s\n", GetName(), fname);
+
+   if (gStoreCalibrTables && fVersion4) {
+      snprintf(fname, sizeof(fname), "%s%04x.cal.table", fprefix.c_str(), fileid);
+      f = fopen(fname,"w");
+
+      if (!f) {
+         printf("%s Cannot open file %s for writing calibration tables\n", GetName(), fname);
+         return;
+      }
+
+      for (unsigned ch=0;ch<NumChannels();ch++) {
+
+         uint32_t table[256];
+
+         CreateV4CalibrTable(ch, table);
+
+         fprintf(f,"## calibration table for channel %u\n", ch);
+         for(int n=0;n<256;n++) {
+            fprintf(f, " %08x", (unsigned) table[n]);
+            if ((n % 8) == 7) fprintf(f, "\n");
+         }
+
+      }
+
+      fclose(f);
+
+      printf("%s store calibration table %s\n", GetName(), fname);
+   }
 }
+
+void hadaq::TdcProcessor::SetTable(uint32_t *table, unsigned addr, uint32_t value)
+{
+   if (addr >= 0x200) return;
+   unsigned indx = addr / 2;
+
+   value = value & 0x1FF;
+
+   if (addr % 2 == 0)
+      table[indx] = (table[indx] & 0xFFFFFE00) | value;
+   else
+      table[indx] = (table[indx] & 0xFFFC01FF) | (value << 9);
+}
+
+#define CRC16 0x8005
+
+uint16_t gen_crc16(const uint32_t *data, unsigned size)
+{
+    uint16_t out = 0;
+    int bits_read = 0, bit_flag;
+
+    /* Sanity check: */
+    if(data == NULL)
+        return 0;
+
+    while(size > 0)
+    {
+        bit_flag = out >> 15;
+
+        /* Get next bit: */
+        out <<= 1;
+        out |= (*data >> bits_read) & 1; // item a) work from the least significant bits
+
+        /* Increment bit counter: */
+        bits_read++;
+        if(bits_read > 31)
+        {
+            bits_read = 0;
+            data++;
+            size--;
+        }
+
+        /* Cycle check: */
+        if(bit_flag)
+            out ^= CRC16;
+    }
+
+    // item b) "push out" the last 16 bits
+    int i;
+    for (i = 0; i < 16; ++i) {
+        bit_flag = out >> 15;
+        out <<= 1;
+        if(bit_flag)
+            out ^= CRC16;
+    }
+
+    // item c) reverse the bits
+    uint16_t crc = 0;
+    i = 0x8000;
+    int j = 0x0001;
+    for (; i != 0; i >>=1, j <<= 1) {
+        if (i & out) crc |= j;
+    }
+
+    return crc;
+}
+
+void hadaq::TdcProcessor::CreateV4CalibrTable(unsigned ch, uint32_t *table)
+{
+   ChannelRec &rec = fCh[ch];
+
+   for (int i=0; i<256; i++)
+      table[i] = 0;
+
+   double corse_unit = hadaq::TdcMessage::CoarseUnit280();
+
+   // calibration curve
+   for (unsigned fine = 0x20; fine <= 0x1DF; ++fine) {
+      double value = rec.rising_calibr[fine];
+      // convert into range 0..508
+      long newfine = std::lround(value / corse_unit * 508);
+      if (newfine < 0)
+         newfine = 0;
+      else if (newfine > 508)
+         newfine = 508;
+
+      SetTable(table, fine, newfine);
+   }
+
+   unsigned tableid = 0;
+   SetTable(table, 0x1E0, tableid & 0x1FF);
+   SetTable(table, 0x1E1, (tableid >> 9) & 0x1FF);
+   SetTable(table, 0x1E2, (tableid >> 18) & 0x1FF);
+
+   SetTable(table, 0x1E3, (ch > 0) ? ch-1 : 0x1FF); // channel id
+
+   uint64_t serial_number = 0;
+
+   SetTable(table, 0x1E4, serial_number & 0x1FF);
+   SetTable(table, 0x1E5, (serial_number >> 9) & 0x1FF);
+   SetTable(table, 0x1E6, (serial_number >> 18) & 0x1FF);
+   SetTable(table, 0x1E7, (serial_number >> 27) & 0x1FF);
+
+   timespec tm0;
+   clock_gettime(CLOCK_REALTIME, &tm0);
+   time_t src = tm0.tv_sec;
+   struct tm res;
+   localtime_r(&src, &res);
+
+   SetTable(table, 0x1E8, res.tm_sec);    /* Seconds (0-60) */
+   SetTable(table, 0x1E9, res.tm_min);    /* Minutes (0-59) */
+   SetTable(table, 0x1EA, res.tm_hour);   /* Hours (0-23) */
+   SetTable(table, 0x1EB, res.tm_mday);   /* Day of the month (1-31) */
+   SetTable(table, 0x1EC, res.tm_mon);    /* Month (0-11) */
+   SetTable(table, 0x1ED, res.tm_year-100);  /* Year - 1900 */
+
+   uint16_t crc16 = gen_crc16(table, 0xF7);
+
+   SetTable(table, 0x1EF, (crc16 & 0x3F) << 2);  // first 7 bits of CRC16
+   SetTable(table, 0x1EF, (crc16 >> 7) & 0x1FF);  // higher 9 bits of CRC16
+
+   // default values on top
+   for (unsigned addr = 0x1F0; addr <= 0x1FF; ++addr)
+      SetTable(table, addr, addr);
+
+
+}
+
 
 bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
 {

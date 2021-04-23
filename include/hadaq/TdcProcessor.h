@@ -339,6 +339,7 @@ namespace hadaq {
          static double gTotRMSLimit;       //! allowed RMS value
          static int gDefaultLinearNumPoints;      //! number of points when linear calibration is used
          static bool gIgnoreCalibrMsgs;    //! ignore calibration messages
+         static bool gStoreCalibrTables;   //! when enabled, store calibration tables for v4 TDC
 
          /** Method will be called by TRB processor if SYNC message was found
           * One should change 4 first bytes in the last buffer in the queue */
@@ -403,6 +404,9 @@ namespace hadaq {
             return func[pnt-1] + (bin - func[pnt-2]) / (func[pnt] - func[pnt-2]) * (func[pnt+1] - func[pnt-1]);
          }
 
+         void CreateV4CalibrTable(unsigned ch, uint32_t *table);
+         void SetTable(uint32_t *table, unsigned addr, uint32_t value);
+
          void FindFMinMax(const std::vector<float> &func, int nbin, int &fmin, int &fmax);
 
          virtual void CreateBranch(TTree*);
@@ -438,6 +442,9 @@ namespace hadaq {
          static void SetDefaultLinearNumPoints(int cnt = 2);
 
          static void SetUseAsDTrig(bool on = true);
+
+         static void SetStoreCalibrTables(bool on = true);
+
 
          /** Set number of TDC messages, which should be skipped from subevent before analyzing it */
          void SetSkipTdcMessages(unsigned cnt = 0) { fSkipTdcMessages = cnt; }
@@ -532,7 +539,8 @@ namespace hadaq {
           * One could specify up-to 4 different trigger types, for instance 0x1 and 0xD
           * First argument could be use to enable all triggers (0xFFFF, default)
           * or none of the triggers (-1) */
-         void SetCalibrTrigger(int typ1 = 0xFFFF, unsigned typ2 = 0, unsigned typ3 = 0, unsigned typ4 = 0) {
+         void SetCalibrTrigger(int typ1 = 0xFFFF, unsigned typ2 = 0, unsigned typ3 = 0, unsigned typ4 = 0)
+         {
             fCalibrTriggerMask = 0;
             if (typ1<0) return;
             if (typ1 >= 0xFFFF) { fCalibrTriggerMask = 0xFFFF; return; }
@@ -544,24 +552,28 @@ namespace hadaq {
 
          /** Set calibration trigger mask directly, 1bit per each trigger type
           * if bit 0x80000000 configured, calibration will use temperature correction */
-         void SetCalibrTriggerMask(unsigned trigmask) {
+         void SetCalibrTriggerMask(unsigned trigmask)
+         {
             fCalibrTriggerMask = trigmask & 0x3FFF;
             fCalibrUseTemp = (trigmask & 0x80000000) != 0;
          }
 
          /** Set temperature coefficient, which is applied to calibration curves
           * Typical value is about 0.0044 */
-         void SetCalibrTempCoef(float coef) {
+         void SetCalibrTempCoef(float coef)
+         {
             fCalibrTempCoef = coef;
          }
 
          /** Set shift for the channel time stamp, which is added with temperature change */
-         void SetChannelTempShift(unsigned ch, float shift_per_grad) {
+         void SetChannelTempShift(unsigned ch, float shift_per_grad)
+         {
             if (ch < fCh.size()) fCh[ch].time_shift_per_grad = shift_per_grad;
          }
 
          /** Set channel TOT shift in nano-seconds, typical value is around 30 ns */
-         void SetChannelTotShift(unsigned ch, float tot_shift) {
+         void SetChannelTotShift(unsigned ch, float tot_shift)
+         {
             if (ch < fCh.size()) fCh[ch].tot_shift = tot_shift;
          }
 
