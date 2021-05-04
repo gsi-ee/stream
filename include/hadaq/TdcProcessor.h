@@ -44,6 +44,7 @@ namespace hadaq {
             bool refabs;                   //! if true, absolute difference (without channel 0) will be used
             unsigned doublerefch;          //! double reference channel
             unsigned doublereftdc;         //! tdc of double reference channel
+            unsigned refch_tmds;           //! reference channel for TMDS messages
             bool docalibr;                 //! if false, simple calibration will be used
             bool hascalibr;                //! indicate if channel has valid calibration (not simple linear)
             bool check_calibr;             //! flag used to indicate that calibration was checked
@@ -60,12 +61,14 @@ namespace hadaq {
             base::H1handle fTot;           //! histogram of time-over-threshold measurement
             base::H1handle fTot0D;         //! TOT from 0xD trigger (used for shift calibration)
             base::H1handle fFallingCalibr; //! histogram of channel calibration function
+            base::H1handle fRisingTmdsRef; //! histogram of time diff to ref channel for TMDS message
             int rising_cnt;                //! number of rising hits in last event
             int falling_cnt;               //! number of falling hits in last event
             double rising_hit_tm;          //! leading edge time, used in correlation analysis. can be first or last time
             double rising_last_tm;         //! last leading edge time
             bool rising_new_value;         //! used to calculate TOT and avoid errors after single leading and double trailing edge
             double rising_ref_tm;
+            double rising_tmds;            //! first detected rising time from TMDS
             unsigned rising_coarse;
             unsigned rising_fine;
             unsigned last_rising_fine;
@@ -95,6 +98,7 @@ namespace hadaq {
                refabs(false),
                doublerefch(0xffffff),
                doublereftdc(0xffffff),
+               refch_tmds(0xffffff),
                docalibr(true),
                hascalibr(false),
                check_calibr(false),
@@ -111,12 +115,14 @@ namespace hadaq {
                fTot(0),
                fTot0D(0),
                fFallingCalibr(0),
+               fRisingTmdsRef(0),
                rising_cnt(0),
                falling_cnt(0),
                rising_hit_tm(0.),
                rising_last_tm(0),
                rising_new_value(false),
                rising_ref_tm(0.),
+               rising_tmds(0.),
                rising_coarse(0),
                rising_fine(0),
                last_rising_fine(0),
@@ -479,9 +485,10 @@ namespace hadaq {
             return res;
          }
 
-         int GetNumHist() const { return 8; }
+         int GetNumHist() const { return 9; }
 
-         const char* GetHistName(int k) const {
+         const char* GetHistName(int k) const
+         {
             switch(k) {
                case 0: return "RisingFine";
                case 1: return "RisingCoarse";
@@ -491,11 +498,13 @@ namespace hadaq {
                case 5: return "Tot";
                case 6: return "RisingMult";
                case 7: return "FallingMult";
+               case 8: return "RisingTmdsRef";
             }
             return "";
          }
 
-         base::H1handle GetHist(unsigned ch, int k = 0) {
+         base::H1handle GetHist(unsigned ch, int k = 0)
+         {
             if (ch>=NumChannels()) return 0;
             switch (k) {
                case 0: return fCh[ch].fRisingFine;
@@ -506,6 +515,7 @@ namespace hadaq {
                case 5: return fCh[ch].fTot;
                case 6: return fCh[ch].fRisingMult;
                case 7: return fCh[ch].fFallingMult;
+               case 8: return fCh[ch].fRisingTmdsRef;
             }
             return 0;
          }
@@ -593,6 +603,12 @@ namespace hadaq {
           *   fine_counter of ref channel (shift -1 ns)
           *   coarse_counter/4 (shift -2 ns) */
          void SetRefChannel(unsigned ch, unsigned refch, unsigned reftdc = 0xffff, int npoints = 5000, double left = -10., double right = 10., bool twodim = false);
+
+
+         /** Set reference signal for time extracted from v4 TMDS message
+          * \param ch   configured channel
+          * \param refch   reference channel */
+         void SetRefTmds(unsigned ch, unsigned refch, int npoints, double left, double right);
 
          /** Fill double-reference histogram
           * Required that for both channels references are specified via SetRefChannel() command.

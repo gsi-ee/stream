@@ -164,6 +164,7 @@ namespace hadaq {
          inline bool isEPOC() const { return (fData & newkind_Mask3) == newkind_EPOC; }
          inline bool isTMDR() const { return (fData & newkind_Mask7) == newkind_TMDR; }
          inline bool isTMDT() const { return (fData & newkind_TMDT) == newkind_TMDT; }
+         inline bool isTMDS() const { return (fData & newkind_Mask4) == newkind_TMDS; }
          inline bool isTRL() const { return (fData & newkind_Mask3) == newkind_TRL; }
 
 
@@ -190,6 +191,10 @@ namespace hadaq {
          inline uint32_t getTMDRCoarse() const { return (fData >> 9) & 0xFFF; }
          inline uint32_t getTMDRFine() const { return fData & 0x1FF; }
 
+         // methods for TMDS - sampling TDC message
+         inline uint32_t getTMDSChannel() const { return (fData >> 21) & 0x7F; }
+         inline uint32_t getTMDSCoarse() const { return (fData >> 9) & 0xFFF; }
+         inline uint32_t getTMDSPattern() const { return fData & 0x1FF; }
 
          // methods for TRLA
          inline uint32_t getTRLAPlatformId() const { return (fData  >> 20) & 0xff; }

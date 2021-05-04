@@ -464,6 +464,41 @@ void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned re
    }
 }
 
+
+void hadaq::TdcProcessor::SetRefTmds(unsigned ch, unsigned refch, int npoints, double left, double right)
+{
+   if ((ch>=NumChannels()) || (refch>=NumChannels()) || (HistFillLevel()<4)) return;
+
+   // ignore invalid settings
+   if ((refch==0) || (ch == 0) || (ch == refch)) {
+      printf("%s cannot set reference between TMDS channel %u %u\n", GetName(), ch, refch);
+      return;
+   }
+
+   fCh[ch].refch_tmds = refch;
+
+   CreateChannelHistograms(ch);
+   CreateChannelHistograms(refch);
+
+   char sbuf[1024], saxis[1024], refname[512];
+   snprintf(refname, sizeof(refname), "Ch%u", fCh[ch].refch);
+
+   if ((left < right) && (npoints > 1)) {
+      SetSubPrefix2("Ch", ch);
+      if (DoRisingEdge()) {
+
+         if (fCh[ch].fRisingTmdsRef == 0) {
+            snprintf(sbuf, sizeof(sbuf), "difference to %s", refname);
+            snprintf(saxis, sizeof(saxis), "Ch%u - %s, ns", ch, refname);
+            fCh[ch].fRisingTmdsRef = MakeH1("RisingTmdsRef", sbuf, npoints, left, right, saxis);
+         }
+      }
+
+      SetSubPrefix2();
+   }
+}
+
+
 bool hadaq::TdcProcessor::SetDoubleRefChannel(unsigned ch1, unsigned ch2,
                                               int npx, double xmin, double xmax,
                                               int npy, double ymin, double ymax)
@@ -562,17 +597,18 @@ bool hadaq::TdcProcessor::EnableRefCondPrint(unsigned ch, double left, double ri
 
 void hadaq::TdcProcessor::BeforeFill()
 {
-   for (unsigned ch=0;ch<NumChannels();ch++) {
-      fCh[ch].rising_hit_tm = 0;
-      fCh[ch].rising_last_tm = 0;
-      fCh[ch].rising_ref_tm = 0.;
-      fCh[ch].rising_new_value = false;
+   for (unsigned ch = 0; ch < NumChannels(); ch++) {
+      ChannelRec &rec = fCh[ch];
+      rec.rising_hit_tm = 0;
+      rec.rising_last_tm = 0;
+      rec.rising_ref_tm = 0.;
+      rec.rising_new_value = false;
+      rec.rising_tmds = 0.;
    }
 }
 
 void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
 {
-
 
    // complete logic only when hist level is specified
    if (HistFillLevel()>=4)
@@ -580,6 +616,15 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
 
       DefFillH1(fCh[ch].fRisingMult, fCh[ch].rising_cnt, 1.); fCh[ch].rising_cnt = 0;
       DefFillH1(fCh[ch].fFallingMult, fCh[ch].falling_cnt, 1.); fCh[ch].falling_cnt = 0;
+
+      if (fCh[ch].fRisingTmdsRef && (fCh[ch].refch_tmds < NumChannels())) {
+         unsigned ref = fCh[ch].refch_tmds;
+         double tm1 = fCh[ch].rising_tmds;
+         double tm0 = fCh[ref].rising_tmds;
+         if (tm1!=0 && tm0!=0) {
+            DefFillH1(fCh[ch].fRisingTmdsRef, (tm1-tm0) * 1e9, 1.);
+         }
+      }
 
       unsigned ref = fCh[ch].refch;
       if (ref > 0xffff) continue; // no any settings for ref channel, can ignore
@@ -619,9 +664,8 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
             double diff = fCh[ch].rising_ref_tm*1e9;
 
             // when refch is 0 on same board, histogram already filled
-            if ((ref!=0) || (refproc != this)) {
+            if ((ref!=0) || (refproc != this))
                DefFillH1(fCh[ch].fRisingRef, diff, 1.);
-            }
 
             DefFillH2(fCh[ch].fRisingRef2D, diff, fCh[ch].rising_fine, 1.);
             DefFillH2(fCh[ch].fRisingRef2D, (diff-1.), refproc->fCh[ref].rising_fine, 1.);
@@ -2129,6 +2173,40 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
          continue;
       }
 
+      if (msg.isTMDS()) {
+         unsigned chid = msg.getTMDSChannel() + 1;
+         unsigned coarse = msg.getTMDSCoarse();
+         unsigned pattern = msg.getTMDSPattern();
+
+         if (chid >= NumChannels()) {
+            ADDERROR(errChId, "Channel number %u bigger than configured %u", chid, NumChannels());
+            iserr = true;
+            continue;
+         }
+
+         ChannelRec& rec = fCh[chid];
+
+         localtm = (((uint64_t) iter.getCurEpoch()) << 12 | coarse) * hadaq::TdcMessage::CoarseUnit280(); // 280 MHz
+
+         unsigned mask = 0x100, cnt = 8;
+         while (((pattern & mask) == 0) && (cnt > 0)) {
+            mask = mask >> 1;
+            cnt--;
+         }
+         localtm -= hadaq::TdcMessage::CoarseUnit280()/8*cnt;
+
+         if (IsTriggeredAnalysis()) {
+            if (ch0time==0)
+               ADDERROR(errCh0, "channel 0 time not found when first HIT in channel %u appears", chid);
+            localtm -= ch0time;
+         }
+
+         if (rec.rising_tmds == 0)
+            rec.rising_tmds = localtm;
+
+         continue;
+      }
+
       if (msg.isTMDR() || msg.isTMDT()) {
 
          unsigned chid = 0, fine = 0, coarse = 0;
@@ -2342,10 +2420,10 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
                   // TODO chid
                   DefFillH2(fhTotVsChannel, chid, tot, 1.);
                   if (tot < 0. ) {
-                      DefFillH1(fhTotMinusCounter, chid, 1.);
+                     DefFillH1(fhTotMinusCounter, chid, 1.);
                   }
                   if (tot > fTotUpperLimit) {
-                      DefFillH1(fhTotMoreCounter, chid, 1.);
+                     DefFillH1(fhTotMoreCounter, chid, 1.);
                   }
                   DefFillH1(rec.fTot, tot, 1.);
                   rec.rising_new_value = false;
