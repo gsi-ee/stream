@@ -617,11 +617,9 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
       DefFillH1(rec.fRisingMult, rec.rising_cnt, 1.); rec.rising_cnt = 0;
       DefFillH1(rec.fFallingMult, rec.falling_cnt, 1.); rec.falling_cnt = 0;
 
-
       if (rec.fRisingTmdsRef && (rec.refch_tmds < NumChannels())) {
-         unsigned ref = rec.refch_tmds;
          double tm1 = rec.rising_tmds;
-         double tm0 = fCh[ref].rising_tmds;
+         double tm0 = fCh[rec.refch_tmds].rising_tmds;
          if ((tm1!=0) && (tm0!=0))
             DefFillH1(rec.fRisingTmdsRef, (tm1-tm0) * 1e9, 1.);
       }

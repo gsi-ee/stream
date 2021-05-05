@@ -56,12 +56,12 @@ namespace hadaq {
             base::H2handle fRisingRef2D;   //! histogram
             base::H1handle fRisingRefRef;  //! difference of two ref times, connected with double ref
             base::H2handle fRisingDoubleRef; //! correlation with diff time from other channel
+            base::H1handle fRisingTmdsRef; //! histogram of time diff to ref channel for TMDS message
             base::H1handle fFallingFine;   //! histogram of all fine counters
             base::H1handle fFallingMult;   //! number of hits per event
             base::H1handle fTot;           //! histogram of time-over-threshold measurement
             base::H1handle fTot0D;         //! TOT from 0xD trigger (used for shift calibration)
             base::H1handle fFallingCalibr; //! histogram of channel calibration function
-            base::H1handle fRisingTmdsRef; //! histogram of time diff to ref channel for TMDS message
             int rising_cnt;                //! number of rising hits in last event
             int falling_cnt;               //! number of falling hits in last event
             double rising_hit_tm;          //! leading edge time, used in correlation analysis. can be first or last time
@@ -110,12 +110,12 @@ namespace hadaq {
                fRisingRef2D(0),
                fRisingRefRef(0),
                fRisingDoubleRef(0),
+               fRisingTmdsRef(0),
                fFallingFine(0),
                fFallingMult(0),
                fTot(0),
                fTot0D(0),
                fFallingCalibr(0),
-               fRisingTmdsRef(0),
                rising_cnt(0),
                falling_cnt(0),
                rising_hit_tm(0.),
