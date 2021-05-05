@@ -481,17 +481,15 @@ void hadaq::TdcProcessor::SetRefTmds(unsigned ch, unsigned refch, int npoints, d
    CreateChannelHistograms(refch);
 
    char sbuf[1024], saxis[1024], refname[512];
-   snprintf(refname, sizeof(refname), "Ch%u", fCh[ch].refch);
+   snprintf(refname, sizeof(refname), "Ch%u", refch);
 
-   if ((left < right) && (npoints > 1)) {
+   if ((left < right) && (npoints > 1) && DoRisingEdge()) {
       SetSubPrefix2("Ch", ch);
-      if (DoRisingEdge()) {
 
-         if (fCh[ch].fRisingTmdsRef == 0) {
-            snprintf(sbuf, sizeof(sbuf), "difference to %s", refname);
-            snprintf(saxis, sizeof(saxis), "Ch%u - %s, ns", ch, refname);
-            fCh[ch].fRisingTmdsRef = MakeH1("RisingTmdsRef", sbuf, npoints, left, right, saxis);
-         }
+      if (fCh[ch].fRisingTmdsRef == 0) {
+         snprintf(sbuf, sizeof(sbuf), "TMDS difference to %s", refname);
+         snprintf(saxis, sizeof(saxis), "Ch%u - %s, ns", ch, refname);
+         fCh[ch].fRisingTmdsRef = MakeH1("RisingTmdsRef", sbuf, npoints, left, right, saxis);
       }
 
       SetSubPrefix2();
@@ -614,22 +612,24 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
    if (HistFillLevel()>=4)
    for (unsigned ch=0;ch<NumChannels();ch++) {
 
-      DefFillH1(fCh[ch].fRisingMult, fCh[ch].rising_cnt, 1.); fCh[ch].rising_cnt = 0;
-      DefFillH1(fCh[ch].fFallingMult, fCh[ch].falling_cnt, 1.); fCh[ch].falling_cnt = 0;
+      ChannelRec &rec = fCh[ch];
 
-      if (fCh[ch].fRisingTmdsRef && (fCh[ch].refch_tmds < NumChannels())) {
-         unsigned ref = fCh[ch].refch_tmds;
-         double tm1 = fCh[ch].rising_tmds;
+      DefFillH1(rec.fRisingMult, rec.rising_cnt, 1.); rec.rising_cnt = 0;
+      DefFillH1(rec.fFallingMult, rec.falling_cnt, 1.); rec.falling_cnt = 0;
+
+
+      if (rec.fRisingTmdsRef && (rec.refch_tmds < NumChannels())) {
+         unsigned ref = rec.refch_tmds;
+         double tm1 = rec.rising_tmds;
          double tm0 = fCh[ref].rising_tmds;
-         if (tm1!=0 && tm0!=0) {
-            DefFillH1(fCh[ch].fRisingTmdsRef, (tm1-tm0) * 1e9, 1.);
-         }
+         if ((tm1!=0) && (tm0!=0))
+            DefFillH1(rec.fRisingTmdsRef, (tm1-tm0) * 1e9, 1.);
       }
 
-      unsigned ref = fCh[ch].refch;
+      unsigned ref = rec.refch;
       if (ref > 0xffff) continue; // no any settings for ref channel, can ignore
 
-      unsigned reftdc = fCh[ch].reftdc;
+      unsigned reftdc = rec.reftdc;
       if (reftdc>=0xffff) reftdc = GetID();
 
       TdcProcessor* refproc = 0;
@@ -646,50 +646,50 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
 
       // RAWPRINT("TDC%u Ch:%u Try to use as ref TDC%u %u proc:%p\n", GetID(), ch, reftdc, ref, refproc);
 
-      // printf("TDC %s %d %d same %d %p %p  %f %f \n", GetName(), ch, ref, (this==refproc), this, refproc, fCh[ch].rising_hit_tm, refproc->fCh[ref].rising_hit_tm);
+      // printf("TDC %s %d %d same %d %p %p  %f %f \n", GetName(), ch, ref, (this==refproc), this, refproc, rec.rising_hit_tm, refproc->fCh[ref].rising_hit_tm);
 
       if ((refproc!=0) && ((ref>0) || (refproc!=this)) && (ref<refproc->NumChannels()) && ((ref!=ch) || (refproc!=this))) {
-         if (DoRisingEdge() && (fCh[ch].rising_hit_tm != 0) && (refproc->fCh[ref].rising_hit_tm != 0)) {
+         if (DoRisingEdge() && (rec.rising_hit_tm != 0) && (refproc->fCh[ref].rising_hit_tm != 0)) {
 
-            double tm = fCh[ch].rising_hit_tm; // relative time to ch0 on same TDC
+            double tm = rec.rising_hit_tm; // relative time to ch0 on same TDC
             double tm_ref = refproc->fCh[ref].rising_hit_tm; // relative time to ch0 on referenced TDC
 
-            if ((refproc!=this) && (ch>0) && (ref>0) && fCh[ch].refabs) {
+            if ((refproc!=this) && (ch>0) && (ref>0) && rec.refabs) {
                tm += fCh[0].rising_hit_tm; // produce again absolute time for channel
                tm_ref += refproc->fCh[0].rising_hit_tm; // produce again absolute time for reference channel
             }
 
-            fCh[ch].rising_ref_tm = tm - tm_ref;
+            rec.rising_ref_tm = tm - tm_ref;
 
-            double diff = fCh[ch].rising_ref_tm*1e9;
+            double diff = rec.rising_ref_tm*1e9;
 
             // when refch is 0 on same board, histogram already filled
-            if ((ref!=0) || (refproc != this))
-               DefFillH1(fCh[ch].fRisingRef, diff, 1.);
+            if ((ref != 0) || (refproc != this))
+               DefFillH1(rec.fRisingRef, diff, 1.);
 
-            DefFillH2(fCh[ch].fRisingRef2D, diff, fCh[ch].rising_fine, 1.);
-            DefFillH2(fCh[ch].fRisingRef2D, (diff-1.), refproc->fCh[ref].rising_fine, 1.);
-            DefFillH2(fCh[ch].fRisingRef2D, (diff-2.), fCh[ch].rising_coarse/4, 1.);
+            DefFillH2(rec.fRisingRef2D, diff, rec.rising_fine, 1.);
+            DefFillH2(rec.fRisingRef2D, (diff-1.), refproc->fCh[ref].rising_fine, 1.);
+            DefFillH2(rec.fRisingRef2D, (diff-2.), rec.rising_coarse/4, 1.);
             RAWPRINT("Difference rising %04x:%02u\t %04x:%02u\t %12.3f\t %12.3f\t %7.3f  coarse %03x - %03x = %4d  fine %03x %03x \n",
                   GetID(), ch, reftdc, ref,
                   tm*1e9,  tm_ref*1e9, diff,
-                  fCh[ch].rising_coarse, refproc->fCh[ref].rising_coarse, (int) (fCh[ch].rising_coarse - refproc->fCh[ref].rising_coarse),
-                  fCh[ch].rising_fine, refproc->fCh[ref].rising_fine);
+                  rec.rising_coarse, refproc->fCh[ref].rising_coarse, (int) (rec.rising_coarse - refproc->fCh[ref].rising_coarse),
+                  rec.rising_fine, refproc->fCh[ref].rising_fine);
 
             // make double reference only for local channels
-            // if ((fCh[ch].doublerefch < NumChannels()) &&
-            //    (fCh[ch].fRisingDoubleRef != 0) &&
-            //    (fCh[fCh[ch].doublerefch].rising_ref_tm != 0)) {
-            //   DefFillH1(fCh[ch].fRisingDoubleRef, diff, fCh[fCh[ch].doublerefch].rising_ref_tm*1e9);
+            // if ((rec.doublerefch < NumChannels()) &&
+            //    (rec.fRisingDoubleRef != 0) &&
+            //    (fCh[rec.doublerefch].rising_ref_tm != 0)) {
+            //   DefFillH1(rec.fRisingDoubleRef, diff, fCh[rec.doublerefch].rising_ref_tm*1e9);
             // }
          }
       }
 
       // fill double-reference histogram, using data from any reference TDC
-      if ((fCh[ch].doublerefch < NumChannels()) && ((fCh[ch].fRisingDoubleRef!=0) || (fCh[ch].fRisingRefRef!=0))) {
+      if ((rec.doublerefch < NumChannels()) && ((rec.fRisingDoubleRef!=0) || (rec.fRisingRefRef!=0))) {
 
-         ref = fCh[ch].doublerefch;
-         reftdc = fCh[ch].doublereftdc;
+         ref = rec.doublerefch;
+         reftdc = rec.doublereftdc;
          if (reftdc>=0xffff) reftdc = GetID();
          refproc = 0;
          if (reftdc == GetID()) refproc = this; else
@@ -702,9 +702,9 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
          }
 
          if ((refproc!=0) && (ref<refproc->NumChannels()) && ((ref!=ch) || (refproc!=this))) {
-            if ((fCh[ch].rising_ref_tm != 0) && (refproc->fCh[ref].rising_ref_tm != 0)) {
-               DefFillH1(fCh[ch].fRisingRefRef, (fCh[ch].rising_ref_tm - refproc->fCh[ref].rising_ref_tm)*1e9, 1.);
-               DefFillH2(fCh[ch].fRisingDoubleRef, fCh[ch].rising_ref_tm*1e9, refproc->fCh[ref].rising_ref_tm*1e9, 1.);
+            if ((rec.rising_ref_tm != 0) && (refproc->fCh[ref].rising_ref_tm != 0)) {
+               DefFillH1(rec.fRisingRefRef, (rec.rising_ref_tm - refproc->fCh[ref].rising_ref_tm)*1e9, 1.);
+               DefFillH2(rec.fRisingDoubleRef, rec.rising_ref_tm*1e9, refproc->fCh[ref].rising_ref_tm*1e9, 1.);
             }
          }
       }
