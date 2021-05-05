@@ -38,19 +38,20 @@ namespace base {
 
          typedef std::map<unsigned,StreamProc*> StreamProcMap;
 
-         std::string              fSecondName;      //! name of second.C script
-         std::vector<StreamProc*> fProc;            //! all stream processors
-         StreamProcMap            fMap;             //! map for fast access
-         std::vector<EventProc*>  fEvProc;          //! all event processors
-         GlobalMarksQueue         fTriggers;        //!< list of current triggers
-         unsigned                 fTimeMasterIndex; //!< processor index, which time is used for all other subsystems
-         AnalysisKind             fAnalysisKind;    //!< ignore all events, only single scan, not output events
-         TTree                   *fTree{nullptr};   //!< abstract tree pointer, will be used in ROOT implementation
-         int                      fDfltHistLevel;   //!< default histogram fill level for any new created processor
-         int                      fDfltStoreKind;   //!< default store kind for any new created processor
-         base::Event             *fTrigEvent{nullptr}; //!< current event, filled when performing triggered analysis
+         std::string              fSecondName;         ///<! name of second.C script
+         std::vector<StreamProc*> fProc;               ///<! all stream processors
+         StreamProcMap            fMap;                ///<! map for fast access
+         std::vector<EventProc*>  fEvProc;             ///<! all event processors
+         GlobalMarksQueue         fTriggers;           ///<!< list of current triggers
+         unsigned                 fTimeMasterIndex;    ///<! processor index, which time is used for all other subsystems
+         AnalysisKind             fAnalysisKind;       ///<! ignore all events, only single scan, not output events
+         TTree                   *fTree{nullptr};      ///<! abstract tree pointer, will be used in ROOT implementation
+         int                      fDfltHistLevel;      ///<! default histogram fill level for any new created processor
+         int                      fDfltStoreKind;      ///<! default store kind for any new created processor
+         base::Event             *fTrigEvent{nullptr}; ///<! current event, filled when performing triggered analysis
+         int                      fDebug{0};            ///<! debug level
 
-         static ProcMgr* fInstance;                 //!
+         static ProcMgr* fInstance;                     ///<! instance
 
          virtual unsigned SyncIdRange() const { return 0x1000000; }
 
@@ -86,6 +87,9 @@ namespace base {
 
          /** Set histogram fill level for all processors */
          void SetHistFilling(int lvl);
+
+         void SetDebug(int lvl = 0) { fDebug = lvl; }
+         int GetDebug() const { return fDebug; }
 
          /** Set store kind for all processors */
          virtual void SetStoreKind(unsigned kind = 1);
