@@ -381,6 +381,7 @@ void hadaq::TdcProcessor::ConfigureToTByHwType(unsigned hwtype)
       case 0x95: SetToTRange(30., 50., 80.); break; // TRB3sc
       case 0x96: SetToTRange(20., 15., 60.); break; // DiRich
       case 0xA5: SetToTRange(20., 15., 60.); break; // TRB5sc
+      case 0xA7: SetToTRange(20., 15., 60.); break; // ???
       default: fToTdflt = false; recognized = false; // keep as is but mark as not default value
    }
 
