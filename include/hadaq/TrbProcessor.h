@@ -113,8 +113,6 @@ namespace hadaq {
           * TRB3 not yet able to perform trigger selection */
          virtual bool doTriggerSelection() const { return false; }
 
-         void SetAutoCreate(bool on = true) { fAutoCreate = on; }
-
          void AccountTriggerId(unsigned id);
 
          /** Way to register sub-processor, like for TDC */
@@ -143,6 +141,9 @@ namespace hadaq {
          virtual ~TrbProcessor();
 
          HldProcessor *GetHLD() const { return fHldProc; }
+
+         /** enable autocreation mode if necessary, works for single event */
+         void SetAutoCreate(bool on = true) { fAutoCreate = on; }
 
          void SetHadaqCTSId(unsigned id) { fHadaqCTSId = id; }
          void SetHadaqHUBId(unsigned id1, unsigned id2=0, unsigned id3=0, unsigned id4=0)

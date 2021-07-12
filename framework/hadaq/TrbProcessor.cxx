@@ -861,6 +861,10 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
       ClearFastTDCVector();
    }
 
+   // auto creation works only for one event
+   if (fAutoCreate)
+      fAutoCreate = false;
+
    if (fUseTriggerAsSync) {
       fMsg.fTrigSyncIdFound = true;
       fMsg.fTrigSyncId = trb3seqid;
