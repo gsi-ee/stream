@@ -141,19 +141,13 @@ namespace hadaq {
          unsigned NumberOfTRB() const;
          TrbProcessor* GetTRB(unsigned indx) const;
 
-         /** Configure calibration for all components
-          *  \par name  file prefix for calibrations. Could include path. Will be extend for individual TDC
-          *  \par period how often automatic calibration will be performed. 0 - never, -1 - at the end of run
-          *  \par trig specifies trigger type used for calibration (0xFFFF means all kind of triggers) */
-         void ConfigureCalibration(const std::string& name, long period, unsigned trig = 0xFFFF);
+         void ConfigureCalibration(const std::string& fileprefix, long period, unsigned trig = 0xFFFF);
 
          /** Set event type, only used in the analysis */
          void SetEventTypeSelect(unsigned evid) { fEventTypeSelect = evid; }
 
-         /** Set trigger window not only for itself, bit for all subprocessors */
          virtual void SetTriggerWindow(double left, double right);
 
-         /** Enable/disable store for HLD and all TRB processors */
          virtual void SetStoreKind(unsigned kind = 1);
 
          /** Scan all messages, find reference signals */

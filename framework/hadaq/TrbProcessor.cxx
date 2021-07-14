@@ -20,6 +20,16 @@ unsigned hadaq::TrbProcessor::gTDCMax = 0x0FFF;
 unsigned hadaq::TrbProcessor::gHUBMin = 0x8100;
 unsigned hadaq::TrbProcessor::gHUBMax = 0x81FF;
 
+/** Set defaults for the next creation of TDC processors.
+ *
+ * \param numch provides number of channels and edges.
+ * \param edges define how falling edges are used
+ * - 1 - use only rising edge, falling edge is ignore
+ * - 2 - falling edge enabled and fully independent from rising edge
+ * - 3 - falling edge enabled and uses calibration from rising edge
+ * - 4 - falling edge enabled and common statistic is used for calibration
+ * \param ignore_sync defines if sync messages are ignored (true by default) */
+
 void hadaq::TrbProcessor::SetDefaults(unsigned numch, unsigned edges, bool ignore_sync)
 {
    gNumChannels = numch;

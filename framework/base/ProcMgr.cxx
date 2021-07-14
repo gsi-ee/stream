@@ -78,7 +78,13 @@ void base::ProcMgr::DeleteAllProcessors()
 }
 
 /////////////////////////////////////////////////////////////////////////
-//// Set histogram fill level for all processors
+/// Set histogram fill level for all processors.
+/// In HADAQ plugin following values are supported:
+/// * 0 - no histograms
+/// * 1 - basic histograms in HLD/TRB
+/// * 2 - generic histograms for each TDC
+/// * 3 - include histograms for each active TDC channel
+/// * 4 - also special time reference histograms for channels (when configured)
 
 void base::ProcMgr::SetHistFilling(int lvl)
 {

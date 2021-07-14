@@ -117,7 +117,9 @@ namespace base {
          virtual bool DoLog() { return false; }
          virtual void PrintLog(const char *msg);
 
+         /** Set if histograms folders should be created in sorted alphabetical order, default false */
          virtual void SetSortedOrder(bool = true) {}
+         /** Returns true if histograms folders created in sorted alphabetical order */
          virtual bool IsSortedOrder() { return false; }
 
          virtual H1handle MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle = 0);
@@ -200,7 +202,8 @@ namespace base {
          /** Analyze new data, if triggered analysis configured - immediately produce new event */
          bool AnalyzeNewData(base::Event* &evt);
 
-         bool HasTrigEvent() const { return fTrigEvent!=0; }
+         /** Returns true if trigger even exists */
+         bool HasTrigEvent() const { return fTrigEvent != nullptr; }
 
          bool AddToTrigEvent(const std::string& name, base::SubEvent* sub);
 

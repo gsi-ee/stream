@@ -14,6 +14,12 @@
 
 #define RAWPRINT( args ...) if(IsPrintRawData()) printf( args )
 
+////////////////////////////////////////////////////////////////////////////////////
+/// constructor
+/// \param auto_create enables automatic TRB and TDC creation based on setting,
+///    see \ref hadaq::TrbProcessor::SetTDCRange and \ref hadaq::TrbProcessor::SetHUBRange
+/// \param after_func function name which will be called after all TRBs and TDCs are created
+
 hadaq::HldProcessor::HldProcessor(bool auto_create, const char* after_func) :
    base::StreamProc("HLD", 0, false),
    fMap(),
@@ -40,11 +46,11 @@ hadaq::HldProcessor::HldProcessor(bool auto_create, const char* after_func) :
    fHitsPerTDCChannel = nullptr; // HADAQ hits per TDC channel
    fErrPerTDCChannel = nullptr;  // HADAQ errorsvper TDC channel
    fCorrPerTDCChannel = nullptr; // corrections
-   fQaFinePerTDCChannel = nullptr;  ///< HADAQ QA fine time per TDC channel
-   fQaToTPerTDCChannel = nullptr;  ///< HADAQ QA ToT per TDC channel
-   fQaEdgesPerTDCChannel = nullptr;  ///< HADAQ QA edges per TDC channel
-   fQaErrorsPerTDCChannel = nullptr;  ///< HADAQ QA errors per TDC channel
-   fQaSummary = nullptr; ///< HADAQ QA summary histogramm
+   fQaFinePerTDCChannel = nullptr;  // HADAQ QA fine time per TDC channel
+   fQaToTPerTDCChannel = nullptr;  // HADAQ QA ToT per TDC channel
+   fQaEdgesPerTDCChannel = nullptr;  // HADAQ QA edges per TDC channel
+   fQaErrorsPerTDCChannel = nullptr;  // HADAQ QA errors per TDC channel
+   fQaSummary = nullptr; // HADAQ QA summary histogramm
    // printf("Create HldProcessor %s\n", GetName());
 
    // this is raw-scan processor, therefore no synchronization is required for it
@@ -53,6 +59,9 @@ hadaq::HldProcessor::HldProcessor(bool auto_create, const char* after_func) :
    // only raw scan, data can be immediately removed
    SetRawScanOnly();
 }
+
+////////////////////////////////////////////////////////////////////////////////////
+/// destructor
 
 hadaq::HldProcessor::~HldProcessor()
 {
@@ -111,15 +120,31 @@ hadaq::TdcProcessor* hadaq::HldProcessor::GetTDC(unsigned indx) const
    return 0;
 }
 
-void hadaq::HldProcessor::ConfigureCalibration(const std::string& name, long period, unsigned trigmask)
+////////////////////////////////////////////////////////////////////////////////////////
+/// Configure calibration modes
+/// \param fileprefix is filename prefix for calibration files (empty string - no file I/O)
+/// \param period is hits count for autocalibration
+///   - 0 - only load calibration
+///   - -1 - accumulate data and store calibrations only at the end
+///   - -77 - accumulate data and produce liner calibrations only at the end
+///   - >0 - automatic calibration after N hits in each active channel
+///         if value ends with 77 like 10077 linear calibration will be calculated
+/// \param trigmask is trigger type mask used for calibration
+///  - (1 << 0xD) - special 0XD trigger with internal pulser, used also for TOT calibration
+///  - 0x3FFF - all kinds of trigger types will be used for calibration (excluding 0xE and 0xF)
+///  - 0x80000000 in mask enables usage of temperature correction
+
+void hadaq::HldProcessor::ConfigureCalibration(const std::string& fileprefix, long period, unsigned trigmask)
 {
-   fCalibrName = name;
+   fCalibrName = fileprefix;
    fCalibrPeriod = period;
    fCalibrTriggerMask = trigmask;
    for (TrbProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
       iter->second->ConfigureCalibration(name, period, trigmask);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////
+/// Set trigger window not only for itself, but for all subprocessors
 
 void hadaq::HldProcessor::SetTriggerWindow(double left, double right)
 {
@@ -129,6 +154,8 @@ void hadaq::HldProcessor::SetTriggerWindow(double left, double right)
       iter->second->SetTriggerWindow(left, right);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////
+/// Set store kind for all sub processors
 
 void hadaq::HldProcessor::SetStoreKind(unsigned kind)
 {
