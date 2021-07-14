@@ -97,23 +97,28 @@ namespace base {
 
          H1handle MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle = 0);
 
+         /** Fill 1-D histogram */
          inline void FillH1(H1handle h1, double x, double weight = 1.)
            { DefFillH1(h1,x,weight); }
 
-         /** Can only be used where index is same as x itself, no range checks are performed */
+         /** \brief Fast fill 1-D histogram
+          * \details Can only be used where index is same as x itself, no range checks are performed */
          inline void FastFillH1(H1handle h1, int x, double weight = 1.)
             { DefFastFillH1(h1,x, weight); }
 
+         /** Get bin content of 1-D histogram */
          inline double GetH1Content(H1handle h1, int nbin)
          {
             return h1 ? mgr()->GetH1Content(h1, nbin) : 0.;
          }
 
+         /** Set bin content of 1-D histogram */
          inline void SetH1Content(H1handle h1, int nbin, double v = 0.)
          {
             if (h1) mgr()->SetH1Content(h1, nbin, v);
          }
 
+         /** Get bins numbers for 1-D histogram */
          inline int GetH1NBins(H1handle h1)
          {
             int nbins = 0;
@@ -121,18 +126,20 @@ namespace base {
             return isGood ? nbins : 0;
          }
 
-
+         /** Clear 1-D histogram */
          inline void ClearH1(H1handle h1)
          {
             if (h1) mgr()->ClearH1(h1);
          }
 
+         /** Copy 1-D histogram from src to tgt */
          inline void CopyH1(H1handle tgt, H1handle src)
          {
             mgr()->CopyH1(tgt, src);
          }
 
-         inline void SetH1Title(H1handle h1, const char* title)
+         /** Set 1-D histogram title */
+         inline void SetH1Title(H1handle h1, const char *title)
          {
             mgr()->SetH1Title(h1, title);
          }

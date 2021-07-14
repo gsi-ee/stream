@@ -112,6 +112,9 @@ void base::Processor::SetSubPrefix2(const char* name, int indx, const char* subn
    }
 }
 
+/////////////////////////////////////////////////////////////////////////
+/// Adds processor prefix to histogram name and calls \ref base::ProcMgr::MakeH1 method
+
 base::H1handle base::Processor::MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle)
 {
    if ((mgr()==0) || !IsHistFilling()) return 0;
@@ -130,6 +133,9 @@ base::H1handle base::Processor::MakeH1(const char* name, const char* title, int 
    return mgr()->MakeH1(hname.c_str(), htitle.c_str(), nbins, left, right, xtitle);
 }
 
+
+/////////////////////////////////////////////////////////////////////////
+/// Adds processor prefix to histogram name and calls \ref base::ProcMgr::MakeH2 method
 
 base::H2handle base::Processor::MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options)
 {

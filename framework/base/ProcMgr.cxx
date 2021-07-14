@@ -89,6 +89,20 @@ void base::ProcMgr::SetStoreKind(unsigned kind)
       evproc->SetStoreKind(kind);
 }
 
+/////////////////////////////////////////////////////////////////////////
+/// Creates 1-dimensional histogram
+/// \param name  histogram name
+/// \param title histogram title
+/// \param nbins number of histogram bins
+/// \param left left range of histogram
+/// \param right right range of histogram
+/// \param xtitle axis title
+///
+/// Parameter xtitle used to deliver different optional arguments
+/// syntax will be like: arg_name:arg_value;arg2_name:arg2_value;
+/// For instance, labels for each bin:
+///      xbin:EPOCH,HIT,SYNC,AUX,,,SYS;
+
 base::H1handle base::ProcMgr::MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle)
 {
    if (!InternalHistFormat()) return nullptr;
@@ -167,6 +181,22 @@ void base::ProcMgr::CopyH1(H1handle tgt, H1handle src)
    if (atgt[0] == asrc[0])
       for (int n=0;n<atgt[0]+2;n++) atgt[n+3] = asrc[n+3];
 }
+
+/////////////////////////////////////////////////////////////////////////
+/// Creates 2-dimensional histogram
+/// \param name  histogram name
+/// \param title histogram title
+/// \param nbins1 number of histogram bins on X axis
+/// \param left1 left X range
+/// \param right1 right X range
+/// \param nbins2 number of histogram bins on Y axis
+/// \param left2 left Y range
+/// \param right2 right Y range
+/// \param options typically X and Y axis title like "x_values;y_values"
+///
+/// Parameter options can also be used to deliver different optional arguments.
+/// Syntax will be like: arg_name:arg_value;arg2_name:arg2_value;
+/// For instance, labels for each x bin: "xbin:EPOCH,HIT,SYNC,AUX,,,SYS;"
 
 
 base::H2handle base::ProcMgr::MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options)
