@@ -1,3 +1,10 @@
+/// \file
+/// \ingroup stream_examples
+///
+/// \brief This is example of automatic TDC creation
+/// \verbinclude autotdc/first.C
+
+
 #include "base/ProcMgr.h"
 #include "hadaq/HldProcessor.h"
 #include "hadaq/TdcProcessor.h"

@@ -1,4 +1,10 @@
-// this is example for
+/// \file
+/// \ingroup stream_examples
+///
+/// \brief This is example of custom processor of HADAQ sub-event
+/// \verbinclude custom/custom.h
+/// \verbinclude custom/first.C
+
 
 #include <cstdlib>
 
@@ -135,88 +141,18 @@ extern "C" void after_create(hadaq::HldProcessor* hld)
    for (unsigned k=0;k<hld->NumberOfTDC();k++) {
       hadaq::TdcProcessor* tdc = hld->GetTDC(k);
       if (tdc==0) continue;
-//     printf("Temperature: %f", tdc-GetCalibrTemp() );
       if (firsttdc == 0) firsttdc = tdc->GetID();
 
       printf("Configure %s!\n", tdc->GetName());
 
-      // try to build abs time difference between 0 channels
-      //      if (tdc->GetID() != firsttdc)
-      //   tdc->SetRefChannel(0, 0, (0x70000 | firsttdc), 6000,  -20., 20.);
-//tdc->DisableCalibrationFor(1);
-//tdc->DisableCalibrationFor(2);
       tdc->SetUseLastHit(false);
-/*      tdc->SetLinearCalibration(1, 16, 478);
-      tdc->SetLinearCalibration(2, 16, 478);
-      tdc->SetLinearCalibration(3, 16, 478);
-      tdc->SetLinearCalibration(4, 16, 480);
-      tdc->SetLinearCalibration(5, 16, 479);
-      tdc->SetLinearCalibration(6, 16, 475);
-      tdc->SetLinearCalibration(7, 16, 475);
-      tdc->SetLinearCalibration(8, 15, 475);
-      tdc->SetLinearCalibration(9, 16, 474);
-      tdc->SetLinearCalibration(10, 16, 478);
-      tdc->SetLinearCalibration(11, 16, 479);
-      tdc->SetLinearCalibration(12, 16, 475);
-     tdc->SetLinearCalibration(13, 16, 504);
-      tdc->SetLinearCalibration(14, 16, 502);
-      tdc->SetLinearCalibration(15, 16, 501);
-      tdc->SetLinearCalibration(16, 16, 504);
-*/
-      // }
-  for (int i=2;i<52;i++) {
-    tdc->SetRefChannel(i,i-1, tdc->GetID(), 30000, -50, 50); // LED DIFF
-    }
+      for (int i=2;i<52;i++) {
+         tdc->SetRefChannel(i,i-1, tdc->GetID(), 30000, -50, 50); // LED DIFF
+       }
 
-  if (tdc->GetID() == 0x0507) {
-    tdc->SetToTRange(20, 15., 60.);
-  }
+       if (tdc->GetID() == 0x0507) {
+          tdc->SetToTRange(20, 15., 60.);
+       }
+   }
 
-//       if (tdc->GetID() == 0x0600) {
-//         tdc->SetRefChannel(13,1, 0xffff, 30000, -2500, 2500); // LED DIFF
-//         tdc->SetRefChannel(14,1, 0xffff, 30000, -2500, 2500); // LED DIFF
-//       }
-
-//       if (tdc->GetID() == 0x0550) {
-//         tdc->SetToTRange(20, 15., 60.);
-//         for (int i=2;i<33;i++) {
-// //	        tdc->SetRefChannel(i,i-1, 0xf3d1, 20000, -150, 150); // LED DIFF
-// 	       tdc->SetRefChannel(i,1, 0x0550, 3000, -15, 15); // LED DIFF
-//         }
-//       }
-//       if (tdc->GetID() == 0x0123) {
-//         for (int i=2;i<33;i++) {
-// //	        tdc->SetRefChannel(i,i-1, 0xf3d1, 20000, -150, 150); // LED DIFF
-// 	       tdc->SetRefChannel(i,1, 0x0123, 3000, -15, 15); // LED DIFF
-//
-//         }
-       //    printf("Configure ref ******************\n");
-	     //   tdc->SetRefChannel(3,2, 0x1001, 3000, -150, 150); // LED DIFF
-
-      }
-
-
-      /*if (tdc->GetID() == 0x0501) {
-	//tdc->SetRefChannel(1,0, 0x1133, 6000, -200, -100); // LED DIFF
-	tdc->SetRefChannel(,2, 0x0501, 6000, -20, 20); // LED DIFF
-	tdc->SetRefChannel(11,1, 0x1133, 6000, -20, 20); // LED DIFF
-      }*/
-
-//       if (tdc->GetID() == 0x0501) {
-//         for (unsigned nch=1;nch<tdc->NumChannels();nch++) {
-//           if(nch != 2) {
-//             tdc->SetRefChannel(nch,2, 0x0501, 500000, -100, 1000); // LED DIFF
-//             }
-//         }
-
-          //tdc->SetRefChannel(1,31, 0x1130, 6000, -20, 20); // LED DIFF
-
-	//tdc->SetRefChannel(11,1, 0x1133, 6000, -20, 20); // LED DIFF
-//       }
-//    } // end of TDC loop
-
-
-  // }
 }
-
-
