@@ -76,32 +76,32 @@ parallel data streams.
 1. Precise time calibration, was missing completely in onlinemonitor.
    For a moment simple linear interpolation between two syncs are used.
    Now, when all local times are continuous, it is possible to implement
-   calibration coefficients with smoothing instead of simple interpolations.  
+   calibration coefficients with smoothing instead of simple interpolations.
 2. More complex rules for Region-of-Interests (RoI) definitions.
    One could use correlation between several channels for that.
 3. Regular time intervals - model of time slices. In such case
    all data (with some duplication) should be delivered to next step
- 
+
 
 ## How to use package
 
 1. Checkout repository with command
 
     [shell] svn co https://subversion.gsi.de/go4/app/stream stream
-  
+
 2. If required, configure ROOT and Go4 shell variables.
    Typically one should call go4login initialization script
-   
-    [shell] . go4login 
-   
+
+    [shell] . go4login
+
    Project can be compiled without ROOT and Go4, there is run engine
    provided with DABC framework
-    
+
 3. Compile project:
 
     [shell] cd stream
     [shell] make all
-   
+
 4. Use generated streamlogin script to set variables:
 
     [shell] . streamlogin
@@ -115,8 +115,12 @@ parallel data streams.
 
 6. Results histogram can be seen from autosave file
 
-    [shell] go4 Go4AnalysisASF.root    
-   
+    [shell] go4 Go4AnalysisASF.root
+
+## How to generate documentatio
+
+    doxygen doc/doxygen.config
+
 
 For any questions or suggestions contact:
 S.Linev (at) gsi.de
