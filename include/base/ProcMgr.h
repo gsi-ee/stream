@@ -78,21 +78,32 @@ namespace base {
 
          static ProcMgr* AddProc(Processor* proc);
 
+         /** Set name of second macro, which executed after first.C. Normally it is second.C */
          void SetSecondName(const std::string &name = "second.C") { fSecondName = name; }
+
+         /** Clear name of second macro, will not be executed at all */
          void ClearSecondName() { SetSecondName(""); }
+
+         /** Returns number of second macro */
          const std::string &GetSecondName() const { return fSecondName; }
 
          /** Enter processor for processing data of specified kind */
          bool RegisterProc(StreamProc* proc, unsigned kind, unsigned brdid);
 
+         /** Get number of registered processors */
          unsigned NumProc() const { return fProc.size(); }
-         StreamProc* GetProc(unsigned n) const { return n<NumProc() ? fProc[n] : nullptr; }
+
+         /** Get processor by sequence number */
+         StreamProc* GetProc(unsigned n) const { return n < NumProc() ? fProc[n] : nullptr; }
+
+         /** Find processor by name */
          StreamProc* FindProc(const char* name) const;
 
-         /** Set histogram fill level for all processors */
          void SetHistFilling(int lvl);
 
+         /** Set debug level */
          void SetDebug(int lvl = 0) { fDebug = lvl; }
+         /** Returns debug level */
          int GetDebug() const { return fDebug; }
 
          /** Set store kind for all processors */
@@ -132,8 +143,6 @@ namespace base {
 
          virtual C1handle MakeC1(const char* name, double left, double right, base::H1handle h1 = nullptr);
          virtual void ChangeC1(C1handle c1, double left, double right);
-         /** Condition check 0 - inside, -1 left , +1 - right
-          * If variable dist specified, will contain distance to left (-1) or right (+1) boundary   */
          virtual int TestC1(C1handle c1, double value, double *dist = nullptr);
          virtual double GetC1Limit(C1handle c1, bool isleft = true);
 
@@ -154,12 +163,19 @@ namespace base {
 
          // this is list of generic methods for common data processing
 
+         /** Returns true if raw analysis is configured */
          bool IsRawAnalysis() const { return fAnalysisKind == kind_Raw; }
+
+         /** Enable/disable raw analysis. If on - only data scan is performed, no any output events with second scan can be produced. No second.C will be involved */
          void SetRawAnalysis(bool on = true) { fAnalysisKind = on ? kind_Raw : kind_Stream; }
 
+         /** Returns true if triggered analysis is configured */
          bool IsTriggeredAnalysis() const { return fAnalysisKind == kind_Triggered; }
+
+         /** Enabled/disable triggered analysis is configured. If on - analyzed data will be processed as triggered, no time correlation is performed  */
          void SetTriggeredAnalysis(bool on = true) { fAnalysisKind = on ? kind_Triggered : kind_Stream; }
 
+         /** Returns true if full timed stream analysis is configured */
          bool IsStreamAnalysis() const { return fAnalysisKind == kind_Stream; }
 
          /** Set sorting flag for all registered processors */

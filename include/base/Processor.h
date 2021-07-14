@@ -146,39 +146,45 @@ namespace base {
 
          H2handle MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options = 0);
 
+         /** Fill 2-D histogram */
          inline void FillH2(H1handle h2, double x, double y, double weight = 1.)
          { DefFillH2(h2,x,y,weight); }
 
-         /** Can only be used where index is same as x and y themself, no range checks are performed */
+         /** \brief Fast fill 2-D histogram
+           * \details  Can only be used where index is same as x and y themself, no range checks are performed */
          inline void FastFillH2(H1handle h2, int x, int y)
          { DefFastFillH2(h2,x,y); }
 
+         /** Set bin content of 2-D histogram */
          inline void SetH2Content(H2handle h2, int nbin1, int nbin2, double v = 0.)
          {
             if (h2) mgr()->SetH2Content(h2, nbin1, nbin2, v);
          }
 
+         /** Get bin content of 2-D histogram */
          inline double GetH2Content(H2handle h2, int bin1, int bin2)
          {
             return h2 ? mgr()->GetH2Content(h2, bin1, bin2) : 0.;
          }
 
+         /** Get number of bins for 2-D histogram */
          inline bool GetH2NBins(H2handle h2, int &nBins1, int &nBins2)
          {
             bool isGood = mgr()->GetH2NBins(h2, nBins1, nBins2);
             return isGood;
          }
 
+         /** Clear 2-D histogram */
          inline void ClearH2(base::H2handle h2)
          {
             if (h2) mgr()->ClearH2(h2);
          }
 
+         /** Change title of 2-D histogram */
          inline void SetH2Title(H2handle h2, const char* title)
          {
             mgr()->SetH2Title(h2, title);
          }
-
 
          C1handle MakeC1(const char* name, double left, double right, H1handle h1 = 0);
 
@@ -197,7 +203,6 @@ namespace base {
          {
             return mgr()->RegisterObject(tobj, subfolder);
          }
-
 
       public:
 

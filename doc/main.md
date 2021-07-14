@@ -8,6 +8,9 @@ Documentation that will appear on the main page
 
 [HADAQ classes](\ref stream_hadaq_classes)
 
+[TDC calibrations](\ref hadaq_tdc_calibr)
+
+
 [Examples](\ref stream_examples)
 
 

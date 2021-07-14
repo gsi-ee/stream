@@ -26,6 +26,9 @@ base::ProcMgr::ProcMgr() :
    fSecondName = "second.C";
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////
+/// Destructor
+
 base::ProcMgr::~ProcMgr()
 {
    DeleteAllProcessors();
@@ -33,6 +36,9 @@ base::ProcMgr::~ProcMgr()
 
    ClearInstancePointer(this);
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////
+/// Return global instance of processor manager, provided by framework
 
 base::ProcMgr* base::ProcMgr::instance()
 {
@@ -71,6 +77,9 @@ void base::ProcMgr::DeleteAllProcessors()
    fProc.clear();
 }
 
+/////////////////////////////////////////////////////////////////////////
+//// Set histogram fill level for all processors
+
 void base::ProcMgr::SetHistFilling(int lvl)
 {
    fDfltHistLevel = lvl;
@@ -79,6 +88,13 @@ void base::ProcMgr::SetHistFilling(int lvl)
    for (auto &evproc : fEvProc)
       evproc->SetHistFilling(lvl);
 }
+
+/////////////////////////////////////////////////////////////////////////
+//// Set store kind for all processors. With HADAQ following values are used
+/// 0 - disable store
+/// 1 - std::vector<hadaq::TdcMessageExt> - includes original TDC message
+/// 2 - std::vector<hadaq::MessageFloat>  - compact form, without channel 0, stamp as float (relative to ch0)
+/// 3 - std::vector<hadaq::MessageDouble> - compact form, with channel 0, absolute time stamp as double
 
 void base::ProcMgr::SetStoreKind(unsigned kind)
 {
@@ -288,20 +304,22 @@ base::C1handle base::ProcMgr::MakeC1(const char* name, double left, double right
    return 0;
 }
 
-void base::ProcMgr::ChangeC1(C1handle c1, double left, double right)
+void base::ProcMgr::ChangeC1(C1handle, double, double)
 {
-   // put dummy virtual function here to avoid ACLiC warnings
 }
 
+
+/////////////////////////////////////////////////////////////////////////
+/// Condition check 0 - inside, -1 left , +1 - right
+/// If variable dist specified, will contain distance to left (-1) or right (+1) boundary   */
 int base::ProcMgr::TestC1(C1handle c1, double value, double* dist)
 {
-   // put dummy virtual function here to avoid ACLiC warnings
    return 0;
 }
 
+
 double base::ProcMgr::GetC1Limit(C1handle c1, bool isleft)
 {
-   // put dummy virtual function here to avoid ACLiC warnings
    return 0;
 }
 
