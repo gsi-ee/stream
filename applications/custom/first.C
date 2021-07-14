@@ -1,10 +1,7 @@
-/// \file
-/// \ingroup stream_examples
+/// This is example of custom processor of HADAQ sub-event
 ///
-/// \brief This is example of custom processor of HADAQ sub-event
-/// \verbinclude custom/custom.h
-/// \verbinclude custom/first.C
-
+/// In file custom.h new processor is defined
+/// And in first.C processor is configured
 
 #include <cstdlib>
 

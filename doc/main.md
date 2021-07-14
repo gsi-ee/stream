@@ -10,7 +10,6 @@ Documentation that will appear on the main page
 
 [TDC calibrations](\ref hadaq_tdc_calibr)
 
-
 [Examples](\ref stream_examples)
 
 
@@ -19,7 +18,4 @@ Documentation that will appear on the main page
 
 \defgroup stream_hadaq_classes HADAQ classes
 \brief HADAQ classes
-
-\defgroup stream_examples Stream examples
-\brief Stream examples
 
