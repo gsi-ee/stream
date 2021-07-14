@@ -33,7 +33,11 @@ namespace hadaq {
       }
    };
 
-   /** This is generic processor for data, coming from TRB board
+   /** \brief TRB processor
+    *
+    * \ingroup stream_hadaq_classes
+    *
+    * This is generic processor for data, coming from TRB board
     * Normally one requires specific sub-processor for frontend like TDC or any other
     * Idea that TrbProcessor can interpret HADAQ event/subevent structures and
     * will distribute data to sub-processors.  */

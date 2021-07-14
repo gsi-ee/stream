@@ -58,6 +58,12 @@ namespace hadaq {
          }
    };
 
+   /** \brief HLD processor
+     *
+     * \ingroup stream_hadaq_classes
+     *
+     * Top-level processor of HLD events */
+
    class HldProcessor : public base::StreamProc {
 
       friend class TrbProcessor;

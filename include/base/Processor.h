@@ -52,7 +52,11 @@
 
 namespace base {
 
-   /** Class base::Processor is abstract processor.
+   /** \brief Abstract processor
+    *
+    * \ingroup stream_core_classes
+    *
+    * Class base::Processor is abstract processor.
     * Provides service functions to create histograms and conditions */
 
    class Processor {

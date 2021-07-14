@@ -7,6 +7,12 @@
 
 namespace hadaq {
 
+/** \brief TDC iterator
+  *
+  * \ingroup stream_hadaq_classes
+  *
+  * Iterator over TDC messages */
+
    class TdcIterator {
       protected:
 

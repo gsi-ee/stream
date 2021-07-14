@@ -7,7 +7,11 @@
 
 namespace base {
 
-   /** Class base::StreamProc is abstract processor of data streams
+   /** \brief Abstract processor of data streams
+    *
+    * \ingroup stream_core_classes
+    *
+    * Class base::StreamProc is abstract processor of data streams
     * from TRB3 or GET4 or nXYTER or any other kind of data.
     * Main motivation for the class is unify way how data-streams can be processed
     * and how all kind of time calculations could be done.  */

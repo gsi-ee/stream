@@ -15,7 +15,11 @@ namespace hadaq {
 
    enum { FineCounterBins = 600, TotBins = 3000, ToTvalue = 20, ToThmin = 15, ToThmax = 60 };
 
-   /** This is specialized sub-processor for FPGA-TDC.
+   /** \brief TDC processor
+    *
+    * \ingroup stream_hadaq_classes
+    *
+    * This is specialized sub-processor for FPGA-TDC.
     * Normally it should be used together with TrbProcessor,
     * which the only can provide data
     * Following levels of histograms filling are working
@@ -23,8 +27,7 @@ namespace hadaq {
     *  1 - only basic statistic from TRB
     *  2 - generic statistic over TDC channels
     *  3 - basic per-channel histograms with IDs
-    *  4 - per-channel histograms with references
-    **/
+    *  4 - per-channel histograms with references **/
 
    class TdcProcessor : public SubProcessor {
 

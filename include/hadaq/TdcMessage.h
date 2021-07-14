@@ -57,8 +57,12 @@ namespace hadaq {
       newkind_TMDR     = 0x5E000000
    };
 
-   /** TdcMessage is wrapper for data, produced by FPGA-TDC
-    * struct is used to avoid any potential overhead */
+   /** \brief TDC message
+     *
+     * \ingroup stream_hadaq_classes
+     *
+     * TdcMessage is wrapper for data, produced by FPGA-TDC
+     * struct is used to avoid any potential overhead */
 
    struct TdcMessage {
       protected:

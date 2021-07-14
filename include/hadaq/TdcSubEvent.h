@@ -11,6 +11,13 @@ namespace hadaq {
 
    typedef base::SubEventEx<hadaq::TdcMessageExt> TdcSubEvent;
 
+   /** \brief Output float message
+     *
+     * \ingroup stream_hadaq_classes
+     *
+     * Stores channel, edge and relative to channel 0 time stamp as float
+     * Configured when calling base::ProcMgr::instance()->SetStoreKind(2); */
+
    struct MessageFloat {
       uint8_t ch;    // channel and edge
       float   stamp; // time stamp minus channel0 time, ns
@@ -35,6 +42,13 @@ namespace hadaq {
    };
 
    typedef base::SubEventEx<hadaq::MessageFloat> TdcSubEventFloat;
+
+   /** \brief Output double message
+     *
+     * \ingroup stream_hadaq_classes
+     *
+     * Stores channel, edge and full time stamp as double
+     * Configured when calling base::ProcMgr::instance()->SetStoreKind(3); */
 
    struct MessageDouble {
       uint8_t ch;    // channel and edge

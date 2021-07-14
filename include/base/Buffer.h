@@ -5,7 +5,11 @@
 
 namespace base {
 
-   /** Class base::Buffer is for memory management
+   /** \brief Memory management class
+    *
+    * \ingroup stream_core_classes
+    *
+    * Class base::Buffer is for memory management
     * It allows to keep many references on same raw data and automatically release it  */
 
    struct RawDataRec {

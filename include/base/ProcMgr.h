@@ -14,14 +14,18 @@ class TObject;
 
 namespace base {
 
-   /** Class base::ProcMgr is central manager of processors and interface
-    * to any external frameworks like ROOT or Go4 or ...
-    * It is singleton - the only instance for whole system  */
-
    class Processor;
    class StreamProc;
    class EventProc;
    class EventStore;
+
+   /** \brief Central data and process manager
+    *
+    * \ingroup stream_core_classes
+    *
+    * Class base::ProcMgr is central manager of processors and interface
+    * to any external frameworks like ROOT or Go4 or ...
+    * It is singleton - the only instance for whole system */
 
    class ProcMgr {
 

@@ -16,10 +16,11 @@ namespace hadaq {
 
    typedef std::map<unsigned,SubProcessor*> SubProcMap;
 
-   /** This is specialized sub-processor for ADC addon.
-    * Normally it should be used together with TrbProcessor,
-    * which the only can provide data
-    **/
+   /** \brief Abstract processor of HADAQ sub-sub-event
+     *
+     * \ingroup stream_hadaq_classes
+     *
+     * Defines some basic API and introduces several common histograms **/
 
    class SubProcessor : public base::StreamProc {
 

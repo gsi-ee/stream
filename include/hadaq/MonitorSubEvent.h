@@ -7,8 +7,14 @@
 
 namespace hadaq {
 
+   /** \brief Monitor message
+     *
+     * \ingroup stream_hadaq_classes
+     *
+     * Record addr0, addr and value readout by MonitorModule */
+
    struct MessageMonitor {
-      uint32_t addr0;    // first addr
+      uint32_t addr0;   // first addr
       uint32_t addr;    // second addr
       uint32_t value;   // value
 

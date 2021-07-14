@@ -8,10 +8,14 @@
 
 namespace hadaq {
 
-   /** This is specialized processor for data produced with hadaq;:MonitorModule
-    * Normally one requires specific sub-processor for frontend like TDC or any other
-    * Idea that TrbProcessor can interpret HADAQ event/subevent structures and
-    * will distribute data to sub-processors.  */
+   /** \brief Processor of monitored data
+     *
+     * \ingroup stream_hadaq_classes
+     *
+     * This is specialized processor for data produced with hadaq::MonitorModule
+     * Normally one requires specific sub-processor for frontend like TDC or any other
+     * Idea that TrbProcessor can interpret HADAQ event/subevent structures and
+     * will distribute data to sub-processors.  */
 
    class MonitorProcessor : public TrbProcessor {
 
