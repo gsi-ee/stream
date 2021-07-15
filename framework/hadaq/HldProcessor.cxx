@@ -67,30 +67,24 @@ hadaq::HldProcessor::~HldProcessor()
 {
 }
 
+////////////////////////////////////////////////////////////////////////////////////////
+/// Adds TRB processor
+
 void hadaq::HldProcessor::AddTrb(TrbProcessor* trb, unsigned id)
 {
    fMap[id] = trb;
 }
 
-hadaq::TdcProcessor* hadaq::HldProcessor::FindTDC(unsigned tdcid) const
-{
-   for (TrbProcMap::const_iterator iter = fMap.begin(); iter != fMap.end(); iter++) {
-      hadaq::TdcProcessor* res = iter->second->GetTDC(tdcid, true);
-      if (res!=0) return res;
-   }
-   return 0;
-}
-
-hadaq::TrbProcessor* hadaq::HldProcessor::FindTRB(unsigned trbid) const
-{
-   TrbProcMap::const_iterator iter = fMap.find(trbid);
-   return iter == fMap.end() ? 0 : iter->second;
-}
+////////////////////////////////////////////////////////////////////////////////////////
+/// Return number of TRBs
 
 unsigned hadaq::HldProcessor::NumberOfTRB() const
 {
    return fMap.size();
 }
+
+////////////////////////////////////////////////////////////////////////////////////////
+/// Get TRB by index
 
 hadaq::TrbProcessor* hadaq::HldProcessor::GetTRB(unsigned indx) const
 {
@@ -101,6 +95,19 @@ hadaq::TrbProcessor* hadaq::HldProcessor::GetTRB(unsigned indx) const
    return 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////
+/// Find TRB by id
+
+hadaq::TrbProcessor* hadaq::HldProcessor::FindTRB(unsigned trbid) const
+{
+   TrbProcMap::const_iterator iter = fMap.find(trbid);
+   return iter == fMap.end() ? 0 : iter->second;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////
+/// Return number of TDCs in all TRBs
+
 unsigned hadaq::HldProcessor::NumberOfTDC() const
 {
    unsigned num = 0;
@@ -108,6 +115,9 @@ unsigned hadaq::HldProcessor::NumberOfTDC() const
       num += iter->second->NumberOfTDC();
    return num;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////
+/// Get TDC by index
 
 hadaq::TdcProcessor* hadaq::HldProcessor::GetTDC(unsigned indx) const
 {
@@ -117,6 +127,18 @@ hadaq::TdcProcessor* hadaq::HldProcessor::GetTDC(unsigned indx) const
       indx -= num;
    }
 
+   return 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////
+/// Find TDC by id
+
+hadaq::TdcProcessor* hadaq::HldProcessor::FindTDC(unsigned tdcid) const
+{
+   for (TrbProcMap::const_iterator iter = fMap.begin(); iter != fMap.end(); iter++) {
+      hadaq::TdcProcessor* res = iter->second->GetTDC(tdcid, true);
+      if (res!=0) return res;
+   }
    return 0;
 }
 
@@ -140,7 +162,7 @@ void hadaq::HldProcessor::ConfigureCalibration(const std::string& fileprefix, lo
    fCalibrPeriod = period;
    fCalibrTriggerMask = trigmask;
    for (TrbProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
-      iter->second->ConfigureCalibration(name, period, trigmask);
+      iter->second->ConfigureCalibration(fileprefix, period, trigmask);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -165,6 +187,8 @@ void hadaq::HldProcessor::SetStoreKind(unsigned kind)
       iter->second->SetStoreKind(kind);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////
+/// Configure printing raw data in all sub-processors
 
 void hadaq::HldProcessor::SetPrintRawData(bool on)
 {
@@ -174,6 +198,9 @@ void hadaq::HldProcessor::SetPrintRawData(bool on)
 }
 
 
+////////////////////////////////////////////////////////////////////////////////////////
+/// Create branch in TTree to store provided data - \ref hadaq::HldMessage
+
 void hadaq::HldProcessor::CreateBranch(TTree*)
 {
    if(mgr()->IsTriggeredAnalysis()) {
@@ -182,6 +209,9 @@ void hadaq::HldProcessor::CreateBranch(TTree*)
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////
+/// Perform scan of data in the buffer
+/// Central entry point for all analysis
 
 bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
 {
@@ -287,6 +317,9 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
    return true;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////
+/// Fill QA summary histograms
+
 void hadaq::HldProcessor::DoHadesHistSummary()
 {
     if (fQaFinePerTDCChannel == nullptr || fQaToTPerTDCChannel == nullptr || fQaEdgesPerTDCChannel == nullptr ||
@@ -318,6 +351,9 @@ void hadaq::HldProcessor::DoHadesHistSummary()
     SetH1Content(fQaSummary, 3, nBadErrors);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////
+/// Call store event
+
 void hadaq::HldProcessor::Store(base::Event* ev)
 {
    if (ev) {
@@ -334,11 +370,16 @@ void hadaq::HldProcessor::Store(base::Event* ev)
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////
+/// Reset store
+
 void hadaq::HldProcessor::ResetStore()
 {
    pMsg = &fMsg;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////
+/// Function to transform HLD event, used for TDC calibrations
 
 unsigned hadaq::HldProcessor::TransformEvent(void* src, unsigned len, void* tgt, unsigned tgtlen)
 {
@@ -399,6 +440,9 @@ unsigned hadaq::HldProcessor::TransformEvent(void* src, unsigned len, void* tgt,
    return reslen;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////
+/// Executing preliminary function before entering event loop
+
 void hadaq::HldProcessor::UserPreLoop()
 {
    if (!fAutoCreate && (fAfterFunc.length()>0))
@@ -407,6 +451,8 @@ void hadaq::HldProcessor::UserPreLoop()
    if (!fAutoCreate) CreatePerTDCHisto();
 }
 
+////////////////////////////////////////////////////////////////////////////////////////
+/// Create summary histos where each bin corresponds to single TDC
 
 void hadaq::HldProcessor::CreatePerTDCHisto()
 {
@@ -493,6 +539,10 @@ void hadaq::HldProcessor::CreatePerTDCHisto()
           &fQaFinePerTDCChannel, &fQaToTPerTDCChannel, &fQaEdgesPerTDCChannel, &fQaErrorsPerTDCChannel);
 }
 
+
+////////////////////////////////////////////////////////////////////////////////////////
+/// Enable cross-processing of data
+/// Let produce time correlation between different TRBs
 
 void hadaq::HldProcessor::SetCrossProcess(bool on)
 {

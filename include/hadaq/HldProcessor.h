@@ -10,10 +10,13 @@
 namespace hadaq {
 
 
-   /** This is generic processor for HLD data
-    * Its only task - redistribute data over TRB processors  */
-
    typedef std::map<unsigned,TrbProcessor*> TrbProcMap;
+
+   /** \brief HLD message
+     *
+     * \ingroup stream_hadaq_classes
+     *
+     * Data extracted by \ref hadaq::HldProcessor and stored in \ref hadaq::HldSubEvent */
 
    struct HldMessage {
       uint8_t trig_type; // trigger type
@@ -23,6 +26,12 @@ namespace hadaq {
       HldMessage() : trig_type(0), seq_nr(0), run_nr(0) {}
       HldMessage(const HldMessage& src) : trig_type(src.trig_type), seq_nr(src.seq_nr), run_nr(src.run_nr) {}
    };
+
+   /** \brief HLD subevent
+     *
+     * \ingroup stream_hadaq_classes
+     *
+     * Stored in the TTree by the \ref hadaq::HldProcessor */
 
    class HldSubEvent : public base::SubEvent {
       public:
@@ -36,8 +45,12 @@ namespace hadaq {
          virtual unsigned Multiplicity() const { return 1; }
    };
 
-   // processor used to filter-out all HLD events with specific trigger
-   // only these events will be processed and stored
+   /** \brief HLD filter
+     *
+     * \ingroup stream_hadaq_classes
+     *
+     * processor used to filter-out all HLD events with specific trigger
+     * only these events will be processed and stored */
 
    class HldFilter : public base::EventProc {
       protected:
@@ -62,7 +75,9 @@ namespace hadaq {
      *
      * \ingroup stream_hadaq_classes
      *
-     * Top-level processor of HLD events */
+     * Top-level processor of HLD events
+     * This is generic processor for HLD data
+     * Its only task - redistribute data over TRB processors  */
 
    class HldProcessor : public base::StreamProc {
 
@@ -127,19 +142,18 @@ namespace hadaq {
          HldProcessor(bool auto_create = false, const char* after_func = "");
          virtual ~HldProcessor();
 
+         /** Returns current event id */
          uint32_t GetEventId() const { return fMsg.seq_nr; }
+         /** Returns current run id */
          uint32_t GetRunId() const { return fMsg.run_nr; }
-
-         /** Search for specified TDC in all subprocessors */
-         TdcProcessor* FindTDC(unsigned tdcid) const;
-
-         TrbProcessor* FindTRB(unsigned trbid) const;
 
          unsigned NumberOfTDC() const;
          TdcProcessor* GetTDC(unsigned indx) const;
+         TdcProcessor* FindTDC(unsigned tdcid) const;
 
          unsigned NumberOfTRB() const;
          TrbProcessor* GetTRB(unsigned indx) const;
+         TrbProcessor* FindTRB(unsigned trbid) const;
 
          void ConfigureCalibration(const std::string& fileprefix, long period, unsigned trig = 0xFFFF);
 
@@ -154,15 +168,17 @@ namespace hadaq {
          virtual bool FirstBufferScan(const base::Buffer& buf);
 
          void SetPrintRawData(bool on = true);
+         /** Returns true if print raw data configured */
          bool IsPrintRawData() const { return fPrintRawData; }
 
+         /** Enable auto-create mode */
          void SetAutoCreate(bool on = true) { fAutoCreate = on; }
 
-         /** Function to transform HLD event, used for TDC calibrations */
          unsigned TransformEvent(void* src, unsigned len, void* tgt = 0, unsigned tgtlen = 0);
 
          virtual void UserPreLoop();
 
+         /** Return reference on last event header structure */
          hadaqs::RawEvent& GetLastEventHdr() { return fLastEvHdr; }
    };
 
