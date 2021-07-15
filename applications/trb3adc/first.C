@@ -1,6 +1,4 @@
-#ifndef __CINT__
 #include <hadaq/AdcProcessor.h>
-#endif
 
 void first()
 {
@@ -16,7 +14,7 @@ void first()
    //trb3->SetUseTriggerAsSync(); // use TRB3 CTS trigger number, not from ETM
    trb3->SetHistFilling(4);
    //trb3->SetPrintRawData();
-   
+
    new hadaq::AdcProcessor(trb3, 0x0200);
    //adc->SetDiffChannel(8, 24);
    //adc->SetDiffChannel(24, 8);

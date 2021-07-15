@@ -3,7 +3,6 @@
 
 #include <cstdint>
 
-/*
 //Description of the Event Structure
 //
 //An event consists of an event header and of varying number of subevents, each with a subevent header. The size of the event header is fixed to 0x20 bytes
@@ -88,7 +87,6 @@
 //
 //    * runNr - file number: A unique number assigned to the file. The runNr is used as key for the RTDB.
 //    * evtPad - padding: Makes the event header a multiple of 64 bits long.
-*/
 
 #ifndef __CINT__
 #pragma pack(push, 1)
@@ -118,7 +116,7 @@ namespace hadaqs {
 
 // #define HADAQ_SWAP4(value)  __builtin_bswap32(value)
 
-   /*
+   /**
     * HADES transport unit header
     * used as base for event and subevent
     * also common envelope for trd network data packets
@@ -137,6 +135,7 @@ namespace hadaqs {
          /** msb of decode word is always non zero...? */
          inline bool IsSwapped() const  { return tuDecoding > 0xffffff; }
 
+         /** access value */
          inline uint32_t Value(const uint32_t *member) const
          {
 //            return IsSwapped() ? __builtin_bswap32 (*member) : *member;
@@ -163,9 +162,13 @@ namespace hadaqs {
          }
 
 
+         /** get decoding */
          uint32_t GetDecoding() const { return Value(&tuDecoding); }
+
+         /** get size */
          inline uint32_t GetSize() const { return Value(&tuSize); }
 
+         /** get padded size */
          inline uint32_t GetPaddedSize() const
          {
             uint32_t hedsize = GetSize();
@@ -173,13 +176,16 @@ namespace hadaqs {
             return (rest==0) ? hedsize : (hedsize + 8 - rest);
          }
 
+         /** set size */
          void SetSize(uint32_t bytes) { SetValue(&tuSize, bytes); }
+
+         /** set decoding */
          void SetDecoding(uint32_t decod) { SetValue(&tuDecoding, decod); }
    };
 
    // ======================================================================
 
-   /*
+   /**
     * Intermediate hierarchy class as common base for event and subevent
     */
    struct HadTuId : public HadTu {
@@ -191,11 +197,16 @@ namespace hadaqs {
          HadTuId() {}
          ~HadTuId() {}
 
+         /** get id */
          inline uint32_t GetId() const { return Value(&tuId); }
+
+         /** set id */
          void SetId(uint32_t id) { SetValue(&tuId, id); }
 
+         /** get data error */
          inline bool GetDataError() const { return (GetId() & 0x80000000) != 0; }
 
+         /** set data error */
          void SetDataError(bool on)
          {
             if(on)
@@ -293,14 +304,18 @@ namespace hadaqs {
    //    * evtPad - padding: Makes the event header a multiple of 64 bits long.
 
 
+   /**
+    * HADES raw event
+    */
+
    struct RawEvent : public HadTuId  {
 
       protected:
-         uint32_t evtSeqNr;
-         uint32_t evtDate;
-         uint32_t evtTime;
-         uint32_t evtRunNr;
-         uint32_t evtPad;
+         uint32_t evtSeqNr;   ///< event sequence number
+         uint32_t evtDate;    ///< event date
+         uint32_t evtTime;    ///< event time
+         uint32_t evtRunNr;   ///< event run number
+         uint32_t evtPad;     ///< event padding
 
          /** Method to set initial header value like decoding and date/time */
          void InitHeader(uint32_t evid);
@@ -311,18 +326,27 @@ namespace hadaqs {
          RawEvent() {}
          ~RawEvent() {}
 
+         /** get seq nr */
          uint32_t GetSeqNr() const { return Value(&evtSeqNr); }
+         /** set seq nr */
          void SetSeqNr(uint32_t n) { SetValue(&evtSeqNr, n); }
 
+         /** get run nr */
          int32_t GetRunNr() const { return Value(&evtRunNr); }
+         /** set run nr */
          void SetRunNr(uint32_t n) { SetValue(&evtRunNr, n); }
 
+         /** get date */
          int32_t GetDate() const { return Value(&evtDate); }
+         /** set date */
          void SetDate(uint32_t d) { SetValue(&evtDate, d); }
 
+         /** get time */
          int32_t GetTime() const { return Value(&evtTime); }
+         /** set time */
          void SetTime(uint32_t t) { SetValue(&evtTime, t); }
 
+         /** initialize subevent */
          void Init(uint32_t evnt, uint32_t run=0, uint32_t id=EvtId_DABC)
          {
             InitHeader(id);
@@ -373,30 +397,35 @@ namespace hadaqs {
 //    * The data words: The format of the data words (word length, compression algorithm, sub-sub-event format) is defined by the subEvtDecoding and apart from this it is completely free. The meaning of the data words (detector, geographical position, error information) is defined by the subEvtId and apart from this it is completely unknown to the data acquisition system.
 */
 
+   /** Raw hades subevent */
+
    struct RawSubevent : public HadTuId  {
 
       protected:
 
-         uint32_t subEvtTrigNr;
+         uint32_t subEvtTrigNr;   ///< subevent trigger number
 
       public:
 
          RawSubevent() {}
          ~RawSubevent() {}
 
+         /** get alignment */
          unsigned Alignment() const { return 1 << ( GetDecoding() >> 16 & 0xff); }
 
+         /** get trigger number */
          uint32_t GetTrigNr() const { return Value(&subEvtTrigNr); }
+         /** set trigger number */
          void SetTrigNr(uint32_t trigger) { SetValue(&subEvtTrigNr, trigger); }
 
-         /* for trb3: each subevent contains trigger type in decoding word*/
+         /** for trb3: each subevent contains trigger type in decoding word*/
          uint8_t GetTrigTypeTrb3() const { return (GetDecoding() & 0xF0) >> 4; }
 
+         /** init header */
          void Init(uint32_t trigger = 0)
          {
             SetTrigNr(trigger);
          }
-
 
          /** Return pointer on data by index - user should care itself about swapping */
          uint32_t* GetDataPtr(unsigned indx) const
@@ -404,8 +433,7 @@ namespace hadaqs {
             return (uint32_t*) (this) + sizeof(hadaqs::RawSubevent)/sizeof(uint32_t) + indx;
          }
 
-
-         /* returns number of payload data words, not maximum index!*/
+         /** returns number of payload data words, not maximum index!*/
          unsigned GetNrOfDataWords() const
          {
             unsigned datasize = GetSize() - sizeof(hadaqs::RawSubevent);
@@ -437,6 +465,7 @@ namespace hadaqs {
             return ((uint8_t*) my)[idx];
          }
 
+         /** set data */
          void SetData(unsigned idx, uint32_t value)
          {
             const void* my = (char*) (this) + sizeof(hadaqs::RawSubevent);
@@ -453,11 +482,13 @@ namespace hadaqs {
             }
          }
 
+         /** get error bits */
          uint32_t GetErrBits()
          {
             return Data(GetNrOfDataWords()-1);
          }
 
+         /** copy data to provided buffer */
          void CopyDataTo(void* buf, unsigned indx, unsigned datalen)
          {
             if (buf==0) return;
@@ -469,7 +500,6 @@ namespace hadaqs {
 
          /** Return pointer where raw data should starts */
          void* RawData(unsigned ix = 0) const { return (char*) (this) + sizeof(hadaqs::RawSubevent) + ix*4; }
-
 
          void Dump(bool print_raw_data = false);
    };

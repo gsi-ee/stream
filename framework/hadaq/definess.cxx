@@ -4,12 +4,17 @@
 #include <sys/time.h>
 #include <time.h>
 
+////////////////////////////////////////////////////////////////
+/// dump raw event
 
 void hadaqs::RawEvent::Dump()
 {
    printf("*** Event #0x%06x fullid=0x%04x size %u *** \n",
          (unsigned) GetSeqNr(), (unsigned) GetId(), (unsigned) GetSize());
 }
+
+////////////////////////////////////////////////////////////////
+/// init header
 
 void hadaqs::RawEvent::InitHeader(uint32_t id)
 {
@@ -30,7 +35,8 @@ void hadaqs::RawEvent::InitHeader(uint32_t id)
    SetTime(clock);
 }
 
-// ===========================================================
+////////////////////////////////////////////////////////////////
+/// dump subevent
 
 void hadaqs::RawSubevent::Dump(bool print_raw_data)
 {
