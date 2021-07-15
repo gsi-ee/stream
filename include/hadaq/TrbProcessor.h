@@ -144,47 +144,56 @@ namespace hadaq {
          TrbProcessor(unsigned brdid = 0, HldProcessor *hld = nullptr, int hfill = -1);
          virtual ~TrbProcessor();
 
+         /** Returns instance of \ref hadaq::HldProcessor to which it belongs */
          HldProcessor *GetHLD() const { return fHldProc; }
 
          /** enable autocreation mode if necessary, works for single event */
          void SetAutoCreate(bool on = true) { fAutoCreate = on; }
 
+         /** Set id of CTS sub-sub event */
          void SetHadaqCTSId(unsigned id) { fHadaqCTSId = id; }
+
+         /** Add HUB id */
+         void AddHadaqHUBId(unsigned id) { fHadaqHUBId.emplace_back(id); }
+
+         /** Set up to 4 different HUB ids */
          void SetHadaqHUBId(unsigned id1, unsigned id2=0, unsigned id3=0, unsigned id4=0)
          {
             fHadaqHUBId.clear();
-            fHadaqHUBId.emplace_back(id1);
-            if (id2!=0) fHadaqHUBId.emplace_back(id2);
-            if (id3!=0) fHadaqHUBId.emplace_back(id3);
-            if (id4!=0) fHadaqHUBId.emplace_back(id4);
+            AddHadaqHUBId(id1);
+            if (id2!=0) AddHadaqHUBId(id2);
+            if (id3!=0) AddHadaqHUBId(id3);
+            if (id4!=0) AddHadaqHUBId(id4);
          }
-         void AddHadaqHUBId(unsigned id) { fHadaqHUBId.emplace_back(id); }
 
-         void SetHadaqTDCId(unsigned) {} // keep for backward compatibility, can be ignored
-         void SetHadaqSUBId(unsigned) {} // keep for backward compatibility, can be ignored
+         /** deprecated, keep for backward compatibility, can be ignored */
+         void SetHadaqTDCId(unsigned) {}
+         /** deprecated, keep for backward compatibility, can be ignored */
+         void SetHadaqSUBId(unsigned) {}
 
          virtual void UserPreLoop();
          virtual void UserPostLoop();
 
-         /** Set trigger window not only for itself, bit for all subprocessors */
          virtual void SetTriggerWindow(double left, double right);
 
-         /** Enable/disable store for TRB and all TDC processors */
          virtual void SetStoreKind(unsigned kind = 1);
 
-         /** Scan all messages, find reference signals */
          virtual bool FirstBufferScan(const base::Buffer& buf);
 
+         /** Enables printing of raw data */
          void SetPrintRawData(bool on = true) { fPrintRawData = on; }
+
+         /** Return true if printing of raw data enabled */
          bool IsPrintRawData() const { return fPrintRawData; }
 
+         /** Set number of errors which could be printed */
          void SetPrintErrors(int cnt = 100) { fPrintErrCnt = cnt; }
          bool CheckPrintError();
 
          void SetCrossProcess(bool on = true);
+         /** Returns true if cross-processing enabled */
          bool IsCrossProcess() const { return fCrossProcess; }
 
-         /** Enable/disable ch0 store in output event for all TDC processors */
          void SetCh0Enabled(bool on = true);
 
          /** Set sync mask and value which, should be obtained from
@@ -200,17 +209,21 @@ namespace hadaq {
          /** Use TRB trigger number as SYNC message.
           * By this we synchronize all TDCs on all TRB boards by trigger number */
          void SetUseTriggerAsSync(bool on = true) { fUseTriggerAsSync = on; }
+         /** Returns true if trigger number should be used to sync events over all TRBs */
          bool IsUseTriggerAsSync() const { return fUseTriggerAsSync; }
 
          /** When enabled, artificially create contiguous epoch value */
          void SetCompensateEpochReset(bool on = true) { fCompensateEpochReset = on; }
 
+         /** Returns number of sub-processors */
          unsigned NumSubProc() const { return fMap.size(); }
-         SubProcessor* GetSubProc(unsigned n) const
+
+         /** Returns sub-processor by its index */
+         SubProcessor* GetSubProc(unsigned indx) const
          {
             for (SubProcMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
-               if (n==0) return iter->second;
-               n--;
+               if (indx==0) return iter->second;
+               indx--;
             }
             return 0;
          }
@@ -237,7 +250,7 @@ namespace hadaq {
             return num;
          }
 
-         /** Get TDC processoer by index */
+         /** Get TDC processor by index */
          TdcProcessor* GetTDCWithIndex(unsigned indx) const
          {
             for (SubProcMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
@@ -254,7 +267,6 @@ namespace hadaq {
                unsigned ix,
                unsigned datalen);
 
-         /** Search TDC in current TRB or in the top HLD */
          TdcProcessor* FindTDC(unsigned tdcid) const;
 
          static void SetDefaults(unsigned numch=65, unsigned edges=0x1, bool ignore_sync = true);
@@ -275,53 +287,42 @@ namespace hadaq {
             gHUBMax = max;
          }
 
-         /** Create up-to 4 TDCs processors with specified IDs */
          int CreateTDC(unsigned id1, unsigned id2 = 0, unsigned id3 = 0, unsigned id4 = 0);
 
          /** Create TDC processor, which extracts TDC information from CTS header */
          void CreateCTS_TDC() { new hadaq::TdcProcessor(this, fHadaqCTSId, gNumChannels, gEdgesMask); }
 
-         /** Disable calibration of specified channels in all TDCs */
          void DisableCalibrationFor(unsigned firstch, unsigned lastch = 0);
 
-         /** Mark automatic calibrations for all TDCs */
          void SetAutoCalibrations(long cnt = 100000);
 
-         /** Specify to produce and write calibrations at the end of data processing */
          void SetWriteCalibrations(const char* fileprefix, bool every_time = false, bool use_linear = false);
 
-         /** Load TDC calibrations, as argument file prefix (without TDC id) should be specified
-          * One also could specify coefficient to scale calibration (koef >= 1) */
          bool LoadCalibrations(const char* fileprefix);
 
-         /** Central method to configure way how calibrations will be performed */
          void ConfigureCalibration(const std::string& name, long period, unsigned trigmask = 0xFFFF);
 
-         /** Set calibration trigger type for all TDCs */
          void SetCalibrTriggerMask(unsigned trigmask = 0xFFFF);
 
-         /** Collect TDCs using IDs from subevent */
          bool CollectMissingTDCs(hadaqs::RawSubevent *sub, std::vector<unsigned> &ids);
 
-         /** Clear fast access vector for TDC - will be created with next event */
          void ClearFastTDCVector();
 
-         /** Calibrate hits in subevent */
          unsigned TransformSubEvent(hadaqs::RawSubevent *sub, void *tgtbuf = nullptr, unsigned tgtlen = 0, bool only_hist = false, std::vector<unsigned> *newids = nullptr);
 
-         /** Just for emulation of TDC calibrations */
          unsigned EmulateTransform(hadaqs::RawSubevent *sub, int dummycnt, bool only_hist = false);
 
-         /** Create TDC-specific histograms */
          void CreatePerTDCHistos();
 
+         /** Are there per-TDC histograms */
          bool HasPerTDCHistos() const { return (fHitsPerBrd != nullptr) && (fToTPerBrd != nullptr); }
 
-         /** Create histograms filled in HADES DAQ, when module used for HADES TDC calibration */
          void ClearDAQHistos();
 
+         /** Return reference on last subevent header */
          hadaqs::RawSubevent& GetLastSubeventHdr() { return fLastSubevHdr; }
 
+         /** Return reference on last filled message */
          hadaq::TrbMessage &GetTrbMsg() { return fMsg; }
    };
 }

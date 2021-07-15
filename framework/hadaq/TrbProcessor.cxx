@@ -20,15 +20,16 @@ unsigned hadaq::TrbProcessor::gTDCMax = 0x0FFF;
 unsigned hadaq::TrbProcessor::gHUBMin = 0x8100;
 unsigned hadaq::TrbProcessor::gHUBMax = 0x81FF;
 
-/** Set defaults for the next creation of TDC processors.
- *
- * \param numch provides number of channels and edges.
- * \param edges define how falling edges are used
- * - 1 - use only rising edge, falling edge is ignore
- * - 2 - falling edge enabled and fully independent from rising edge
- * - 3 - falling edge enabled and uses calibration from rising edge
- * - 4 - falling edge enabled and common statistic is used for calibration
- * \param ignore_sync defines if sync messages are ignored (true by default) */
+//////////////////////////////////////////////////////////////////////////////
+/// Set defaults for the next creation of TDC processors.
+///
+/// \param numch provides number of channels and edges.
+/// \param edges define how falling edges are used
+///  - 1 - use only rising edge, falling edge is ignore
+///  - 2 - falling edge enabled and fully independent from rising edge
+///  - 3 - falling edge enabled and uses calibration from rising edge
+///  - 4 - falling edge enabled and common statistic is used for calibration
+/// \param ignore_sync defines if sync messages are ignored (true by default) */
 
 void hadaq::TrbProcessor::SetDefaults(unsigned numch, unsigned edges, bool ignore_sync)
 {
@@ -37,10 +38,16 @@ void hadaq::TrbProcessor::SetDefaults(unsigned numch, unsigned edges, bool ignor
    gIgnoreSync = ignore_sync;
 }
 
+//////////////////////////////////////////////////////////////////////////////
+/// Retun default number of TDC channels
+
 unsigned hadaq::TrbProcessor::GetDefaultNumCh()
 {
    return gNumChannels;
 }
+
+//////////////////////////////////////////////////////////////////////////////
+/// Constructor, one could specify histogram fill level
 
 hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc, int hfill) :
    base::StreamProc("TRB_%04X", brdid, false),
@@ -108,9 +115,15 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc, int hfi
 //   fProfiler.Reserve(50);
 }
 
+//////////////////////////////////////////////////////////////////////////////
+/// Destructor
+
 hadaq::TrbProcessor::~TrbProcessor()
 {
 }
+
+//////////////////////////////////////////////////////////////////////////////
+/// Find TDC with provided id
 
 hadaq::TdcProcessor* hadaq::TrbProcessor::FindTDC(unsigned tdcid) const
 {
@@ -118,6 +131,9 @@ hadaq::TdcProcessor* hadaq::TrbProcessor::FindTDC(unsigned tdcid) const
    if ((res==0) && (fHldProc!=0)) res = fHldProc->FindTDC(tdcid);
    return res;
 }
+
+//////////////////////////////////////////////////////////////////////////////
+/// Create overview histograms where each TDC corresponds one bin
 
 void hadaq::TrbProcessor::CreatePerTDCHistos()
 {
@@ -164,6 +180,9 @@ void hadaq::TrbProcessor::CreatePerTDCHistos()
    }
 }
 
+//////////////////////////////////////////////////////////////////////////////
+/// Pre loop function
+
 void hadaq::TrbProcessor::UserPreLoop()
 {
    if (fMap.size() > 0)
@@ -172,12 +191,17 @@ void hadaq::TrbProcessor::UserPreLoop()
    // fProfiler.MakeStatistic();
 }
 
+//////////////////////////////////////////////////////////////////////////////
+/// Post loop function
+
 void hadaq::TrbProcessor::UserPostLoop()
 {
    // fProfiler.MakeStatistic();
    // printf("TRB PROFILER: %s\n", fProfiler.Format().c_str());
 }
 
+//////////////////////////////////////////////////////////////////////////////
+/// Checks if error can be print out
 
 bool hadaq::TrbProcessor::CheckPrintError()
 {
@@ -190,6 +214,9 @@ bool hadaq::TrbProcessor::CheckPrintError()
 
    return true;
 }
+
+//////////////////////////////////////////////////////////////////////////////
+/// Create up to 4 TDC with pre-configured default parameters
 
 int hadaq::TrbProcessor::CreateTDC(unsigned id1, unsigned id2, unsigned id3, unsigned id4)
 {
@@ -232,6 +259,8 @@ int hadaq::TrbProcessor::CreateTDC(unsigned id1, unsigned id2, unsigned id3, uns
    return num;
 }
 
+//////////////////////////////////////////////////////////////////////////////
+/// Set auto calibration for all existing TDCs
 
 void hadaq::TrbProcessor::SetAutoCalibrations(long cnt)
 {
@@ -241,6 +270,8 @@ void hadaq::TrbProcessor::SetAutoCalibrations(long cnt)
    }
 }
 
+//////////////////////////////////////////////////////////////////////////////
+/// Disable calibration of specified channels for all existing TDCs
 
 void hadaq::TrbProcessor::DisableCalibrationFor(unsigned firstch, unsigned lastch)
 {
@@ -250,6 +281,8 @@ void hadaq::TrbProcessor::DisableCalibrationFor(unsigned firstch, unsigned lastc
    }
 }
 
+//////////////////////////////////////////////////////////////////////////////
+/// Set write calibration for all existing TDCs
 
 void hadaq::TrbProcessor::SetWriteCalibrations(const char* fileprefix, bool every_time, bool use_linear)
 {
@@ -259,6 +292,9 @@ void hadaq::TrbProcessor::SetWriteCalibrations(const char* fileprefix, bool ever
    }
 }
 
+//////////////////////////////////////////////////////////////////////////////
+/// Load calibrations for all existing TDCs
+/// as argument file prefix (without TDC id) should be specified
 
 bool hadaq::TrbProcessor::LoadCalibrations(const char* fileprefix)
 {
@@ -272,6 +308,9 @@ bool hadaq::TrbProcessor::LoadCalibrations(const char* fileprefix)
 
    return res;
 }
+
+//////////////////////////////////////////////////////////////////////////////
+/// Configure calibration
 
 void hadaq::TrbProcessor::ConfigureCalibration(const std::string& name, long period, unsigned trigmask)
 {
@@ -288,6 +327,11 @@ void hadaq::TrbProcessor::ConfigureCalibration(const std::string& name, long per
    }
 }
 
+//////////////////////////////////////////////////////////////////////////////
+/// Set trigger ids mask which should be used for calibration
+/// Value 0x3FF enables calibration for all kinds of events
+/// Value `(1 << 0xD)` enable calibration for 0xD trigger
+
 void hadaq::TrbProcessor::SetCalibrTriggerMask(unsigned trigmask)
 {
    fCalibrTriggerMask = trigmask;
@@ -299,10 +343,16 @@ void hadaq::TrbProcessor::SetCalibrTriggerMask(unsigned trigmask)
    }
 }
 
+//////////////////////////////////////////////////////////////////////////////
+/// Add sub-processor (like TDC or ADC)
+
 void hadaq::TrbProcessor::AddSub(SubProcessor* tdc, unsigned id)
 {
    fMap[id] = tdc;
 }
+
+//////////////////////////////////////////////////////////////////////////////
+/// Configure store kind
 
 void hadaq::TrbProcessor::SetStoreKind(unsigned kind)
 {
@@ -312,6 +362,9 @@ void hadaq::TrbProcessor::SetStoreKind(unsigned kind)
       entry.second->SetStoreKind(kind);
 }
 
+//////////////////////////////////////////////////////////////////////////////
+/// Enable/disable ch0 store in output event for all TDC processors
+
 void hadaq::TrbProcessor::SetCh0Enabled(bool on)
 {
    for (auto &entry : fMap) {
@@ -319,6 +372,9 @@ void hadaq::TrbProcessor::SetCh0Enabled(bool on)
          ((TdcProcessor*)entry.second)->SetCh0Enabled(on);
    }
 }
+
+//////////////////////////////////////////////////////////////////////////////
+/// Set trigger window for all TDCs
 
 void hadaq::TrbProcessor::SetTriggerWindow(double left, double right)
 {
@@ -330,6 +386,8 @@ void hadaq::TrbProcessor::SetTriggerWindow(double left, double right)
    }
 }
 
+//////////////////////////////////////////////////////////////////////////////
+/// Assign current trigger id
 
 void hadaq::TrbProcessor::AccountTriggerId(unsigned subid)
 {
@@ -358,6 +416,8 @@ void hadaq::TrbProcessor::AccountTriggerId(unsigned subid)
    }
 }
 
+//////////////////////////////////////////////////////////////////////////////
+/// First scan of buffer - main entry point for data
 
 bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
 {
@@ -413,6 +473,8 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
    return true;
 }
 
+//////////////////////////////////////////////////////////////////////////////
+/// Function called before each event scan
 
 void hadaq::TrbProcessor::BeforeEventScan()
 {
@@ -420,6 +482,8 @@ void hadaq::TrbProcessor::BeforeEventScan()
       entry.second->BeforeFill();
 }
 
+//////////////////////////////////////////////////////////////////////////////
+/// Function called after event scan - TDCs analyze data they got
 
 void hadaq::TrbProcessor::AfterEventScan()
 {
@@ -428,6 +492,8 @@ void hadaq::TrbProcessor::AfterEventScan()
       entry.second->ScanNewBuffers();
 }
 
+//////////////////////////////////////////////////////////////////////////////
+/// if SetCrossProcess() enabled - fill histograms across TDCs
 
 void hadaq::TrbProcessor::AfterEventFill()
 {
@@ -438,7 +504,8 @@ void hadaq::TrbProcessor::AfterEventFill()
    }
 }
 
-
+//////////////////////////////////////////////////////////////////////////////
+/// Cal SetCrossProcess for all existing TRB processors
 
 void hadaq::TrbProcessor::SetCrossProcessAll()
 {
@@ -448,6 +515,8 @@ void hadaq::TrbProcessor::SetCrossProcessAll()
       SetCrossProcess(true);
 }
 
+//////////////////////////////////////////////////////////////////////////////
+/// Enable Cross-processing - hits correlation between different TDCs
 
 void hadaq::TrbProcessor::SetCrossProcess(bool on)
 {
@@ -456,12 +525,17 @@ void hadaq::TrbProcessor::SetCrossProcess(bool on)
       entry.second->fCrossProcess = on;
 }
 
+//////////////////////////////////////////////////////////////////////////////
+/// Create branch in TTree to store hadaq::TrbMessage
 
 void hadaq::TrbProcessor::CreateBranch(TTree*)
 {
    if(mgr()->IsTriggeredAnalysis())
       mgr()->CreateBranch(GetName(), "hadaq::TrbMessage", (void**)&pMsg);
 }
+
+//////////////////////////////////////////////////////////////////////////////
+/// Provide buffer to sub-processor
 
 void hadaq::TrbProcessor::AddBufferToTDC(hadaqs::RawSubevent* sub,
                                          hadaq::SubProcessor* tdcproc,
@@ -495,12 +569,18 @@ void hadaq::TrbProcessor::AddBufferToTDC(hadaqs::RawSubevent* sub,
    tdcproc->SetNewDataFlag(true);
 }
 
+//////////////////////////////////////////////////////////////////////////////
+/// Add event-related error message - adds event info
+
 void hadaq::TrbProcessor::EventError(const char *msg)
 {
    char sbuf[1000];
    snprintf(sbuf, sizeof(sbuf), "Run: %u Ev: 0x%08x Msg: %s", fCurrentRunId, fCurrentEventId, msg);
    mgr()->AddErrLog(sbuf);
 }
+
+//////////////////////////////////////////////////////////////////////////////
+/// Add event-related log message - adds event info
 
 void hadaq::TrbProcessor::EventLog(const char *msg)
 {
@@ -509,13 +589,15 @@ void hadaq::TrbProcessor::EventLog(const char *msg)
    mgr()->AddRunLog(sbuf);
 }
 
+//////////////////////////////////////////////////////////////////////////////
+/// Scan subevent
+///
+/// this is first scan of subevent from TRB3 data
+/// our task is statistic over all messages we will found
+/// also for trigger-type 1 we should add SYNC message to each processor
 
 void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3runid, unsigned trb3seqid)
 {
-   // this is first scan of subevent from TRB3 data
-   // our task is statistic over all messages we will found
-   // also for trigger-type 1 we should add SYNC message to each processor
-
    memcpy((void *) &fLastSubevHdr, sub, sizeof(fLastSubevHdr));
    fCurrentRunId = trb3runid;
    fCurrentEventId = sub->GetTrigNr();
@@ -889,6 +971,10 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
    }
 }
 
+
+//////////////////////////////////////////////////////////////////////////////
+/// Using data structure in raw event, collect ids of missing TDCs
+
 bool hadaq::TrbProcessor::CollectMissingTDCs(hadaqs::RawSubevent *sub, std::vector<unsigned> &ids)
 {
    // bool isany = false;
@@ -924,6 +1010,9 @@ bool hadaq::TrbProcessor::CollectMissingTDCs(hadaqs::RawSubevent *sub, std::vect
    return ids.size() > 0;
 }
 
+//////////////////////////////////////////////////////////////////////////////
+/// Build vector of TDCs processor for fast access
+
 void hadaq::TrbProcessor::BuildFastTDCVector()
 {
    bool isany = false;
@@ -949,11 +1038,18 @@ void hadaq::TrbProcessor::BuildFastTDCVector()
    }
 }
 
+//////////////////////////////////////////////////////////////////////////////
+/// Clear helper vector of TDCs processor for fast access
+
 void hadaq::TrbProcessor::ClearFastTDCVector()
 {
    fTdcsVect.clear();
    fMinTdc = fMaxTdc = 0;
 }
+
+//////////////////////////////////////////////////////////////////////////////
+/// Transform (calibrate) raw data
+/// Creates output HLD structure, used in HADES DAQ
 
 unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent *sub, void *tgtbuf, unsigned tgtlen, bool only_hist, std::vector<unsigned> *newids)
 {
@@ -1103,6 +1199,8 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent *sub, void *
    return 0;
 }
 
+//////////////////////////////////////////////////////////////////////////////
+/// Emulate transform (calibrate) raw data - only for debugging
 
 unsigned hadaq::TrbProcessor::EmulateTransform(hadaqs::RawSubevent *sub, int dummycnt, bool only_hist)
 {
@@ -1124,6 +1222,9 @@ unsigned hadaq::TrbProcessor::EmulateTransform(hadaqs::RawSubevent *sub, int dum
    return 0;
 }
 
+//////////////////////////////////////////////////////////////////////////////
+/// Clear all DAQ-related histograms
+
 void hadaq::TrbProcessor::ClearDAQHistos()
 {
    ClearH1(fEvSize);
@@ -1138,4 +1239,3 @@ void hadaq::TrbProcessor::ClearDAQHistos()
    ClearH2(fCalHitsPerBrd);
    // ClearH2(fToTPerBrd); // do not clear ToT histogram
 }
-
