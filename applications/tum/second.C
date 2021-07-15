@@ -9,11 +9,11 @@
 class SecondProc : public base::EventProc {
    protected:
 
-      std::string fTdcId;      //!< tdc id where channels will be selected
+      std::string fTdcId;      ///< tdc id where channels will be selected
 
-      double      fHits[8];    //!< 8 channel, abstract hits
+      double      fHits[8];    ///< 8 channel, abstract hits
 
-      base::H1handle  hNumHits; //!< histogram with hits number
+      base::H1handle  hNumHits; ///< histogram with hits number
 
    public:
       SecondProc(const char* procname, const char* _tdcid) :

@@ -28,7 +28,7 @@ namespace base {
          // returns true is last message was extracted from the buffer
          inline bool islast() const { return  fBufferPos >= fBufferLen; }
 
-         //! Expanded timestamp for 250 MHz * 14 bit epochs
+         ///<! Expanded timestamp for 250 MHz * 14 bit epochs
          inline static uint64_t FullTimeStamp(uint32_t epoch, uint16_t stamp)
             { return ((uint64_t) epoch << 14) | (stamp & 0x3fff); }
    };

@@ -22,22 +22,22 @@ namespace base {
          unsigned  fSyncSource;    // 0,1: SYNC0,1 used for synchronization,  >=2: local time used for time stamp
          unsigned  fTriggerSignal; // 0 .. 3 is AUXs, 10-11 is SYNCs
 
-         int fNumPrintMessages;      //! number of messages to be printed
-         double fPrintLeft;          //! left border to start printing
-         double fPrintRight;         //! right border to stop printing
-         bool fAnyPrinted;           //! true when any message was printed
+         int fNumPrintMessages;      ///<! number of messages to be printed
+         double fPrintLeft;          ///<! left border to start printing
+         double fPrintRight;         ///<! right border to stop printing
+         bool fAnyPrinted;           ///<! true when any message was printed
 
-         base::H1handle fMsgPerBrd;  //! common histogram for all boards with similar prefix
-         base::H1handle fALLt;       //! histogram for all messages times
-         base::H1handle fHITt;       //! histogram for hit messages only
-         base::H1handle fAUXt[4];    //! histogram for AUX times
-         base::H1handle fSYNCt[2];   //! histogram for SYNC times
+         base::H1handle fMsgPerBrd;  ///<! common histogram for all boards with similar prefix
+         base::H1handle fALLt;       ///<! histogram for all messages times
+         base::H1handle fHITt;       ///<! histogram for hit messages only
+         base::H1handle fAUXt[4];    ///<! histogram for AUX times
+         base::H1handle fSYNCt[2];   ///<! histogram for SYNC times
 
-         static unsigned fMaxBrdId;  //! maximum allowed board id, used for histogramming
+         static unsigned fMaxBrdId;  ///<! maximum allowed board id, used for histogramming
 
          // this part is dedicated for OpticSplitter and should not be touched
-         Buffer    fSplitBuf;         //! temporary buffer for splitting
-         uint64_t* fSplitPtr;         //! current position for split data
+         Buffer    fSplitBuf;         ///<! temporary buffer for splitting
+         uint64_t* fSplitPtr;         ///<! current position for split data
 
 
          /** Returns true when processor used to select trigger signal

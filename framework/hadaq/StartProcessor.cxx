@@ -68,7 +68,7 @@ bool hadaq::StartProcessor::FirstBufferScan(const base::Buffer& buf)
          unsigned trbSubEvSize = sub->GetSize() / 4 - 4;
 
          while (ix < trbSubEvSize) {
-            //! Extract data portion from the whole packet (in a loop)
+            ///<! Extract data portion from the whole packet (in a loop)
             uint32_t data = sub->Data(ix++);
 
             unsigned datalen = (data >> 16) & 0xFFFF;

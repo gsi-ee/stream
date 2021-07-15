@@ -21,15 +21,15 @@ int yGSI[2][128] = {   {16,16,16,16,16,16,16,16,15,15,15,15,15,15,15,15,14,14,14
 class TGemProc : public base::EventProc {
    protected:
 
-      base::H2handle fMappingGSI_GEM1;  //!
-      base::H2handle fMappingGSI_GEM2;  //!
-      base::H2handle fMappingGSI_GEM3;  //!
+      base::H2handle fMappingGSI_GEM1;  ///<!
+      base::H2handle fMappingGSI_GEM2;  ///<!
+      base::H2handle fMappingGSI_GEM3;  ///<!
 
    public:
 
-      unsigned gem1Roc;  //! ROCid for first GEM
-      unsigned gem2Roc;  //! ROCid for second GEM
-      unsigned gem3Roc;  //! ROCid for third GEM
+      unsigned gem1Roc;  ///<! ROCid for first GEM
+      unsigned gem2Roc;  ///<! ROCid for second GEM
+      unsigned gem3Roc;  ///<! ROCid for third GEM
 
       TGemProc(const char* name) :
          base::EventProc(name)
@@ -40,9 +40,9 @@ class TGemProc : public base::EventProc {
          fMappingGSI_GEM2 = MakeH2("GEM/MappingGSI_GEM2", "MAPPING GSI for station 2 ", 20, 0., 19., 20, 0., 19., "Mapping_X;Mapping_Y");
          fMappingGSI_GEM3 = MakeH2("GEM/MappingGSI_GEM3", "MAPPING GSI for station 3 ", 20, 0., 19., 20, 0., 19., "Mapping_X;Mapping_Y");
 
-         gem1Roc = 2;  //! ROCid for first GEM
-         gem2Roc = 3;  //! ROCid for second GEM
-         gem3Roc = 4;  //! ROCid for third GEM
+         gem1Roc = 2;  ///<! ROCid for first GEM
+         gem2Roc = 3;  ///<! ROCid for second GEM
+         gem3Roc = 4;  ///<! ROCid for third GEM
       }
 
 
@@ -113,7 +113,7 @@ void second() {
 
    TGemProc* p = new TGemProc("GEM");
 
-   p->gem1Roc = 2;  //! ROCid for first GEM
-   p->gem2Roc = 3;  //! ROCid for second GEM
-   p->gem3Roc = 4;  //! ROCid for third GEM
+   p->gem1Roc = 2;  ///<! ROCid for first GEM
+   p->gem2Roc = 3;  ///<! ROCid for second GEM
+   p->gem3Roc = 4;  ///<! ROCid for third GEM
 }

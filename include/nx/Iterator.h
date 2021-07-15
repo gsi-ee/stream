@@ -14,17 +14,17 @@ namespace nx {
    class Iterator : public base::Iterator {
       protected:
 
-         uint32_t                   fEpoch;     //! current epoch
+         uint32_t                   fEpoch;     ///<! current epoch
 
-         nx::Message                fMsg;       //! current read message
+         nx::Message                fMsg;       ///<! current read message
 
-         base::LocalStampConverter  fConv;      //! use to covert time stamps in seconds
+         base::LocalStampConverter  fConv;      ///<! use to covert time stamps in seconds
 
-         bool                       fCorrecion; //! is message correction is enabled
+         bool                       fCorrecion; ///<! is message correction is enabled
 
-         std::vector<uint64_t>      fLastNxHit; //! last stamp of nx hit
+         std::vector<uint64_t>      fLastNxHit; ///<! last stamp of nx hit
 
-         unsigned                   fNxTmDistance; //! allowed negative distance between consequent hits - to recognize problems
+         unsigned                   fNxTmDistance; ///<! allowed negative distance between consequent hits - to recognize problems
 
          int                        fVerifyRes;
 

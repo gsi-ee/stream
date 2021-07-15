@@ -13,13 +13,13 @@ const int NumChannels = 33;
 class DebugProc : public base::EventProc {
    protected:
 
-      std::string fTdcId;    //!< tdc id where channels will be selected "TDC_8a00"
+      std::string fTdcId;    ///< tdc id where channels will be selected "TDC_8a00"
 
-      double      fHits[NumChannels]; //!< 16 channel, last hit in every channel
+      double      fHits[NumChannels]; ///< 16 channel, last hit in every channel
 
-      base::H1handle  hNumHits; //!< histogram with hits number
+      base::H1handle  hNumHits; ///< histogram with hits number
 
-      base::H1handle  hRefHist; //!< histogram with hits number
+      base::H1handle  hRefHist; ///< histogram with hits number
 
    public:
       DebugProc(const char* procname, const char* _tdcid) :
@@ -84,7 +84,7 @@ class DebugProc : public base::EventProc {
 class PrintProc : public base::EventProc {
    protected:
 
-      std::string fTdcId;    //!< tdc id where channels will be selected "TDC_8a00"
+      std::string fTdcId;    ///< tdc id where channels will be selected "TDC_8a00"
 
       int fCounter;
 

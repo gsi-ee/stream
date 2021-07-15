@@ -9,13 +9,13 @@
 class RawHadesProc : public base::EventProc {
    protected:
       
-      std::string fTdcId[2];    //!< tdc1 id where channels will be selected "TDC_8a00"
+      std::string fTdcId[2];    ///< tdc1 id where channels will be selected "TDC_8a00"
       double lasttm[2];
       
-      base::H1handle  hDiff;  //!< histogram with time diff between two events
-      base::H1handle  hRatio; //!< histogram with time ratio
-      base::H2handle  hDet[2]; //!< time distribution
-      base::H1handle  hDetInt[2]; //!< time distribution
+      base::H1handle  hDiff;  ///< histogram with time diff between two events
+      base::H1handle  hRatio; ///< histogram with time ratio
+      base::H2handle  hDet[2]; ///< time distribution
+      base::H1handle  hDetInt[2]; ///< time distribution
       
    public:
       RawHadesProc(const char* procname, const char* tdc1, const char* tdc2) :

@@ -27,19 +27,19 @@ namespace hadaq {
       friend class TrbProcessor;
 
       protected:
-         TrbProcessor *fTrb;   //! pointer on TRB processor
-         unsigned fSeqeunceId; //! sequence number of processor in TRB
-         bool fIsTDC;          //! indicate when it is TDC, to avoid dynamic_cast
+         TrbProcessor *fTrb;   ///<! pointer on TRB processor
+         unsigned fSeqeunceId; ///<! sequence number of processor in TRB
+         bool fIsTDC;          ///<! indicate when it is TDC, to avoid dynamic_cast
 
-         base::H1handle *fMsgPerBrd;  //! messages per board - from TRB
-         base::H1handle *fErrPerBrd;  //! errors per board - from TRB
-         base::H1handle *fHitsPerBrd; //! data hits per board - from TRB
-         base::H2handle *fCalHitsPerBrd; //! calibration hits per board - from TRB
-         base::H2handle *fToTPerBrd;  //! ToT per board - from TRB
+         base::H1handle *fMsgPerBrd;  ///<! messages per board - from TRB
+         base::H1handle *fErrPerBrd;  ///<! errors per board - from TRB
+         base::H1handle *fHitsPerBrd; ///<! data hits per board - from TRB
+         base::H2handle *fCalHitsPerBrd; ///<! calibration hits per board - from TRB
+         base::H2handle *fToTPerBrd;  ///<! ToT per board - from TRB
 
-         bool fNewDataFlag;  //! flag used by TRB processor to indicate if new data was added
-         bool fPrintRawData; //! if true, raw data will be printed
-         bool fCrossProcess; //! if true, AfterFill will be called by Trb processor
+         bool fNewDataFlag;  ///<! flag used by TRB processor to indicate if new data was added
+         bool fPrintRawData; ///<! if true, raw data will be printed
+         bool fCrossProcess; ///<! if true, AfterFill will be called by Trb processor
 
          SubProcessor(TrbProcessor *trb, const char* nameprefix, unsigned subid);
 

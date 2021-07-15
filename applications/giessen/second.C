@@ -9,12 +9,12 @@
 class RawPandaDircProc : public base::EventProc {
    protected:
 
-      std::string fTdcId;    //!< tdc id where channels will be selected "TDC_8a00"
-      unsigned    fFirstId;  //!< first channel
+      std::string fTdcId;    ///< tdc id where channels will be selected "TDC_8a00"
+      unsigned    fFirstId;  ///< first channel
 
-      double      fHits[16]; //!< 16 channel, last hit in every channel
+      double      fHits[16]; ///< 16 channel, last hit in every channel
 
-      base::H1handle  hNumHits; //!< histogram with hits number
+      base::H1handle  hNumHits; ///< histogram with hits number
 
    public:
       RawPandaDircProc(const char* procname, const char* _tdcid, unsigned _firstid = 1) :

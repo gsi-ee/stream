@@ -4,6 +4,9 @@
 #include <cstring>
 #include <cstdio>
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// reset buffer
+
 void base::Buffer::reset()
 {
    if (fRec!=0) {
@@ -12,6 +15,9 @@ void base::Buffer::reset()
       fRec = 0;
    }
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// set data length
 
 bool base::Buffer::setdatalen(unsigned newlen)
 {
@@ -25,6 +31,8 @@ bool base::Buffer::setdatalen(unsigned newlen)
    return true;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// allocate new buffer
 
 void base::Buffer::makenew(unsigned datalen)
 {
@@ -47,6 +55,8 @@ void base::Buffer::makenew(unsigned datalen)
    fRec->datalen = datalen;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// create copy of memory
 
 void base::Buffer::makecopyof(void* buf, unsigned datalen)
 {
@@ -71,6 +81,9 @@ void base::Buffer::makecopyof(void* buf, unsigned datalen)
 
    fRec->datalen = datalen;
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// make reference on external buffer
 
 void base::Buffer::makereferenceof(void* buf, unsigned datalen)
 {

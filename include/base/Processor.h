@@ -71,16 +71,16 @@ namespace base {
 
          enum { DummyBrdId = 0xffffffff };
 
-         std::string   fName;                     //!< processor name, used for event naming
-         unsigned      fID;                       //!< identifier, used mostly for debugging
-         ProcMgr*      fMgr;                      //!< direct pointer on manager
-         std::string   fPathPrefix;               //!< histogram path prefix, used for histogram folder name
-         std::string   fPrefix;                   //!< prefix, used for histogram names
-         std::string   fSubPrefixD;               //!< sub-prefix for histogram directory
-         std::string   fSubPrefixN;               //!< sub-prefix for histogram names
-         int           fHistFilling;              //!< level of histogram filling
-         unsigned      fStoreKind;                //!< if >0, store will be enabled for processor
-         bool          fIntHistFormat;            //!< if true, internal histogram format is used
+         std::string   fName;                     ///< processor name, used for event naming
+         unsigned      fID;                       ///< identifier, used mostly for debugging
+         ProcMgr*      fMgr;                      ///< direct pointer on manager
+         std::string   fPathPrefix;               ///< histogram path prefix, used for histogram folder name
+         std::string   fPrefix;                   ///< prefix, used for histogram names
+         std::string   fSubPrefixD;               ///< sub-prefix for histogram directory
+         std::string   fSubPrefixN;               ///< sub-prefix for histogram names
+         int           fHistFilling;              ///< level of histogram filling
+         unsigned      fStoreKind;                ///< if >0, store will be enabled for processor
+         bool          fIntHistFormat;            ///< if true, internal histogram format is used
 
          /** Make constructor protected - no way to create base class instance */
          Processor(const char* name = "", unsigned brdid = DummyBrdId);

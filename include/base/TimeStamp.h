@@ -34,14 +34,14 @@ namespace base {
 
    class LocalStampConverter {
       protected:
-         int64_t  fT0;          //! time stamp, used as t0 for time production
-         uint64_t fWrapSize;    //! value of time stamp which wraps - MUST be power of 2
-         uint64_t fHalfWrapSize; //! fWrapSize/2 - used very often in calculations
-         uint64_t fValueMask;   //! mask to extract bits related to stamp
+         int64_t  fT0;          ///<! time stamp, used as t0 for time production
+         uint64_t fWrapSize;    ///<! value of time stamp which wraps - MUST be power of 2
+         uint64_t fHalfWrapSize; ///<! fWrapSize/2 - used very often in calculations
+         uint64_t fValueMask;   ///<! mask to extract bits related to stamp
 
-         uint64_t fCurrentWrap; //! summed wraps since begin
-         LocalStamp_t fRef;     //! reference time, used to detect wraps of timestamp
-         int64_t  fConvRef;     //! value used for time conversion
+         uint64_t fCurrentWrap; ///<! summed wraps since begin
+         LocalStamp_t fRef;     ///<! reference time, used to detect wraps of timestamp
+         int64_t  fConvRef;     ///<! value used for time conversion
 
          double fCoef;  // time coefficient to convert to seconds
 

@@ -7,6 +7,8 @@
 
 namespace base {
 
+   class Event;
+
    /** \brief Abstract processor of data streams
     *
     * \ingroup stream_core_classes
@@ -16,17 +18,15 @@ namespace base {
     * Main motivation for the class is unify way how data-streams can be processed
     * and how all kind of time calculations could be done.  */
 
-   class Event;
-
    class StreamProc : public Processor {
       friend class ProcMgr;
 
       public:
          enum SyncKind {
-            sync_None,         //!< no synchronization
-            sync_Inter,        //!< use time interpolation between two markers
-            sync_Left,         //!< use sync marker on left side
-            sync_Right         //!< use sync marker on right side
+            sync_None,         ///< no synchronization
+            sync_Inter,        ///< use time interpolation between two markers
+            sync_Left,         ///< use sync marker on left side
+            sync_Right         ///< use sync marker on right side
          };
 
 
@@ -36,36 +36,36 @@ namespace base {
 
          typedef RecordsQueue<base::SyncMarker, false> SyncMarksQueue;
 
-         BuffersQueue fQueue;                     //!
+         BuffersQueue fQueue;                     ///<! buffers queue
 
-         unsigned        fQueueScanIndex;         //!< index of next buffer which should be scanned
-         unsigned        fQueueScanIndexTm;       //!< index of buffer to scan and set correct times of the buffer head
+         unsigned        fQueueScanIndex;         ///< index of next buffer which should be scanned
+         unsigned        fQueueScanIndexTm;       ///< index of buffer to scan and set correct times of the buffer head
 
-         AnalysisKind    fAnalysisKind;           //!< defines that processor is doing
+         AnalysisKind    fAnalysisKind;           ///< defines that processor is doing
 
-         SyncKind        fSynchronisationKind;    //!< kind of synchronization
-         SyncMarksQueue  fSyncs;                  //!< list of sync markers
-         unsigned        fSyncScanIndex;          //!< sync scan index, indicate number of syncs which can really be used for synchronization
-         bool            fSyncFlag;               //!< boolean, used in sync adjustment procedure
+         SyncKind        fSynchronisationKind;    ///< kind of synchronization
+         SyncMarksQueue  fSyncs;                  ///< list of sync markers
+         unsigned        fSyncScanIndex;          ///< sync scan index, indicate number of syncs which can really be used for synchronization
+         bool            fSyncFlag;               ///< boolean, used in sync adjustment procedure
 
-         LocalMarkersQueue  fLocalMarks;          //!< queue with local markers
-         double          fTriggerAcceptMaring;    //!< time margin (in local time) to accept new trigger
-         GlobalTime_t    fLastLocalTriggerTm;     //!< time of last local trigger
+         LocalMarkersQueue  fLocalMarks;          ///< queue with local markers
+         double          fTriggerAcceptMaring;    ///< time margin (in local time) to accept new trigger
+         GlobalTime_t    fLastLocalTriggerTm;     ///< time of last local trigger
 
-         GlobalMarksQueue fGlobalMarks;           //!< list of global triggers in work
+         GlobalMarksQueue fGlobalMarks;           ///< list of global triggers in work
 
-         unsigned fGlobalTrigScanIndex;           //!< index with first trigger which is not yet ready
-         unsigned fGlobalTrigRightIndex;          //!< temporary value, used during second buffers scan
+         unsigned fGlobalTrigScanIndex;           ///< index with first trigger which is not yet ready
+         unsigned fGlobalTrigRightIndex;          ///< temporary value, used during second buffers scan
 
-         bool fTimeSorting;                       //!< defines if time sorting should be used for the messages
+         bool fTimeSorting;                       ///< defines if time sorting should be used for the messages
 
-         base::H1handle fTriggerTm;  //! histogram with time relative to the trigger
-         base::H1handle fMultipl;    //! histogram of event multiplicity
+         base::H1handle fTriggerTm;  ///<! histogram with time relative to the trigger
+         base::H1handle fMultipl;    ///<! histogram of event multiplicity
 
-         base::C1handle fTriggerWindow;   //!<  window used for data selection
+         base::C1handle fTriggerWindow;   ///<  window used for data selection
 
-         static unsigned fMarksQueueCapacity;   //!< maximum number of items in the marksers queue
-         static unsigned fBufsQueueCapacity;   //!< maximum number of items in the queue
+         static unsigned fMarksQueueCapacity;   ///< maximum number of items in the marksers queue
+         static unsigned fBufsQueueCapacity;   ///< maximum number of items in the queue
 
          /** Make constructor protected - no way to create base class instance */
          StreamProc(const char* name = "", unsigned brdid = DummyBrdId, bool basehist = true);

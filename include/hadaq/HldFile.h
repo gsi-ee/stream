@@ -26,8 +26,8 @@ namespace hadaq {
 
    class HldFile : public dabc::BasicFile {
       protected:
-         uint32_t       fRunNumber;   //! run number
-         bool           fEOF;         //! flag indicate that end-of-file was reached
+         uint32_t       fRunNumber;   ///<! run number
+         bool           fEOF;         ///<! flag indicate that end-of-file was reached
 
       public:
          HldFile();

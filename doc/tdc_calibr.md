@@ -459,7 +459,7 @@ This loook like:
        <InputPort name="Input0" url="hadaq://host:10101" urlopt1="trb=0x8000&tdc=[0x3000,0x3001,0x3002,0x3003]&hub=0x8010"/>
        <InputPort name="Input1" url="hadaq://host:10102" urlopt1="trb=0x8010&tdc=[0x3010,0x3011,0x3012,0x3013]"/>
 
-For each input [TDC calibration module](@ref stream::TdcCalibrationModule) will be created with name 'Input0TdcCal' for first input, 'Input1TdcCal' for second input and so on. One could specify additional parameters for such modules in common section:
+For each input [TDC calibration module](https://web-docs.gsi.de/~dabc/doc/dabc2/classstream_1_1TdcCalibrationModule.html) will be created with name 'Input0TdcCal' for first input, 'Input1TdcCal' for second input and so on. One could specify additional parameters for such modules in common section:
 
     <Module name="Input*TdcCal">
        <FineMin value="31"/>

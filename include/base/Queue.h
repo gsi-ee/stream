@@ -7,6 +7,8 @@
 
 namespace base {
 
+   /** queue class */
+
    template<class T, bool canexpand = false>
    class Queue {
 
@@ -51,15 +53,16 @@ namespace base {
 
          friend class Queue<T,canexpand>::Iterator;
 
-         T*         fQueue;
-         T*         fBorder; // maximum pointer value
-         unsigned   fCapacity;
-         unsigned   fSize;
-         T*         fHead;
-         T*         fTail;
-         unsigned   fInitSize; //!< original size of the queue, restored then clear() method is called
+         T*         fQueue;     ///< queue
+         T*         fBorder;    ///< maximum pointer value
+         unsigned   fCapacity;  ///< capacity
+         unsigned   fSize;      ///< size
+         T*         fHead;      ///< head
+         T*         fTail;      ///< tail
+         unsigned   fInitSize;  ///< original size of the queue, restored then clear() method is called
 
       public:
+         /** default constructor */
          Queue() :
             fQueue(0),
             fBorder(0),
@@ -71,6 +74,7 @@ namespace base {
          {
          }
 
+         /** constructor with capacity */
          Queue(unsigned _capacity) :
             fQueue(0),
             fBorder(0),
@@ -83,18 +87,21 @@ namespace base {
             Allocate(_capacity);
          }
 
+         /** destructor */
          virtual ~Queue()
          {
             delete[] fQueue;
             fQueue = 0;
          }
 
+         /** init queue */
          void Init(unsigned _capacity)
          {
             fInitSize = _capacity;
             Allocate(_capacity);
          }
 
+         /** allocate queue */
          void Allocate(unsigned _capacity)
          {
             if (fCapacity>0) {
@@ -129,7 +136,7 @@ namespace base {
             }
          }
 
-         // increase capacity of queue without lost of content
+         /** increase capacity of queue without lost of content */
          bool Expand(unsigned newcapacity = 0)
          {
             if (!canexpand) return false;
@@ -152,6 +159,7 @@ namespace base {
             return true;
          }
 
+         /** remove value from queue */
          bool Remove(T value)
          {
             if (size()==0) return false;
@@ -172,6 +180,7 @@ namespace base {
             return i_tgt != i_src;
          }
 
+         /** erase item with index */
          bool erase_item(unsigned indx)
          {
             if (indx>=fSize) return false;
@@ -192,11 +201,13 @@ namespace base {
             return true;
          }
 
+         /** create place for next entry */
          bool MakePlaceForNext()
          {
             return (fSize<fCapacity) || Expand();
          }
 
+         /** push value */
          void push(const T& val)
          {
             if ((fSize<fCapacity) || Expand()) {
@@ -208,6 +219,7 @@ namespace base {
             }
          }
 
+         /** push empty, return pointer on place */
          T* PushEmpty()
          {
             if ((fSize<fCapacity) || Expand()) {
@@ -221,14 +233,16 @@ namespace base {
             return 0;
          }
 
+         /** pop element */
          void pop()
          {
-            if (fSize>0) {
+            if (fSize > 0) {
                fSize--;
                if (++fTail==fBorder) fTail = fQueue;
             }
          }
 
+         /** pop front element */
          T pop_front()
          {
             #ifdef DABC_EXTRA_CHECKS
@@ -240,6 +254,7 @@ namespace base {
             return *res;
          }
 
+         /** access front element */
          T& front() const
          {
             #ifdef DABC_EXTRA_CHECKS
@@ -248,8 +263,7 @@ namespace base {
             return *fTail;
          }
 
-         // TODO: implement iterator to access all items in the queue
-
+         /** access arbitrary item */
          T& item(unsigned indx) const
          {
             #ifdef DABC_EXTRA_CHECKS
@@ -261,6 +275,7 @@ namespace base {
             return *_item;
          }
 
+         /** provide item pointer */
          T* item_ptr(unsigned indx) const
          {
             #ifdef DABC_EXTRA_CHECKS
@@ -274,6 +289,7 @@ namespace base {
             return _item;
          }
 
+         /** access back element */
          T& back() const
          {
             #ifdef DABC_EXTRA_CHECKS
@@ -282,6 +298,7 @@ namespace base {
             return item(fSize-1);
          }
 
+         /** clear queue */
          void clear()
          {
             fHead = fQueue;
@@ -289,21 +306,28 @@ namespace base {
             fSize = 0;
          }
 
+         /** return queue capacity */
          unsigned capacity() const { return fCapacity; }
 
+         /** return queue size */
          unsigned size() const { return fSize; }
 
+         /** is queue full */
          bool full() const { return capacity() == size(); }
 
+         /** is queue empty */
          bool empty() const { return size() == 0; }
 
+         /** begin iterator */
          Iterator begin() { return Iterator(this, fTail, 0); }
+         /** end iterator */
          Iterator end() { return Iterator(this, fHead, fHead > fTail ? 0 : 1); }
    };
 
    // ___________________________________________________________
 
    /** Special case of the queue when structure or class is used as entry of the queue.
+    *
     * Main difference from normal queue - one somehow should cleanup item when it is not longer used
     * without item destructor. The only way is to introduce reset() method in contained class which
     * do the job similar to destructor. It is also recommended that contained class has
@@ -324,28 +348,40 @@ namespace base {
    class RecordsQueue : public Queue<T, canexpand> {
       typedef Queue<T, canexpand> Parent;
       public:
+         /** default constructor */
          RecordsQueue() : Parent() {}
 
+         /** construct queue with given capacity */
          RecordsQueue(unsigned _capacity) : Parent(_capacity) {}
 
+         /** front element */
          T& front() const { return Parent::front(); }
 
+         /** back element */
          T& back() const { return Parent::back(); }
 
+         /** capacity */
          unsigned capacity() const { return Parent::capacity(); }
 
+         /** size */
          unsigned size() const { return Parent::size(); }
 
+         /** is queue full */
          bool full() const { return Parent::full(); }
 
+         /** is queue empty */
          bool empty() const { return Parent::empty(); }
 
+         /** item reference */
          T& item(unsigned indx) const { return Parent::item(indx); }
 
+         /** item pointer */
          T* item_ptr(unsigned indx) const { return Parent::item_ptr(indx); }
 
+         /** pop item */
          void pop() { front().reset(); Parent::pop(); }
 
+         /** pop item and return it */
          T pop_front()
          {
             T res = front();
@@ -353,7 +389,7 @@ namespace base {
             return res;
          }
 
-
+         /** pop several items */
          void pop_items(unsigned cnt)
          {
             if (cnt>=size()) {
@@ -363,6 +399,7 @@ namespace base {
             }
          }
 
+         /** clear queue */
          void clear()
          {
             if (Parent::fCapacity != Parent::fInitSize) {
@@ -374,6 +411,7 @@ namespace base {
             }
          }
 
+         /** erase item */
          bool erase_item(unsigned indx)
          {
             bool res = Parent::erase_item(indx);

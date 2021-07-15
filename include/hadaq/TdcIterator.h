@@ -18,15 +18,15 @@ namespace hadaq {
 
          enum { DummyEpoch = 0xffffffff };
 
-         uint32_t*  fBuf;        //! pointer on raw data
-         uint32_t*  fLastBuf;    //! pointer on last extracted message
-         unsigned   fBuflen;     //! length of raw data
-         bool       fSwapped;    //! true if raw data are swapped
+         uint32_t*  fBuf;        ///<! pointer on raw data
+         uint32_t*  fLastBuf;    ///<! pointer on last extracted message
+         unsigned   fBuflen;     ///<! length of raw data
+         bool       fSwapped;    ///<! true if raw data are swapped
 
-         hadaq::TdcMessage fMsg; //! current message
-         uint32_t  fCurEpoch;    //! current epoch
+         hadaq::TdcMessage fMsg; ///<! current message
+         uint32_t  fCurEpoch;    ///<! current epoch
 
-         base::LocalStampConverter  fConv;   //! use to covert time stamps in seconds
+         base::LocalStampConverter  fConv;   ///<! use to covert time stamps in seconds
 
       public:
 

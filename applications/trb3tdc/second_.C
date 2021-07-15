@@ -18,7 +18,7 @@ class PostProcessor : public base::EventProc {
 
       hadaq::TrbProcessor* fTRB;
 
-      base::H2handle  hCorr;  //!< correlation between mean and rms
+      base::H2handle  hCorr;  ///< correlation between mean and rms
 
       PostProcessor(hadaq::TrbProcessor* trb) :
          base::EventProc("PostProcessor"),

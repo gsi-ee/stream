@@ -23,8 +23,8 @@ namespace hadaq {
 
          unsigned fMonitorProcess;
 
-         std::vector<hadaq::MessageMonitor>  fDummyVect; //! dummy empty vector
-         std::vector<hadaq::MessageMonitor> *pStoreVect; //! pointer on store vector
+         std::vector<hadaq::MessageMonitor>  fDummyVect; ///<! dummy empty vector
+         std::vector<hadaq::MessageMonitor> *pStoreVect; ///<! pointer on store vector
 
          /** Scan FPGA-TDC data, distribute over sub-processors */
          virtual void ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3runid, unsigned trb3seqid);

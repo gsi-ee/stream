@@ -83,10 +83,10 @@ namespace dabc {
 
    class BasicFile {
       protected:
-         FileInterface* io;              //!  interface to the file system
-         bool iowoner;                   //!  if true, io object owned by file
-         FileInterface::Handle fd;       //!  file descriptor
-         bool  fReadingMode;             //!  reading/writing mode
+         FileInterface* io;              ///<!  interface to the file system
+         bool iowoner;                   ///<!  if true, io object owned by file
+         FileInterface::Handle fd;       ///<!  file descriptor
+         bool  fReadingMode;             ///<!  reading/writing mode
 
          bool CloseBasicFile()
          {
@@ -180,8 +180,8 @@ namespace dabc {
 
    class BinaryFile : public BasicFile {
       protected:
-         BinaryFileHeader    fFileHdr;   //!  file header
-         BinaryFileBufHeader fBufHdr;    //!  buffer header
+         BinaryFileHeader    fFileHdr;   ///<!  file header
+         BinaryFileBufHeader fBufHdr;    ///<!  buffer header
 
       public:
 

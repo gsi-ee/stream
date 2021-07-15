@@ -5,30 +5,27 @@
 
 namespace base {
 
-   /** \brief Memory management class
-    *
-    * \ingroup stream_core_classes
-    *
-    * Class base::Buffer is for memory management
-    * It allows to keep many references on same raw data and automatically release it  */
+   /** Internal raw data for base::Buffer */
 
    struct RawDataRec {
-      int           refcnt;   // number of references
+      int           refcnt;   ///< number of references
 
-      unsigned      kind;       // like ROC event, SPADIC or MBS or ..
-      unsigned      boardid;    // board id
-      unsigned      format;     // raw data format like optic, Ethernet for ROC and so on
+      unsigned      kind;       ///< like ROC event, SPADIC or MBS or ..
+      unsigned      boardid;    ///< board id
+      unsigned      format;     ///< raw data format like optic, Ethernet for ROC and so on
 
-      GlobalTime_t  local_tm;    // buffer head time in local scale,
-      GlobalTime_t  global_tm;   // buffer head time in global time
+      GlobalTime_t  local_tm;    ///< buffer head time in local scale,
+      GlobalTime_t  global_tm;   ///< buffer head time in global time
 
-      void*         buf;        // raw data
-      unsigned      datalen;    // length of raw data
+      void*         buf;        ///< raw data
+      unsigned      datalen;    ///< length of raw data
 
-      unsigned      user_tag;   // arbitrary data, can be used for any additional data
+      unsigned      user_tag;   ///< arbitrary data, can be used for any additional data
 
+      /** constructor */
       RawDataRec() : refcnt(0), kind(0), boardid(0), format(0), local_tm(0), global_tm(0), buf(0), datalen(0), user_tag(0) {}
 
+      /** reset */
       void reset()
       {
          refcnt = 0;
@@ -43,14 +40,24 @@ namespace base {
       }
    };
 
+   /** Memory management class
+    *
+    * \ingroup stream_core_classes
+    *
+    * It allows to keep many references on same raw data and automatically release it  */
+
    class Buffer {
       protected:
-         RawDataRec* fRec;
+         RawDataRec* fRec;         ///< data
       public:
-         Buffer() : fRec(0) {}
+         /** constructor */
+         Buffer() : fRec(nullptr) {}
+         /** constructor */
          Buffer(const Buffer& src) : fRec(src.fRec) { if (fRec) fRec->refcnt++; }
+         /** destructor */
          ~Buffer() { reset(); }
 
+         /** assign operator */
          Buffer& operator=(const Buffer& src)
          {
             reset();
@@ -59,12 +66,15 @@ namespace base {
             return *this;
          }
 
-         bool null() const { return fRec==0; }
+         /** returns true if empty */
+         bool null() const { return fRec==nullptr; }
 
          void reset();
 
+         /** access operator */
          RawDataRec& operator()(void) const { return *fRec; }
 
+         /** access operator */
          RawDataRec& rec() const { return *fRec; }
 
          /** Returns length of memory buffer */
@@ -73,10 +83,11 @@ namespace base {
          /** Change length of memory buffer - only can be reduced */
          bool setdatalen(unsigned newlen);
 
+         /** return pointer with shift */
          void* ptr(unsigned shift = 0) const { return fRec ? (shift <= fRec->datalen ? (char*)fRec->buf + shift : 0) : 0; }
 
+         /** get uint32_t at given index */
          uint32_t getuint32(unsigned indx) const { return ((uint32_t*) ptr())[indx]; }
-
 
          /** Method produces empty buffer with
           * specified amount of memory */
@@ -90,7 +101,6 @@ namespace base {
           * Means buffer will only contain pointer of source data
           * Source data should exists until single instance of buffer is existing */
          void makereferenceof(void* buf, unsigned datalen);
-
 
    };
 

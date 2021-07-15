@@ -14,13 +14,13 @@ namespace get4 {
       protected:
          enum { MaxGet4=16 };
 
-         uint32_t         fEpoch;            //! current epoch
+         uint32_t         fEpoch;            ///<! current epoch
 
-         get4::Message    fMsg;              //! current read message
-         uint32_t         fEpoch2[MaxGet4];  //! current epoch2 for each Get4
+         get4::Message    fMsg;              ///<! current read message
+         uint32_t         fEpoch2[MaxGet4];  ///<! current epoch2 for each Get4
 
-         base::LocalStampConverter fConvRoc;   //! use to covert time stamps from ROC messages
-         base::LocalStampConverter fConvGet4;  //! use to covert time stamps from Get4 messages
+         base::LocalStampConverter fConvRoc;   ///<! use to covert time stamps from ROC messages
+         base::LocalStampConverter fConvGet4;  ///<! use to covert time stamps from Get4 messages
 
       public:
          Iterator(int fmt = base::formatNormal);
@@ -144,7 +144,7 @@ namespace get4 {
 
          void printMessages(unsigned cnt = 100, unsigned kind = base::msg_print_Prefix | base::msg_print_Data);
 
-         //! Expanded timestamp for 250/8*5 MHz * 19 bit epochs
+         ///<! Expanded timestamp for 250/8*5 MHz * 19 bit epochs
          inline static uint64_t FullTimeStamp2(uint32_t epoch, uint32_t stamp)
             { return ((uint64_t) epoch << 19) | (stamp & 0x7ffff); }
 

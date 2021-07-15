@@ -640,7 +640,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
          datalen = trbSubEvSize - 2; // whole sub event beside last 2 words which should be 0xx5555
          dataid = sub->GetId();  // inherit ID
       } else {
-         //! Extract data portion from the whole packet (in a loop)
+         ///<! Extract data portion from the whole packet (in a loop)
          data = sub->Data(ix++);
          datalen = (data >> 16) & 0xFFFF;
          dataid = data & 0xFFFF;
@@ -682,11 +682,11 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
          maxhublen -= (datalen+1);
       }
 
-      //! ==================== CTS header and inside ================
+      ///<! ==================== CTS header and inside ================
       if (dataid == fHadaqCTSId) {
          RAWPRINT("   CTS header: 0x%x, size=%d\n", (unsigned) data, datalen);
-         //hTrbTriggerCount->Fill(5);          //! TRB - CTS
-         //hTrbTriggerCount->Fill(0);          //! TRB TOTAL
+         //hTrbTriggerCount->Fill(5);          ///<! TRB - CTS
+         //hTrbTriggerCount->Fill(0);          ///<! TRB TOTAL
 
          data = sub->Data(ix++); datalen--;
          unsigned trigtype = (data & 0xFFFF);
@@ -812,7 +812,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
          tdcproc = GetTDC(dataid, true);
       }
 
-      //! ================= FPGA TDC header ========================
+      ///<! ================= FPGA TDC header ========================
       if (tdcproc) {
          RAWPRINT("   FPGA-TDC header: 0x%08x, tdcid=0x%04x, size=%u\n", (unsigned) data, dataid, datalen);
 
@@ -830,14 +830,14 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
       }  // end of if TDC header
 
 
-      //! ==================  Dummy header and inside ==========================
+      ///<! ==================  Dummy header and inside ==========================
       if (dataid == 0x5555) {
          RAWPRINT("   Dummy header: 0x%x, size=%d\n", (unsigned) data, datalen);
-         //hTrbTriggerCount->Fill(4);          //! TRB - DUMMY
-         //hTrbTriggerCount->Fill(0);          //! TRB TOTAL
+         //hTrbTriggerCount->Fill(4);          ///<! TRB - DUMMY
+         //hTrbTriggerCount->Fill(0);          ///<! TRB TOTAL
          bool first = true;
          while (datalen-- > 0) {
-            //! In theory here must be only one word - termination package with the status
+            ///<! In theory here must be only one word - termination package with the status
             data = sub->Data(ix++);
             RAWPRINT("      word: 0x%08x\n", (unsigned) data);
 
@@ -858,7 +858,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
       auto iter = fMap.find(dataid);
       SubProcessor* subproc = iter != fMap.end() ? iter->second : nullptr;
 
-      //! ================= any other header ========================
+      ///<! ================= any other header ========================
       if (subproc) {
          RAWPRINT ("   SUB header: 0x%08x, id=0x%04x, size=%u\n", (unsigned) data, dataid, datalen);
 
@@ -985,7 +985,7 @@ bool hadaq::TrbProcessor::CollectMissingTDCs(hadaqs::RawSubevent *sub, std::vect
    unsigned trbSubEvSize = (sub->GetSize() - sizeof(hadaqs::RawSubevent)) / 4;
 
    while (ix < trbSubEvSize) {
-      //! Extract data portion from the whole packet (in a loop)
+      ///<! Extract data portion from the whole packet (in a loop)
       uint32_t data = sub->Data(ix++);
 
       uint32_t dataid = data & 0xFFFF;
@@ -1148,7 +1148,7 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent *sub, void *
 
 //      grd.Next("get");
 
-      //! ================= FPGA TDC header ========================
+      ///<! ================= FPGA TDC header ========================
       TdcProcessor *subproc = nullptr;
       if (get_fast) {
          if ((id >= fMinTdc) && (id < fMaxTdc)) subproc = fTdcsVect[id-fMinTdc];

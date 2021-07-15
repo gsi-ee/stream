@@ -22,7 +22,7 @@ class ADCProc : public base::EventProc {
       string fTdcInCTSId;
       
 
-      //double      fHits[16]; //!< 16 channel, last hit in every channel
+      //double      fHits[16]; ///< 16 channel, last hit in every channel
       
       base::H1handle  hDiffTime; 
       base::H1handle  hAdcPhase;      

@@ -36,36 +36,36 @@ namespace hadaq {
       protected:
 
          struct ChannelRec {
-            unsigned refch;                //! reference channel for specified
-            unsigned reftdc;               //! tdc of reference channel
-            bool refabs;                   //! if true, absolute difference (without channel 0) will be used
-            unsigned doublerefch;          //! double reference channel
-            unsigned doublereftdc;         //! tdc of double reference channel
-            unsigned refch_tmds;           //! reference channel for TMDS messages
-            bool docalibr;                 //! if false, simple calibration will be used
-            bool hascalibr;                //! indicate if channel has valid calibration (not simple linear)
-            bool check_calibr;             //! flag used to indicate that calibration was checked
-            base::H1handle fRisingFine;    //! histogram of all fine counters
-            base::H1handle fRisingMult;    //! number of hits per event
-            base::H1handle fRisingRef;     //! histogram of time diff to ref channel
-            base::C1handle fRisingRefCond; //! condition to print raw events
-            base::H1handle fRisingCalibr;  //! histogram of channel calibration function
-            base::H2handle fRisingRef2D;   //! histogram
-            base::H1handle fRisingRefRef;  //! difference of two ref times, connected with double ref
-            base::H2handle fRisingDoubleRef; //! correlation with diff time from other channel
-            base::H1handle fRisingTmdsRef; //! histogram of time diff to ref channel for TMDS message
-            base::H1handle fFallingFine;   //! histogram of all fine counters
-            base::H1handle fFallingMult;   //! number of hits per event
-            base::H1handle fTot;           //! histogram of time-over-threshold measurement
-            base::H1handle fTot0D;         //! TOT from 0xD trigger (used for shift calibration)
-            base::H1handle fFallingCalibr; //! histogram of channel calibration function
-            int rising_cnt;                //! number of rising hits in last event
-            int falling_cnt;               //! number of falling hits in last event
-            double rising_hit_tm;          //! leading edge time, used in correlation analysis. can be first or last time
-            double rising_last_tm;         //! last leading edge time
-            bool rising_new_value;         //! used to calculate TOT and avoid errors after single leading and double trailing edge
+            unsigned refch;                ///<! reference channel for specified
+            unsigned reftdc;               ///<! tdc of reference channel
+            bool refabs;                   ///<! if true, absolute difference (without channel 0) will be used
+            unsigned doublerefch;          ///<! double reference channel
+            unsigned doublereftdc;         ///<! tdc of double reference channel
+            unsigned refch_tmds;           ///<! reference channel for TMDS messages
+            bool docalibr;                 ///<! if false, simple calibration will be used
+            bool hascalibr;                ///<! indicate if channel has valid calibration (not simple linear)
+            bool check_calibr;             ///<! flag used to indicate that calibration was checked
+            base::H1handle fRisingFine;    ///<! histogram of all fine counters
+            base::H1handle fRisingMult;    ///<! number of hits per event
+            base::H1handle fRisingRef;     ///<! histogram of time diff to ref channel
+            base::C1handle fRisingRefCond; ///<! condition to print raw events
+            base::H1handle fRisingCalibr;  ///<! histogram of channel calibration function
+            base::H2handle fRisingRef2D;   ///<! histogram
+            base::H1handle fRisingRefRef;  ///<! difference of two ref times, connected with double ref
+            base::H2handle fRisingDoubleRef; ///<! correlation with diff time from other channel
+            base::H1handle fRisingTmdsRef; ///<! histogram of time diff to ref channel for TMDS message
+            base::H1handle fFallingFine;   ///<! histogram of all fine counters
+            base::H1handle fFallingMult;   ///<! number of hits per event
+            base::H1handle fTot;           ///<! histogram of time-over-threshold measurement
+            base::H1handle fTot0D;         ///<! TOT from 0xD trigger (used for shift calibration)
+            base::H1handle fFallingCalibr; ///<! histogram of channel calibration function
+            int rising_cnt;                ///<! number of rising hits in last event
+            int falling_cnt;               ///<! number of falling hits in last event
+            double rising_hit_tm;          ///<! leading edge time, used in correlation analysis. can be first or last time
+            double rising_last_tm;         ///<! last leading edge time
+            bool rising_new_value;         ///<! used to calculate TOT and avoid errors after single leading and double trailing edge
             double rising_ref_tm;
-            double rising_tmds;            //! first detected rising time from TMDS
+            double rising_tmds;            ///<! first detected rising time from TMDS
             unsigned rising_coarse;
             unsigned rising_fine;
             unsigned last_rising_fine;
@@ -77,17 +77,17 @@ namespace hadaq {
             std::vector<uint32_t> falling_stat;
             std::vector<float> falling_calibr;
             float last_tot;
-            long tot0d_cnt;                 //! counter of tot0d statistic for calibration
-            std::vector<uint32_t> tot0d_hist;  //! histogram used for TOT calibration, allocated only when required
-            float tot_shift;                //! calibrated tot shift
-            float tot_dev;                  //! tot shift deviation after calibration
-            float time_shift_per_grad;      //! delay in channel (ns/C), caused by temperature change
-            float trig0d_coef;              //! scaling coefficient, applied when build calibration from 0xD trigger (reserved)
+            long tot0d_cnt;                 ///<! counter of tot0d statistic for calibration
+            std::vector<uint32_t> tot0d_hist;  ///<! histogram used for TOT calibration, allocated only when required
+            float tot_shift;                ///<! calibrated tot shift
+            float tot_dev;                  ///<! tot shift deviation after calibration
+            float time_shift_per_grad;      ///<! delay in channel (ns/C), caused by temperature change
+            float trig0d_coef;              ///<! scaling coefficient, applied when build calibration from 0xD trigger (reserved)
             int rising_cond_prnt;
-            float calibr_quality_rising;    //! quality of last calibration 0. is nothing
-            float calibr_quality_falling;    //! quality of last calibration 0. is nothing
-            long calibr_stat_rising;        //! accumulated statistic during last calibration
-            long calibr_stat_falling;       //! accumulated statistic during last calibration
+            float calibr_quality_rising;    ///<! quality of last calibration 0. is nothing
+            float calibr_quality_falling;    ///<! quality of last calibration 0. is nothing
+            long calibr_stat_rising;        ///<! accumulated statistic during last calibration
+            long calibr_stat_falling;       ///<! accumulated statistic during last calibration
 
             /** constructor */
             ChannelRec() :
@@ -213,116 +213,116 @@ namespace hadaq {
 
          bool fVersion4{false};         ///< if version4 TDC is analyzed
 
-         TdcIterator fIter1;         //! iterator for the first scan
-         TdcIterator fIter2;         //! iterator for the second scan
+         TdcIterator fIter1;         ///<! iterator for the first scan
+         TdcIterator fIter2;         ///<! iterator for the second scan
 
-         base::H1handle fChannels;   //! histogram with messages per channel
-         base::H1handle fHits;       //! histogram with hits per channel
-         base::H1handle fErrors;     //! histogram with errors per channel
-         base::H1handle fUndHits;    //! histogram with undetected hits per channel
-         base::H1handle fCorrHits;   //! histogram with corrected hits per channel
-         base::H1handle fMsgsKind;   //! messages kinds
-         base::H2handle fAllFine;    //! histogram of all fine counters
-         base::H2handle fAllCoarse;  //! histogram of all coarse counters
-         base::H2handle fRisingCalibr;//! histogram with all rising calibrations
-         base::H2handle fFallingCalibr; //! histogram all rising calibrations
-         base::H1handle fHitsRate;    //! histogram with data rate
-         base::H1handle fTotShifts;  //! histogram with all TOT shifts
-         base::H1handle fTempDistr;   //! temperature distribution
+         base::H1handle fChannels;   ///<! histogram with messages per channel
+         base::H1handle fHits;       ///<! histogram with hits per channel
+         base::H1handle fErrors;     ///<! histogram with errors per channel
+         base::H1handle fUndHits;    ///<! histogram with undetected hits per channel
+         base::H1handle fCorrHits;   ///<! histogram with corrected hits per channel
+         base::H1handle fMsgsKind;   ///<! messages kinds
+         base::H2handle fAllFine;    ///<! histogram of all fine counters
+         base::H2handle fAllCoarse;  ///<! histogram of all coarse counters
+         base::H2handle fRisingCalibr;///<! histogram with all rising calibrations
+         base::H2handle fFallingCalibr; ///<! histogram all rising calibrations
+         base::H1handle fHitsRate;    ///<! histogram with data rate
+         base::H1handle fTotShifts;  ///<! histogram with all TOT shifts
+         base::H1handle fTempDistr;   ///<! temperature distribution
 
-         base::H2handle fhRaisingFineCalibr; //! histogram of calibrated raising fine counter vs channel
-         base::H2handle fhTotVsChannel; //! histogram of ToT vs channel
-         base::H1handle fhTotMoreCounter; //! histogram of counter with ToT >20 ns per channel
-         base::H1handle fhTotMinusCounter; //! histogram of counter with ToT < 0 ns per channel
+         base::H2handle fhRaisingFineCalibr; ///<! histogram of calibrated raising fine counter vs channel
+         base::H2handle fhTotVsChannel; ///<! histogram of ToT vs channel
+         base::H1handle fhTotMoreCounter; ///<! histogram of counter with ToT >20 ns per channel
+         base::H1handle fhTotMinusCounter; ///<! histogram of counter with ToT < 0 ns per channel
 
-         unsigned fHldId;               //! sequence number of processor in HLD
-         base::H1handle *fHitsPerHld;   //! hits per TDC - from HLD
-         base::H1handle *fErrPerHld;    //! errors per TDC - from HLD
-         base::H2handle *fChHitsPerHld; //! hits per TDC channel - from HLD
-         base::H2handle *fChErrPerHld;  //! errors per TDC channel - from HLD
-         base::H2handle *fChCorrPerHld;  //! corrections per TDC channel - from HLD
-         base::H2handle *fQaFinePerHld;  //! QA fine counter per TDC channel - from HLD
-         base::H2handle *fQaToTPerHld;  //! QA ToT per TDC channel - from HLD
-         base::H2handle *fQaEdgesPerHld;  //! QA Edges per TDC channel - from HLD
-         base::H2handle *fQaErrorsPerHld;  //! QA Errors per TDC channel - from HLD
+         unsigned fHldId;               ///<! sequence number of processor in HLD
+         base::H1handle *fHitsPerHld;   ///<! hits per TDC - from HLD
+         base::H1handle *fErrPerHld;    ///<! errors per TDC - from HLD
+         base::H2handle *fChHitsPerHld; ///<! hits per TDC channel - from HLD
+         base::H2handle *fChErrPerHld;  ///<! errors per TDC channel - from HLD
+         base::H2handle *fChCorrPerHld;  ///<! corrections per TDC channel - from HLD
+         base::H2handle *fQaFinePerHld;  ///<! QA fine counter per TDC channel - from HLD
+         base::H2handle *fQaToTPerHld;  ///<! QA ToT per TDC channel - from HLD
+         base::H2handle *fQaEdgesPerHld;  ///<! QA Edges per TDC channel - from HLD
+         base::H2handle *fQaErrorsPerHld;  ///<! QA Errors per TDC channel - from HLD
 
-         unsigned                 fNumChannels;       //! number of channels
-         unsigned                 fNumFineBins;       //! number of fine-counter bins
-         std::vector<ChannelRec>  fCh;                //! full description for each channels
-         float                    fCalibrTemp;        //! temperature when calibration was performed
-         float                    fCalibrTempCoef;    //! coefficient to scale calibration curve (real value -1)
-         bool                     fCalibrUseTemp;     //! when true, use temperature adjustment for calibration
-         unsigned                 fCalibrTriggerMask; //! mask with enabled for trigger events ids, default all
+         unsigned                 fNumChannels;       ///<! number of channels
+         unsigned                 fNumFineBins;       ///<! number of fine-counter bins
+         std::vector<ChannelRec>  fCh;                ///<! full description for each channels
+         float                    fCalibrTemp;        ///<! temperature when calibration was performed
+         float                    fCalibrTempCoef;    ///<! coefficient to scale calibration curve (real value -1)
+         bool                     fCalibrUseTemp;     ///<! when true, use temperature adjustment for calibration
+         unsigned                 fCalibrTriggerMask; ///<! mask with enabled for trigger events ids, default all
 
-         bool                     fToTdflt;        //! indicate if default setting used, which can be adjusted after seeing first event
-         double                   fToTvalue;       //! ToT of 0xd trigger
-         double                   fToThmin;        //! histogram min
-         double                   fToThmax;        //! histogram max
-         double                   fTotUpperLimit;  //! upper limit for ToT range check
-         int                      fTotStatLimit;   //! how much statistic required for ToT calibration
-         double                   fTotRMSLimit;    //! maximal RMS valus for complete calibration
+         bool                     fToTdflt;        ///<! indicate if default setting used, which can be adjusted after seeing first event
+         double                   fToTvalue;       ///<! ToT of 0xd trigger
+         double                   fToThmin;        ///<! histogram min
+         double                   fToThmax;        ///<! histogram max
+         double                   fTotUpperLimit;  ///<! upper limit for ToT range check
+         int                      fTotStatLimit;   ///<! how much statistic required for ToT calibration
+         double                   fTotRMSLimit;    ///<! maximal RMS valus for complete calibration
 
-         long   fCalibrAmount;        //! current accumulated calibr data
-         double fCalibrProgress;      //! current progress in calibration
-         std::string fCalibrStatus;   //! calibration status
-         double fCalibrQuality;       //! calibration quality:
+         long   fCalibrAmount;        ///<! current accumulated calibr data
+         double fCalibrProgress;      ///<! current progress in calibration
+         std::string fCalibrStatus;   ///<! calibration status
+         double fCalibrQuality;       ///<! calibration quality:
                                       //  0         - not exists
                                       //  0..0.3    - bad (red color)
                                       //  0.3..0.7  - poor (yellow color)
                                       //  0.7..0.8  - accumulating (blue color)
                                       //  0.8..1.0  - ok (green color)
 
-         float                    fTempCorrection; //! correction for temperature sensor
-         float                    fCurrentTemp;    //! current measured temperature
-         unsigned                 fDesignId;       //! design ID, taken from status message
-         double                   fCalibrTempSum0; //! sum0 used to check temperature during calibration
-         double                   fCalibrTempSum1; //! sum1 used to check temperature during calibration
-         double                   fCalibrTempSum2; //! sum2 used to check temperature during calibration
+         float                    fTempCorrection; ///<! correction for temperature sensor
+         float                    fCurrentTemp;    ///<! current measured temperature
+         unsigned                 fDesignId;       ///<! design ID, taken from status message
+         double                   fCalibrTempSum0; ///<! sum0 used to check temperature during calibration
+         double                   fCalibrTempSum1; ///<! sum1 used to check temperature during calibration
+         double                   fCalibrTempSum2; ///<! sum2 used to check temperature during calibration
 
-         std::vector<hadaq::TdcMessageExt>  fDummyVect; //! dummy empty vector
-         std::vector<hadaq::TdcMessageExt> *pStoreVect; //! pointer on store vector
+         std::vector<hadaq::TdcMessageExt>  fDummyVect; ///<! dummy empty vector
+         std::vector<hadaq::TdcMessageExt> *pStoreVect; ///<! pointer on store vector
 
-         std::vector<hadaq::MessageFloat> fDummyFloat;  //! vector with compact messages
-         std::vector<hadaq::MessageFloat> *pStoreFloat; //! pointer on store vector
+         std::vector<hadaq::MessageFloat> fDummyFloat;  ///<! vector with compact messages
+         std::vector<hadaq::MessageFloat> *pStoreFloat; ///<! pointer on store vector
 
-         std::vector<hadaq::MessageDouble> fDummyDouble;  //! vector with compact messages
-         std::vector<hadaq::MessageDouble> *pStoreDouble; //! pointer on store vector
+         std::vector<hadaq::MessageDouble> fDummyDouble;  ///<! vector with compact messages
+         std::vector<hadaq::MessageDouble> *pStoreDouble; ///<! pointer on store vector
 
          /** EdgeMask defines how TDC calibration for falling edge is performed
           * 0,1 - use only rising edge, falling edge is ignore
           * 2   - falling edge enabled and fully independent from rising edge
           * 3   - falling edge enabled and uses calibration from rising edge
           * 4   - falling edge enabled and common statistic is used for calibration */
-         unsigned    fEdgeMask;        //! which channels to analyze, analyzes trailing edges when more than 1
-         long        fCalibrCounts;    //! indicates minimal number of counts in each channel required to produce calibration
-         bool        fAutoCalibr;      //! when true, perform auto calibration
-         bool        fAutoCalibrOnce;  //! when true, auto calibration will be executed once
-         int         fAllCalibrMode;   //! use all data for calibrations, used with DABC -1 - disabled, 0 - off, 1 - on
-         int         fAllTotMode;      //! ToT calibration mode -1 - disabled, 0 - accumulate stat for channels, 1 - accumulate stat for ToT
-         int         fAllDTrigCnt;     //! number of 0xD triggers
+         unsigned    fEdgeMask;        ///<! which channels to analyze, analyzes trailing edges when more than 1
+         long        fCalibrCounts;    ///<! indicates minimal number of counts in each channel required to produce calibration
+         bool        fAutoCalibr;      ///<! when true, perform auto calibration
+         bool        fAutoCalibrOnce;  ///<! when true, auto calibration will be executed once
+         int         fAllCalibrMode;   ///<! use all data for calibrations, used with DABC -1 - disabled, 0 - off, 1 - on
+         int         fAllTotMode;      ///<! ToT calibration mode -1 - disabled, 0 - accumulate stat for channels, 1 - accumulate stat for ToT
+         int         fAllDTrigCnt;     ///<! number of 0xD triggers
 
-         std::string fWriteCalibr;    //! file which should be written at the end of data processing
-         bool        fWriteEveryTime; //! write calibration every time automatic calibration performed
-         bool        fUseLinear;      //! create linear calibrations for the channel
-         int         fLinearNumPoints; //! number of linear points
+         std::string fWriteCalibr;    ///<! file which should be written at the end of data processing
+         bool        fWriteEveryTime; ///<! write calibration every time automatic calibration performed
+         bool        fUseLinear;      ///<! create linear calibrations for the channel
+         int         fLinearNumPoints; ///<! number of linear points
 
-         bool      fEveryEpoch;       //! if true, each hit must be supplied with epoch
+         bool      fEveryEpoch;       ///<! if true, each hit must be supplied with epoch
 
-         bool      fUseLastHit;       //! if true, last hit will be used in reference calculations
+         bool      fUseLastHit;       ///<! if true, last hit will be used in reference calculations
 
-         bool      fUseNativeTrigger;  //! if true, TRB3 trigger is used as event time
+         bool      fUseNativeTrigger;  ///<! if true, TRB3 trigger is used as event time
 
-         bool      fCompensateEpochReset; //! if true, compensates epoch reset
+         bool      fCompensateEpochReset; ///<! if true, compensates epoch reset
 
-         unsigned  fCompensateEpochCounter;  //! counter to compensate epoch reset
+         unsigned  fCompensateEpochCounter;  ///<! counter to compensate epoch reset
 
-         bool      fCh0Enabled;           //! when true, channel 0 stored in output event
+         bool      fCh0Enabled;           ///<! when true, channel 0 stored in output event
 
-         TdcMessage fLastTdcHeader;      //! copy of last TDC header
-         TdcMessage fLastTdcTrailer;      //! copy of last TDC trailer
+         TdcMessage fLastTdcHeader;      ///<! copy of last TDC header
+         TdcMessage fLastTdcTrailer;      ///<! copy of last TDC trailer
 
-         long      fRateCnt;             //! counter used for rate calculation
-         double    fLastRateTm;          //! last ch0 time when rate was calculated
+         long      fRateCnt;             ///<! counter used for rate calculation
+         double    fLastRateTm;          ///<! last ch0 time when rate was calculated
 
          unsigned  fSkipTdcMessages;     ///<! number of first messages, skipped from analysis
          bool      f400Mhz;              ///<! is 400Mhz mode (debug)
@@ -334,21 +334,21 @@ namespace hadaq {
           * TDC not yet able to perform trigger selection */
          virtual bool doTriggerSelection() const { return false; }
 
-         static unsigned gNumFineBins;   //! default value for number of bins in histograms for fine bins
-         static unsigned gTotRange;      //! default range for TOT histogram
-         static unsigned gHist2dReduce;  //! reduce factor for points in 2D histogram
-         static unsigned gErrorMask;     //! mask for errors to display
-         static bool gAllHistos;         //! when true, all histos for all channels created simultaneously
-         static double gTrigDWindowLow;  //! low limit of time stamps for 0xD trigger used for calibration
-         static double gTrigDWindowHigh; //! high limit of time stamps for 0xD trigger used for calibration
-         static bool gUseDTrigForRef;    //! when true, use special triggers for ref calculations
-         static bool gUseAsDTrig;        //! when true, all events are analyzed as 0xD trigger
-         static int gHadesMonitorInterval; //! how often special HADES monitoring procedure called
-         static int gTotStatLimit;         //! how much statistic required for ToT calibration
-         static double gTotRMSLimit;       //! allowed RMS value
-         static int gDefaultLinearNumPoints;      //! number of points when linear calibration is used
-         static bool gIgnoreCalibrMsgs;    //! ignore calibration messages
-         static bool gStoreCalibrTables;   //! when enabled, store calibration tables for v4 TDC
+         static unsigned gNumFineBins;   ///<! default value for number of bins in histograms for fine bins
+         static unsigned gTotRange;      ///<! default range for TOT histogram
+         static unsigned gHist2dReduce;  ///<! reduce factor for points in 2D histogram
+         static unsigned gErrorMask;     ///<! mask for errors to display
+         static bool gAllHistos;         ///<! when true, all histos for all channels created simultaneously
+         static double gTrigDWindowLow;  ///<! low limit of time stamps for 0xD trigger used for calibration
+         static double gTrigDWindowHigh; ///<! high limit of time stamps for 0xD trigger used for calibration
+         static bool gUseDTrigForRef;    ///<! when true, use special triggers for ref calculations
+         static bool gUseAsDTrig;        ///<! when true, all events are analyzed as 0xD trigger
+         static int gHadesMonitorInterval; ///<! how often special HADES monitoring procedure called
+         static int gTotStatLimit;         ///<! how much statistic required for ToT calibration
+         static double gTotRMSLimit;       ///<! allowed RMS value
+         static int gDefaultLinearNumPoints;      ///<! number of points when linear calibration is used
+         static bool gIgnoreCalibrMsgs;    ///<! ignore calibration messages
+         static bool gStoreCalibrTables;   ///<! when enabled, store calibration tables for v4 TDC
 
          virtual void AppendTrbSync(uint32_t syncid);
 

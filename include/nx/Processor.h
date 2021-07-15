@@ -13,9 +13,9 @@ namespace nx {
       bool used;
       bool isbaseline;
 
-      base::H1handle fChannels;  //! histogram with system types
-      base::H2handle fADCs;      //! ADC distribution
-      base::H1handle fHITt;      //! hit time
+      base::H1handle fChannels;  ///<! histogram with system types
+      base::H2handle fADCs;      ///<! ADC distribution
+      base::H1handle fHITt;      ///<! hit time
       double   base_line[NumChannels];
 
       NxRec() : used(false), isbaseline(false), fChannels(0), fADCs(0), fHITt(0)
@@ -28,17 +28,17 @@ namespace nx {
    class Processor : public base::SysCoreProc {
 
       protected:
-         nx::Iterator fIter1;  //! first iterator over all messages
-         nx::Iterator fIter2;  //! second iterator over all messages
+         nx::Iterator fIter1;  ///<! first iterator over all messages
+         nx::Iterator fIter2;  ///<! second iterator over all messages
 
-         base::H1handle fMsgsKind;   //! histogram with messages kinds
-         base::H1handle fSysTypes;   //! histogram with system types
+         base::H1handle fMsgsKind;   ///<! histogram with messages kinds
+         base::H1handle fSysTypes;   ///<! histogram with system types
 
-         std::vector<nx::NxRec> NX;      //! usage masks for nxyters
+         std::vector<nx::NxRec> NX;      ///<! usage masks for nxyters
 
-         int fNumHits;               //! total number of hits
-         int fNumBadHits;            //! total number of bad hits
-         int fNumCorrHits;           //! total number of corrected hits
+         int fNumHits;               ///<! total number of hits
+         int fNumBadHits;            ///<! total number of bad hits
+         int fNumCorrHits;           ///<! total number of corrected hits
 
          bool nx_in_use(unsigned id) { return id < NX.size() ? NX[id].used : false; }
 

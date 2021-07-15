@@ -3,7 +3,7 @@
 #include <cstdio>
 
 //----------------------------------------------------------------------------
-//! Print message in human readable format to \a cout.
+///<! Print message in human readable format to \a cout.
 /*!
  * Prints a one line representation of the message in to \a cout.
  * See printData(std::ostream&, unsigned, uint32_t) const for full
@@ -16,7 +16,7 @@ void nx::Message::printData(unsigned kind, uint32_t epoch, double localtm) const
 }
 
 //----------------------------------------------------------------------------
-//! Print message in binary or human readable format to a stream.
+///<! Print message in binary or human readable format to a stream.
 /*!
  * Prints a one line representation of the message in to stream \a os.
  * The parameter \a kind is mask with 4 bits

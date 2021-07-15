@@ -237,7 +237,7 @@ Bool_t TUserSource::OpenNextFile()
    if (fIsHLD) {
       if(fxFile.isOpened()) fxFile.Close();
 
-      //! Open connection/file
+      ///<! Open connection/file
       if(!fxFile.OpenRead(nextname.Data())) {
          SetCreateStatus(1);
          SetErrMess(Form("Eror opening user file:%s", nextname.Data()));

@@ -69,11 +69,11 @@ namespace hadaq {
          base::H1handle fTrigType{nullptr};   ///< trigger type
          base::H1handle fErrBits{nullptr};    ///< error bit statistics
 
-         base::H1handle fMsgPerBrd{nullptr};  //! messages per board
-         base::H1handle fErrPerBrd{nullptr};  //! errors per board
-         base::H1handle fHitsPerBrd{nullptr}; //! data hits per board
-         base::H2handle fCalHitsPerBrd{nullptr}; //! calibration hits per board, used only in HADES
-         base::H2handle fToTPerBrd{nullptr};  //! ToT values for each TDC channel
+         base::H1handle fMsgPerBrd{nullptr};  ///<! messages per board
+         base::H1handle fErrPerBrd{nullptr};  ///<! errors per board
+         base::H1handle fHitsPerBrd{nullptr}; ///<! data hits per board
+         base::H2handle fCalHitsPerBrd{nullptr}; ///<! calibration hits per board, used only in HADES
+         base::H2handle fToTPerBrd{nullptr};  ///<! ToT values for each TDC channel
 
 
          bool fPrintRawData;         ///< true when raw data should be printed

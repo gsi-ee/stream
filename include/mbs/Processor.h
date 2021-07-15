@@ -13,10 +13,10 @@ namespace mbs {
 
       protected:
 
-         base::LocalStampConverter  fConv1; //! use converter to emulate local time scale
+         base::LocalStampConverter  fConv1; ///<! use converter to emulate local time scale
 
-         unsigned fLastSync1; //! last sync id in first scan
-         unsigned fLastSync2; //! last sync id in second scan
+         unsigned fLastSync1; ///<! last sync id in first scan
+         unsigned fLastSync2; ///<! last sync id in second scan
 
          /** Returns true when processor used to select trigger signal
           * TRB3 not yet able to perform trigger selection */

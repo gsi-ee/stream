@@ -20,7 +20,7 @@ class CustomProcessor : public SubProcessor {
 protected:
 
    unsigned fNumChannels;
-   base::H1handle fChannels;     //! histogram with messages per channel
+   base::H1handle fChannels;     ///<! histogram with messages per channel
 
 public:
 

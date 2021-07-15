@@ -61,10 +61,10 @@ namespace get4 {
    struct Get4MbsRec {
       bool used;
 
-      base::H1handle fChannels;  //! histogram with channels
-      base::H1handle fErrors;  //! errors kinds
+      base::H1handle fChannels;  ///<! histogram with channels
+      base::H1handle fErrors;  ///<! errors kinds
 
-      Get4MbsChRec CH[NumGet4Channels]; //! channels-relevant data
+      Get4MbsChRec CH[NumGet4Channels]; ///<! channels-relevant data
 
       Get4MbsRec() :
          used(false),
@@ -83,7 +83,7 @@ namespace get4 {
    struct Get4MbsRef {
       unsigned g1,ch1, g2, ch2;
       bool r1, r2;
-      base::H1handle fHist;  //! histogram with channels
+      base::H1handle fHist;  ///<! histogram with channels
 
       Get4MbsRef() : g1(0), ch1(0), g2(0), ch2(0), r1(true), r2(true), fHist(0) {}
    };
@@ -96,23 +96,23 @@ namespace get4 {
 
          bool         fIs32mode;     // is 32 bit mode
          unsigned     fTotMult;      // multiplier of tot in 32 bit mode
-         std::string  fWriteCalibr;   //! file name to write calibrations at the end
-         bool         fUseCalibr;     //! if true, calibration will be used
-         long         fAutoCalibr;    //! if positive, will try to calibrate get4 channels
+         std::string  fWriteCalibr;   ///<! file name to write calibrations at the end
+         bool         fUseCalibr;     ///<! if true, calibration will be used
+         long         fAutoCalibr;    ///<! if positive, will try to calibrate get4 channels
 
-         base::H1handle fMsgPerGet4;   //! histogram with messages per get4
-         base::H1handle fErrPerGet4;   //! histogram with errors per get4
+         base::H1handle fMsgPerGet4;   ///<! histogram with messages per get4
+         base::H1handle fErrPerGet4;   ///<! histogram with errors per get4
 
-//         base::H2handle fSlMsgPerGet4; //! histogram with slow control per GET4
-//         base::H2handle fScalerPerGet4; //! histogram with slow control scaler per GET4
-//         base::H2handle fDeadPerGet4; //! histogram with slow control dead time per GET4
-//         base::H2handle fSpiPerGet4; //! histogram with slow control Spi per GET4
-//         base::H2handle fSeuPerGet4; //! histogram with slow control SEU counter per GET4
-//         base::H2handle fDllPerGet4; //! histogram with DLL flag per GET4
+//         base::H2handle fSlMsgPerGet4; ///<! histogram with slow control per GET4
+//         base::H2handle fScalerPerGet4; ///<! histogram with slow control scaler per GET4
+//         base::H2handle fDeadPerGet4; ///<! histogram with slow control dead time per GET4
+//         base::H2handle fSpiPerGet4; ///<! histogram with slow control Spi per GET4
+//         base::H2handle fSeuPerGet4; ///<! histogram with slow control SEU counter per GET4
+//         base::H2handle fDllPerGet4; ///<! histogram with DLL flag per GET4
 
-         std::vector<get4::Get4MbsRec> GET4;    //! vector with GET4-specific histograms
+         std::vector<get4::Get4MbsRec> GET4;    ///<! vector with GET4-specific histograms
 
-         std::vector<get4::Get4MbsRef> fRef;    //! arrays with reference between channels
+         std::vector<get4::Get4MbsRef> fRef;    ///<! arrays with reference between channels
 
 
          bool get4_in_use(unsigned id) { return id < GET4.size() ? GET4[id].used : false; }

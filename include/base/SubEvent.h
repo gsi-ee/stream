@@ -78,7 +78,7 @@ namespace base {
    template<class MsgClass>
    class SubEventEx : public base::SubEvent {
       protected:
-         std::vector<MsgClass> fExtMessages;   //!< vector of extended messages
+         std::vector<MsgClass> fExtMessages;   ///< vector of extended messages
 
       public:
 

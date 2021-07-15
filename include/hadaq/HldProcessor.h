@@ -115,7 +115,7 @@ namespace hadaq {
          HldMessage     fMsg;        ///< used for TTree store
          HldMessage    *pMsg;        ///< used for TTree store
 
-         hadaqs::RawEvent  fLastEvHdr;    //! copy of last event header (without data)
+         hadaqs::RawEvent  fLastEvHdr;    ///<! copy of last event header (without data)
 
          long fLastHadesTm;
 

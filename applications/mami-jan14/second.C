@@ -9,13 +9,13 @@
 class PadiwaProc : public base::EventProc {
    protected:
 
-      std::string fTdcId;    //!< tdc id with padiwa asic like "TDC_8a00"
-      unsigned    fChId;     //!< first channel
-      double      fHits[4];  //!< time of 4 TDC channels, stored in the tree (when enabled)
+      std::string fTdcId;    ///< tdc id with padiwa asic like "TDC_8a00"
+      unsigned    fChId;     ///< first channel
+      double      fHits[4];  ///< time of 4 TDC channels, stored in the tree (when enabled)
 
-      base::H1handle  hFast;  //!< histogram of fast channel
-      base::H1handle  hSlow;  //!< histogram of slow channel
-      base::H2handle  hCorr;  //!< correlation between fast and slow
+      base::H1handle  hFast;  ///< histogram of fast channel
+      base::H1handle  hSlow;  ///< histogram of slow channel
+      base::H2handle  hCorr;  ///< correlation between fast and slow
 
    public:
       PadiwaProc(unsigned padiwaid, const char* _tdcid, unsigned _chid) :
@@ -91,10 +91,10 @@ class PadiwaProc : public base::EventProc {
 class TestProc : public base::EventProc {
    protected:
 
-      PadiwaProc* fProc1;     //!< first processor
-      PadiwaProc* fProc2;     //!< second processor
-      base::H2handle  hCorr;  //!< correlation between padiwas
-      double fX, fY;          //!< calculated coordinates, stored in the tree (when tree enabled)
+      PadiwaProc* fProc1;     ///< first processor
+      PadiwaProc* fProc2;     ///< second processor
+      base::H2handle  hCorr;  ///< correlation between padiwas
+      double fX, fY;          ///< calculated coordinates, stored in the tree (when tree enabled)
 
    public:
       TestProc(PadiwaProc* proc1, PadiwaProc* proc2) :

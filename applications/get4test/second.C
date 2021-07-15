@@ -68,12 +68,12 @@ typedef std::map<unsigned,TGet4TestRec> TGet4TestMap;
 class TGet4TestProc : public base::EventProc {
    protected:
 
-      base::H1handle fMultipl;   //!
-      base::H1handle fEvPerCh;   //!  events per channel
-      base::H1handle fBadPerCh;  //!  bad events per channel
-      base::H1handle fHitPerCh;  //!  bad events per channel
+      base::H1handle fMultipl;   ///<!
+      base::H1handle fEvPerCh;   ///<!  events per channel
+      base::H1handle fBadPerCh;  ///<!  bad events per channel
+      base::H1handle fHitPerCh;  ///<!  bad events per channel
 
-      TGet4TestMap fMap; //! all channels which should be present
+      TGet4TestMap fMap; ///<! all channels which should be present
 
    public:
 

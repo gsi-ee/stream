@@ -24,7 +24,7 @@
 
 unsigned hadaq::TdcProcessor::gNumFineBins = FineCounterBins;
 unsigned hadaq::TdcProcessor::gTotRange = 100;
-unsigned hadaq::TdcProcessor::gHist2dReduce = 10;  //! reduce factor for points in 2D histogram
+unsigned hadaq::TdcProcessor::gHist2dReduce = 10;  ///<! reduce factor for points in 2D histogram
 
 unsigned hadaq::TdcProcessor::gErrorMask = 0xffffffffU;
 bool hadaq::TdcProcessor::gAllHistos = false;
@@ -243,16 +243,16 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fRateCnt = 0;
    fLastRateTm = -1;
 
-   fHldId = 0;                   //! sequence number of processor in HLD
+   fHldId = 0;                   ///<! sequence number of processor in HLD
    fHitsPerHld = nullptr;
    fErrPerHld = nullptr;
    fChHitsPerHld = nullptr;
-   fChErrPerHld = nullptr; //! errors per TDC channel - from HLD
-   fChCorrPerHld = nullptr;  //! corrections per TDC channel - from HLD
-   fQaFinePerHld = nullptr;  //! QA fine counter per TDC channel - from HLD
-   fQaToTPerHld = nullptr;  //! QA ToT per TDC channel - from HLD
-   fQaEdgesPerHld = nullptr;  //! QA Edges per TDC channel - from HLD
-   fQaErrorsPerHld = nullptr;  //! QA Errors per TDC channel - from HLD
+   fChErrPerHld = nullptr; ///<! errors per TDC channel - from HLD
+   fChCorrPerHld = nullptr;  ///<! corrections per TDC channel - from HLD
+   fQaFinePerHld = nullptr;  ///<! QA fine counter per TDC channel - from HLD
+   fQaToTPerHld = nullptr;  ///<! QA ToT per TDC channel - from HLD
+   fQaEdgesPerHld = nullptr;  ///<! QA Edges per TDC channel - from HLD
+   fQaErrorsPerHld = nullptr;  ///<! QA Errors per TDC channel - from HLD
 
    fToTdflt = true;
    fToTvalue = ToTvalue;

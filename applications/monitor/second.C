@@ -11,11 +11,11 @@ const int NumChannels = 16;
 class DebugProc : public base::EventProc {
    protected:
 
-      std::string fSubId;    //!< if which is tested
+      std::string fSubId;    ///< if which is tested
 
       double fHits[NumChannels];
 
-      base::H1handle  hNumHits; //!< histogram with hits number
+      base::H1handle  hNumHits; ///< histogram with hits number
 
    public:
       DebugProc(const char* procname, const char* _subid) :
