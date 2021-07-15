@@ -71,6 +71,7 @@ void hadaq::TdcProcessor::SetErrorMask(unsigned mask)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// Automatically create histograms for all channels - even they not appear in data
 
 void hadaq::TdcProcessor::SetAllHistos(bool on)
 {
@@ -107,6 +108,7 @@ void hadaq::TdcProcessor::SetToTCalibr(int minstat, double rms)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// Set default number of point in linear approximation
 
 void hadaq::TdcProcessor::SetDefaultLinearNumPoints(int cnt)
 {
@@ -114,6 +116,7 @@ void hadaq::TdcProcessor::SetDefaultLinearNumPoints(int cnt)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// Enable usage of 0xD trigger in ref histogram filling
 
 void hadaq::TdcProcessor::SetUseDTrigForRef(bool on)
 {
@@ -121,6 +124,7 @@ void hadaq::TdcProcessor::SetUseDTrigForRef(bool on)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// Use all data as 0xD trigger
 
 void hadaq::TdcProcessor::SetUseAsDTrig(bool on)
 {
@@ -128,6 +132,7 @@ void hadaq::TdcProcessor::SetUseAsDTrig(bool on)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// Configure interval in seconds for HADES monitoring histograms filling
 
 void hadaq::TdcProcessor::SetHadesMonitorInterval(int tm)
 {
@@ -135,6 +140,7 @@ void hadaq::TdcProcessor::SetHadesMonitorInterval(int tm)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// Return interval in seconds for HADES monitoring histograms filling
 
 int hadaq::TdcProcessor::GetHadesMonitorInterval()
 {
@@ -142,6 +148,7 @@ int hadaq::TdcProcessor::GetHadesMonitorInterval()
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// enable storage of calibration tables for V4 TDC
 
 void hadaq::TdcProcessor::SetStoreCalibrTables(bool on)
 {
@@ -150,6 +157,11 @@ void hadaq::TdcProcessor::SetStoreCalibrTables(bool on)
 
 ///////////////////////////////////////////////////////////////////////////
 /// constructor
+/// \param trb - instance of \ref hadaq::TrbProcessor
+/// \param tdcid - TDC id
+/// \param numchannels - number of channels
+/// \param edge_mask - edges mask, see \ref hadaq::TdcProcessor::EEdgesMasks
+/// \param ver4 - is TDC V4 should be expected
 
 hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels, unsigned edge_mask, bool ver4) :
    SubProcessor(trb, "TDC_%04X", tdcid),
@@ -312,6 +324,7 @@ hadaq::TdcProcessor::~TdcProcessor()
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// Configure 400 MHz mode
 
 void hadaq::TdcProcessor::Set400Mhz(bool on)
 {
@@ -321,7 +334,9 @@ void hadaq::TdcProcessor::Set400Mhz(bool on)
    for (unsigned ch=0;ch<fNumChannels;ch++)
       fCh[ch].FillCalibr(fNumFineBins, 200. / fCustomMhz * hadaq::TdcMessage::CoarseUnit());
 }
+
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// Set custom frequency
 
 void hadaq::TdcProcessor::SetCustomMhz(float freq)
 {
@@ -333,6 +348,7 @@ void hadaq::TdcProcessor::SetCustomMhz(float freq)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// Check if error should be printed
 
 bool hadaq::TdcProcessor::CheckPrintError()
 {
@@ -340,6 +356,7 @@ bool hadaq::TdcProcessor::CheckPrintError()
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// add new error
 
 void hadaq::TdcProcessor::AddError(unsigned code, const char *fmt, ...)
 {
@@ -370,6 +387,7 @@ void hadaq::TdcProcessor::AddError(unsigned code, const char *fmt, ...)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// create all histograms for the channel
 
 bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
 {
@@ -449,6 +467,7 @@ void hadaq::TdcProcessor::ConfigureToTByHwType(unsigned hwtype)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// execute posloop function - check if calibration should be performed
 
 void hadaq::TdcProcessor::UserPostLoop()
 {
@@ -814,6 +833,7 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// Return number of accumulated statistics for the channel
 
 long hadaq::TdcProcessor::CheckChannelStat(unsigned ch)
 {
@@ -929,6 +949,7 @@ void hadaq::TdcProcessor::CompleteCalibration(bool dummy, const std::string &fil
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// Find min and max values of fine counter in calibration
 
 void hadaq::TdcProcessor::FindFMinMax(const std::vector<float> &func, int nbin, int &fmin, int &fmax)
 {
@@ -1300,6 +1321,7 @@ void hadaq::TdcProcessor::EmulateTransform(int dummycnt)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// print buble - obsolete
 
 void PrintBubble(unsigned* bubble) {
    // print in original order
@@ -1315,6 +1337,9 @@ void PrintBubble(unsigned* bubble) {
       printf("%04x",swap);
    }
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// print buble binary - obsolete
 
 void PrintBubbleBinary(unsigned* bubble, int p1 = -1, int p2 = -1) {
    if (p1<0) p1 = 0;
@@ -1339,6 +1364,7 @@ void PrintBubbleBinary(unsigned* bubble, int p1 = -1, int p2 = -1) {
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// check buble - obsolete
 
 unsigned BubbleCheck(unsigned* bubble, int &p1, int &p2) {
    p1 = 0; p2 = 0;
@@ -1434,6 +1460,7 @@ unsigned rom_encoder_falling_cnt = 0;
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 /// this is how it used in the FPGA, table provided by Cahit
+/// obsolete
 
 unsigned BubbleCheckCahit(unsigned* bubble, int &p1, int &p2, bool debug = false, int maskid = 0, int shift = 0, bool = false) {
 
@@ -2953,15 +2980,16 @@ void hadaq::TdcProcessor::AppendTrbSync(uint32_t syncid)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// Configure linear calibration for the channel
 
 void hadaq::TdcProcessor::SetLinearCalibration(unsigned nch, unsigned finemin, unsigned finemax)
 {
-   if (nch<NumChannels())
+   if (nch < NumChannels())
       fCh[nch].SetLinearCalibr(finemin, finemax);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
-
+/// Calibrate channel
 
 double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, bool rising, const std::vector<uint32_t> &statistic, std::vector<float> &calibr, bool use_linear, bool preliminary)
 {
@@ -3131,6 +3159,7 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, bool rising, const st
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// Calibrate ToT
 
 bool hadaq::TdcProcessor::CalibrateTot(unsigned nch, std::vector<uint32_t> &hist, float &tot_shift, float &tot_dev, float cut)
 {
@@ -3212,6 +3241,7 @@ bool hadaq::TdcProcessor::CalibrateTot(unsigned nch, std::vector<uint32_t> &hist
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// Copy calibration
 
 void hadaq::TdcProcessor::CopyCalibration(const std::vector<float> &calibr, base::H1handle hcalibr, unsigned ch, base::H2handle h2calibr)
 {
@@ -3363,6 +3393,7 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// Fill ToT histogram
 
 void hadaq::TdcProcessor::FillToTHistogram()
 {
@@ -3490,6 +3521,7 @@ void hadaq::TdcProcessor::StoreCalibration(const std::string& fprefix, unsigned 
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// Set V4 table values
 
 void hadaq::TdcProcessor::SetTable(uint32_t *table, unsigned addr, uint32_t value)
 {
@@ -3559,6 +3591,7 @@ uint16_t gen_crc16(const uint32_t *data, unsigned size, unsigned last_bitlen)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// Create V4 calibration table
 
 void hadaq::TdcProcessor::CreateV4CalibrTable(unsigned ch, uint32_t *table)
 {
@@ -3623,6 +3656,7 @@ void hadaq::TdcProcessor::CreateV4CalibrTable(unsigned ch, uint32_t *table)
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// Load calibration from the file
 
 bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
 {
@@ -3757,6 +3791,7 @@ void hadaq::TdcProcessor::IncCalibration(unsigned ch, bool rising, unsigned fine
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// Create TTree branch
 
 void hadaq::TdcProcessor::CreateBranch(TTree*)
 {
@@ -3779,6 +3814,7 @@ void hadaq::TdcProcessor::CreateBranch(TTree*)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// Store event
 
 void hadaq::TdcProcessor::Store(base::Event* ev)
 {
@@ -3811,6 +3847,7 @@ void hadaq::TdcProcessor::Store(base::Event* ev)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// reset store
 
 void hadaq::TdcProcessor::ResetStore()
 {
