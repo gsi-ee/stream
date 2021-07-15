@@ -61,17 +61,32 @@ But liner approximation has several drawbacks. First of al, it introduces error 
 
 Approach is very simple - for _every_ channel one measures many (~1e5) hits from _random_ signal and build distribution for fine-counter values. Higher value in such distribution - larger width of correspondent bin. While sum of all bins widths is 5 ns, one can very easily calculate time shift corresponding to each fine counter.
 
-This link shows shows typical distribution of fine-counter bins in the channel:
+This drawing shows typical distribution of fine-counter bins in the channel:
+
+\htmlonly
+<script src="https://jsroot.gsi.de/latest/scripts/JSRoot.core.min.js" type="text/javascript"></script>
+<div id="drawing1" style="width:1200px; height:700px"></div>
+<script type='text/javascript'>
+   JSROOT.openFile("https://jsroot.gsi.de/files/temp44.root")
+         .then(file => file.readObject("Histograms/TDC_C100/Ch1/TDC_C100_Ch1_RisingFine;1"))
+         .then(obj => JSROOT.draw("drawing1", obj, ""));
+</script>
+\endhtmlonly
 
 <http://jsroot.gsi.de/latest/?nobrowser&file=../files/temp44.root&item=Histograms/TDC_C100/Ch1/TDC_C100_Ch1_RisingFine;1>
 
-![Fine counter distribution](http://web-docs.gsi.de/~dabc/doc/images/finecounter.jpg "Fine counter distribution")
-
 As result from such distribution calibration function is build:
 
-<http://jsroot.gsi.de/latest/?nobrowser&file=../files/temp44.root&item=Histograms/TDC_C100/Ch1/TDC_C100_Ch1_RisingCalibr;1>
+\htmlonly
+<div id="drawing2" style="width:1200px; height:700px"></div>
+<script type='text/javascript'>
+   JSROOT.openFile("https://jsroot.gsi.de/files/temp44.root")
+         .then(file => file.readObject("Histograms/TDC_C100/Ch1/TDC_C100_Ch1_RisingCalibr;1"))
+         .then(obj => JSROOT.draw("drawing2", obj, ""));
+</script>
+\endhtmlonly
 
-![Fine counter calibration](http://web-docs.gsi.de/~dabc/doc/images/finecalibr.jpg "Fine counter calibration")
+<http://jsroot.gsi.de/latest/?nobrowser&file=../files/temp44.root&item=Histograms/TDC_C100/Ch1/TDC_C100_Ch1_RisingCalibr;1>
 
 
 At the moment it is best-known method for calibration of fine counter.
