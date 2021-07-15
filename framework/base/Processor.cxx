@@ -6,6 +6,9 @@
 
 #include "base/ProcMgr.h"
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+/// constructor
+
 base::Processor::Processor(const char* name, unsigned brdid) :
    fName(name),
    fID(0),
@@ -30,10 +33,15 @@ base::Processor::Processor(const char* name, unsigned brdid) :
    SetManager(base::ProcMgr::instance());
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+/// destructor
 
 base::Processor::~Processor()
 {
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+/// set manager instance
 
 void base::Processor::SetManager(base::ProcMgr* m)
 {
@@ -45,6 +53,9 @@ void base::Processor::SetManager(base::ProcMgr* m)
       fStoreKind = fMgr->fDfltStoreKind;
    }
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+/// set sub-prefixes
 
 void base::Processor::SetSubPrefix(const char* name, int indx, const char* subname2, int indx2)
 {
@@ -78,6 +89,9 @@ void base::Processor::SetSubPrefix(const char* name, int indx, const char* subna
       fSubPrefixN.append("_");
    }
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Set sub-prefixes, use 2 digits for indicies
 
 void base::Processor::SetSubPrefix2(const char* name, int indx, const char* subname2, int indx2)
 {
@@ -155,6 +169,8 @@ base::H2handle base::Processor::MakeH2(const char* name, const char* title, int 
    return mgr()->MakeH2(hname.c_str(), htitle.c_str(), nbins1, left1, right1, nbins2, left2, right2, options);
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Create condition
 
 base::C1handle base::Processor::MakeC1(const char* name, double left, double right, H1handle h1)
 {
@@ -169,11 +185,16 @@ base::C1handle base::Processor::MakeC1(const char* name, double left, double rig
    return mgr()->MakeC1(cname.c_str(), left, right, h1);
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Change condition limits
 
 void base::Processor::ChangeC1(C1handle c1, double left, double right)
 {
    if (mgr()) mgr()->ChangeC1(c1, left, right);
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Get condition limit
 
 double base::Processor::GetC1Limit(C1handle c1, bool isleft)
 {

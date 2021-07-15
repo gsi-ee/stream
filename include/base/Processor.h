@@ -85,8 +85,10 @@ namespace base {
          /** Make constructor protected - no way to create base class instance */
          Processor(const char* name = "", unsigned brdid = DummyBrdId);
 
+         /** Set board id */
          void SetBoardId(unsigned id) { fID = id; }
 
+         /** Set path prefix for histogramsid */
          void SetPathPrefix(const std::string &prefix) { fPathPrefix = prefix; }
 
          /** Set subprefix for histograms and conditions */
@@ -190,6 +192,7 @@ namespace base {
 
          void ChangeC1(C1handle c1, double left, double right);
 
+         /** Test condition */
          inline int TestC1(C1handle c1, double value, double* dist = 0)
          {
             return mgr()->TestC1(c1, value, dist);
@@ -197,8 +200,10 @@ namespace base {
 
          double GetC1Limit(C1handle c1, bool isleft = true);
 
+         /** Create branch */
          virtual void CreateBranch(TTree*) {}
 
+         /** Register object */
          virtual bool RegisterObject(TObject* tobj, const char* subfolder = 0)
          {
             return mgr()->RegisterObject(tobj, subfolder);
@@ -208,23 +213,35 @@ namespace base {
 
          virtual ~Processor();
 
+         /** Return manager instance */
          ProcMgr* mgr() const { return fMgr; }
 
+         /** Get processor name */
          const char* GetName() const { return fName.c_str(); }
+         /** Get processor ID */
          unsigned GetID() const { return fID; }
 
+         /** Set histogram filling level */
          inline void SetHistFilling(int lvl = 99) { fHistFilling = lvl; }
+         /** Is histogram filling enabled */
          inline bool IsHistFilling() const { return fHistFilling > 0; }
+         /** Get histogram filling level */
          inline int  HistFillLevel() const { return fHistFilling; }
 
+         /** Get store kind */
          unsigned GetStoreKind() const { return fStoreKind; }
-         bool IsStoreEnabled() const { return GetStoreKind()!=0; }
+         /** Is store enabled */
+         bool IsStoreEnabled() const { return GetStoreKind() != 0; }
 
+         /** Set store kind */
          virtual void SetStoreKind(unsigned kind = 1) { fStoreKind = kind; }
+         /** Enable store - set store kind 1 */
          void SetStoreEnabled(bool on = true) { SetStoreKind(on ? 1 : 0); }
 
+         /** pre loop */
          virtual void UserPreLoop() {}
 
+         /** post loop */
          virtual void UserPostLoop() {}
    };
 

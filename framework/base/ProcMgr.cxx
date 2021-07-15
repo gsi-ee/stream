@@ -9,6 +9,9 @@
 
 base::ProcMgr* base::ProcMgr::fInstance = 0;
 
+/////////////////////////////////////////////////////////////////////////////////////////////
+/// constructor
+
 base::ProcMgr::ProcMgr() :
    fProc(),
    fMap(),
@@ -27,7 +30,7 @@ base::ProcMgr::ProcMgr() :
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-/// Destructor
+/// destructor
 
 base::ProcMgr::~ProcMgr()
 {
@@ -45,17 +48,25 @@ base::ProcMgr* base::ProcMgr::instance()
    return fInstance;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////
+/// clear instance pointer
+
 void base::ProcMgr::ClearInstancePointer(ProcMgr *mgr)
 {
    if (!mgr || (fInstance == mgr))
       fInstance = nullptr;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////
+/// print log message
+
 void base::ProcMgr::PrintLog(const char *msg)
 {
    printf("%s", msg);
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////
+/// Find processor
 
 base::StreamProc* base::ProcMgr::FindProc(const char* name) const
 {
@@ -65,6 +76,9 @@ base::StreamProc* base::ProcMgr::FindProc(const char* name) const
    }
    return 0;
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+/// Delete all processors
 
 void base::ProcMgr::DeleteAllProcessors()
 {
@@ -137,6 +151,9 @@ base::H1handle base::ProcMgr::MakeH1(const char* name, const char* title, int nb
    return arr;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////
+/// get number of histogram bins
+
 bool base::ProcMgr::GetH1NBins(H1handle h1, int &nbins)
 {
    if (!InternalHistFormat() || !h1) return false;
@@ -145,6 +162,8 @@ bool base::ProcMgr::GetH1NBins(H1handle h1, int &nbins)
    return true;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////
+/// Fill histogram
 
 void base::ProcMgr::FillH1(H1handle h1, double x, double weight)
 {
@@ -158,6 +177,9 @@ void base::ProcMgr::FillH1(H1handle h1, double x, double weight)
    if (bin>=nbin) arr[4+nbin]+=weight; else arr[4+bin]+=weight;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////
+/// get histogram context
+
 double base::ProcMgr::GetH1Content(H1handle h1, int bin)
 {
    // put code here, but it should be called already performed in processor
@@ -169,6 +191,9 @@ double base::ProcMgr::GetH1Content(H1handle h1, int bin)
    if (bin>=nbin) return arr[4+nbin];
    return arr[4+bin];
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+/// set histogram content
 
 void base::ProcMgr::SetH1Content(H1handle h1, int bin, double v)
 {
@@ -182,6 +207,8 @@ void base::ProcMgr::SetH1Content(H1handle h1, int bin, double v)
    else arr[4+bin] = v;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////
+/// Clear 1D histogram
 
 void base::ProcMgr::ClearH1(base::H1handle h1)
 {
@@ -193,6 +220,8 @@ void base::ProcMgr::ClearH1(base::H1handle h1)
    for (int n=0;n<arr[0]+2;n++) arr[n+3] = 0.;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////
+/// Copy 1D histogram
 
 void base::ProcMgr::CopyH1(H1handle tgt, H1handle src)
 {
@@ -220,7 +249,6 @@ void base::ProcMgr::CopyH1(H1handle tgt, H1handle src)
 /// Syntax will be like: arg_name:arg_value;arg2_name:arg2_value;
 /// For instance, labels for each x bin: "xbin:EPOCH,HIT,SYNC,AUX,,,SYS;"
 
-
 base::H2handle base::ProcMgr::MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options)
 {
    if (!InternalHistFormat()) return 0;
@@ -237,6 +265,9 @@ base::H2handle base::ProcMgr::MakeH2(const char* name, const char* title, int nb
    return (base::H2handle) bins;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////
+/// get number of bins for 2D histogram
+
 bool base::ProcMgr::GetH2NBins(H2handle h2, int &nbins1, int &nbins2)
 {
    if (!h2 || !InternalHistFormat()) return false;
@@ -247,6 +278,8 @@ bool base::ProcMgr::GetH2NBins(H2handle h2, int &nbins1, int &nbins2)
    return true;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////
+///
 
 void base::ProcMgr::FillH2(H2handle h2, double x, double y, double weight)
 {
@@ -265,6 +298,9 @@ void base::ProcMgr::FillH2(H2handle h2, double x, double y, double weight)
    arr[6 + (bin1+1) + (bin2+1)*(nbin1+2)] += weight;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////
+/// Get content for 2D histogram
+
 double base::ProcMgr::GetH2Content(H2handle h2, int bin1, int bin2)
 {
    if (!h2 || !InternalHistFormat()) return 0.;
@@ -278,6 +314,9 @@ double base::ProcMgr::GetH2Content(H2handle h2, int bin1, int bin2)
 
    return arr[6 + (bin1+1) + (bin2+1)*(nbin1+2)];
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+/// Set content for 2D histogram
 
 void base::ProcMgr::SetH2Content(H2handle h2, int bin1, int bin2, double v)
 {
@@ -293,6 +332,8 @@ void base::ProcMgr::SetH2Content(H2handle h2, int bin1, int bin2, double v)
    arr[6 + (bin1+1) + (bin2+1)*(nbin1+2)] = v;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////
+/// Clear 2D histogram
 
 void base::ProcMgr::ClearH2(base::H2handle h2)
 {
@@ -304,11 +345,17 @@ void base::ProcMgr::ClearH2(base::H2handle h2)
    for (int n=0;n<(nbin1+2)*(nbin2+2);n++) arr[6+n] = 0.;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////
+/// create condition
+
 base::C1handle base::ProcMgr::MakeC1(const char* name, double left, double right, base::H1handle h1)
 {
    // put dummy virtual function here to avoid ACLiC warnings
    return 0;
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+/// change condition limits
 
 void base::ProcMgr::ChangeC1(C1handle, double, double)
 {
@@ -318,17 +365,22 @@ void base::ProcMgr::ChangeC1(C1handle, double, double)
 /////////////////////////////////////////////////////////////////////////
 /// Condition check 0 - inside, -1 left , +1 - right
 /// If variable dist specified, will contain distance to left (-1) or right (+1) boundary   */
+
 int base::ProcMgr::TestC1(C1handle c1, double value, double* dist)
 {
    return 0;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////
+/// get condition limit
 
 double base::ProcMgr::GetC1Limit(C1handle c1, bool isleft)
 {
    return 0;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////
+/// pre-loop
 
 void base::ProcMgr::UserPreLoop(Processor* only_proc, bool call_when_running)
 {
@@ -361,6 +413,9 @@ void base::ProcMgr::UserPreLoop(Processor* only_proc, bool call_when_running)
    }
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////
+/// post-loop
+
 void base::ProcMgr::UserPostLoop(Processor* only_proc)
 {
    for (unsigned n=0;n<fProc.size();n++) {
@@ -377,6 +432,9 @@ void base::ProcMgr::UserPostLoop(Processor* only_proc)
    if (only_proc==0) CloseStore();
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////
+/// add processor
+
 base::ProcMgr* base::ProcMgr::AddProcessor(Processor* proc)
 {
    StreamProc* sproc = dynamic_cast<StreamProc*> (proc);
@@ -387,10 +445,16 @@ base::ProcMgr* base::ProcMgr::AddProcessor(Processor* proc)
    return this;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////
+/// add processor to instance
+
 base::ProcMgr *base::ProcMgr::AddProc(Processor* proc)
 {
    return fInstance ? fInstance->AddProcessor(proc) : nullptr;
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+///
 
 bool base::ProcMgr::RegisterProc(StreamProc* proc, unsigned kind, unsigned brdid)
 {
@@ -414,6 +478,8 @@ bool base::ProcMgr::RegisterProc(StreamProc* proc, unsigned kind, unsigned brdid
    return true;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////
+/// Enable time sorting
 
 void base::ProcMgr::SetTimeSorting(bool on)
 {
@@ -421,6 +487,8 @@ void base::ProcMgr::SetTimeSorting(bool on)
       fProc[n]->SetTimeSorting(on);
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////
+/// Method to provide raw data on base of data kind to the processor
 
 void base::ProcMgr::ProvideRawData(const Buffer& buf)
 {
@@ -442,6 +510,10 @@ void base::ProcMgr::ProvideRawData(const Buffer& buf)
    it->second->AddNextBuffer(buf);
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////
+/// Calculate difference between two sync ids
+/// taking into account possible overflow
+
 int base::ProcMgr::SyncIdDiff(unsigned id1, unsigned id2) const
 {
    if (id1==id2) return 0;
@@ -461,13 +533,14 @@ int base::ProcMgr::SyncIdDiff(unsigned id1, unsigned id2) const
    return res;
 }
 
-
+/////////////////////////////////////////////////////////////////////////////////////////////
+/// Check current sync markers
+/// TODO: configure which processor is time master
+/// TODO: work with unsynchronized SYNC messages - not always the same id in the front
+/// TODO: process not only last sync message
 
 bool base::ProcMgr::AnalyzeSyncMarkers()
 {
-   // TODO: configure which processor is time master
-   // TODO: work with unsynchronized SYNC messages - not always the same id in the front
-   // TODO: process not only last sync message
 
    // in raw analysis we should not call this function
    if (IsRawAnalysis()) return false;
@@ -608,13 +681,17 @@ skip_sync_scanning:
    return true;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////
+/// Method to collect triggers
+///
+/// central place where triggers should be produced
+/// in addition, we should perform flushing of data
+/// therefore if triggers are not produced for long time,
+/// one should create special "flush" trigger which force
+/// flushing of the data
+
 bool base::ProcMgr::CollectNewTriggers()
 {
-   // central place where triggers should be produced
-   // in addition, we should perform flushing of data
-   // therefore if triggers are not produced for long time,
-   // one should create special "flush" trigger which force
-   // flushing of the data
 
    if (IsRawAnalysis()) return false;
 
@@ -669,18 +746,23 @@ bool base::ProcMgr::CollectNewTriggers()
    return true;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////
+/// Method to produce data for new triggers
+///
+/// here we want that each processor scan its data again for new triggers
+/// which we already distribute to each processor. In fact, this could run in
+/// individual thread of each processor
 
 bool base::ProcMgr::ScanDataForNewTriggers()
 {
-   // here we want that each processor scan its data again for new triggers
-   // which we already distribute to each processor. In fact, this could run in
-   // individual thread of each processor
-
    for (unsigned n=0;n<fProc.size();n++)
       fProc[n]->ScanDataForNewTriggers();
 
    return true;
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+/// Analyze new data, if triggered analysis configured - immediately produce new event
 
 bool base::ProcMgr::AnalyzeNewData(base::Event* &evt)
 {
@@ -718,26 +800,34 @@ bool base::ProcMgr::AnalyzeNewData(base::Event* &evt)
    return ProduceNextEvent(evt);
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////
+/// add subevent with the name to the trigger event
+///
+/// method used to add data, extracted with first scan, to the special triggered event
+/// if subevent not accepted, it will be deleted
+
 bool base::ProcMgr::AddToTrigEvent(const std::string& name, base::SubEvent* sub)
 {
-   // method used to add data, extracted with first scan, to the special triggered event
-   // if subevent not accepted, it will be deleted
 
-   if (fTrigEvent==0) { delete sub; return false; }
+   if (!fTrigEvent) { delete sub; return false; }
 
    fTrigEvent->AddSubEvent(name, sub);
 
    return true;
 }
 
-
+/////////////////////////////////////////////////////////////////////////////////////////////
+/// Very central method - select if possible data for next event
+///
+/// Only can be done that each processor is agree to deliver data within
+/// trigger interval. It may not be a case when messages from future buffers may be required */
+///
+/// at this moment each processor should finish with buffers scanning
+/// for special cases (like MBS or EPICS) processor itself should declare that
+/// triggers in between are correctly filled
 
 bool base::ProcMgr::ProduceNextEvent(base::Event* &evt)
 {
-   // at this moment each processor should finish with buffers scanning
-   // for special cases (like MBS or EPICS) processor itself should declare that
-   // triggers in between are correctly filled
-
    if (!IsStreamAnalysis()) return false;
 
    unsigned numready = fTriggers.size();
@@ -783,6 +873,9 @@ bool base::ProcMgr::ProduceNextEvent(base::Event* &evt)
    return false;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////
+/// Process event - consequently calls all event processors
+
 bool base::ProcMgr::ProcessEvent(base::Event* evt)
 {
    if (!evt) return false;
@@ -808,7 +901,6 @@ bool base::ProcMgr::ProcessEvent(base::Event* evt)
             fProc[n]->ResetStore();
          }
    }
-
 
    return true;
 }

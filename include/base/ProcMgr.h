@@ -57,6 +57,7 @@ namespace base {
 
          static ProcMgr* fInstance;                     ///<! instance
 
+         /** range for sync messages */
          virtual unsigned SyncIdRange() const { return 0x1000000; }
 
          /** Method calculated difference id2-id1,
@@ -112,8 +113,11 @@ namespace base {
          /** When returns true, indicates that simple histogram format is used */
          virtual bool InternalHistFormat() const { return true; }
 
+         /** Add run log */
          virtual void AddRunLog(const char *msg) {}
+         /** Add error log */
          virtual void AddErrLog(const char *msg) {}
+         /** Returns true if logging is enabled */
          virtual bool DoLog() { return false; }
          virtual void PrintLog(const char *msg);
 
@@ -129,7 +133,9 @@ namespace base {
          virtual void SetH1Content(H1handle h1, int bin, double v = 0.);
          virtual void ClearH1(H1handle h1);
          virtual void CopyH1(H1handle tgt, H1handle src);
+         /** Set histogram title */
          virtual void SetH1Title(H1handle h1, const char* title) {}
+         /** Tag histogram time */
          virtual void TagH1Time(H1handle h1) {}
 
          virtual H2handle MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options = 0);
@@ -139,8 +145,10 @@ namespace base {
          virtual void SetH2Content(H2handle h2, int bin1, int bin2, double v = 0.);
          virtual void ClearH2(H2handle h2);
          virtual void SetH2Title(H2handle h1, const char* title) {}
+         /** Tag histogram time */
          virtual void TagH2Time(H2handle h2) {}
 
+         /** Clear all histograms */
          virtual void ClearAllHistograms() {}
 
          virtual C1handle MakeC1(const char* name, double left, double right, base::H1handle h1 = nullptr);
@@ -148,19 +156,23 @@ namespace base {
          virtual int TestC1(C1handle c1, double value, double *dist = nullptr);
          virtual double GetC1Limit(C1handle c1, bool isleft = true);
 
-         // create data store, for the moment - ROOT tree
+         /** create data store, for the moment - ROOT tree */
          virtual bool CreateStore(const char* storename) { return false; }
+         /** Close store */
          virtual bool CloseStore() { return false; }
+         /** Create branch */
          virtual bool CreateBranch(const char* name, const char* class_name, void** obj) { return false; }
+         /** Create branch */
          virtual bool CreateBranch(const char* name, void* member, const char* kind) { return false; }
+         /** Store event */
          virtual bool StoreEvent() { return false; }
 
-         // method to register ROOT objects, object should be derived from TObject class
-         // if returns true, object is registered and will be owned by framework
+         /** method to register ROOT objects, object should be derived from TObject class
+          * if returns true, object is registered and will be owned by framework */
          virtual bool RegisterObject(TObject* tobj, const char* subfolder = nullptr) { return false; }
 
 
-         // method to call function by name
+         /** method to call function by name */
          virtual bool CallFunc(const char* funcname, void* arg) { return false; }
 
          // this is list of generic methods for common data processing
@@ -186,20 +198,14 @@ namespace base {
          /** Specify processor index, which is used as time reference for all others */
          void SetTimeMasterIndex(unsigned indx) { fTimeMasterIndex = indx; }
 
-         /** Method to provide raw data on base of data kind to the processor */
          void ProvideRawData(const Buffer& buf);
 
-
-         /** Check current sync markers */
          bool AnalyzeSyncMarkers();
 
-         /** Method to collect triggers */
          bool CollectNewTriggers();
 
-         /** Method to produce data for new triggers */
          bool ScanDataForNewTriggers();
 
-         /** Analyze new data, if triggered analysis configured - immediately produce new event */
          bool AnalyzeNewData(base::Event* &evt);
 
          /** Returns true if trigger even exists */
@@ -207,12 +213,8 @@ namespace base {
 
          bool AddToTrigEvent(const std::string& name, base::SubEvent* sub);
 
-         /** Very central method - select if possible data for next event
-          * Only can be done that each processor is agree to deliver data within
-          * trigger interval. It may not be a case when messages from future buffers may be required */
          bool ProduceNextEvent(base::Event* &evt);
 
-         /** Process event - consequently calls all event processors */
          virtual bool ProcessEvent(base::Event* evt);
 
          void UserPreLoop(Processor* only_proc = nullptr, bool call_when_running = false);
