@@ -54,7 +54,6 @@ void hadaq::TdcProcessor::SetMaxBoardId(unsigned)
 /// \param totrange - time in ns for ToT histograms, default 100
 /// \param hist2dreduced - reducing factor on some 2D histograms, default 10 - means one bin instead 10 ns of ToT
 
-
 void hadaq::TdcProcessor::SetDefaults(unsigned numfinebins, unsigned totrange, unsigned hist2dreduced)
 {
    gNumFineBins = numfinebins;
@@ -63,6 +62,8 @@ void hadaq::TdcProcessor::SetDefaults(unsigned numfinebins, unsigned totrange, u
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// Set errors mask which are printout, set 0 to disable errors printout
+/// See \ref hadaq::TdcProcessor::EErrors to list of detected errors
 
 void hadaq::TdcProcessor::SetErrorMask(unsigned mask)
 {
@@ -77,6 +78,8 @@ void hadaq::TdcProcessor::SetAllHistos(bool on)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// Configure to ignore all kind of calibration data stored in HLD file
+/// Let analysis HLD stored by HADES DAQ as it was not calibrated at all
 
 void hadaq::TdcProcessor::SetIgnoreCalibrMsgs(bool on)
 {
@@ -84,6 +87,7 @@ void hadaq::TdcProcessor::SetIgnoreCalibrMsgs(bool on)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// Configure window (in nanoseconds), where time stamps from 0xD trigger will be accepted for calibration
 
 void hadaq::TdcProcessor::SetTriggerDWindow(double low, double high)
 {
@@ -92,6 +96,9 @@ void hadaq::TdcProcessor::SetTriggerDWindow(double low, double high)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// Configure ToT calibration parameters
+/// \param minstat - minimal number of counts to make ToT calibration, default 100
+/// \param rms - maximal allowed RMS for ToT histogram in ns, default 0.15
 
 void hadaq::TdcProcessor::SetToTCalibr(int minstat, double rms)
 {
@@ -394,6 +401,9 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
 }
 
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// Disable calibration for specified channels
+
 void hadaq::TdcProcessor::DisableCalibrationFor(unsigned firstch, unsigned lastch)
 {
    if (lastch<=firstch) lastch = firstch+1;
@@ -403,12 +413,11 @@ void hadaq::TdcProcessor::DisableCalibrationFor(unsigned firstch, unsigned lastc
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+// set real ToT value for 0xD trigger and min/max for histogram accumulation
+// default is 30ns, and 50ns - 80ns range
 
 void hadaq::TdcProcessor::SetToTRange(double tot, double hmin, double hmax)
 {
-   // set real ToT value for 0xD trigger and min/max for histogram accumulation
-   // default is 30ns, and 50ns - 80ns range
-
    fToTdflt = false;
    fToTvalue = tot;
    fToThmin = hmin;
@@ -416,6 +425,7 @@ void hadaq::TdcProcessor::SetToTRange(double tot, double hmin, double hmax)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// Configure 0xD trigger ToT based on hwtype
 
 void hadaq::TdcProcessor::ConfigureToTByHwType(unsigned hwtype)
 {
@@ -449,6 +459,11 @@ void hadaq::TdcProcessor::UserPostLoop()
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// Create basic histograms for specified channels.
+/// If array not specified, histograms for all channels are created.
+/// In array last element must be 0 or out of channel range. Call should be like:
+/// int channels[] = {33, 34, 35, 36, 0};
+/// tdc->CreateHistograms( channels );
 
 void hadaq::TdcProcessor::CreateHistograms(int *arr)
 {
@@ -462,6 +477,18 @@ void hadaq::TdcProcessor::CreateHistograms(int *arr)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// Set reference signal for the TDC channel ch
+/// \param refch   specifies number of reference channel
+/// \param reftdc  specifies tdc id, used for ref channel.
+/// Default (0xffff) same TDC will be used
+/// If redtdc contains 0x70000 (like 0x7c010), than direct difference without channel 0 will be calculated
+/// To be able use other TDCs, one should enable TTrbProcessor::SetCrossProcess(true);
+/// If left-right range are specified, ref histograms are created.
+/// If twodim==true, 2-D histogram which will accumulate correlation between
+/// time difference to ref channel and:
+/// - fine_counter (shift 0 ns)
+/// - fine_counter of ref channel (shift -1 ns)
+/// - coarse_counter/4 (shift -2 ns)
 
 void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned reftdc,
                                         int npoints, double left, double right, bool twodim)
@@ -517,6 +544,9 @@ void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned re
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// Set reference signal for time extracted from v4 TMDS message
+/// \param ch   configured channel
+/// \param refch   reference channel
 
 void hadaq::TdcProcessor::SetRefTmds(unsigned ch, unsigned refch, int npoints, double left, double right)
 {
@@ -550,6 +580,9 @@ void hadaq::TdcProcessor::SetRefTmds(unsigned ch, unsigned refch, int npoints, d
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// Configure double-reference histogram
+/// Required that for both channels references are specified via SetRefChannel() command.
+/// If ch2 > 1000, than channel from other TDC can be used. tdcid = (ch2 - 1000) / 1000
 
 bool hadaq::TdcProcessor::SetDoubleRefChannel(unsigned ch1, unsigned ch2,
                                               int npx, double xmin, double xmax,
@@ -616,6 +649,7 @@ bool hadaq::TdcProcessor::SetDoubleRefChannel(unsigned ch1, unsigned ch2,
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// Create rate histogram to count hits per second (excluding channel 0)
 
 void hadaq::TdcProcessor::CreateRateHisto(int np, double xmin, double xmax)
 {
@@ -624,6 +658,10 @@ void hadaq::TdcProcessor::CreateRateHisto(int np, double xmin, double xmax)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// Enable print of TDC data when time difference to ref channel belong to specified interval
+/// Work ONLY when reference channel 0 is used.
+/// One could set maximum number of events to print
+/// In any case one should first set reference channel
 
 bool hadaq::TdcProcessor::EnableRefCondPrint(unsigned ch, double left, double right, int numprint)
 {
@@ -851,6 +889,7 @@ bool hadaq::TdcProcessor::PerformAutoCalibrate()
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// Start mode, when all data will be used for calibrations
 
 void hadaq::TdcProcessor::BeginCalibration(long cnt)
 {
@@ -872,6 +911,7 @@ void hadaq::TdcProcessor::BeginCalibration(long cnt)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// Complete calibration mode, create calibration and calibration files
 
 void hadaq::TdcProcessor::CompleteCalibration(bool dummy, const std::string &filename, const std::string &subname)
 {
@@ -935,6 +975,7 @@ float hadaq::TdcProcessor::ExtractCalibr(const std::vector<float> &func, unsigne
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// Method transform TDC data, if output specified, use it otherwise change original data
 
 unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_t *rawdata, unsigned indx, unsigned datalen, hadaqs::RawSubevent* tgt, unsigned tgtindx)
 {
@@ -1248,6 +1289,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// Emulate transformation
 
 void hadaq::TdcProcessor::EmulateTransform(int dummycnt)
 {
@@ -2708,7 +2750,7 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
-
+/// Special hades histograms creation
 
 void hadaq::TdcProcessor::DoHadesHistAnalysis()
 {
@@ -3182,6 +3224,7 @@ void hadaq::TdcProcessor::CopyCalibration(const std::vector<float> &calibr, base
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// For expert use - produce calibration
 
 void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, bool dummy, bool preliminary)
 {
@@ -3347,6 +3390,7 @@ void hadaq::TdcProcessor::ClearChannelStat(unsigned ch)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// For expert use - store calibration in the file
 
 void hadaq::TdcProcessor::StoreCalibration(const std::string& fprefix, unsigned fileid)
 {
@@ -3695,6 +3739,7 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// For expert use - artificially set calibration statistic
 
 void hadaq::TdcProcessor::IncCalibration(unsigned ch, bool rising, unsigned fine, unsigned value)
 {

@@ -29,6 +29,7 @@ unsigned hadaq::TrbProcessor::gHUBMax = 0x81FF;
 ///  - 2 - falling edge enabled and fully independent from rising edge
 ///  - 3 - falling edge enabled and uses calibration from rising edge
 ///  - 4 - falling edge enabled and common statistic is used for calibration
+/// see \ref hadaq::TdcProcessor::EEdgesMasks for more info
 /// \param ignore_sync defines if sync messages are ignored (true by default) */
 
 void hadaq::TrbProcessor::SetDefaults(unsigned numch, unsigned edges, bool ignore_sync)

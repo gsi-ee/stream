@@ -35,12 +35,6 @@ namespace hadaq {
 
       protected:
 
-         enum { errNoHeader, errChId, errEpoch, errFine, err3ff, errCh0, errMismatchDouble, errUncknHdr, errDesignId, errMisc };
-
-         enum { rising_edge = 1, falling_edge = 2 };
-
-         enum { edge_None = 0, edge_Rising = 1, edge_BothIndepend = 2, edge_ForceRising  = 3, edge_CommonStatistic = 4 };
-
          struct ChannelRec {
             unsigned refch;                //! reference channel for specified
             unsigned reftdc;               //! tdc of reference channel
@@ -423,6 +417,28 @@ namespace hadaq {
 
       public:
 
+         /** error codes */
+         enum EErrors {
+            errNoHeader,       ///< no header found
+            errChId,           ///< wrong channel id
+            errEpoch,          ///< wrong/missing epoch
+            errFine,           ///< bad fine counter
+            err3ff,            ///< 0x3ff error
+            errCh0,            ///< nissig channel 0
+            errMismatchDouble, ///<
+            errUncknHdr,       ///< uncknown header
+            errDesignId,       ///< mismatch in design id
+            errMisc            ///< all other errors
+         };
+
+         /** edges mask */
+         enum EEdgesMasks {
+            edge_Rising = 1,        ///< process only rising edge
+            edge_BothIndepend = 2,  ///< process rising and falling endges independent
+            edge_ForceRising  = 3,  ///< use rising edge calibration for falling
+            edge_CommonStatistic = 4  ///< accumulate common statistic for both
+         };
+
          TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels = MaxNumTdcChannels, unsigned edge_mask = 1, bool ver4 = false);
          virtual ~TdcProcessor();
 
@@ -441,10 +457,8 @@ namespace hadaq {
 
          static void SetUseDTrigForRef(bool on = true);
 
-         /** Configure window (in nanoseconds), where time stamps from 0xD trigger will be accepted for calibration */
          static void SetTriggerDWindow(double low = -25, double high = 50);
 
-         /** Configure Tot calibration parameters */
          static void SetToTCalibr(int minstat = 100, double rms = 0.15);
 
          static void SetDefaultLinearNumPoints(int cnt = 2);
@@ -453,7 +467,6 @@ namespace hadaq {
 
          static void SetStoreCalibrTables(bool on = true);
 
-
          /** Set number of TDC messages, which should be skipped from subevent before analyzing it */
          void SetSkipTdcMessages(unsigned cnt = 0) { fSkipTdcMessages = cnt; }
 
@@ -461,17 +474,27 @@ namespace hadaq {
 
          void SetCustomMhz(float freq = 400.);
 
+         /** Set minimal counts number for ToT calibration */
          void SetTotStatLimit(int minstat = 100) { fTotStatLimit = minstat; }
+         /** Set maximal allowed RMS for ToT histogram in ns */
          void SetTotRMSLimit(double rms = 0.15) { fTotRMSLimit = rms; }
 
+         /** Returns number of TDC channels */
          inline unsigned NumChannels() const { return fNumChannels; }
+         /** Returns true if processing rising edge */
          inline bool DoRisingEdge() const { return true; }
+         /** Returns true if processing falling */
          inline bool DoFallingEdge() const { return fEdgeMask > 1; }
+         /** Returns value of edge mask */
          inline unsigned GetEdgeMask() const { return fEdgeMask; }
 
+         /** Returns calibration progress */
          double GetCalibrProgress() const { return fCalibrProgress; }
+         /** Returns calibration status */
          std::string GetCalibrStatus() const { return fCalibrStatus; }
+         /** Returns calibration quality */
          double GetCalibrQuality() const { return fCalibrQuality; }
+         /** Acknowledge calibration quality */
          void AcknowledgeCalibrQuality(double lvl = 1.)
          {
             if (fCalibrQuality < lvl) {
@@ -480,6 +503,7 @@ namespace hadaq {
                fCalibrStatus = "Ready";
             }
          }
+         /** Take all messages from calibration log */
          std::vector<std::string> TakeCalibrLog()
          {
             std::vector<std::string> res;
@@ -487,8 +511,10 @@ namespace hadaq {
             return res;
          }
 
+         /** Get number of indexed histograms */
          int GetNumHist() const { return 9; }
 
+         /** Get histogram name by index */
          const char* GetHistName(int k) const
          {
             switch(k) {
@@ -505,6 +531,7 @@ namespace hadaq {
             return "";
          }
 
+         /** Get histogram by index and channel id */
          base::H1handle GetHist(unsigned ch, int k = 0)
          {
             if (ch>=NumChannels()) return 0;
@@ -522,13 +549,9 @@ namespace hadaq {
             return 0;
          }
 
-         /** Create basic histograms for specified channels.
-          * If array not specified, histograms for all channels are created.
-          * In array last element must be 0 or out of channel range. Call should be like:
-          * int channels[] = {33, 34, 35, 36, 0};
-          * tdc->CreateHistograms( channels ); */
          void CreateHistograms(int *arr = 0);
 
+         /** Assign per HLD histos */
          void AssignPerHldHistos(unsigned id, base::H1handle *hHits, base::H1handle *hErrs,
                                               base::H2handle *hChHits, base::H2handle *hChErrs,
                                               base::H2handle *hChCorr,
@@ -589,50 +612,30 @@ namespace hadaq {
             if (ch < fCh.size()) fCh[ch].tot_shift = tot_shift;
          }
 
-         /** Disable calibration for specified channels */
          void DisableCalibrationFor(unsigned firstch, unsigned lastch = 0);
 
-         /** Set reference signal for the TDC channel ch
-          * \param refch   specifies number of reference channel
-          * \param reftdc  specifies tdc id, used for ref channel.
-          * Default (0xffff) same TDC will be used
-          * If redtdc contains 0x70000 (like 0x7c010), than direct difference without channel 0 will be calculated
-          * To be able use other TDCs, one should enable TTrbProcessor::SetCrossProcess(true);
-          * If left-right range are specified, ref histograms are created.
-          * If twodim==true, 2-D histogram which will accumulate correlation between
-          * time difference to ref channel and:
-          *   fine_counter (shift 0 ns)
-          *   fine_counter of ref channel (shift -1 ns)
-          *   coarse_counter/4 (shift -2 ns) */
          void SetRefChannel(unsigned ch, unsigned refch, unsigned reftdc = 0xffff, int npoints = 5000, double left = -10., double right = 10., bool twodim = false);
 
 
-         /** Set reference signal for time extracted from v4 TMDS message
-          * \param ch   configured channel
-          * \param refch   reference channel */
          void SetRefTmds(unsigned ch, unsigned refch, int npoints, double left, double right);
 
-         /** Fill double-reference histogram
-          * Required that for both channels references are specified via SetRefChannel() command.
-          * If ch2 > 1000, than channel from other TDC can be used. tdcid = (ch2 - 1000) / 1000 */
          bool SetDoubleRefChannel(unsigned ch1, unsigned ch2,
                                   int npx = 200, double xmin = -10., double xmax = 10.,
                                   int npy = 200, double ymin = -10., double ymax = 10.);
 
-         /** Create rate histogram to count hits per second (excluding channel 0) */
          void CreateRateHisto(int np = 1000, double xmin = 0., double xmax = 1e5);
 
+         /** Configure upper limit for ToT */
          void SetTotUpperLimit(double lmt = 20) { fTotUpperLimit = lmt; }
+
+         /** Get configured upper limit for ToT */
          double GetTotUpperLimit() const { return fTotUpperLimit; }
 
-         /** Enable print of TDC data when time difference to ref channel belong to specified interval
-          * Work ONLY when reference channel 0 is used.
-          * One could set maximum number of events to print
-          * In any case one should first set reference channel  */
          bool EnableRefCondPrint(unsigned ch, double left = -10, double right = 10, int numprint = 0);
 
          /** If set, each hit must be supplied with epoch message */
          void SetEveryEpoch(bool on) { fEveryEpoch = on; }
+         /** Return true if each hit must be supplied with epoch message */
          bool IsEveryEpoch() const { return fEveryEpoch; }
 
          void SetLinearCalibration(unsigned nch, unsigned finemin=30, unsigned finemax=500);
@@ -645,10 +648,8 @@ namespace hadaq {
          /** Return explicit calibr mode, -1 - off, 0 - normal data processing, 1 - accumulating calibration */
          int GetExplicitCalibrationMode() { return fAllCalibrMode; }
 
-         /** Start mode, when all data will be used for calibrations */
          void BeginCalibration(long cnt);
 
-         /** Complete calibration mode, create calibration and calibration files */
          void CompleteCalibration(bool dummy = false, const std::string &filename = "", const std::string &subdir = "");
 
          bool LoadCalibration(const std::string& fprefix);
@@ -668,13 +669,13 @@ namespace hadaq {
          /** Returns true is linear calibrations are configured */
          bool IsUseLinear() const { return fUseLinear; }
 
+         /** Set number of points in linear calibrations */
          void SetLinearNumPoints(int cnt = 2) { fLinearNumPoints = (cnt < 2) ? 2 : ((cnt > 100) ? 100 : cnt); }
+         /** Return number of points in linear calibrations */
          int GetLinearNumPoints() const { return fLinearNumPoints; }
 
-         /** Configure 0xD trigger ToT length and min/max values for histogram */
          void SetToTRange(double tot_0xd, double hmin, double hmax);
 
-         /** Configure 0xD trigger ToT based on hwtype */
          void ConfigureToTByHwType(unsigned hwtype);
 
          /** When enabled, last hit time in the channel used for reference time calculations
@@ -682,6 +683,7 @@ namespace hadaq {
           * Special case is reference to channel 0 - here all hits will be used */
          void SetUseLastHit(bool on = true) { fUseLastHit = on; }
 
+         /** Returns true if last hit used in reference histogram calculations */
          bool IsUseLastHist() const { return fUseLastHit; }
 
          /** Return last TDC header, seen by the processor */
@@ -692,9 +694,11 @@ namespace hadaq {
 
          virtual void UserPostLoop();
 
+         /** Get ref histogram for specified channel */
          base::H1handle GetChannelRefHist(unsigned ch, bool = true)
             { return ch < fCh.size() ? fCh[ch].fRisingRef : 0; }
 
+         /** Clear ref histogram for specified channel */
          void ClearChannelRefHist(unsigned ch, bool rising = true)
             { ClearH1(GetChannelRefHist(ch, rising)); }
 
@@ -714,31 +718,27 @@ namespace hadaq {
             return fVersion4 ? DoBuffer4Scan(buf, false) : DoBufferScan(buf, false);
          }
 
-         /** For expert use - artificially set calibration statistic */
          void IncCalibration(unsigned ch, bool rising, unsigned fine, unsigned value);
 
-         /** For expert use - artificially produce calibration */
          void ProduceCalibration(bool clear_stat = true, bool use_linear = false, bool dummy = false, bool preliminary = false);
 
          /** Access value of temperature during calibration.
           * Used to adjust all kind of calibrations afterwards */
          float GetCalibrTemp() const { return fCalibrTemp; }
+
+         /** Set temperature used for calibration */
          void SetCalibrTemp(float v) { fCalibrTemp = v; }
 
-         /** For expert use - store calibration in the file */
          void StoreCalibration(const std::string& fname, unsigned fileid = 0);
 
          virtual void Store(base::Event*);
 
          virtual void ResetStore();
 
-         /** Method transform TDC data, if output specified, use it otherwise change original data */
          unsigned TransformTdcData(hadaqs::RawSubevent* sub, uint32_t *rawdata, unsigned indx, unsigned datalen, hadaqs::RawSubevent* tgt = 0, unsigned tgtindx = 0);
 
-         /** Emulate transformation */
          void EmulateTransform(int dummycnt);
 
-         /** Special hades histograms creation */
          void DoHadesHistAnalysis();
 
          void FillToTHistogram();
