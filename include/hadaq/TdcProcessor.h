@@ -23,11 +23,11 @@ namespace hadaq {
     * Normally it should be used together with TrbProcessor,
     * which the only can provide data
     * Following levels of histograms filling are working
-    *  0 - none
-    *  1 - only basic statistic from TRB
-    *  2 - generic statistic over TDC channels
-    *  3 - basic per-channel histograms with IDs
-    *  4 - per-channel histograms with references **/
+    * - 0 - none
+    * - 1 - only basic statistic from TRB
+    * - 2 - generic statistic over TDC channels
+    * - 3 - basic per-channel histograms with IDs
+    * - 4 - per-channel histograms with references **/
 
    class TdcProcessor : public SubProcessor {
 
@@ -95,6 +95,7 @@ namespace hadaq {
             long calibr_stat_rising;        //! accumulated statistic during last calibration
             long calibr_stat_falling;       //! accumulated statistic during last calibration
 
+            /** constructor */
             ChannelRec() :
                refch(0xffffff),
                reftdc(0xffffffff),
@@ -151,6 +152,7 @@ namespace hadaq {
             {
             }
 
+            /** create calibration structures */
             void CreateCalibr(unsigned numfine, double coarse_unit = -1.)
             {
                rising_stat.resize(numfine);
@@ -159,6 +161,7 @@ namespace hadaq {
                FillCalibr(numfine, coarse_unit);
             }
 
+            /** Initialize claibration with default values */
             void FillCalibr(unsigned numfine, double coarse_unit = -1.)
             {
                for (unsigned n=0;n<numfine;n++)
@@ -167,6 +170,7 @@ namespace hadaq {
                SetLinearCalibr(hadaq::TdcMessage::GetFineMinValue(), hadaq::TdcMessage::GetFineMaxValue(), coarse_unit);
             }
 
+            /** Assign linear calibration */
             void SetLinearCalibr(unsigned finemin, unsigned finemax, double coarse_unit = -1)
             {
                rising_calibr.resize(5,0);
@@ -188,7 +192,7 @@ namespace hadaq {
                   falling_calibr[n] = rising_calibr[n];
             }
 
-
+            /** Release memory used by calibration structures */
             void ReleaseCalibr()
             {
                rising_stat.clear();
@@ -197,6 +201,7 @@ namespace hadaq {
                falling_calibr.clear();
             }
 
+            /** Create ToT histogram  */
             void CreateToTHist()
             {
                tot0d_hist.resize(TotBins);
@@ -204,6 +209,7 @@ namespace hadaq {
                   tot0d_hist[n] = 0;
             }
 
+            /** Release memory for ToT histogram  */
             void ReleaseToTHist()
             {
                tot0d_hist.clear();
@@ -350,15 +356,12 @@ namespace hadaq {
          static bool gIgnoreCalibrMsgs;    //! ignore calibration messages
          static bool gStoreCalibrTables;   //! when enabled, store calibration tables for v4 TDC
 
-         /** Method will be called by TRB processor if SYNC message was found
-          * One should change 4 first bytes in the last buffer in the queue */
          virtual void AppendTrbSync(uint32_t syncid);
 
          /** This is maximum disorder time for TDC messages
           * TODO: derive this value from sub-items */
          virtual double MaximumDisorderTm() const { return 2e-6; }
 
-         /** Scan all messages, find reference signals */
          bool DoBufferScan(const base::Buffer &buf, bool isfirst);
          bool DoBuffer4Scan(const base::Buffer &buf, bool isfirst);
 
@@ -368,7 +371,6 @@ namespace hadaq {
          double DoTestFineTimeH2(int iCh, base::H2handle h);
          double DoTestFineTime(double hRebin[], int nBinsRebin, int nEntries);
 
-         /** These methods used to fill different raw histograms during first scan */
          virtual void BeforeFill();
          virtual void AfterFill(SubProcMap* = 0);
 
@@ -383,18 +385,15 @@ namespace hadaq {
 
          bool CreateChannelHistograms(unsigned ch);
 
-         /** Check if automatic calibration can be performed - enough statistic is accumulated */
          double TestCanCalibrate(bool fillhist = false, std::string *status = nullptr);
 
-         /** Perform automatic calibration of channels */
          bool PerformAutoCalibrate();
 
-         /** Clear channel statistic used for calibrations */
          void ClearChannelStat(unsigned ch);
 
-         /** Extract calibration value */
          float ExtractCalibr(const std::vector<float> &func, unsigned bin);
 
+         /** extract calibration value */
          inline float ExtractCalibrDirect(const std::vector<float> &func, unsigned bin)
          {
             if (func.size() > 100) return func[bin];
@@ -427,7 +426,7 @@ namespace hadaq {
          TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels = MaxNumTdcChannels, unsigned edge_mask = 1, bool ver4 = false);
          virtual ~TdcProcessor();
 
-         static void SetMaxBoardId(unsigned) { }
+         static void SetMaxBoardId(unsigned);
 
          static void SetDefaults(unsigned numfinebins = 600, unsigned totrange = 100, unsigned hist2dreduced = 10);
 

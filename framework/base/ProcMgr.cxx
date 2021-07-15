@@ -97,10 +97,10 @@ void base::ProcMgr::SetHistFilling(int lvl)
 
 /////////////////////////////////////////////////////////////////////////
 //// Set store kind for all processors. With HADAQ following values are used
-/// 0 - disable store
-/// 1 - std::vector<hadaq::TdcMessageExt> - includes original TDC message
-/// 2 - std::vector<hadaq::MessageFloat>  - compact form, without channel 0, stamp as float (relative to ch0)
-/// 3 - std::vector<hadaq::MessageDouble> - compact form, with channel 0, absolute time stamp as double
+/// * 0 - disable store
+/// * 1 - std::vector<hadaq::TdcMessageExt> - includes original TDC message
+/// * 2 - std::vector<hadaq::MessageFloat>  - compact form, without channel 0, stamp as float (relative to ch0)
+/// * 3 - std::vector<hadaq::MessageDouble> - compact form, with channel 0, absolute time stamp as double
 
 void base::ProcMgr::SetStoreKind(unsigned kind)
 {

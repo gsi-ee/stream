@@ -41,6 +41,19 @@ bool hadaq::TdcProcessor::gStoreCalibrTables = false;
 
 unsigned BUBBLE_SIZE = 19;
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// obsolete, noop
+
+void hadaq::TdcProcessor::SetMaxBoardId(unsigned)
+{
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// Set default values for TDC creation
+/// \param numfinebins - maximal value of fine counter bins, used for all histograms and calibrations, default 600
+/// \param totrange - time in ns for ToT histograms, default 100
+/// \param hist2dreduced - reducing factor on some 2D histograms, default 10 - means one bin instead 10 ns of ToT
+
 
 void hadaq::TdcProcessor::SetDefaults(unsigned numfinebins, unsigned totrange, unsigned hist2dreduced)
 {
@@ -49,22 +62,28 @@ void hadaq::TdcProcessor::SetDefaults(unsigned numfinebins, unsigned totrange, u
    gHist2dReduce = hist2dreduced;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+
 void hadaq::TdcProcessor::SetErrorMask(unsigned mask)
 {
    gErrorMask = mask;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 void hadaq::TdcProcessor::SetAllHistos(bool on)
 {
    gAllHistos = on;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+
 void hadaq::TdcProcessor::SetIgnoreCalibrMsgs(bool on)
 {
    gIgnoreCalibrMsgs = on;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 void hadaq::TdcProcessor::SetTriggerDWindow(double low, double high)
 {
@@ -72,36 +91,50 @@ void hadaq::TdcProcessor::SetTriggerDWindow(double low, double high)
    gTrigDWindowHigh = high;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+
 void hadaq::TdcProcessor::SetToTCalibr(int minstat, double rms)
 {
    gTotStatLimit = minstat;
    gTotRMSLimit = rms;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+
 void hadaq::TdcProcessor::SetDefaultLinearNumPoints(int cnt)
 {
    gDefaultLinearNumPoints = (cnt < 2) ? 2 : ((cnt > 100) ? 100 : cnt);
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 void hadaq::TdcProcessor::SetUseDTrigForRef(bool on)
 {
    gUseDTrigForRef = on;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+
 void hadaq::TdcProcessor::SetUseAsDTrig(bool on)
 {
    gUseAsDTrig = on;
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 void hadaq::TdcProcessor::SetHadesMonitorInterval(int tm)
 {
    gHadesMonitorInterval = tm;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+
 int hadaq::TdcProcessor::GetHadesMonitorInterval()
 {
    return gHadesMonitorInterval;
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 void hadaq::TdcProcessor::SetStoreCalibrTables(bool on)
 {
@@ -109,6 +142,7 @@ void hadaq::TdcProcessor::SetStoreCalibrTables(bool on)
 }
 
 ///////////////////////////////////////////////////////////////////////////
+/// constructor
 
 hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels, unsigned edge_mask, bool ver4) :
    SubProcessor(trb, "TDC_%04X", tdcid),
@@ -259,6 +293,8 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fWriteEveryTime = false;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// destructor
 
 hadaq::TdcProcessor::~TdcProcessor()
 {
@@ -268,6 +304,8 @@ hadaq::TdcProcessor::~TdcProcessor()
    }
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+
 void hadaq::TdcProcessor::Set400Mhz(bool on)
 {
    f400Mhz = on;
@@ -276,6 +314,7 @@ void hadaq::TdcProcessor::Set400Mhz(bool on)
    for (unsigned ch=0;ch<fNumChannels;ch++)
       fCh[ch].FillCalibr(fNumFineBins, 200. / fCustomMhz * hadaq::TdcMessage::CoarseUnit());
 }
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 void hadaq::TdcProcessor::SetCustomMhz(float freq)
 {
@@ -286,11 +325,14 @@ void hadaq::TdcProcessor::SetCustomMhz(float freq)
       fCh[ch].FillCalibr(fNumFineBins, 200. / fCustomMhz * hadaq::TdcMessage::CoarseUnit());
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 bool hadaq::TdcProcessor::CheckPrintError()
 {
    return fTrb ? fTrb->CheckPrintError() : true;
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 void hadaq::TdcProcessor::AddError(unsigned code, const char *fmt, ...)
 {
@@ -320,6 +362,7 @@ void hadaq::TdcProcessor::AddError(unsigned code, const char *fmt, ...)
    if (fTrb) fTrb->EventError(sbuf.c_str());
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
 {
@@ -359,6 +402,8 @@ void hadaq::TdcProcessor::DisableCalibrationFor(unsigned firstch, unsigned lastc
       fCh[n].docalibr = false;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+
 void hadaq::TdcProcessor::SetToTRange(double tot, double hmin, double hmax)
 {
    // set real ToT value for 0xD trigger and min/max for histogram accumulation
@@ -370,6 +415,7 @@ void hadaq::TdcProcessor::SetToTRange(double tot, double hmin, double hmax)
    fToThmax = hmax;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 void hadaq::TdcProcessor::ConfigureToTByHwType(unsigned hwtype)
 {
@@ -392,6 +438,8 @@ void hadaq::TdcProcessor::ConfigureToTByHwType(unsigned hwtype)
    }
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+
 void hadaq::TdcProcessor::UserPostLoop()
 {
    if (!fWriteCalibr.empty() && !fWriteEveryTime) {
@@ -399,6 +447,8 @@ void hadaq::TdcProcessor::UserPostLoop()
       StoreCalibration(fWriteCalibr);
    }
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 void hadaq::TdcProcessor::CreateHistograms(int *arr)
 {
@@ -411,6 +461,7 @@ void hadaq::TdcProcessor::CreateHistograms(int *arr)
    }
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned reftdc,
                                         int npoints, double left, double right, bool twodim)
@@ -465,6 +516,7 @@ void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned re
    }
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 void hadaq::TdcProcessor::SetRefTmds(unsigned ch, unsigned refch, int npoints, double left, double right)
 {
@@ -497,6 +549,7 @@ void hadaq::TdcProcessor::SetRefTmds(unsigned ch, unsigned refch, int npoints, d
    }
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 bool hadaq::TdcProcessor::SetDoubleRefChannel(unsigned ch1, unsigned ch2,
                                               int npx, double xmin, double xmax,
@@ -562,11 +615,15 @@ bool hadaq::TdcProcessor::SetDoubleRefChannel(unsigned ch1, unsigned ch2,
    return true;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+
 void hadaq::TdcProcessor::CreateRateHisto(int np, double xmin, double xmax)
 {
    SetSubPrefix2();
    fHitsRate = MakeH1("HitsRate", "Hits rate", np, xmin, xmax, "hits/sec");
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 bool hadaq::TdcProcessor::EnableRefCondPrint(unsigned ch, double left, double right, int numprint)
 {
@@ -593,6 +650,8 @@ bool hadaq::TdcProcessor::EnableRefCondPrint(unsigned ch, double left, double ri
    return true;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// Reset different values before scan subevent
 
 void hadaq::TdcProcessor::BeforeFill()
 {
@@ -605,6 +664,9 @@ void hadaq::TdcProcessor::BeforeFill()
       rec.rising_tmds = 0.;
    }
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// Fill histograms after scan subevent
 
 void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
 {
@@ -713,6 +775,8 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
    if ((fCalibrProgress>=1.) && fAutoCalibr) PerformAutoCalibrate();
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+
 long hadaq::TdcProcessor::CheckChannelStat(unsigned ch)
 {
    ChannelRec &rec = fCh[ch];
@@ -730,6 +794,9 @@ long hadaq::TdcProcessor::CheckChannelStat(unsigned ch)
 
    return stat;
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// Check if automatic calibration can be performed - enough statistic is accumulated
 
 double hadaq::TdcProcessor::TestCanCalibrate(bool fillhist, std::string *status)
 {
@@ -767,6 +834,9 @@ double hadaq::TdcProcessor::TestCanCalibrate(bool fillhist, std::string *status)
    return min_progress;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// Perform automatic calibration of channels
+
 bool hadaq::TdcProcessor::PerformAutoCalibrate()
 {
    ProduceCalibration(true, fUseLinear || ((fCalibrCounts > 0) && (fCalibrCounts % 10000 == 77)));
@@ -779,6 +849,8 @@ bool hadaq::TdcProcessor::PerformAutoCalibrate()
 
    return true;
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 void hadaq::TdcProcessor::BeginCalibration(long cnt)
 {
@@ -799,6 +871,7 @@ void hadaq::TdcProcessor::BeginCalibration(long cnt)
       ClearChannelStat(ch);
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 void hadaq::TdcProcessor::CompleteCalibration(bool dummy, const std::string &filename, const std::string &subname)
 {
@@ -815,6 +888,7 @@ void hadaq::TdcProcessor::CompleteCalibration(bool dummy, const std::string &fil
    // if (!fWriteCalibr.empty()) StoreCalibration(fWriteCalibr);
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 void hadaq::TdcProcessor::FindFMinMax(const std::vector<float> &func, int nbin, int &fmin, int &fmax)
 {
@@ -833,6 +907,8 @@ void hadaq::TdcProcessor::FindFMinMax(const std::vector<float> &func, int nbin, 
    }
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// Extract calibration value
 
 float hadaq::TdcProcessor::ExtractCalibr(const std::vector<float> &func, unsigned bin)
 {
@@ -857,6 +933,8 @@ float hadaq::TdcProcessor::ExtractCalibr(const std::vector<float> &func, unsigne
 
    return val < coarse_unit ? val : coarse_unit;
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_t *rawdata, unsigned indx, unsigned datalen, hadaqs::RawSubevent* tgt, unsigned tgtindx)
 {
@@ -1169,6 +1247,8 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
    return tgt ? (tgtindx - tgtindx0) : cnt;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+
 void hadaq::TdcProcessor::EmulateTransform(int dummycnt)
 {
    if (fAllCalibrMode>0) {
@@ -1177,6 +1257,7 @@ void hadaq::TdcProcessor::EmulateTransform(int dummycnt)
    }
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 void PrintBubble(unsigned* bubble) {
    // print in original order
@@ -1214,6 +1295,8 @@ void PrintBubbleBinary(unsigned* bubble, int p1 = -1, int p2 = -1) {
    *ptr++ = 0;
    printf("%s", sbuf);
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 unsigned BubbleCheck(unsigned* bubble, int &p1, int &p2) {
    p1 = 0; p2 = 0;
@@ -1307,7 +1390,8 @@ unsigned rom_encoder_rising_cnt = 0;
 unsigned* rom_encoder_falling = 0;
 unsigned rom_encoder_falling_cnt = 0;
 
-// this is how it used in the FPGA, table provided by Cahit
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// this is how it used in the FPGA, table provided by Cahit
 
 unsigned BubbleCheckCahit(unsigned* bubble, int &p1, int &p2, bool debug = false, int maskid = 0, int shift = 0, bool = false) {
 
@@ -1426,6 +1510,10 @@ unsigned BubbleCheckCahit(unsigned* bubble, int &p1, int &p2, bool debug = false
    return ((p1>0) ? 0x00 : 0x20) | ((p2>0) ? 0x00 : 0x02);
 }
 
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Scan all messages, find reference signals
+/// Major data analysis method
 
 bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 {
@@ -2025,6 +2113,9 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    return !iserr;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Scan all messages, find reference signals
+/// Major data analysis method
 
 bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan)
 {
@@ -2616,6 +2707,7 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
    return !iserr;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 
 void hadaq::TdcProcessor::DoHadesHistAnalysis()
@@ -2632,6 +2724,9 @@ void hadaq::TdcProcessor::DoHadesHistAnalysis()
         if (fQaErrorsPerHld) SetH2Content(*fQaErrorsPerHld, fHldId, iCh, testErrors);
     }
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Test ToT
 
 double hadaq::TdcProcessor::DoTestToT(int iCh)
 {
@@ -2661,6 +2756,9 @@ double hadaq::TdcProcessor::DoTestToT(int iCh)
     return dresult;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Test errors in channel
+
 double hadaq::TdcProcessor::DoTestErrors(int iCh)
 {
     int nBins = GetH1NBins(fErrors);
@@ -2687,6 +2785,9 @@ double hadaq::TdcProcessor::DoTestErrors(int iCh)
 
     return dresult;
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Test edges count
 
 double hadaq::TdcProcessor::DoTestEdges(int iCh)
 {
@@ -2716,6 +2817,9 @@ double hadaq::TdcProcessor::DoTestEdges(int iCh)
     return dresult;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Test fine time
+
 double hadaq::TdcProcessor::DoTestFineTimeH2(int iCh, base::H2handle h)
 {
     int nBins1, nBins2;
@@ -2735,6 +2839,9 @@ double hadaq::TdcProcessor::DoTestFineTimeH2(int iCh, base::H2handle h)
     }
     return DoTestFineTime(hRebin, nBinsRebin, nEntries);
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Test fine time
 
 double hadaq::TdcProcessor::DoTestFineTime(double hRebin[], int nBinsRebin, int nEntries)
 {
@@ -2789,6 +2896,10 @@ double hadaq::TdcProcessor::DoTestFineTime(double hRebin[], int nBinsRebin, int 
     return dresult;
 }
 
+///////////////////////////////////////////////////////////////////////////////////////
+/// Method will be called by TRB processor if SYNC message was found
+///  One should change 4 first bytes in the last buffer in the queue
+
 void hadaq::TdcProcessor::AppendTrbSync(uint32_t syncid)
 {
    if (fQueue.size() == 0) {
@@ -2799,11 +2910,15 @@ void hadaq::TdcProcessor::AppendTrbSync(uint32_t syncid)
    memcpy(fQueue.back().ptr(), &syncid, 4);
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+
 void hadaq::TdcProcessor::SetLinearCalibration(unsigned nch, unsigned finemin, unsigned finemax)
 {
    if (nch<NumChannels())
       fCh[nch].SetLinearCalibr(finemin, finemax);
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 
 double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, bool rising, const std::vector<uint32_t> &statistic, std::vector<float> &calibr, bool use_linear, bool preliminary)
@@ -2973,6 +3088,8 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, bool rising, const st
    return quality;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+
 bool hadaq::TdcProcessor::CalibrateTot(unsigned nch, std::vector<uint32_t> &hist, float &tot_shift, float &tot_dev, float cut)
 {
    int left(0), right(TotBins);
@@ -3052,6 +3169,7 @@ bool hadaq::TdcProcessor::CalibrateTot(unsigned nch, std::vector<uint32_t> &hist
    return true;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 void hadaq::TdcProcessor::CopyCalibration(const std::vector<float> &calibr, base::H1handle hcalibr, unsigned ch, base::H2handle h2calibr)
 {
@@ -3062,6 +3180,8 @@ void hadaq::TdcProcessor::CopyCalibration(const std::vector<float> &calibr, base
       SetH2Content(h2calibr, ch, n, ExtractCalibrDirect(calibr,n)*1e12);
    }
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, bool dummy, bool preliminary)
 {
@@ -3199,6 +3319,8 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
    }
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+
 void hadaq::TdcProcessor::FillToTHistogram()
 {
    if (fToTPerBrd)
@@ -3209,6 +3331,8 @@ void hadaq::TdcProcessor::FillToTHistogram()
 
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// Clear channel statistic used for calibrations
 
 void hadaq::TdcProcessor::ClearChannelStat(unsigned ch)
 {
@@ -3221,6 +3345,8 @@ void hadaq::TdcProcessor::ClearChannelStat(unsigned ch)
    fCh[ch].tot0d_cnt = 0;
    fCh[ch].ReleaseToTHist();
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 void hadaq::TdcProcessor::StoreCalibration(const std::string& fprefix, unsigned fileid)
 {
@@ -3319,6 +3445,8 @@ void hadaq::TdcProcessor::StoreCalibration(const std::string& fprefix, unsigned 
    }
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+
 void hadaq::TdcProcessor::SetTable(uint32_t *table, unsigned addr, uint32_t value)
 {
    if (addr >= 0x200) return;
@@ -3386,6 +3514,8 @@ uint16_t gen_crc16(const uint32_t *data, unsigned size, unsigned last_bitlen)
     return crc;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+
 void hadaq::TdcProcessor::CreateV4CalibrTable(unsigned ch, uint32_t *table)
 {
    ChannelRec &rec = fCh[ch];
@@ -3447,6 +3577,8 @@ void hadaq::TdcProcessor::CreateV4CalibrTable(unsigned ch, uint32_t *table)
       SetTable(table, addr, addr);
 }
 
+
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
 {
@@ -3562,6 +3694,8 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
    return true;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+
 void hadaq::TdcProcessor::IncCalibration(unsigned ch, bool rising, unsigned fine, unsigned value)
 {
    if ((ch>=NumChannels()) || (fine>=fNumFineBins)) return;
@@ -3576,6 +3710,8 @@ void hadaq::TdcProcessor::IncCalibration(unsigned ch, bool rising, unsigned fine
       fCh[ch].all_falling_stat += value;
    }
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 void hadaq::TdcProcessor::CreateBranch(TTree*)
 {
@@ -3596,6 +3732,8 @@ void hadaq::TdcProcessor::CreateBranch(TTree*)
          break;
    }
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 void hadaq::TdcProcessor::Store(base::Event* ev)
 {
@@ -3626,6 +3764,8 @@ void hadaq::TdcProcessor::Store(base::Event* ev)
       }
    }
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 void hadaq::TdcProcessor::ResetStore()
 {
