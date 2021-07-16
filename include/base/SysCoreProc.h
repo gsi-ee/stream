@@ -19,8 +19,8 @@ namespace base {
       friend class OpticSplitter;
 
       protected:
-         unsigned  fSyncSource;    // 0,1: SYNC0,1 used for synchronization,  >=2: local time used for time stamp
-         unsigned  fTriggerSignal; // 0 .. 3 is AUXs, 10-11 is SYNCs
+         unsigned  fSyncSource;      ///< 0,1: SYNC0,1 used for synchronization,  >=2: local time used for time stamp
+         unsigned  fTriggerSignal;   ///< 0 .. 3 is AUXs, 10-11 is SYNCs
 
          int fNumPrintMessages;      ///<! number of messages to be printed
          double fPrintLeft;          ///<! left border to start printing
@@ -46,6 +46,7 @@ namespace base {
 
          void CreateBasicHistograms();
 
+         /** fill histogram */
          void FillMsgPerBrdHist(unsigned cnt) { FillH1(fMsgPerBrd, GetID(), cnt); }
 
          bool CheckPrint(double msgtm, double safetymargin = 1e-6);

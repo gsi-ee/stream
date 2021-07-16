@@ -71,11 +71,14 @@ class TUserSource : public TGo4EventSource {
 
       virtual Bool_t BuildDatEvent(TGo4MbsEvent* dest);
 
-
+      /** get args */
       const char* GetArgs() const { return fxArgs.Data(); }
+      /** set args */
       void SetArgs(const char* arg) { fxArgs=arg; }
 
+      /** get port */
       Int_t GetPort() const { return fiPort; }
+      /** set port */
       void SetPort(Int_t val) { fiPort=val; }
 
    ClassDef(TUserSource, 1)

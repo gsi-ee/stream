@@ -13,12 +13,16 @@ namespace base {
 
    class SubEvent {
       public:
+         /** default constructor */
          SubEvent() {}
 
+         /** destructor */
          virtual ~SubEvent() {}
 
+         /** clear sub event */
          virtual void Clear() {}
 
+         /** sort data in sub event */
          virtual void Sort() {}
 
          /** Method returns event multiplicity - that ever it means */
@@ -31,32 +35,34 @@ namespace base {
    template<class MsgClass>
    class MessageExt {
       protected:
-         /* original roc message*/
-         MsgClass fMessage;
+         MsgClass fMessage; ///< original roc message
 
-         /* full time stamp without correction*/
-         double fGlobalTime;
+         double fGlobalTime;  ///< full time stamp without correction
 
       public:
 
+         /** default constructor */
          MessageExt() :
             fMessage(),
             fGlobalTime(0.)
          {
          }
 
+         /** constructor */
          MessageExt(const MsgClass& _msg, double globaltm) :
             fMessage(_msg),
             fGlobalTime(globaltm)
          {
          }
 
+         /** copy constructor */
          MessageExt(const MessageExt& src) :
             fMessage(src.fMessage),
             fGlobalTime(src.fGlobalTime)
          {
          }
 
+         /** assign operator */
          MessageExt& operator=(const MessageExt& src)
          {
             fMessage = src.fMessage;
@@ -64,14 +70,17 @@ namespace base {
             return *this;
          }
 
+         /** destructor */
          ~MessageExt() {}
 
-         /* this is used for timesorting the messages in the filled vectors */
+         /** this is used for timesorting the messages in the filled vectors */
          bool operator<(const MessageExt &rhs) const
             { return (fGlobalTime < rhs.fGlobalTime); }
 
+         /** message */
          const MsgClass& msg() const { return fMessage; }
 
+         /** global time stamp */
          double GetGlobalTime() const { return fGlobalTime; }
    };
 
@@ -85,8 +94,10 @@ namespace base {
 
       public:
 
+         /** constructor */
          SubEventEx(unsigned capacity = 0) : base::SubEvent(), fExtMessages()  { fExtMessages.reserve(capacity); }
 
+         /** destructor */
          ~SubEventEx() {}
 
          /** Add new message to sub-event */

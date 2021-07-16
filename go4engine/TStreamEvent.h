@@ -12,10 +12,13 @@ class TStreamEvent : public TGo4EventElement,
 {
    public:
 
+      /** constructor */
       TStreamEvent() : TGo4EventElement(), base::Event() {}
 
+      /** constructor */
       TStreamEvent(const char* name)  : TGo4EventElement(name), base::Event() {}
 
+      /** destructor */
       virtual ~TStreamEvent() {}
 
       ClassDef(TStreamEvent,1)

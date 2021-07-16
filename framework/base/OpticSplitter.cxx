@@ -4,6 +4,8 @@
 
 #include "base/ProcMgr.h"
 
+///////////////////////////////////////////////////////////////////////////
+/// constructor
 
 base::OpticSplitter::OpticSplitter(unsigned brdid) :
    base::StreamProc("Splitter", DummyBrdId, false),
@@ -18,14 +20,23 @@ base::OpticSplitter::OpticSplitter(unsigned brdid) :
    SetRawScanOnly();
 }
 
+///////////////////////////////////////////////////////////////////////////
+/// destructor
+
 base::OpticSplitter::~OpticSplitter()
 {
 }
+
+///////////////////////////////////////////////////////////////////////////
+/// Way to register sub-processor
 
 void base::OpticSplitter::AddSub(SysCoreProc* proc, unsigned id)
 {
    fMap[id] = proc;
 }
+
+///////////////////////////////////////////////////////////////////////////
+/// Scan all messages, find reference signals
 
 bool base::OpticSplitter::FirstBufferScan(const base::Buffer& buf)
 {

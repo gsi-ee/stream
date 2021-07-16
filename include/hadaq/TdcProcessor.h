@@ -35,6 +35,7 @@ namespace hadaq {
 
       protected:
 
+         /** TDC channel record */
          struct ChannelRec {
             unsigned refch;                ///<! reference channel for specified
             unsigned reftdc;               ///<! tdc of reference channel

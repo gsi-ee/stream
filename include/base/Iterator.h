@@ -9,11 +9,11 @@ namespace base {
 
    class Iterator {
       protected:
-         int           fFormat;       // format identifier
-         void*         fBuffer;       // assigned buffer
-         uint32_t      fBufferLen;    // length of assigned buffer
-         uint32_t      fBufferPos;    // current position
-         uint32_t      fMsgSize;      // size of single message
+         int           fFormat;       ///< format identifier
+         void*         fBuffer;       ///< assigned buffer
+         uint32_t      fBufferLen;    ///< length of assigned buffer
+         uint32_t      fBufferPos;    ///< current position
+         uint32_t      fMsgSize;      ///< size of single message
 
       public:
          Iterator(int fmt = formatNormal);
@@ -21,6 +21,7 @@ namespace base {
          ~Iterator();
 
          void setFormat(int fmt);
+         /** get format */
          int getFormat() const { return fFormat; }
 
          /** get message size */

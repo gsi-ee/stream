@@ -1,6 +1,7 @@
-// $Id$
-
 #include "base/Profiler.h"
+
+///////////////////////////////////////////////////////////////////////////
+/// make statistic
 
 void base::Profiler::MakeStatistic()
 {
@@ -19,6 +20,8 @@ void base::Profiler::MakeStatistic()
    fLast = now;
 }
 
+///////////////////////////////////////////////////////////////////////////
+/// format
 
 std::string base::Profiler::Format()
 {

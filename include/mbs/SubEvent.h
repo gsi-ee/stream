@@ -5,16 +5,20 @@
 
 namespace mbs {
 
+   /** subevent with MBS data */
    class SubEvent : public base::SubEvent {
-      protected:
 
       public:
+         /** constructor */
          SubEvent() : base::SubEvent() {}
 
+         /** destructor */
          virtual ~SubEvent() {}
 
+         /** clear */
          virtual void Clear() {}
 
+         /** sort */
          virtual void Sort() {}
 
          /** Method returns event multiplicity - that ever it means */

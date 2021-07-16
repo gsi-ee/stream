@@ -6,8 +6,10 @@
 
 #include "base/ProcMgr.h"
 
-
 unsigned base::SysCoreProc::fMaxBrdId = 16;
+
+///////////////////////////////////////////////////////////////////////////
+/// constructor
 
 base::SysCoreProc::SysCoreProc(const char* name, unsigned brdid, OpticSplitter* spl) :
    base::StreamProc(name, brdid),
@@ -29,10 +31,15 @@ base::SysCoreProc::SysCoreProc(const char* name, unsigned brdid, OpticSplitter* 
    fMsgPerBrd = mgr()->MakeH1(sbuf1, sbuf2, fMaxBrdId, 0, fMaxBrdId, "brdid;reuse");
 }
 
+///////////////////////////////////////////////////////////////////////////
+/// destructor
+
 base::SysCoreProc::~SysCoreProc()
 {
 }
 
+///////////////////////////////////////////////////////////////////////////
+/// create basic histograms
 
 void base::SysCoreProc::CreateBasicHistograms()
 {
@@ -49,6 +56,8 @@ void base::SysCoreProc::CreateBasicHistograms()
    fSYNCt[1] = MakeH1("SYNC1_t", "Time distribution of SYNC1 signal", 10000, 0., 1000., "s");
 }
 
+///////////////////////////////////////////////////////////////////////////
+/// check print
 
 bool base::SysCoreProc::CheckPrint(double msgtm, double safetymargin)
 {

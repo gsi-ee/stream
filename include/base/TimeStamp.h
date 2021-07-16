@@ -43,10 +43,11 @@ namespace base {
          LocalStamp_t fRef;     ///<! reference time, used to detect wraps of timestamp
          int64_t  fConvRef;     ///<! value used for time conversion
 
-         double fCoef;  // time coefficient to convert to seconds
+         double fCoef;          ///<! time coefficient to convert to seconds
 
       public:
 
+         /** constructor */
          LocalStampConverter() :
             fT0(0),
             fWrapSize(2),
@@ -59,8 +60,10 @@ namespace base {
          {
          }
 
+         /** destructor */
          ~LocalStampConverter() {}
 
+         /** set T0 */
          void SetT0(int64_t t0) { fT0 = t0; }
 
          /** Set major timing parameters - wrap value and coefficient */

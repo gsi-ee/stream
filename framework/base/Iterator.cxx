@@ -1,5 +1,8 @@
 #include "base/Iterator.h"
 
+///////////////////////////////////////////////////////////////////////////
+/// constructor
+
 base::Iterator::Iterator(int fmt) :
    fFormat(fmt),
    fBuffer(0),
@@ -10,9 +13,15 @@ base::Iterator::Iterator(int fmt) :
    fMsgSize = base::Message::RawSize(fFormat);
 }
 
+///////////////////////////////////////////////////////////////////////////
+/// destructor
+
 base::Iterator::~Iterator()
 {
 }
+
+///////////////////////////////////////////////////////////////////////////
+/// set format
 
 void base::Iterator::setFormat(int fmt)
 {
@@ -20,6 +29,8 @@ void base::Iterator::setFormat(int fmt)
    fMsgSize = base::Message::RawSize(fFormat);
 }
 
+///////////////////////////////////////////////////////////////////////////
+/// assign buffer
 
 bool base::Iterator::assign(void* buf, uint32_t len)
 {

@@ -24,6 +24,8 @@
 
 #include "TGo4EventErrorException.h"
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// constructor
 
 TFirstStepProcessor::TFirstStepProcessor():
    TGo4EventProcessor(),
@@ -32,6 +34,8 @@ TFirstStepProcessor::TFirstStepProcessor():
    // streamer dummy constructor
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+///  constructor
 
 TFirstStepProcessor::TFirstStepProcessor(const char* name) :
    TGo4EventProcessor(name),
@@ -77,11 +81,16 @@ TFirstStepProcessor::TFirstStepProcessor(const char* name) :
    fNumOutEvents = 0;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// destructor
+
 TFirstStepProcessor::~TFirstStepProcessor()
 {
    TGo4Log::Info("Input %ld  Output %ld  Total processed size = %ld", fNumInpBufs, fNumOutEvents, fTotalDataSize);
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// pre loop
 
 void TFirstStepProcessor::UserPreLoop()
 {
@@ -91,6 +100,9 @@ void TFirstStepProcessor::UserPreLoop()
    if (fTree!=0) TGo4Analysis::Instance()->AddTree(fTree);
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// post loop
+
 void TFirstStepProcessor::UserPostLoop()
 {
    if (fTree!=0) TGo4Analysis::Instance()->RemoveTree(fTree);
@@ -98,6 +110,8 @@ void TFirstStepProcessor::UserPostLoop()
    TRootProcMgr::UserPostLoop();
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// build event - main entry point
 
 Bool_t TFirstStepProcessor::BuildEvent(TGo4EventElement* outevnt)
 {
@@ -174,16 +188,25 @@ Bool_t TFirstStepProcessor::BuildEvent(TGo4EventElement* outevnt)
    return kFALSE;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// set sorted order for created histogram folders
+
 void TFirstStepProcessor::SetSortedOrder(bool on)
 {
    TGo4Analysis::Instance()->SetSortedOrder(on);
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// is sorted order for created histogram folders
 
 bool TFirstStepProcessor::IsSortedOrder()
 {
    return TGo4Analysis::Instance()->IsSortedOrder();
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// make H1
+/// see \ref base::ProcMgr::MakeH1
 
 base::H1handle TFirstStepProcessor::MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle)
 {
@@ -227,6 +250,9 @@ base::H1handle TFirstStepProcessor::MakeH1(const char* name, const char* title, 
    return (base::H1handle) histo1;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// Get H1 bins numbers
+
 bool TFirstStepProcessor::GetH1NBins(base::H1handle h1, int &nbins)
 {
    if (h1==0) return false;
@@ -236,6 +262,8 @@ bool TFirstStepProcessor::GetH1NBins(base::H1handle h1, int &nbins)
    return true;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// fill H1
 
 void TFirstStepProcessor::FillH1(base::H1handle h1, double x, double weight)
 {
@@ -249,6 +277,9 @@ void TFirstStepProcessor::FillH1(base::H1handle h1, double x, double weight)
       histo1->Fill(x);
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// get h1 content
+
 double TFirstStepProcessor::GetH1Content(base::H1handle h1, int nbin)
 {
    if (h1==0) return 0.;
@@ -258,6 +289,9 @@ double TFirstStepProcessor::GetH1Content(base::H1handle h1, int nbin)
    return histo1->GetBinContent(nbin+1);
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// set h1 content
+
 void TFirstStepProcessor::SetH1Content(base::H1handle h1, int nbin, double v)
 {
    TH1* histo1 = (TH1*) h1;
@@ -266,6 +300,9 @@ void TFirstStepProcessor::SetH1Content(base::H1handle h1, int nbin, double v)
 }
 
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// clear h1
+
 void TFirstStepProcessor::ClearH1(base::H1handle h1)
 {
    if (!h1) return;
@@ -273,6 +310,9 @@ void TFirstStepProcessor::ClearH1(base::H1handle h1)
    TH1* histo1 = (TH1*) h1;
    histo1->Reset();
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// copy h1
 
 void TFirstStepProcessor::CopyH1(base::H1handle tgt, base::H1handle src)
 {
@@ -284,6 +324,9 @@ void TFirstStepProcessor::CopyH1(base::H1handle tgt, base::H1handle src)
    htgt->Add(hsrc);
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// set h1 title
+
 void TFirstStepProcessor::SetH1Title(base::H1handle h1, const char* title)
 {
    if (!h1) return;
@@ -292,6 +335,9 @@ void TFirstStepProcessor::SetH1Title(base::H1handle h1, const char* title)
    histo1->SetTitle(title);
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// make H2
+/// see \ref base::ProcMgr::MakeH2
 
 base::H2handle TFirstStepProcessor::MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options)
 {
@@ -343,6 +389,9 @@ base::H2handle TFirstStepProcessor::MakeH2(const char* name, const char* title, 
    return (base::H2handle) histo2;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// get h2 bins number
+
 bool TFirstStepProcessor::GetH2NBins(base::H2handle h2, int &nbins1, int &nbins2)
 {
    if (h2==0) return false;
@@ -351,6 +400,9 @@ bool TFirstStepProcessor::GetH2NBins(base::H2handle h2, int &nbins1, int &nbins2
    nbins2 = histo2->GetNbinsY();
    return true;
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// fill h2
 
 void TFirstStepProcessor::FillH2(base::H2handle h2, double x, double y, double weight)
 {
@@ -364,6 +416,8 @@ void TFirstStepProcessor::FillH2(base::H2handle h2, double x, double y, double w
       histo2->Fill(x, y);
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// get h2 content
 
 double TFirstStepProcessor::GetH2Content(base::H2handle h2, int bin1, int bin2)
 {
@@ -374,6 +428,8 @@ double TFirstStepProcessor::GetH2Content(base::H2handle h2, int bin1, int bin2)
    return histo2->GetBinContent(bin1+1, bin2+1);
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// set h2 content
 
 void TFirstStepProcessor::SetH2Content(base::H2handle h2, int bin1, int bin2, double v)
 {
@@ -384,6 +440,8 @@ void TFirstStepProcessor::SetH2Content(base::H2handle h2, int bin1, int bin2, do
    return histo2->SetBinContent(bin1+1, bin2+1, v);
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// clear h2
 
 void TFirstStepProcessor::ClearH2(base::H2handle h2)
 {
@@ -393,6 +451,9 @@ void TFirstStepProcessor::ClearH2(base::H2handle h2)
    histo2->Reset();
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// set h2 title
+
 void TFirstStepProcessor::SetH2Title(base::H2handle h2, const char* title)
 {
    if (!h2) return;
@@ -401,12 +462,18 @@ void TFirstStepProcessor::SetH2Title(base::H2handle h2, const char* title)
    histo2->SetTitle(title);
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// clear all histograms
+
 void TFirstStepProcessor::ClearAllHistograms()
 {
    TGo4Analysis* an = TGo4Analysis::Instance();
    if (an)
       an->ClearObjects("Histograms");
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// make condition
 
 base::C1handle TFirstStepProcessor::MakeC1(const char* name, double left, double right, base::H1handle h1)
 {
@@ -417,11 +484,17 @@ base::C1handle TFirstStepProcessor::MakeC1(const char* name, double left, double
    return (base::C1handle) cond;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// change condition
+
 void TFirstStepProcessor::ChangeC1(base::C1handle c1, double left, double right)
 {
    TGo4WinCond* cond = (TGo4WinCond*) c1;
    if (cond) cond->SetValues(left, right);
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// test condition
 
 int TFirstStepProcessor::TestC1(base::C1handle c1, double value, double* dist)
 {
@@ -439,12 +512,18 @@ int TFirstStepProcessor::TestC1(base::C1handle c1, double value, double* dist)
    return 0;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// get condition limit
+
 double TFirstStepProcessor::GetC1Limit(base::C1handle c1, bool isleft)
 {
    TGo4WinCond* cond = (TGo4WinCond*) c1;
    if (cond==0) return 0.;
    return isleft ? cond->GetXLow() : cond->GetXUp();
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// register object
 
 bool TFirstStepProcessor::RegisterObject(TObject* tobj, const char* subfolder)
 {
@@ -474,7 +553,6 @@ bool TFirstStepProcessor::RegisterObject(TObject* tobj, const char* subfolder)
    return false;
 }
 
-
 // =============================================================================
 
 /*
@@ -498,6 +576,5 @@ public:
 };
 
 static StreamLoadHandler load_handler;
-
 
 */

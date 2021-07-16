@@ -36,24 +36,28 @@ namespace base {
 
       clock_t fLast{0};
 
+      /** profiler entry */
       struct Entry {
-         clock_t fSum{0};           // sum of used time
-         double fRatio{0.};          // rel time for this slot
-         std::string fName;
+         clock_t fSum{0};           ///< sum of used time
+         double fRatio{0.};         ///< rel time for this slot
+         std::string fName;         ///< name
       };
 
-      std::vector<Entry>  fEntries;
+      std::vector<Entry>  fEntries;  ///< entries
 
    public:
 
+      /** constructor */
       Profiler() { Reserve(10); }
 
+      /** reserve */
       void Reserve(unsigned num = 10)
       {
          while (fEntries.size() < num)
             fEntries.emplace_back();
       }
 
+      /** set active */
       void SetActive(bool on = true) { fActive = on; }
 
       void MakeStatistic();
@@ -65,11 +69,12 @@ namespace base {
    /** Guard class to use \ref base::Profiler */
 
    class ProfilerGuard {
-      Profiler &fProfiler;
-      unsigned fCnt{0};
-      Profiler::clock_t fLast{0};
+      Profiler &fProfiler;       ///< profiler
+      unsigned fCnt{0};          ///< counter
+      Profiler::clock_t fLast{0}; ///< clock
 
    public:
+      /** constructor */
       ProfilerGuard(Profiler &prof, const char *name = nullptr, unsigned lvl = 0) : fProfiler(prof), fCnt(lvl)
       {
          if (!fProfiler.fActive || (fCnt >= fProfiler.fEntries.size()))
@@ -81,11 +86,13 @@ namespace base {
             fProfiler.fEntries[fCnt].fName = name;
       }
 
+      /** destructor */
       ~ProfilerGuard()
       {
          Next();
       }
 
+      /** next ? */
       void Next(const char *name = nullptr, unsigned lvl = 0)
       {
          if (!fProfiler.fActive || (fCnt >= fProfiler.fEntries.size()))

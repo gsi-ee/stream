@@ -17,18 +17,18 @@ namespace base {
 
       friend class SysCoreProc;
 
+      /** map of processors */
       typedef std::map<unsigned,base::SysCoreProc*> SysCoreMap;
 
 
       protected:
 
-         SysCoreMap fMap;
+         SysCoreMap fMap;   ///< map of processors
 
          /** Returns true when processor used to select trigger signal
           * TRB3 not yet able to perform trigger selection */
          virtual bool doTriggerSelection() const { return false; }
 
-         /** Way to register sub-processor */
          void AddSub(SysCoreProc* tdc, unsigned id);
 
       public:
@@ -36,7 +36,6 @@ namespace base {
          OpticSplitter(unsigned brdid = 0xff);
          virtual ~OpticSplitter();
 
-         /** Scan all messages, find reference signals */
          virtual bool FirstBufferScan(const base::Buffer& buf);
 
    };

@@ -18,32 +18,39 @@ namespace base {
 
             friend class Queue<T,canexpand>;
 
-            Queue<T,canexpand>* prnt;
-            T* item;
-            unsigned loop;
+            Queue<T,canexpand>* prnt;    ///< queue
+            T* item;                     ///< item
+            unsigned loop;               ///< loop counter
 
+            /** constructor */
             Iterator(Queue<T,canexpand>* _prnt, T* _item, unsigned _loop) : prnt(_prnt), item(_item), loop(_loop) {}
 
-            public:
+         public:
 
+            /** constructor */
             Iterator() : prnt(0), item(0) {}
+            /** constructor */
             Iterator(const Iterator& src) : prnt(src.prnt), item(src.item), loop(src.loop) {}
 
+            /** get current item */
             T* operator()() const { return item; }
 
+            /** compare operator */
             bool operator==(const Iterator& src) const { return (item == src.item) && (loop == src.loop); }
+            /** compare operator */
             bool operator!=(const Iterator& src) const { return (item != src.item) || (loop != src.loop); }
 
+            /** assign operator */
             Iterator& operator=(const Iterator& src) { prnt = src.prnt; item = src.item; return *this; }
 
-            // prefix ++iter
+            /** prefix ++iter */
             Iterator& operator++()
             {
                if (++item == prnt->fBorder) { item = prnt->fQueue; loop++; }
                return *this;
             }
 
-            // postfix  iter++
+            /** postfix iter++ */
             void operator++(int)
             {
                if (++item == prnt->fBorder) { item = prnt->fQueue; loop++; }

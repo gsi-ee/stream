@@ -11,9 +11,9 @@ class TFirstStepProcessor : public TGo4EventProcessor,
 
    protected:
 
-      long fTotalDataSize;
-      long fNumInpBufs;
-      long fNumOutEvents;
+      long fTotalDataSize;  ///< processed data size
+      long fNumInpBufs;     ///< processed number of buffers
+      long fNumOutEvents;   ///< created number of output events
 
    public:
 
@@ -21,7 +21,6 @@ class TFirstStepProcessor : public TGo4EventProcessor,
       TFirstStepProcessor(const char* name);
       virtual ~TFirstStepProcessor();
 
-      /* Can be overwritten by subclass, but is not recommended! use ProcessEvent or ProcessSubevent instead*/
       virtual Bool_t BuildEvent(TGo4EventElement*);
 
       virtual bool InternalHistFormat() const { return false; }
