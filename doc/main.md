@@ -1,8 +1,4 @@
-Stream main page                         {#mainpage}
-================
-
-Documentation that will appear on the main page
-
+# Stream framework                  {#mainpage}
 
 [Core classes](\ref stream_core_classes)
 
