@@ -14,9 +14,9 @@ namespace hadaq {
 class TrbProcessor;
 
 /** This is specialized sub-processor for ADC addon.
-    * Normally it should be used together with TrbProcessor,
-    * which the only can provide data
-    **/
+  * Normally it should be used together with TrbProcessor,
+  * which the only can provide data
+  **/
 
 class AdcProcessor : public SubProcessor {
 
@@ -24,6 +24,7 @@ class AdcProcessor : public SubProcessor {
 
 protected:
 
+   /** Channel record */
    struct ChannelRec {
    public:
       ChannelRec() :
@@ -42,9 +43,9 @@ protected:
       base::H1handle fHFineTiming;      ///<! histogram of timing of single channel to trigger
    };
 
-   const double fSamplingPeriod; // ADC sampling period in seconds
+   const double fSamplingPeriod;      ///< ADC sampling period in seconds
 
-   static std::vector<double> storage;
+   static std::vector<double> storage;   ///< storage
 
    base::H1handle fKinds;        ///<! kinds of messages
    base::H1handle fChannels;     ///<! histogram with messages per channel
@@ -61,10 +62,11 @@ public:
                 double samplingPeriod = 1000.0e-9/80);
    virtual ~AdcProcessor();
 
+   /** number of channels */
    inline unsigned NumChannels() const { return fCh.size(); }
 
    /** Scan all messages, find reference signals
-          * if returned false, buffer has error and must be discarded */
+     * if returned false, buffer has error and must be discarded */
    virtual bool FirstBufferScan(const base::Buffer& buf);
 
    /** Scan buffer for selecting messages inside trigger window */

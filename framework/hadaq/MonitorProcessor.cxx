@@ -1,11 +1,17 @@
 #include "hadaq/MonitorProcessor.h"
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// constructor
+
 hadaq::MonitorProcessor::MonitorProcessor(unsigned brdid, HldProcessor *hld, int hfill) :
    hadaq::TrbProcessor(brdid, hld, hfill)
 {
    fMonitorProcess = 3;
    pStoreVect = nullptr;
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// Scan FPGA-TDC data, distribute over sub-processors
 
 void hadaq::MonitorProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3runid, unsigned trb3seqid)
 {
@@ -44,6 +50,9 @@ void hadaq::MonitorProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned tr
    }
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// create branch
+
 void hadaq::MonitorProcessor::CreateBranch(TTree*)
 {
    if(mgr()->IsTriggeredAnalysis()) {
@@ -52,6 +61,8 @@ void hadaq::MonitorProcessor::CreateBranch(TTree*)
    }
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// store event
 
 void hadaq::MonitorProcessor::Store(base::Event* ev)
 {
@@ -68,9 +79,10 @@ void hadaq::MonitorProcessor::Store(base::Event* ev)
    }
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// reset store
+
 void hadaq::MonitorProcessor::ResetStore()
 {
    pStoreVect = &fDummyVect;
 }
-
-

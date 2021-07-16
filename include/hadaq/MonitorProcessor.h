@@ -21,12 +21,11 @@ namespace hadaq {
 
       protected:
 
-         unsigned fMonitorProcess;
+         unsigned fMonitorProcess;                    ///< counter
 
          std::vector<hadaq::MessageMonitor>  fDummyVect; ///<! dummy empty vector
          std::vector<hadaq::MessageMonitor> *pStoreVect; ///<! pointer on store vector
 
-         /** Scan FPGA-TDC data, distribute over sub-processors */
          virtual void ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3runid, unsigned trb3seqid);
 
          virtual void CreateBranch(TTree* t);
@@ -36,7 +35,9 @@ namespace hadaq {
          MonitorProcessor(unsigned brdid = 0, HldProcessor *hld = nullptr, int hfill = -1);
          virtual ~MonitorProcessor() {}
 
+         /** set number of words */
          void SetNWords(unsigned nwords = 3) { fMonitorProcess = nwords; }
+         /** get number of words */
          unsigned GetNWords() const { return fMonitorProcess; }
 
          virtual void Store(base::Event*);

@@ -10,6 +10,7 @@
 namespace hadaq {
 
 
+   /** map of trb processors */
    typedef std::map<unsigned,TrbProcessor*> TrbProcMap;
 
    /** \brief HLD message
@@ -19,11 +20,14 @@ namespace hadaq {
      * Data extracted by \ref hadaq::HldProcessor and stored in \ref hadaq::HldSubEvent */
 
    struct HldMessage {
-      uint8_t trig_type; // trigger type
-      uint32_t seq_nr;   // event sequence number
-      uint32_t run_nr;   // run number
+      uint8_t trig_type; ///< trigger type
+      uint32_t seq_nr;   ///< event sequence number
+      uint32_t run_nr;   ///< run number
 
+      /** constructor */
       HldMessage() : trig_type(0), seq_nr(0), run_nr(0) {}
+
+      /** copy constructor */
       HldMessage(const HldMessage& src) : trig_type(src.trig_type), seq_nr(src.seq_nr), run_nr(src.run_nr) {}
    };
 
@@ -35,10 +39,13 @@ namespace hadaq {
 
    class HldSubEvent : public base::SubEvent {
       public:
-         HldMessage fMsg;
+         HldMessage fMsg;   ///< message
 
+         /** constructor */
          HldSubEvent() : base::SubEvent(), fMsg() {}
+         /** copy constructor */
          HldSubEvent(const HldMessage& msg) : base::SubEvent(), fMsg(msg) {}
+         /** destructor */
          virtual ~HldSubEvent() {}
 
          /** Method returns event multiplicity - that ever it means */
@@ -54,12 +61,16 @@ namespace hadaq {
 
    class HldFilter : public base::EventProc {
       protected:
-         unsigned fOnlyTrig;
+         unsigned fOnlyTrig;   ///< configured trigger to filter
       public:
 
+         /** constructor */
          HldFilter(unsigned trig = 0x1) : base::EventProc(), fOnlyTrig(trig) {}
+
+         /** destructor */
          virtual ~HldFilter() {}
 
+         /** process event */
          virtual bool Process(base::Event* ev)
          {
             hadaq::HldSubEvent* sub =
@@ -117,7 +128,7 @@ namespace hadaq {
 
          hadaqs::RawEvent  fLastEvHdr;    ///<! copy of last event header (without data)
 
-         long fLastHadesTm;
+         long fLastHadesTm;               ///<! last hades time
 
          /** Returns true when processor used to select trigger signal
           * TRB3 not yet able to perform trigger selection */

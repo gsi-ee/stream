@@ -21,6 +21,9 @@ const unsigned NUM1MSBINS = 22000; // 22 seconds
 //             0,   0,   1,   1,   2,   2,   3,   3,   4,   4,   5,  5,   6,   6,  7,  7,
 //             8,   8,   9,   9,  10,  10,  11,  11,  12,  12,  13, 13,  14,  14, 15, 15 };
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// constructor
+
 hadaq::SpillProcessor::SpillProcessor() :
    base::StreamProc("HLD", 0, false)
 {
@@ -127,9 +130,11 @@ hadaq::SpillProcessor::~SpillProcessor()
 {
 }
 
-/** returns -1 when leftbin<rightbin, taking into account overflow around 0x1000)
- *          +1 when leftbin>rightbin
- *          0  when leftbin==rightbin */
+//////////////////////////////////////////////////////////////////////////////////////////////
+///  returns -1 when leftbin<rightbin, taking into account overflow around 0x1000)
+///          +1 when leftbin>rightbin
+///          0  when leftbin==rightbin
+
 int hadaq::SpillProcessor::CompareHistBins(unsigned leftbin, unsigned rightbin)
 {
    if (leftbin == rightbin) return 0;
@@ -140,11 +145,16 @@ int hadaq::SpillProcessor::CompareHistBins(unsigned leftbin, unsigned rightbin)
    return (leftbin - rightbin) < NUMHISTBINS/2 ? 1 : -1;
 }
 
-/** Return time difference between epochs in seconds */
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// Return time difference between epochs in seconds
+
 double hadaq::SpillProcessor::EpochTmDiff(unsigned ep1, unsigned ep2)
 {
    return EpochDiff(ep1, ep2) * EPOCHLEN;
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// start spill
 
 void hadaq::SpillProcessor::StartSpill(unsigned epoch, unsigned coarse)
 {
@@ -167,6 +177,9 @@ void hadaq::SpillProcessor::StartSpill(unsigned epoch, unsigned coarse)
    printf("SPILL ON  0x%08x tm  %6.2f s\n", epoch, EpochTmDiff(0, epoch));
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// stop spill
+
 void hadaq::SpillProcessor::StopSpill(unsigned epoch)
 {
    printf("SPILL OFF 0x%08x len %6.2f s\n", epoch, EpochTmDiff(fSpillStartEpoch, epoch));
@@ -180,6 +193,9 @@ void hadaq::SpillProcessor::StopSpill(unsigned epoch)
    CopyH1(fHitsLastSpill, fHitsSpill);
    mgr()->TagH1Time(fHitsLastSpill);
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// calculate quality
 
 double hadaq::SpillProcessor::CalcQuality(unsigned fastbin, unsigned len)
 {
@@ -197,6 +213,8 @@ double hadaq::SpillProcessor::CalcQuality(unsigned fastbin, unsigned len)
    return sum>0 ? max/sum : 0.;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// buffer scan
 
 bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
 {

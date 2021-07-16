@@ -6,6 +6,8 @@
 
 const double EPOCHLEN = 5e-9*0x800;
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// constructor
 
 hadaq::StartProcessor::StartProcessor() :
    base::StreamProc("START", 0, false)
@@ -22,19 +24,25 @@ hadaq::StartProcessor::StartProcessor() :
 
    fTdcMin = 0x5000;
    fTdcMax = 0x5010;
-
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// destructor
 
 hadaq::StartProcessor::~StartProcessor()
 {
 }
 
-/** Return time difference between epochs in seconds */
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// Return time difference between epochs in seconds
+
 double hadaq::StartProcessor::EpochTmDiff(unsigned ep1, unsigned ep2)
 {
    return EpochDiff(ep1, ep2) * EPOCHLEN;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// Scan all messages, find reference signals
 
 bool hadaq::StartProcessor::FirstBufferScan(const base::Buffer& buf)
 {

@@ -3,6 +3,8 @@
 unsigned hadaq::TdcMessage::gFineMinValue = 20;
 unsigned hadaq::TdcMessage::gFineMaxValue = 500;
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// set as hit2
 
 void hadaq::TdcMessage::setAsHit2(uint32_t finebin)
 {
@@ -14,6 +16,8 @@ void hadaq::TdcMessage::setAsHit2(uint32_t finebin)
    }
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// print message
 
 void hadaq::TdcMessage::print(double tm)
 {
@@ -51,6 +55,9 @@ void hadaq::TdcMessage::print(double tm)
          break;
    }
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// print v4 message
 
 void hadaq::TdcMessage::print4(uint32_t &ttype)
 {

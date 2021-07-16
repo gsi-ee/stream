@@ -124,12 +124,14 @@ namespace hadaqs {
 
    struct HadTu {
       protected:
-         uint32_t tuSize;
-         uint32_t tuDecoding;
+         uint32_t tuSize;       ///< size
+         uint32_t tuDecoding;  ///< decoding
 
       public:
 
+         /** constructor */
          HadTu() {}
+         /** destructor */
          ~HadTu() {}
 
          /** msb of decode word is always non zero...? */
@@ -190,11 +192,13 @@ namespace hadaqs {
     */
    struct HadTuId : public HadTu {
       protected:
-         uint32_t tuId;
+         uint32_t tuId;  ///< id
 
       public:
 
+         /** constructor */
          HadTuId() {}
+         /** destructor */
          ~HadTuId() {}
 
          /** get id */
@@ -323,7 +327,9 @@ namespace hadaqs {
 
       public:
 
+         /** constructor */
          RawEvent() {}
+         /** destructor */
          ~RawEvent() {}
 
          /** get seq nr */

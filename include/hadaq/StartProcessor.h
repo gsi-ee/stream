@@ -16,13 +16,14 @@ protected:
 
    base::H1handle fEpochDiff;  ///< epoch differences
 
-   unsigned fStartId; //< HUB with start detector
+   unsigned fStartId; ///< HUB with start detector
 
-   unsigned fTdcMin; // minimal TDC id
-   unsigned fTdcMax; // maximal TDC id
+   unsigned fTdcMin; ///< minimal TDC id
+   unsigned fTdcMax; ///< maximal TDC id
 
    /** Calculates most realistic difference between epochs */
-   inline int EpochDiff(unsigned ep1, unsigned ep2) {
+   inline int EpochDiff(unsigned ep1, unsigned ep2)
+   {
       unsigned res = ep1 <= ep2 ? ep2 - ep1 : ep2 + 0x10000000 - ep1;
 
       return res < 0x8000000 ? res : (int) res - 0x10000000;
@@ -35,14 +36,15 @@ public:
    StartProcessor();
    virtual ~StartProcessor();
 
-   /** Scan all messages, find reference signals */
    virtual bool FirstBufferScan(const base::Buffer &buf);
 
+   /** set start id */
    void SetStartId(unsigned id)
    {
       fStartId = id;
    }
 
+   /** set tdc range */
    void SetTdcRange(unsigned min, unsigned max)
    {
       fTdcMin = min;

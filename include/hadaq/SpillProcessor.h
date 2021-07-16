@@ -41,19 +41,28 @@ protected:
    base::H2handle fHaloPattern; ///<2dim Halo detector Pattern
    base::H2handle fVetoPattern; ///<2dim Veto detector Pattern
 
-   long fSumX, fCntX, fSumY, fCntY;
-   long fSumHaloX, fCntHaloX, fSumHaloY, fCntHaloY;
+   long fSumX;  ///< sum x
+   long fCntX;  ///< cnt x
+   long fSumY;  ///< sum y
+   long fCntY;   ///< cnt y
+   long fSumHaloX; ///< sum halo x
+   long fCntHaloX; ///< counter halo x
+   long fSumHaloY; ///< sum halo y
+   long fCntHaloY;  ///< counter halo y
    unsigned fCurrXYBin;       ///< bin where current XY is calculated
-   double fLastX, fLastY, fLastHaloX, fLastHaloY;
+   double fLastX;  ///< last x
+   double fLastY; ///< last y
+   double fLastHaloX;  ///< last halo x
+   double fLastHaloY;  ///< last halo y
 
-   unsigned fLastBinFast;
-   unsigned fLastBinSlow;
-   unsigned fLastEpoch;
+   unsigned fLastBinFast;  ///< last bin fast
+   unsigned fLastBinSlow;   ///< last bin slow
+   unsigned fLastEpoch;     ///< last epoch
    unsigned fLastSpillEpoch; ///< last epoch used to calculate spill quality
    unsigned fLastSpillBin;   ///< last bin number filled in the histogram
    bool fAutoSpillDetect;    ///< true when spill will be detected automatically
 
-   bool fFirstEpoch;
+   bool fFirstEpoch;      ///< first epoch
 
    double fSpillOnLevel; ///< number of hits in 40ms bin to detect spill on (at least N bins after each other over limit)
    double fSpillOffLevel; ///< number of hits in 40ms bin to detect spill off (at least N bins below limit)
@@ -61,35 +70,32 @@ protected:
 
    unsigned fSpillStartEpoch; ///< epoch value which assumed to be spill start, 0 - off
    unsigned fSpillEndEpoch;   ///< epoch value when switch off spill
-   unsigned fSpillStartCoarse;
+   unsigned fSpillStartCoarse;  ///< spill start coarse
 
    double fMinSpillLength;  ///< minimal spill time in seconds
    double fMaxSpillLength; ///< maximal spill time in seconds
 
-   unsigned fTdcMin; // minimal TDC id
-   unsigned fTdcMax; // maximal TDC id
+   unsigned fTdcMin;             ///< minimal TDC id
+   unsigned fTdcMax;              ///< maximal TDC id
 
-   unsigned fChannelsLookup1[33];   // first tdc
-   unsigned fChannelsLookup2[33];   // second tdc
-   unsigned fChannelsLookup3[33];   // third  tdc
+   unsigned fChannelsLookup1[33];   ///< first tdc
+   unsigned fChannelsLookup2[33];   ///< second tdc
+   unsigned fChannelsLookup3[33];   ///< third  tdc
 
-   double fLastQSlowValue; // last value of Q factor for slow histogram
+   double fLastQSlowValue;            ///< last value of Q factor for slow histogram
 
-   /** returns -1 when leftbin<rightbin, taking into account overflow around 0x1000)
-    *          +1 when leftbin>rightbin
-    *          0  when leftbin==rightbin */
    int CompareHistBins(unsigned leftbin, unsigned rightbin);
 
    /** Hard difference between epochs */
    inline unsigned EpochDiff(unsigned ep1, unsigned ep2) { return ep1 <= ep2 ? ep2 - ep1 : ep2 + 0x10000000 - ep1; }
 
+   /** Get 1ms bin */
    inline unsigned Get1msBin(unsigned ep1, unsigned c1, unsigned ep2, unsigned c2)
    {
       unsigned ediff = EpochDiff(ep1,ep2) * 2048 + c2 - c1; // 5ns
       return ediff / 200000;
    }
 
-   /** Return time difference between epochs in seconds */
    double EpochTmDiff(unsigned ep1, unsigned ep2);
 
    void StartSpill(unsigned epoch, unsigned coarse = 0);
@@ -101,15 +107,16 @@ public:
    SpillProcessor();
    virtual ~SpillProcessor();
 
-   /** Scan all messages, find reference signals */
    virtual bool FirstBufferScan(const base::Buffer &buf);
 
+   /** Set TDC range */
    void SetTdcRange(unsigned min, unsigned max)
    {
       fTdcMin = min;
       fTdcMax = max;
    }
 
+   /** Set spill detect */
    void SetSpillDetect(double lvl_on, double lvl_off, unsigned cnt = 3)
    {
       fSpillOnLevel = lvl_on;
@@ -117,11 +124,16 @@ public:
       fSpillMinCnt = cnt;
    }
 
+   /** Set min spill length */
    void SetMinSpillLength(double tm = 0.1) { fMinSpillLength = tm; }
+   /** Set max spill length */
    void SetMaxSpillLength(double tm = 10) { fMaxSpillLength = tm; }
 
+   /** Set channel lookup 1 */
    void SetChannelsLookup1(unsigned ch, unsigned lookup) { fChannelsLookup1[ch] = lookup; }
+   /** Set channel lookup 2 */
    void SetChannelsLookup2(unsigned ch, unsigned lookup) { fChannelsLookup2[ch] = lookup; }
+   /** Set channel lookup 3 */
    void SetChannelsLookup3(unsigned ch, unsigned lookup) { fChannelsLookup3[ch] = lookup; }
 
    /** Set channel id on third TDC, which should detect spill-start signal */

@@ -30,6 +30,7 @@ namespace hadaq {
 
       public:
 
+         /** constructor */
          TdcIterator(unsigned epochbitlen = 28) :
             fBuf(0),
             fLastBuf(0),
@@ -44,6 +45,7 @@ namespace hadaq {
             fConv.SetTimeSystem(epochbitlen + 11, hadaq::TdcMessage::CoarseUnit());
          }
 
+         /** assign buffer */
          void assign(uint32_t* buf, unsigned len, bool swapped = true)
          {
             fBuf = buf;
@@ -56,6 +58,7 @@ namespace hadaq {
             fCurEpoch = DummyEpoch;
          }
 
+         /** assign data from sub event */
          void assign(hadaqs::RawSubevent* subev, unsigned indx, unsigned datalen)
          {
             if (subev!=0)
@@ -68,6 +71,7 @@ namespace hadaq {
             fConv.MoveRef(((uint64_t) epoch) << 11);
          }
 
+         /** next TDC message */
          bool next()
          {
             if (!fBuf) return false;
@@ -85,6 +89,7 @@ namespace hadaq {
             return true;
          }
 
+         /** next TDC v4 message */
          bool next4()
          {
             if (!fBuf) return false;
@@ -102,6 +107,7 @@ namespace hadaq {
             return true;
          }
 
+         /** try to check forward message - without shifting iterator */
          bool lookForwardMsg(TdcMessage &msg)
          {
             if (fBuf==0) return false;
@@ -117,10 +123,11 @@ namespace hadaq {
          uint64_t getMsgStamp() const
          { return (isCurEpoch() ? ((uint64_t) fCurEpoch) << 11 : 0) | (fMsg.isHitMsg() ? fMsg.getHitTmCoarse() : 0); }
 
+         /** get coarse time for the current message */
          inline double getMsgTimeCoarse() const
          { return fConv.ToSeconds(getMsgStamp()); }
 
-         // return fine time value for current message
+         /** return fine time value for current message */
          inline double getMsgTimeFine() const
          {
            if (fMsg.isHit0Msg() || fMsg.isHit2Msg()) return hadaq::TdcMessage::SimpleFineCalibr(fMsg.getHitTmFine());
@@ -128,6 +135,7 @@ namespace hadaq {
            return 0;
          }
 
+         /** get current message */
          hadaq::TdcMessage& msg() { return fMsg; }
 
          /** Returns true, if current epoch was assigned */
@@ -142,6 +150,7 @@ namespace hadaq {
          /** Return value of current epoch */
          uint32_t getCurEpoch() const { return fCurEpoch; }
 
+         /** print current message */
          void printmsg()
          {
             double tm = -1.;
@@ -150,6 +159,7 @@ namespace hadaq {
             msg().print(tm);
          }
 
+         /** print all v4 messages */
          void printall4()
          {
             uint32_t ttype = 0;

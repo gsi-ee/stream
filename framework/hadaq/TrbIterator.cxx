@@ -2,6 +2,9 @@
 
 #include <cstdio>
 
+///////////////////////////////////////////////////////////////////////////
+/// constructor
+
 hadaq::TrbIterator::TrbIterator(void* data, unsigned datalen) :
    fData(data),
    fDatalen(datalen),
@@ -11,6 +14,8 @@ hadaq::TrbIterator::TrbIterator(void* data, unsigned datalen) :
 {
 }
 
+///////////////////////////////////////////////////////////////////////////
+/// next event
 
 hadaqs::RawEvent* hadaq::TrbIterator::nextEvent()
 {
@@ -46,6 +51,9 @@ hadaqs::RawEvent* hadaq::TrbIterator::nextEvent()
 
    return (hadaqs::RawEvent*) fEvCursor;
 }
+
+///////////////////////////////////////////////////////////////////////////
+/// next subevent
 
 hadaqs::RawSubevent* hadaq::TrbIterator::nextSubevent()
 {

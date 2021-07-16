@@ -71,8 +71,8 @@ namespace hadaq {
       protected:
          uint32_t   fData;  ///< message raw data
 
-         static unsigned gFineMinValue;
-         static unsigned gFineMaxValue;
+         static unsigned gFineMinValue;  ///< default fine min
+         static unsigned gFineMaxValue;  ///< default fine max
 
       public:
 
@@ -94,16 +94,24 @@ namespace hadaq {
          /** Returns kind of the message
           * If used for the hit message, four different values can be returned */
          inline uint32_t getKind() const { return fData & tdckind_Mask; }
-
-         inline bool isHit0Msg() const { return getKind() == tdckind_Hit; } // original hit message
-         inline bool isHit1Msg() const { return getKind() == tdckind_Hit1; } // repaired 0x3fff message
-         inline bool isHit2Msg() const { return getKind() == tdckind_Hit2; } // with replaced fine counter
+         /** is original hit message */
+         inline bool isHit0Msg() const { return getKind() == tdckind_Hit; }
+         /** is repaired 0x3fff message */
+         inline bool isHit1Msg() const { return getKind() == tdckind_Hit1; }
+         /** is hit message with replaced (calibrated) fine counter */
+         inline bool isHit2Msg() const { return getKind() == tdckind_Hit2; }
+         /** is any of hit message */
          inline bool isHitMsg() const { return isHit0Msg() || isHit1Msg() || isHit2Msg(); }
 
+         /** is epoch message */
          inline bool isEpochMsg() const { return getKind() == tdckind_Epoch; }
+         /** is debug message */
          inline bool isDebugMsg() const { return getKind() == tdckind_Debug; }
+         /** is header message */
          inline bool isHeaderMsg() const { return getKind() == tdckind_Header; }
+         /** is trailer message */
          inline bool isTrailerMsg() const { return getKind() == tdckind_Trailer; }
+         /** is calibration message */
          inline bool isCalibrMsg() const { return getKind() == tdckind_Calibr; }
 
          // methods for epoch
@@ -177,19 +185,28 @@ namespace hadaq {
 
          // methods for ver4 messages
 
+         /** is v4 HDR message */
          inline bool isHDR() const { return (fData & newkind_Mask3) == newkind_HDR; }
+         /** is v4 EPOC message */
          inline bool isEPOC() const { return (fData & newkind_Mask3) == newkind_EPOC; }
+         /** is v4 TMDR message */
          inline bool isTMDR() const { return (fData & newkind_Mask7) == newkind_TMDR; }
+         /** is v4 TMDT message */
          inline bool isTMDT() const { return (fData & newkind_TMDT) == newkind_TMDT; }
+         /** is v4 TMDS message */
          inline bool isTMDS() const { return (fData & newkind_Mask4) == newkind_TMDS; }
+         /** is v4 TRL message */
          inline bool isTRL() const { return (fData & newkind_Mask3) == newkind_TRL; }
 
 
          // method for HDR
-
+         /** HDR major */
          inline uint32_t getHDRMajor() const { return (fData >> 24) & 0xF; }
+         /** HDR minor */
          inline uint32_t getHDRMinor() const { return (fData >> 20) & 0xF; }
+         /** HDR type */
          inline uint32_t getHDRTType() const { return (fData >> 16) & 0xF; }
+         /** HDR trigger */
          inline uint32_t getHDRTrigger() const { return (fData & 0xFFFF); }
 
 
@@ -199,41 +216,62 @@ namespace hadaq {
          inline bool getEPOCError() const { return (fData & 0x10000000) != 0; }
 
          // methods for TMDT - hist message
+         /** TMDT mode */
          inline uint32_t getTMDTMode() const { return (fData >> 27) & 0xF; }
+         /** TMDT channel */
          inline uint32_t getTMDTChannel() const { return (fData >> 21) & 0x3F; }
+         /** TMDT coarse */
          inline uint32_t getTMDTCoarse() const { return (fData >> 9) & 0xFFF; }
+         /** TMDT fine */
          inline uint32_t getTMDTFine() const { return fData & 0x1FF; }
 
          // methods for TMDR - ref channel message
+         /** TMDR mode */
          inline uint32_t getTMDRMode() const { return (fData >> 21) & 0xF; }
+         /** TMDR coarse */
          inline uint32_t getTMDRCoarse() const { return (fData >> 9) & 0xFFF; }
+         /** TMDR fine */
          inline uint32_t getTMDRFine() const { return fData & 0x1FF; }
 
          // methods for TMDS - sampling TDC message
+         /** TMDS channel */
          inline uint32_t getTMDSChannel() const { return (fData >> 21) & 0x7F; }
+         /** TMDS coarse */
          inline uint32_t getTMDSCoarse() const { return (fData >> 9) & 0xFFF; }
+         /** TMDS pattern */
          inline uint32_t getTMDSPattern() const { return fData & 0x1FF; }
 
          // methods for TRLA
+         /** TRLA platform id  */
          inline uint32_t getTRLAPlatformId() const { return (fData  >> 20) & 0xff; }
+         /** TRLA major */
          inline uint32_t getTRLAMajor() const { return (fData >> 16) & 0xf; }
+         /** TRLA minor */
          inline uint32_t getTRLAMinor() const { return (fData >> 12) & 0xf; }
+         /** TRLA sub */
          inline uint32_t getTRLASub() const { return (fData >> 8) & 0xf; }
+         /** TRLA numch */
          inline uint32_t getTRLANumCh() const { return (fData & 0x7F) + 1; }
 
          // methods for TRLB
+         /** TRLB eflags */
          inline uint32_t getTRLBEflags() const { return (fData >> 24) & 0xF; }
+         /** TRLB maxdc */
          inline uint32_t getTRLBMaxdc() const { return (fData >> 20) & 0xF; }
+         /** TRLB tptime */
          inline uint32_t getTRLBTptime() const { return (fData >> 16) & 0xF; }
+         /** TRLB freq */
          inline uint32_t getTRLBFreq() const { return (fData & 0xFFFF); }
 
-
          // methods for TRLC
+         /** TRLC cpc */
          inline uint32_t getTRLCCpc() const { return (fData >> 24) & 0x7; }
+         /** TRLC ccs */
          inline uint32_t getTRLCCcs() const { return (fData >> 20) & 0xF; }
+         /** TRLC ccdiv */
          inline uint32_t getTRLCCcdiv() const { return (fData >> 16) & 0xF; }
+         /** TRLC freq */
          inline uint32_t getTRLCFreq() const { return (fData & 0xFFFF); }
-
 
          void print(double tm = -1.);
          void print4(uint32_t &ttype);

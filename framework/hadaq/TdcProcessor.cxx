@@ -431,8 +431,8 @@ void hadaq::TdcProcessor::DisableCalibrationFor(unsigned firstch, unsigned lastc
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
-// set real ToT value for 0xD trigger and min/max for histogram accumulation
-// default is 30ns, and 50ns - 80ns range
+/// set real ToT value for 0xD trigger and min/max for histogram accumulation
+/// default is 30ns, and 50ns - 80ns range
 
 void hadaq::TdcProcessor::SetToTRange(double tot, double hmin, double hmax)
 {

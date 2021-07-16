@@ -2,6 +2,9 @@
 
 #include "hadaq/TrbProcessor.h"
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// constructor
+
 hadaq::SubProcessor::SubProcessor(TrbProcessor *trb, const char* nameprefix, unsigned subid) :
    base::StreamProc(nameprefix, subid, false),
    fTrb(trb),
@@ -32,6 +35,9 @@ hadaq::SubProcessor::SubProcessor(TrbProcessor *trb, const char* nameprefix, uns
    }
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// assign overview histograms
+
 void hadaq::SubProcessor::AssignPerBrdHistos(TrbProcessor* trb, unsigned seqid)
 {
    if (!trb) return;
@@ -47,6 +53,9 @@ void hadaq::SubProcessor::AssignPerBrdHistos(TrbProcessor* trb, unsigned seqid)
    fToTPerBrd = &trb->fToTPerBrd;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// pre loop
+
 void hadaq::SubProcessor::UserPreLoop()
 {
    unsigned cnt(0);
@@ -56,6 +65,9 @@ void hadaq::SubProcessor::UserPreLoop()
          cnt++;
       }
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// get HLD processor
 
 hadaq::HldProcessor *hadaq::SubProcessor::GetHLD() const
 {

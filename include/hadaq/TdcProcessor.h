@@ -64,26 +64,26 @@ namespace hadaq {
             double rising_hit_tm;          ///<! leading edge time, used in correlation analysis. can be first or last time
             double rising_last_tm;         ///<! last leading edge time
             bool rising_new_value;         ///<! used to calculate TOT and avoid errors after single leading and double trailing edge
-            double rising_ref_tm;
+            double rising_ref_tm;          ///<! rising ref time
             double rising_tmds;            ///<! first detected rising time from TMDS
-            unsigned rising_coarse;
-            unsigned rising_fine;
-            unsigned last_rising_fine;
-            unsigned last_falling_fine;
-            long all_rising_stat;
-            long all_falling_stat;
-            std::vector<uint32_t> rising_stat;
-            std::vector<float> rising_calibr;
-            std::vector<uint32_t> falling_stat;
-            std::vector<float> falling_calibr;
-            float last_tot;
+            unsigned rising_coarse;        ///<! rising coarse
+            unsigned rising_fine;          ///<! rising fine
+            unsigned last_rising_fine;     ///<! last rising fine
+            unsigned last_falling_fine;    ///<! last falling fine
+            long all_rising_stat;          ///<! all rising stat
+            long all_falling_stat;         ///<! all falling stat
+            std::vector<uint32_t> rising_stat;  ///<! rising stat
+            std::vector<float> rising_calibr;   ///<! rising calibr
+            std::vector<uint32_t> falling_stat;  ///<! falling stat
+            std::vector<float> falling_calibr;   ///<! falling calibr
+            float last_tot;                 ///<! last tot
             long tot0d_cnt;                 ///<! counter of tot0d statistic for calibration
             std::vector<uint32_t> tot0d_hist;  ///<! histogram used for TOT calibration, allocated only when required
             float tot_shift;                ///<! calibrated tot shift
             float tot_dev;                  ///<! tot shift deviation after calibration
             float time_shift_per_grad;      ///<! delay in channel (ns/C), caused by temperature change
             float trig0d_coef;              ///<! scaling coefficient, applied when build calibration from 0xD trigger (reserved)
-            int rising_cond_prnt;
+            int rising_cond_prnt;           ///<! rising condition print
             float calibr_quality_rising;    ///<! quality of last calibration 0. is nothing
             float calibr_quality_falling;    ///<! quality of last calibration 0. is nothing
             long calibr_stat_rising;        ///<! accumulated statistic during last calibration
@@ -640,6 +640,7 @@ namespace hadaq {
 
          void SetLinearCalibration(unsigned nch, unsigned finemin=30, unsigned finemax=500);
 
+         /** configure auto calibration */
          void SetAutoCalibration(long cnt = 100000) { fCalibrCounts = cnt % 1000000000L; fAutoCalibrOnce = (cnt>1000000000L); fAutoCalibr = (cnt >= 0); }
 
          /** Configure mode, when calibration should be start/stop explicitly */

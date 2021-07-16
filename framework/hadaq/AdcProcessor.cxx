@@ -15,6 +15,9 @@ using namespace std;
 
 vector<double> hadaq::AdcProcessor::storage;
 
+///////////////////////////////////////////////////////////////////////////
+/// constructor
+
 hadaq::AdcProcessor::AdcProcessor(TrbProcessor* trb, unsigned subid, unsigned numchannels, double samplingPeriod) :
    SubProcessor(trb, "ADC_%04X", subid),
    fSamplingPeriod(samplingPeriod),
@@ -41,10 +44,14 @@ hadaq::AdcProcessor::AdcProcessor(TrbProcessor* trb, unsigned subid, unsigned nu
    // fCh.size() equals now numchannels...
 }
 
+///////////////////////////////////////////////////////////////////////////
+/// desructor
 
 hadaq::AdcProcessor::~AdcProcessor()
 {
 }
+
+///////////////////////////////////////////////////////////////////////////
 
 bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
 {
@@ -54,6 +61,8 @@ bool hadaq::AdcProcessor::FirstBufferScan(const base::Buffer& buf)
    }
    return true;
 }
+
+///////////////////////////////////////////////////////////////////////////
 
 bool hadaq::AdcProcessor::SecondBufferScan(const base::Buffer& buf)
 {
@@ -182,12 +191,17 @@ bool hadaq::AdcProcessor::SecondBufferScan(const base::Buffer& buf)
    return true;
 }
 
+///////////////////////////////////////////////////////////////////////////
+/// create branch
 
 void hadaq::AdcProcessor::CreateBranch(TTree*)
 {
    pStoreVect = &fStoreVect;
    mgr()->CreateBranch(GetName(), "std::vector<hadaq::AdcMessage>", (void**) &pStoreVect);
 }
+
+///////////////////////////////////////////////////////////////////////////
+/// store
 
 void hadaq::AdcProcessor::Store(base::Event* ev)
 {
@@ -202,6 +216,9 @@ void hadaq::AdcProcessor::Store(base::Event* ev)
    else
       pStoreVect = &fStoreVect;
 }
+
+///////////////////////////////////////////////////////////////////////////
+/// reset store
 
 void hadaq::AdcProcessor::ResetStore()
 {

@@ -14,6 +14,7 @@ namespace hadaq {
    class TrbProcessor;
    class HldProcessor;
 
+   /** map of sub processors */
    typedef std::map<unsigned,SubProcessor*> SubProcMap;
 
    /** \brief Abstract processor of HADAQ sub-sub-event
@@ -43,30 +44,41 @@ namespace hadaq {
 
          SubProcessor(TrbProcessor *trb, const char* nameprefix, unsigned subid);
 
-         /** These methods used to fill different raw histograms during first scan */
+         /** Before fill,
+          * used to fill different raw histograms during first scan */
          virtual void BeforeFill() {}
+
+         /** After fill,
+          * used to fill different raw histograms during first scan */
          virtual void AfterFill(SubProcMap* = nullptr) {}
 
          /** Method will be called by TRB processor if SYNC message was found
           * One should change 4 first bytes in the last buffer in the queue */
          virtual void AppendTrbSync(uint32_t) {}
 
-         /** Methods used by TrbProcessor */
+         /** Set new data flag, used by TrbProcessor */
          void SetNewDataFlag(bool on) { fNewDataFlag = on; }
+         /** is new data flag, used by TrbProcessor */
          bool IsNewDataFlag() const { return fNewDataFlag; }
 
          void AssignPerBrdHistos(TrbProcessor *trb, unsigned seqid);
 
       public:
 
+         /** destructor */
          virtual ~SubProcessor() {}
 
          virtual void UserPreLoop();
 
+         /** is TDC */
          inline bool IsTDC() const { return fIsTDC; }
 
+         /** set print raw data */
          void SetPrintRawData(bool on = true) { fPrintRawData = on; }
+         /** is print raw data */
          bool IsPrintRawData() const { return fPrintRawData; }
+
+         /** is cross process */
          bool IsCrossProcess() const { return fCrossProcess; }
 
          HldProcessor *GetHLD() const;

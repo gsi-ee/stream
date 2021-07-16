@@ -13,15 +13,16 @@ namespace hadaq {
 
    class HldProcessor;
 
-   // used for ROOT tree storage, similar to TdcMessage and AdcMessage
+   /** message used for ROOT tree storage, similar to TdcMessage and AdcMessage */
    struct TrbMessage {
-      bool fTrigSyncIdFound;
-      unsigned fTrigSyncId;
-      unsigned fTrigSyncIdStatus;
-      uint64_t fTrigTm;
-      unsigned fSyncPulsePeriod;
-      unsigned fSyncPulseLength;
+      bool fTrigSyncIdFound;              ///<  is sync id found
+      unsigned fTrigSyncId;               ///<  sync id
+      unsigned fTrigSyncIdStatus;         ///<  sync id status
+      uint64_t fTrigTm;                   ///<  trigger time
+      unsigned fSyncPulsePeriod;          ///<  sync pulse period
+      unsigned fSyncPulseLength;          ///<  sync pulse length
 
+      /** reset */
       void Reset()
       {
          fTrigSyncIdFound = false;
