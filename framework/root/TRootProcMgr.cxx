@@ -6,15 +6,24 @@
 #include "TUrl.h"
 #include "TInterpreter.h"
 
+///////////////////////////////////////////////////////////////////////////////
+/// constructor
+
 TRootProcMgr::TRootProcMgr() :
    base::ProcMgr()
 {
 }
 
+///////////////////////////////////////////////////////////////////////////////
+/// destructor
+
 TRootProcMgr::~TRootProcMgr()
 {
    CloseStore();
 }
+
+///////////////////////////////////////////////////////////////////////////////
+/// store event
 
 bool TRootProcMgr::StoreEvent()
 {
@@ -24,6 +33,9 @@ bool TRootProcMgr::StoreEvent()
 
    return true;
 }
+
+///////////////////////////////////////////////////////////////////////////////
+/// create store
 
 bool TRootProcMgr::CreateStore(const char* fname)
 {
@@ -43,6 +55,9 @@ bool TRootProcMgr::CreateStore(const char* fname)
    return true;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+/// close store
+
 bool TRootProcMgr::CloseStore()
 {
    if (fTree) {
@@ -56,6 +71,9 @@ bool TRootProcMgr::CloseStore()
    return true;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+/// create branch
+
 bool TRootProcMgr::CreateBranch(const char* name, const char* class_name, void** obj)
 {
    if (fTree==0) return false;
@@ -63,12 +81,18 @@ bool TRootProcMgr::CreateBranch(const char* name, const char* class_name, void**
    return true;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+/// create branch
+
 bool TRootProcMgr::CreateBranch(const char* name, void* member, const char* kind)
 {
    if (fTree==0) return false;
    fTree->Branch(name, member, kind);
    return true;
 }
+
+///////////////////////////////////////////////////////////////////////////////
+/// call function
 
 bool TRootProcMgr::CallFunc(const char* funcname, void* arg)
 {
@@ -103,5 +127,3 @@ bool TRootProcMgr::CallFunc(const char* funcname, void* arg)
 
    return err == 0;
 }
-
-

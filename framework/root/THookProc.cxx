@@ -1,5 +1,8 @@
 #include "root/THookProc.h"
 
+///////////////////////////////////////////////////////////////////////////////
+/// constructor
+
 THookProc::THookProc(const char* cmd, Double_t period) :
    base::StreamProc("Hook"),
    fCmd(cmd),
@@ -10,6 +13,9 @@ THookProc::THookProc(const char* cmd, Double_t period) :
    SetSynchronisationKind(sync_None);
    fWatch.Start();
 }
+
+///////////////////////////////////////////////////////////////////////////////
+/// check if hook command should be executed during data scan
 
 bool THookProc::ScanNewBuffers()
 {

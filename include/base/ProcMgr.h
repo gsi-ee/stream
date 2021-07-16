@@ -40,6 +40,7 @@ namespace base {
             DummyIndex  = 0xffffffff
          };
 
+         /** map of stream processors */
          typedef std::map<unsigned,StreamProc*> StreamProcMap;
 
          std::string              fSecondName;         ///<! name of second.C script
@@ -144,6 +145,7 @@ namespace base {
          virtual double GetH2Content(H2handle h2, int bin1, int bin2);
          virtual void SetH2Content(H2handle h2, int bin1, int bin2, double v = 0.);
          virtual void ClearH2(H2handle h2);
+         /** Set histogram title */
          virtual void SetH2Title(H2handle h1, const char* title) {}
          /** Tag histogram time */
          virtual void TagH2Time(H2handle h2) {}

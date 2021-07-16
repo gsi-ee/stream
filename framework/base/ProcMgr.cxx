@@ -279,7 +279,7 @@ bool base::ProcMgr::GetH2NBins(H2handle h2, int &nbins1, int &nbins2)
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////
-///
+/// Fill 2D histogram
 
 void base::ProcMgr::FillH2(H2handle h2, double x, double y, double weight)
 {

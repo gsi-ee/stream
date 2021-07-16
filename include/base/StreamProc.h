@@ -22,6 +22,8 @@ namespace base {
       friend class ProcMgr;
 
       public:
+
+         /** kind of synchronization */
          enum SyncKind {
             sync_None,         ///< no synchronization
             sync_Inter,        ///< use time interpolation between two markers
@@ -32,8 +34,10 @@ namespace base {
 
       protected:
 
+         /** buffers queue */
          typedef RecordsQueue<base::Buffer, false> BuffersQueue;
 
+         /** sync markers queue */
          typedef RecordsQueue<base::SyncMarker, false> SyncMarksQueue;
 
          BuffersQueue fQueue;                     ///<! buffers queue
@@ -85,8 +89,6 @@ namespace base {
            *  and have minimal distance to previous trigger */
          bool AddTriggerMarker(LocalTimeMarker& marker, double tm_range = 0.);
 
-         /** Method converts local time (in ns representation) to global time
-          * TODO: One could introduce more precise method, which works with stamps*/
          GlobalTime_t LocalToGlobalTime(GlobalTime_t localtm, unsigned* sync_index = 0);
 
          /** Method return true when sync_index is means interpolation of time */
@@ -114,10 +116,11 @@ namespace base {
          // one can preallocate number of subevents with place ready for some messages
          // than one can use these events instead of creating them on the fly
 
+         /** add new message to event */
          template<class EventClass, class MessageClass>
          void AddMessage(unsigned indx, EventClass* ev, const MessageClass& msg)
          {
-            if (ev==0) {
+            if (!ev) {
                ev = new EventClass;
                fGlobalMarks.item(indx).subev = ev;
             }

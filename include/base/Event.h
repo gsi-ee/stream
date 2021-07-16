@@ -16,22 +16,27 @@ namespace base {
 
    class Event {
       protected:
-         EventsMap  fMap;
+         EventsMap  fMap;   ///< subevents map
 
-         GlobalTime_t  fTriggerTm;
+         GlobalTime_t  fTriggerTm;  ///< trigger time
 
       public:
+         /** constructor */
          Event() : fMap(), fTriggerTm(0.) {}
 
+         /** destructor */
          virtual ~Event()
          {
             DestroyEvents();
          }
 
+         /** set trigger time */
          void SetTriggerTime(GlobalTime_t tm) { fTriggerTm = tm; }
 
+         /** get trigger time */
          GlobalTime_t GetTriggerTime() const { return fTriggerTm; }
 
+         /** destroy all events */
          void DestroyEvents()
          {
             for (EventsMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
@@ -39,6 +44,7 @@ namespace base {
             fMap.clear();
          }
 
+         /** reset events */
          void ResetEvents()
          {
             for (EventsMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
@@ -48,6 +54,7 @@ namespace base {
             fTriggerTm = 0;
          }
 
+         /** add subevent */
          void AddSubEvent(const std::string& name, base::SubEvent* ev)
          {
             EventsMap::iterator iter = fMap.find(name);
@@ -74,7 +81,5 @@ namespace base {
    };
 
 }
-
-
 
 #endif

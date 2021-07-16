@@ -1,5 +1,8 @@
 #include "base/Message.h"
 
+///////////////////////////////////////////////////////////////////////////
+/// returns raw size
+
 uint32_t base::Message::RawSize(int fmt)
 {
    switch (fmt) {

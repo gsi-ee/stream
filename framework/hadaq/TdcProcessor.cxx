@@ -497,9 +497,13 @@ void hadaq::TdcProcessor::CreateHistograms(int *arr)
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 /// Set reference signal for the TDC channel ch
+/// \param ch      channel for which reference histogram will be created
 /// \param refch   specifies number of reference channel
-/// \param reftdc  specifies tdc id, used for ref channel.
-/// Default (0xffff) same TDC will be used
+/// \param reftdc  specifies tdc id, used for ref channel. default (0xffff) same TDC will be used
+/// \param npoints number of points in ref histogram
+/// \param left    left limit of histogram
+/// \param right   right limit of histogram
+/// \param twodim  if extra two dimensional histograms should be created
 /// If redtdc contains 0x70000 (like 0x7c010), than direct difference without channel 0 will be calculated
 /// To be able use other TDCs, one should enable TTrbProcessor::SetCrossProcess(true);
 /// If left-right range are specified, ref histograms are created.
@@ -566,6 +570,9 @@ void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned re
 /// Set reference signal for time extracted from v4 TMDS message
 /// \param ch   configured channel
 /// \param refch   reference channel
+/// \param npoints number of points in ref histogram
+/// \param left    left limit of histogram
+/// \param right   right limit of histogram
 
 void hadaq::TdcProcessor::SetRefTmds(unsigned ch, unsigned refch, int npoints, double left, double right)
 {

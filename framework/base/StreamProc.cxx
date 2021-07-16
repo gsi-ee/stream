@@ -10,6 +10,9 @@
 unsigned base::StreamProc::fMarksQueueCapacity = 10000;
 unsigned base::StreamProc::fBufsQueueCapacity = 100;
 
+////////////////////////////////////////////////////////////////////////////////////////////
+/// constructor
+
 base::StreamProc::StreamProc(const char* name, unsigned brdid, bool basehist) :
    base::Processor(name, brdid),
    fQueue(fBufsQueueCapacity),
@@ -35,6 +38,8 @@ base::StreamProc::StreamProc(const char* name, unsigned brdid, bool basehist) :
    if (basehist) CreateTriggerHist(40, 2500, -1e-6, 4e-6);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////
+/// destructor
 
 base::StreamProc::~StreamProc()
 {
@@ -45,6 +50,9 @@ base::StreamProc::~StreamProc()
    fGlobalMarks.clear();
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////
+/// create histograms for triggers
+
 void base::StreamProc::CreateTriggerHist(unsigned multipl, unsigned nbins, double left, double right)
 {
    SetSubPrefix();
@@ -54,16 +62,20 @@ void base::StreamProc::CreateTriggerHist(unsigned multipl, unsigned nbins, doubl
    fTriggerWindow = MakeC1("TrWindow", 5e-7, 10e-7, fTriggerTm);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////
+///  Method converts local time (in ns representation) to global time
+///
+/// method uses helper index to locate faster interval where interpolation could be done
+/// For the interpolation value of index is following
+///  0                      - last value left to the first sync
+///  [1..numReadySyncs()-1] - last value between indx-1 and indx syncs
+///  numReadySyncs()        - last value right to the last sync
+/// For the left/right side sync index indicates sync number used
+///
+/// TODO: One could introduce more precise method, which works with stamps
 
 base::GlobalTime_t base::StreamProc::LocalToGlobalTime(base::GlobalTime_t localtm, unsigned* indx)
 {
-   // method uses helper index to locate faster interval where interpolation could be done
-   // For the interpolation value of index is following
-   //  0                      - last value left to the first sync
-   //  [1..numReadySyncs()-1] - last value between indx-1 and indx syncs
-   //  numReadySyncs()        - last value right to the last sync
-   // For the left/right side sync index indicates sync number used
-
    // TODO: one could probably use some other methods of time conversion
 
    if (!IsSynchronisationRequired()) return localtm;
@@ -167,6 +179,8 @@ base::GlobalTime_t base::StreamProc::LocalToGlobalTime(base::GlobalTime_t localt
    return getSync(numReadySyncs()-1).globaltm + dist2;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////
+/// add next buffer
 
 bool base::StreamProc::AddNextBuffer(const Buffer& buf)
 {
@@ -179,10 +193,11 @@ bool base::StreamProc::AddNextBuffer(const Buffer& buf)
    return true;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////
+/// scan new buffers
+
 bool base::StreamProc::ScanNewBuffers()
 {
-//   printf("Scan buffers last %u size %u\n", fQueueScanIndex, fQueue.size());
-
    bool isany = false;
 
    while (fQueueScanIndex < fQueue.size()) {
@@ -202,10 +217,14 @@ bool base::StreamProc::ScanNewBuffers()
    return isany;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////
+/// scan new buffers times
+///
+/// here we recalculate times for each buffer
+/// this only can be done when appropriate syncs are produced
+
 bool base::StreamProc::ScanNewBuffersTm()
 {
-   // here we recalculate times for each buffer
-   // this only can be done when appropriate syncs are produced
 
    // for raw processor no any time is interesting
    if (IsRawAnalysis()) return true;
@@ -238,11 +257,14 @@ bool base::StreamProc::ScanNewBuffersTm()
    return true;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////
+/// provide flush time
+///
+/// approach is simple - one propose as flush time begin of nbuf-2
+/// make it little bit more complex - use buffers with time stamps
 
 base::GlobalTime_t base::StreamProc::ProvidePotentialFlushTime(GlobalTime_t last_marker)
 {
-   // approach is simple - one propose as flush time begin of nbuf-2
-   // make it little bit more complex - use buffers with time stamps
 
 //   printf("ProvidePotentialFlushTime queue size %u scan indx %u \n", fQueue.size(), fQueueScanIndexTm);
 
@@ -254,11 +276,14 @@ base::GlobalTime_t base::StreamProc::ProvidePotentialFlushTime(GlobalTime_t last
    return 0.;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////
+/// verify flush time
+///
+/// verify that proposed flush time can be processed already now
+/// for that buffer time should be assigned
+
 bool base::StreamProc::VerifyFlushTime(const base::GlobalTime_t& flush_time)
 {
-   // verify that proposed flush time can be processed already now
-   // for that buffer time should be assigned
-
    // when processor doing raw scan, one can ignore flushing as well
    if (IsRawAnalysis()) return true;
 
@@ -270,6 +295,8 @@ bool base::StreamProc::VerifyFlushTime(const base::GlobalTime_t& flush_time)
    return true;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////
+/// add sync marker
 
 void base::StreamProc::AddSyncMarker(base::SyncMarker& marker)
 {
@@ -289,6 +316,9 @@ void base::StreamProc::AddSyncMarker(base::SyncMarker& marker)
    marker.bufid = fQueueScanIndex;
    fSyncs.push(marker);
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////
+/// add trigger marker
 
 bool base::StreamProc::AddTriggerMarker(LocalTimeMarker& marker, double tm_range)
 {
@@ -326,6 +356,9 @@ bool base::StreamProc::AddTriggerMarker(LocalTimeMarker& marker, double tm_range
    return true;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////
+/// find sync marker
+
 unsigned base::StreamProc::findSyncWithId(unsigned syncid) const
 {
    for (unsigned n=0; n<fSyncs.size(); n++)
@@ -334,6 +367,8 @@ unsigned base::StreamProc::findSyncWithId(unsigned syncid) const
    return fSyncs.size();
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////
+/// erase sync marker
 
 bool base::StreamProc::eraseSyncAt(unsigned indx)
 {
@@ -344,6 +379,9 @@ bool base::StreamProc::eraseSyncAt(unsigned indx)
    }
    return false;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////
+/// erase first sync markers
 
 bool base::StreamProc::eraseFirstSyncs(unsigned num_erase)
 {
@@ -357,7 +395,8 @@ bool base::StreamProc::eraseFirstSyncs(unsigned num_erase)
    return true;
 }
 
-
+////////////////////////////////////////////////////////////////////////////////////////////
+/// skip buffers
 
 bool base::StreamProc::SkipBuffers(unsigned num_skip)
 {
@@ -413,6 +452,9 @@ bool base::StreamProc::SkipBuffers(unsigned num_skip)
    return true;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////
+/// skip all data
+
 void base::StreamProc::SkipAllData()
 {
    fQueueScanIndexTm = fQueue.size();
@@ -426,6 +468,8 @@ void base::StreamProc::SkipAllData()
    fSyncScanIndex = 0;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////
+/// collect triggers
 
 bool base::StreamProc::CollectTriggers(GlobalMarksQueue& trigs)
 {
@@ -468,6 +512,9 @@ bool base::StreamProc::CollectTriggers(GlobalMarksQueue& trigs)
    return true;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////
+/// distribute triggers
+
 bool base::StreamProc::DistributeTriggers(const base::GlobalMarksQueue& queue)
 {
    // here just duplicate of main trigger queue is created
@@ -498,6 +545,8 @@ bool base::StreamProc::DistributeTriggers(const base::GlobalMarksQueue& queue)
    return true;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////
+/// append subevent
 
 bool base::StreamProc::AppendSubevent(base::Event* evt)
 {
@@ -539,6 +588,8 @@ bool base::StreamProc::AppendSubevent(base::Event* evt)
    return true;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////
+/// test hit time
 
 unsigned base::StreamProc::TestHitTime(const base::GlobalTime_t& hittime, bool normal_hit, bool can_close_event)
 {
@@ -610,14 +661,18 @@ unsigned base::StreamProc::TestHitTime(const base::GlobalTime_t& hittime, bool n
    return normal_hit ? res_indx : fGlobalMarks.size();
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////
+/// scan for new triggers
+///
+/// first of all, one should find right boundary, where data can be scanned
+/// while when buffer scanned for the second time, it will be automatically rejected
+///
+/// there is nice rule - last trigger and last buffer always remains
+/// time of last trigger is used to check which buffers can be scanned
+/// time of last buffer is used to check which triggers we could check
+
 bool base::StreamProc::ScanDataForNewTriggers()
 {
-   // first of all, one should find right boundary, where data can be scanned
-   // while when buffer scanned for the second time, it will be automatically rejected
-
-   // there is nice rule - last trigger and last buffer always remains
-   // time of last trigger is used to check which buffers can be scanned
-   // time of last buffer is used to check which triggers we could check
 
    // never do any seconds scan in such situation
    if (IsRawAnalysis()) return true;
@@ -743,8 +798,6 @@ bool base::StreamProc::ScanDataForNewTriggers()
       fGlobalTrigScanIndex = 1;
       // printf("%s mark fGlobalTrigScanIndex = 1\n", GetName());
    }
-
-
 
    // printf("After skip buffers queue size %u\n", fQueue.size());
 

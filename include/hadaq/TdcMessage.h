@@ -7,22 +7,25 @@
 
 namespace hadaq {
 
+   /** TDC messages kind */
    enum TdcMessageKind {
-      tdckind_Trailer  = 0x00000000,
-      tdckind_Header   = 0x20000000,
-      tdckind_Debug    = 0x40000000,
-      tdckind_Epoch    = 0x60000000,
-      tdckind_Mask     = 0xe0000000,
-      tdckind_Hit      = 0x80000000,  // original hit message
-      tdckind_Hit1     = 0xa0000000,  // corrected hit message, instead of 0x3ff
-      tdckind_Hit2     = 0xc0000000,  // fine time replaced with 5ps binning value
-      tdckind_Calibr   = 0xe0000000   // calibration data for next two hits
+      tdckind_Trailer  = 0x00000000,  ///< trailer
+      tdckind_Header   = 0x20000000,  ///< header
+      tdckind_Debug    = 0x40000000,  ///< debug
+      tdckind_Epoch    = 0x60000000,  ///< epoch
+      tdckind_Mask     = 0xe0000000,  ///< mask
+      tdckind_Hit      = 0x80000000,  ///< original hit message
+      tdckind_Hit1     = 0xa0000000,  ///< corrected hit message, instead of 0x3ff
+      tdckind_Hit2     = 0xc0000000,  ///< fine time replaced with 5ps binning value
+      tdckind_Calibr   = 0xe0000000   ///< calibration data for next two hits
    };
 
+   /** special constants */
    enum TdcConstants {
-      MaxNumTdcChannels = 65
+      MaxNumTdcChannels = 65 ///< maximal number of TDC channels
    };
 
+   /** TDC v4 messages kind */
    enum TdcNewMessageKinds {
       newkind_TMDT     = 0x80000000,
       // with mask 3
@@ -66,19 +69,23 @@ namespace hadaq {
 
    struct TdcMessage {
       protected:
-         uint32_t   fData;
+         uint32_t   fData;  ///< message raw data
 
          static unsigned gFineMinValue;
          static unsigned gFineMaxValue;
 
       public:
 
+         /** constructor */
          TdcMessage() : fData(0) {}
 
+         /** constructor */
          TdcMessage(uint32_t d) : fData(d) {}
 
+         /** assign raw data to message */
          void assign(uint32_t d) { fData = d; }
 
+         /** get message raw data */
          inline uint32_t getData() const { return fData; }
 
          /** assign operator for the message */
@@ -113,6 +120,7 @@ namespace hadaq {
 
          /** Returns hit coarse time counter, 11 bit */
          inline uint32_t getHitTmCoarse() const { return fData & 0x7FF; }
+         /** Set hit coarse time counter, 11 bit */
          inline void setHitTmCoarse(uint32_t coarse) { fData = (fData & ~0x7FF) | (coarse & 0x7FF); }
 
          /** Returns hit fine time counter, 10 bit */
@@ -124,7 +132,9 @@ namespace hadaq {
          /** Returns hit edge 1 - rising, 0 - falling */
          inline uint32_t getHitEdge() const {  return (fData >> 11) & 0x1; }
 
+         /** Is rising edge */
          inline bool isHitRisingEdge() const { return getHitEdge() == 0x1; }
+         /** Is falling edge */
          inline bool isHitFallingEdge() const { return getHitEdge() == 0x0; }
 
          void setAsHit2(uint32_t finebin);
@@ -134,7 +144,9 @@ namespace hadaq {
 
          // methods for calibration message
 
+         /** get calibration for fine counter */
          inline uint32_t getCalibrFine(unsigned n = 0) const { return (fData >> n*14) & 0x3fff; }
+         /** set calibration for fine counter */
          inline void setCalibrFine(unsigned n = 0, uint32_t v = 0) { fData = (fData & ~(0x3fff << n*14)) | ((v & 0x3fff) << n*14); }
 
          // methods for header
@@ -151,6 +163,7 @@ namespace hadaq {
          /** Return data format: 0 - normal, 1 - double edges for each hit */
          inline uint32_t getHeaderFmt() const { return (fData >> 24) & 0xF; }
 
+         /** is V4 header */
          inline bool IsVer4Header() const { return isHeaderMsg() && (getHeaderFmt() == 4); }
 
          // methods for debug message
@@ -182,6 +195,7 @@ namespace hadaq {
 
          /** Return Epoch for EPOC marker, 28 bit */
          inline uint32_t getEPOC() const { return fData & 0xFFFFFFF; }
+         /** Is EPOC marker error */
          inline bool getEPOCError() const { return (fData & 0x10000000) != 0; }
 
          // methods for TMDT - hist message
@@ -224,10 +238,13 @@ namespace hadaq {
          void print(double tm = -1.);
          void print4(uint32_t &ttype);
 
+         /** default coarse unit for 200 MHz */
          static double CoarseUnit() { return 5e-9; }
 
+         /** default coarse unit for 280 MHz */
          static double CoarseUnit280() { return 1/2.8e8; }
 
+         /** get simple linear calibration for fine counter */
          static double SimpleFineCalibr(unsigned fine)
          {
             if (fine<=gFineMinValue) return 0.;
@@ -242,7 +259,9 @@ namespace hadaq {
             gFineMaxValue = max;
          }
 
+         /** get pre-configured min fine counter*/
          static unsigned GetFineMinValue() { return gFineMinValue; }
+         /** get pre-configured max fine counter*/
          static unsigned GetFineMaxValue() { return gFineMaxValue; }
    };
 

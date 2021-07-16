@@ -3,6 +3,9 @@
 #include <cstdio>
 #include <cstdlib>
 
+///////////////////////////////////////////////////////////////////////////
+/// set interval
+
 void base::GlobalMarker::SetInterval(double left, double right)
 {
    if (left>right) {
@@ -14,10 +17,14 @@ void base::GlobalMarker::SetInterval(double left, double right)
    righttm = globaltm + right;
 }
 
+///////////////////////////////////////////////////////////////////////////
+/// test hit time
+///
+/// be aware that condition like [left, right) is tested
+/// therefore if left==right, hit will never be assigned to such condition
+
 int base::GlobalMarker::TestHitTime(const GlobalTime_t& hittime, double* dist)
 {
-   // be aware that condition like [left, right) is tested
-   // therefore if left==right, hit will never be assigned to such condition
 
    if (dist) *dist = 0.;
    if (hittime < lefttm) {

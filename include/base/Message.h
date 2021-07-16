@@ -68,25 +68,34 @@ namespace base {
          uint64_t data;   ///< main and only storage field for the message
 
       public:
+         /** constructor */
          Message() : data(0) {}
 
+         /** constructor */
          Message(const Message& src) : data(src.data) {}
 
+         /** assign */
          void assign(const Message& src) { data = src.data; }
 
+         /** assign operator */
          Message& operator=(const Message& src) { assign(src); return *this; }
 
+         /** reset */
          inline void reset() { data = 0; }
 
+         /** get field */
          inline uint32_t getField(uint32_t shift, uint32_t len) const
             { return (data >> shift) & ((((uint32_t)1) << len) - 1); }
 
+         /** set field */
          inline void setField(uint32_t shift, uint32_t len, uint32_t value)
             { data = (data & ~(((((uint64_t) 1) << len) - 1) << shift)) | (((uint64_t) value) << shift); }
 
+         /** get bit */
          inline uint8_t getBit(uint32_t shift) const
             { return (data >> shift) & 1; }
 
+         /** set bit */
          inline void setBit(uint32_t shift, uint8_t value)
             { data = value ? (data | (((uint64_t) 1) << shift)) : (data & ~(((uint64_t) 1) << shift)) ; }
 
