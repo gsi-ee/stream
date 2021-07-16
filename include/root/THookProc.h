@@ -6,12 +6,14 @@
 #include "TInterpreter.h"
 #include "TStopwatch.h"
 
+/** Hook processor to regularly execute code during events processing */
+
 class THookProc : public base::StreamProc {
 
    protected:
-      TString fCmd;
-      Double_t fPeriod;
-      TStopwatch fWatch;
+      TString fCmd;           ///< command to execute
+      Double_t fPeriod;       ///< period
+      TStopwatch fWatch;      ///< time measuring
 
    public:
       THookProc(const char* cmd, Double_t period = 0.);

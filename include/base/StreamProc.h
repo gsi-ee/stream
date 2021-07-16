@@ -136,6 +136,7 @@ namespace base {
 
          /** Enable/disable time sorting of data in output event */
          void SetTimeSorting(bool on) { fTimeSorting = on; }
+         /** Is time sorting enabled */
          bool IsTimeSorting() const { return fTimeSorting; }
 
          /** Set minimal distance between two triggers */
@@ -151,10 +152,14 @@ namespace base {
          /** Method set raw-scan only mode for processor
           * Processor will not be used for any data selection */
          void SetRawScanOnly() { fAnalysisKind = kind_RawOnly; }
+         /** Is only raw scan will be performed */
          bool IsRawScanOnly() const { return fAnalysisKind == kind_RawOnly; }
 
+         /** Is raw analysis only */
          bool IsRawAnalysis() const { return fAnalysisKind <= kind_Raw; }
+         /** Is triggered events analysis */
          bool IsTriggeredAnalysis() const { return fAnalysisKind == kind_Triggered; }
+         /** Is full stream analysis */
          bool IsStreamAnalysis() const { return fAnalysisKind == kind_Stream; }
 
          /** Method indicate if any kind of time-synchronization technique
@@ -192,7 +197,9 @@ namespace base {
 
          /** Returns total number of sync markers */
          unsigned numSyncs() const { return fSyncs.size(); }
+         /** Returns number of read sync markers */
          unsigned numReadySyncs() const { return fSyncScanIndex; }
+         /** Returns sync marker */
          SyncMarker& getSync(unsigned n) { return fSyncs.item(n); }
          unsigned findSyncWithId(unsigned syncid) const;
 
@@ -234,7 +241,9 @@ namespace base {
           * which are mapped to the branch */
          virtual void ResetStore() {}
 
+         /** Set markers queue capacity */
          static void SetMarksQueueCapacity(unsigned sz) { fMarksQueueCapacity = sz; }
+         /** Set buffers queue capacity */
          static void SetBufsQueueCapacity(unsigned sz) { fBufsQueueCapacity = sz; }
 
    };

@@ -5,6 +5,8 @@
 
 #include "base/Event.h"
 
+/** Envelope for \ref base::Event event in go4 */
+
 class TStreamEvent : public TGo4EventElement,
                      public base::Event
 {

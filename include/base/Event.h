@@ -10,11 +10,9 @@
 
 namespace base {
 
-   /** Event - collection of several subevents
-    *  Implementation is still open, one could use any external classes at this place */
-
-
    typedef std::map<std::string, base::SubEvent*> EventsMap;
+
+   /** Event - collection of several subevents */
 
    class Event {
       protected:

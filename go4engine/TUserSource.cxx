@@ -24,6 +24,9 @@
 #define Trb_BUFSIZE 0x80000
 
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// constructor
+
 TUserSource::TUserSource() :
    TGo4EventSource("default Trb source"),
    fxArgs(""),
@@ -36,6 +39,9 @@ TUserSource::TUserSource() :
    fEventCounter(0)
 {
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// constructor
 
 TUserSource::TUserSource(const char* name, const char* args, Int_t port) :
    TGo4EventSource(name),
@@ -50,6 +56,9 @@ TUserSource::TUserSource(const char* name, const char* args, Int_t port) :
 {
    Open();
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// constructor
 
 TUserSource::TUserSource(TGo4UserSourceParameter* par) :
    TGo4EventSource(" "),
@@ -71,6 +80,9 @@ TUserSource::TUserSource(TGo4UserSourceParameter* par) :
       TGo4Log::Error("TUserSource constructor with zero parameter!");
    }
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// destructor
 
 TUserSource::~TUserSource()
 {
@@ -94,10 +106,16 @@ TUserSource::~TUserSource()
    }
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// check event class
+
 Bool_t TUserSource::CheckEventClass(TClass* cl)
 {
   return cl->InheritsFrom(TGo4MbsEvent::Class());
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// build dat event
 
 Bool_t TUserSource::BuildDatEvent(TGo4MbsEvent* evnt)
 {
@@ -148,6 +166,9 @@ Bool_t TUserSource::BuildDatEvent(TGo4MbsEvent* evnt)
    return kTRUE; // event is ready
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// build event
+
 Bool_t TUserSource::BuildEvent(TGo4EventElement* dest)
 {
    TGo4MbsEvent* evnt = dynamic_cast<TGo4MbsEvent*> (dest);
@@ -188,6 +209,9 @@ Bool_t TUserSource::BuildEvent(TGo4EventElement* dest)
    return kTRUE; // event is ready
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// open file
+
 Int_t TUserSource::Open()
 {
    TString fname = GetName();
@@ -214,6 +238,8 @@ Int_t TUserSource::Open()
    return 0;
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// open next file
 
 Bool_t TUserSource::OpenNextFile()
 {

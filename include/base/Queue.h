@@ -13,6 +13,7 @@ namespace base {
    class Queue {
 
       public:
+         /** iterator over queue elements */
          class Iterator {
 
             friend class Queue<T,canexpand>;

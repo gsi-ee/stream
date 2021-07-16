@@ -5,9 +5,9 @@
 
 namespace base {
 
-   /** Class base::EventProc is abstract processor of build events */
-
    class Event;
+
+   /** Abstract processor of build events */
 
    class EventProc : public Processor {
       friend class ProcMgr;
@@ -21,9 +21,8 @@ namespace base {
 
          virtual ~EventProc() {}
 
-         /** Generic event processor
+         /** Generic event processing
           * If returns false, processing will be aborted and event will not be stored */
-
          virtual bool Process(Event*) { return true; }
 
    };

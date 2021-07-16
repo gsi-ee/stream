@@ -1,5 +1,3 @@
-// $Id$
-
 // Copy of source from DABC Profiler
 
 #ifndef BASE_PROFILER_H
@@ -11,6 +9,8 @@
 namespace base {
 
    class ProfilerGuard;
+
+   /** Performance profiler */
 
    class Profiler {
 
@@ -61,6 +61,8 @@ namespace base {
       std::string Format();
 
    };
+
+   /** Guard class to use \ref base::Profiler */
 
    class ProfilerGuard {
       Profiler &fProfiler;

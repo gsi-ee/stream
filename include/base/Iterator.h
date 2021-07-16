@@ -5,6 +5,8 @@
 
 namespace base {
 
+   /** iterator over raw data messages */
+
    class Iterator {
       protected:
          int           fFormat;       // format identifier
@@ -21,14 +23,15 @@ namespace base {
          void setFormat(int fmt);
          int getFormat() const { return fFormat; }
 
+         /** get message size */
          uint32_t getMsgSize() const { return fMsgSize; }
 
          bool assign(void* buf, uint32_t len);
 
-         // returns true is last message was extracted from the buffer
+         /** returns true is last message was extracted from the buffer */
          inline bool islast() const { return  fBufferPos >= fBufferLen; }
 
-         ///<! Expanded timestamp for 250 MHz * 14 bit epochs
+         /** Expanded timestamp for 250 MHz * 14 bit epochs */
          inline static uint64_t FullTimeStamp(uint32_t epoch, uint16_t stamp)
             { return ((uint64_t) epoch << 14) | (stamp & 0x3fff); }
    };

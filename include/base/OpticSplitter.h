@@ -9,7 +9,6 @@
 
 namespace base {
 
-
    /** This is splitter of raw data, recorded by the optic readout
     * Current ABB firmware mix data from all ROCs together, therefore
     * OpticSplitter required to resort raw data per buffer.  */

@@ -9,8 +9,7 @@ namespace base {
 
    /** SubEvent - base class for all event structures
     * Need for: virtual destructor - to be able delete any instance
-    *                   Reset - to be able reset (clean) all collections
-    * */
+    *   Reset - to be able reset (clean) all collections */
 
    class SubEvent {
       public:
@@ -26,6 +25,8 @@ namespace base {
          virtual unsigned Multiplicity() const { return 0; }
 
    };
+
+   /** Extended message - any message plus global time stamp */
 
    template<class MsgClass>
    class MessageExt {
@@ -74,6 +75,8 @@ namespace base {
          double GetGlobalTime() const { return fGlobalTime; }
    };
 
+
+   /** Subevent with vector of extended messages*/
 
    template<class MsgClass>
    class SubEventEx : public base::SubEvent {

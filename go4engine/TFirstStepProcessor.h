@@ -4,6 +4,8 @@
 #include "TGo4EventProcessor.h"
 #include "root/TRootProcMgr.h"
 
+/** Handler for first.C in go4 */
+
 class TFirstStepProcessor : public TGo4EventProcessor,
                             public TRootProcMgr {
 

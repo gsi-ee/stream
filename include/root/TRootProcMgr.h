@@ -3,6 +3,8 @@
 
 #include "base/ProcMgr.h"
 
+/** Processors manager for using in ROOT environment */
+
 class TRootProcMgr : public base::ProcMgr {
    public:
       TRootProcMgr();

@@ -9,6 +9,8 @@ namespace base {
 
    class SubEvent;
 
+   /** sync marker */
+
    struct SyncMarker {
       unsigned      uniqueid;    ///< unique identifier for marker like 24-bit number of SYNC message
       unsigned      localid;     ///< some local id, custom number for each subsystem
@@ -24,6 +26,9 @@ namespace base {
       void reset() { uniqueid=0; localid=0; local_stamp=0; localtm=0; globaltm=0; bufid=0; }
    };
 
+   // =========================================================================
+
+   /** local time marker */
 
    struct LocalTimeMarker {
       GlobalTime_t  localtm;     ///< local time in ns,
@@ -41,6 +46,8 @@ namespace base {
    typedef RecordsQueue<LocalTimeMarker, false> LocalMarkersQueue;
 
    // =========================================================================
+
+   /** global time marker */
 
    struct GlobalMarker {
       GlobalTime_t globaltm;     ///< global time - reference time of marker
@@ -72,6 +79,5 @@ namespace base {
    typedef RecordsQueue<GlobalMarker, false> GlobalMarksQueue;
 
 }
-
 
 #endif

@@ -11,6 +11,8 @@ class TGo4UserSourceParameter;
 class TGo4MbsEvent;
 class TList;
 
+/** Custom user source to read files formats supported by stream framework */
+
 class TUserSource : public TGo4EventSource {
 
    protected:
@@ -51,7 +53,7 @@ class TUserSource : public TGo4EventSource {
       /** Create source specifying values directly */
       TUserSource(const char* name, const char* args, Int_t port);
 
-      /** Creat source from setup within usersource parameter object */
+      /** Create source from setup within usersource parameter object */
       TUserSource(TGo4UserSourceParameter* par);
 
       virtual ~TUserSource();
