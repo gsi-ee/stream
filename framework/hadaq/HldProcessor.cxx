@@ -51,6 +51,15 @@ hadaq::HldProcessor::HldProcessor(bool auto_create, const char* after_func) :
    fQaEdgesPerTDCChannel = nullptr;  // HADAQ QA edges per TDC channel
    fQaErrorsPerTDCChannel = nullptr;  // HADAQ QA errors per TDC channel
    fQaSummary = nullptr; // HADAQ QA summary histogramm
+   
+    fToTPerTDCChannel = nullptr;  ///< HADAQ ToT per TDC channel, real values
+    fShiftPerTDCChannel = nullptr;  ///< HADAQ calibrated shift per TDC channel, real values
+    fExpectedToTPerTDC = nullptr;  ///< HADAQ expected ToT per TDC sed for calibration
+    fDevPerTDCChannel = nullptr;  ///< HADAQ ToT deviation per TDC channel from calibration
+          
+   
+   
+   
    // printf("Create HldProcessor %s\n", GetName());
 
    // this is raw-scan processor, therefore no synchronization is required for it
@@ -504,7 +513,31 @@ void hadaq::HldProcessor::CreatePerTDCHisto()
             tdcs.size(), 0, tdcs.size(),
             TrbProcessor::GetDefaultNumCh(), 0, TrbProcessor::GetDefaultNumCh(),
             opt2.c_str());
+      
+      // JAM 2021
 
+       if (!fToTPerTDCChannel)
+          fToTPerTDCChannel = MakeH2("ToTPerChannel", "ToT per TDC channel",
+                              tdcs.size(), 0, tdcs.size(),
+                                   TrbProcessor::GetDefaultNumCh(), 0, TrbProcessor::GetDefaultNumCh(),
+                                   opt2.c_str());
+       
+        if (!fShiftPerTDCChannel)
+          fShiftPerTDCChannel = MakeH2("ShiftPerChannel", "Calibrated time shift of falling edge per TDC channel",
+                              tdcs.size(), 0, tdcs.size(),
+                                   TrbProcessor::GetDefaultNumCh(), 0, TrbProcessor::GetDefaultNumCh(),
+                                   opt2.c_str());
+        
+        if (!fExpectedToTPerTDC)
+          fExpectedToTPerTDC = MakeH1("ExpectedToT", "Expected ToT used for calibration per TDC", tdcs.size(), 0, tdcs.size(), opt1.c_str());
+          
+        if (!fDevPerTDCChannel)
+          fDevPerTDCChannel = MakeH2("DevPerChannel", "Deviation of Tot from calibration per TDC channel",
+                              tdcs.size(), 0, tdcs.size(),
+                                   TrbProcessor::GetDefaultNumCh(), 0, TrbProcessor::GetDefaultNumCh(),
+                                   opt2.c_str());
+       
+      
 
    if (hadaq::TdcProcessor::GetHadesMonitorInterval() > 0) {
        if (!fQaFinePerTDCChannel)
@@ -532,11 +565,36 @@ void hadaq::HldProcessor::CreatePerTDCHisto()
 
        if (!fQaSummary)
           fQaSummary = MakeH1("QaSummary", "QA summary", 4, -0.5, 3.5, "QA histogram;# bad channels");
+       
+// too late here?       
+//         if (!fToTPerTDCChannel)
+//           fToTPerTDCChannel = MakeH2("ToTPerChannel", "ToT per TDC channel",
+//                               tdcs.size(), 0, tdcs.size(),
+//                                    TrbProcessor::GetDefaultNumCh(), 0, TrbProcessor::GetDefaultNumCh(),
+//                                    opt2.c_str());
+//        
+//         if (!fShiftPerTDCChannel)
+//           fShiftPerTDCChannel = MakeH2("ShiftPerChannel", "Calibrated time shift of falling edge per TDC channel",
+//                               tdcs.size(), 0, tdcs.size(),
+//                                    TrbProcessor::GetDefaultNumCh(), 0, TrbProcessor::GetDefaultNumCh(),
+//                                    opt2.c_str());
+//         
+//         if (!fExpectedToTPerTDC)
+//           fExpectedToTPerTDC = MakeH1("ExpectedToT", "Expected ToT used for calibration per TDC", tdcs.size(), 0, tdcs.size(), opt1.c_str());
+//           
+//         if (!fDevPerTDCChannel)
+//           fDevPerTDCChannel = MakeH2("DevPerChannel", "Deviation of Tot from calibration per TDC channel",
+//                               tdcs.size(), 0, tdcs.size(),
+//                                    TrbProcessor::GetDefaultNumCh(), 0, TrbProcessor::GetDefaultNumCh(),
+//                                    opt2.c_str());
+       
    }
    cnt = 0;
    for (auto &tdc : tdcs)
       tdc->AssignPerHldHistos(cnt++, &fHitsPerTDC, &fErrPerTDC, &fHitsPerTDCChannel, &fErrPerTDCChannel, &fCorrPerTDCChannel,
-          &fQaFinePerTDCChannel, &fQaToTPerTDCChannel, &fQaEdgesPerTDCChannel, &fQaErrorsPerTDCChannel);
+          &fQaFinePerTDCChannel, &fQaToTPerTDCChannel, &fQaEdgesPerTDCChannel, &fQaErrorsPerTDCChannel,
+          
+           &fToTPerTDCChannel, &fShiftPerTDCChannel, &fExpectedToTPerTDC,  &fDevPerTDCChannel);
 }
 
 

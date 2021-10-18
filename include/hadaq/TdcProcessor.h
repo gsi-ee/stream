@@ -246,6 +246,14 @@ namespace hadaq {
          base::H2handle *fQaToTPerHld;  ///<! QA ToT per TDC channel - from HLD
          base::H2handle *fQaEdgesPerHld;  ///<! QA Edges per TDC channel - from HLD
          base::H2handle *fQaErrorsPerHld;  ///<! QA Errors per TDC channel - from HLD
+         
+         // JAM 8-10-2021 something new for calibration monitor:
+         base::H2handle *fToTPerTDCChannel;  ///< HADAQ ToT per TDC channel, real values
+         base::H2handle *fShiftPerTDCChannel;  ///< HADAQ calibrated shift per TDC channel, real values
+         base::H1handle *fExpectedToTPerTDC;  ///< HADAQ expected ToT per TDC  used for calibration
+         base::H2handle *fDevPerTDCChannel;  ///< HADAQ ToT deviation per TDC channel from calibration
+     
+         
 
          unsigned                 fNumChannels;       ///<! number of channels
          unsigned                 fNumFineBins;       ///<! number of fine-counter bins
@@ -557,7 +565,9 @@ namespace hadaq {
                                               base::H2handle *hChHits, base::H2handle *hChErrs,
                                               base::H2handle *hChCorr,
                                               base::H2handle *hQaFine, base::H2handle *hQaToT,
-                                              base::H2handle *hQaEdges, base::H2handle *hQaErrors)
+                                              base::H2handle *hQaEdges, base::H2handle *hQaErrors,
+                                              base::H2handle *hTot, base::H2handle *hShift,
+                                              base::H1handle *hExpTot, base::H2handle *hDev)
          {
             fHldId = id;
             fHitsPerHld = hHits;
@@ -568,7 +578,11 @@ namespace hadaq {
             fQaFinePerHld = hQaFine;
             fQaToTPerHld = hQaToT;
             fQaEdgesPerHld = hQaEdges;
-            fQaErrorsPerHld = hQaErrors;
+            fQaErrorsPerHld = hQaErrors;            
+            fToTPerTDCChannel = hTot; 
+            fShiftPerTDCChannel = hShift;
+            fExpectedToTPerTDC = hExpTot;
+            fDevPerTDCChannel = hDev;     
          }
 
          /** Set calibration trigger type(s)
