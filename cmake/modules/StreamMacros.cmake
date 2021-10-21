@@ -38,7 +38,7 @@ endfunction()
 
 #---------------------------------------------------------------------------------------------------
 #---STREAM_LINK_LIBRARY(libname
-#                       SOURCES src1 src2          : 
+#                       SOURCES src1 src2          :
 #                       LIBRARIES lib1 lib2        : direct linked libraries
 #                       DEFINITIONS def1 def2      : library definitions
 #)
@@ -51,9 +51,11 @@ function(STREAM_LINK_LIBRARY libname)
 
    target_compile_definitions(${libname} PUBLIC ${ARG_DEFINITIONS})
 
+   target_compile_options(${libname} PRIVATE -Wall)
+
    target_link_libraries(${libname} ${ARG_LIBRARIES})
-   
+
    # add_dependencies(${libname} move_headers ${ARG_DEPENDENCIES})
-   
+
    target_include_directories(${libname} PRIVATE ${CMAKE_SOURCE_DIR}/include)
 endfunction()
