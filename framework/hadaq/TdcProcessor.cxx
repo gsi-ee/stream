@@ -210,7 +210,8 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fLastTdcTrailer(),
    fSkipTdcMessages(0),
    f400Mhz(false),
-   fCustomMhz(200.)
+   fCustomMhz(200.),
+   fPairedChannels(false)
 {
    fIsTDC = true;
 
@@ -253,13 +254,13 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fQaToTPerHld = nullptr;  ///<! QA ToT per TDC channel - from HLD
    fQaEdgesPerHld = nullptr;  ///<! QA Edges per TDC channel - from HLD
    fQaErrorsPerHld = nullptr;  ///<! QA Errors per TDC channel - from HLD
-    
+
     // JAM2021: additional histos for HADES TDC calib monitor
     fToTPerTDCChannel= nullptr;  ///< HADAQ ToT per TDC channel, real values
-    fShiftPerTDCChannel= nullptr;  ///< HADAQ calibrated shift per TDC channel, real values 
+    fShiftPerTDCChannel= nullptr;  ///< HADAQ calibrated shift per TDC channel, real values
     fExpectedToTPerTDC= nullptr;  ///< HADAQ expected ToT per TDC  used for calibration
     fDevPerTDCChannel= nullptr;
-   
+
 
    fToTdflt = true;
    fToTvalue = ToTvalue;
@@ -1750,6 +1751,13 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          bool isrising = msg.isHitRisingEdge();
          unsigned bad_fine = 0x3FF;
 
+         if (fPairedChannels) {
+            if ((chid > 0) && (chid % 2 == 0)) {
+               chid--; // previous channel
+               isrising = false; // always falling edge
+            }
+         }
+
          if (f400Mhz) {
             unsigned coarse25 = (coarse << 1) | ((fine & 0x200) ? 1 : 0);
             fine = fine & 0x1FF;
@@ -1974,13 +1982,13 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                   }
                   DefFillH1(rec.fTot, tot, 1.);
                   rec.rising_new_value = false;
-                  
+
                    // here put something new for global histograms JAM2021:
-                    if (fToTPerTDCChannel) 
+                    if (fToTPerTDCChannel)
                         {
                             // we first always show most recent value, no averaging here;
                             SetH2Content(*fToTPerTDCChannel, fHldId, chid, tot);
-                            
+
                             // TODO: later get previous statistics for this channel and weight new entry correctly for averaging: (performance?!)
 //                             int nBins1, nBins2;
 //                             GetH2NBins(fhTotVsChannel, nBins1, nBins2);
@@ -1993,7 +2001,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 //                            if (nEntries) averagetot= (oldtot * (nEntries-1) + tot) / nEntries;
 //                            SetH2Content(*fToTPerTDCChannel, fHldId, chid, averagetot);
                         }
-                        
+
 
                   // use only raw hit
                   if (raw_hit && do_tot) rec.last_tot = tot + rec.tot_shift;
@@ -2620,10 +2628,10 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
                   }
                   DefFillH1(rec.fTot, tot, 1.);
                   rec.rising_new_value = false;
-                  
-                  
-              
-                  
+
+
+
+
 
                   // use only raw hit
                   if (raw_hit && do_tot) rec.last_tot = tot + rec.tot_shift;
@@ -2825,7 +2833,7 @@ void hadaq::TdcProcessor::DoHadesHistAnalysis()
         double testTot = DoTestToT(iCh);
         double testEdges = DoTestEdges(iCh);
         double testErrors = DoTestErrors(iCh);
-        
+
         if (fQaFinePerHld) SetH2Content(*fQaFinePerHld, fHldId, iCh, testFine);
         if (fQaToTPerHld) SetH2Content(*fQaToTPerHld, fHldId, iCh, testTot);
         if (fQaEdgesPerHld) SetH2Content(*fQaEdgesPerHld, fHldId, iCh, testEdges);
@@ -2835,19 +2843,19 @@ void hadaq::TdcProcessor::DoHadesHistAnalysis()
             {
                SetH1Content(*fExpectedToTPerTDC, fHldId, fToTvalue);
             }
-            
-        ChannelRec& rec = fCh[iCh]; 
+
+        ChannelRec& rec = fCh[iCh];
         if(fShiftPerTDCChannel)
-           {    
+           {
               SetH2Content(*fShiftPerTDCChannel, fHldId, iCh,  rec.tot_shift);
-           } 
-           
+           }
+
             //tot_dev - this is not recovered from calibration files! we might not fill it here
         if(fDevPerTDCChannel)
              {
               SetH2Content(*fDevPerTDCChannel, fHldId, iCh,  rec.tot_dev); // JAM DEBUG rec.tot_dev
              }
-        
+
     }
 }
 
@@ -3445,12 +3453,12 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
          if (DoFallingEdge())
             CopyCalibration(rec.falling_calibr, rec.fFallingCalibr, ch, fFallingCalibr);
          DefFillH1(fTotShifts, ch, rec.tot_shift);
-         
+
 
        }
     }
 
-   
+
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -3792,7 +3800,7 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
             fread(&(fCh[ch].tot_shift), sizeof(fCh[ch].tot_shift), 1, f);
 
          DefFillH1(fTotShifts, ch, fCh[ch].tot_shift);
-         
+
       }
 
       if (!feof(f)) {

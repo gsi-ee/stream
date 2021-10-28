@@ -246,14 +246,14 @@ namespace hadaq {
          base::H2handle *fQaToTPerHld;  ///<! QA ToT per TDC channel - from HLD
          base::H2handle *fQaEdgesPerHld;  ///<! QA Edges per TDC channel - from HLD
          base::H2handle *fQaErrorsPerHld;  ///<! QA Errors per TDC channel - from HLD
-         
+
          // JAM 8-10-2021 something new for calibration monitor:
          base::H2handle *fToTPerTDCChannel;  ///< HADAQ ToT per TDC channel, real values
          base::H2handle *fShiftPerTDCChannel;  ///< HADAQ calibrated shift per TDC channel, real values
          base::H1handle *fExpectedToTPerTDC;  ///< HADAQ expected ToT per TDC  used for calibration
          base::H2handle *fDevPerTDCChannel;  ///< HADAQ ToT deviation per TDC channel from calibration
-     
-         
+
+
 
          unsigned                 fNumChannels;       ///<! number of channels
          unsigned                 fNumFineBins;       ///<! number of fine-counter bins
@@ -336,6 +336,7 @@ namespace hadaq {
          unsigned  fSkipTdcMessages;     ///<! number of first messages, skipped from analysis
          bool      f400Mhz;              ///<! is 400Mhz mode (debug)
          double    fCustomMhz;           ///<! new design Mhz
+         bool      fPairedChannels;      ///<! special mode when rising/falling edges splitted on different channels
 
          std::vector<std::string> fCalibrLog; ///<! error log messages during calibration
 
@@ -483,6 +484,12 @@ namespace hadaq {
 
          void SetCustomMhz(float freq = 400.);
 
+         /** Set paired channels mode
+          * In such case odd channels are normal rising edge but even channels are falling edge of previous one */
+         void SetPairedChannels(bool on = true) { fPairedChannels = on; }
+         /** Get paired channels mode */
+         bool GetPairedChannels() const { return fPairedChannels; }
+
          /** Set minimal counts number for ToT calibration */
          void SetTotStatLimit(int minstat = 100) { fTotStatLimit = minstat; }
          /** Set maximal allowed RMS for ToT histogram in ns */
@@ -578,11 +585,11 @@ namespace hadaq {
             fQaFinePerHld = hQaFine;
             fQaToTPerHld = hQaToT;
             fQaEdgesPerHld = hQaEdges;
-            fQaErrorsPerHld = hQaErrors;            
-            fToTPerTDCChannel = hTot; 
+            fQaErrorsPerHld = hQaErrors;
+            fToTPerTDCChannel = hTot;
             fShiftPerTDCChannel = hShift;
             fExpectedToTPerTDC = hExpTot;
-            fDevPerTDCChannel = hDev;     
+            fDevPerTDCChannel = hDev;
          }
 
          /** Set calibration trigger type(s)
