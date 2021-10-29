@@ -347,9 +347,9 @@ void hadaq::TrbProcessor::SetCalibrTriggerMask(unsigned trigmask)
 //////////////////////////////////////////////////////////////////////////////
 /// Add sub-processor (like TDC or ADC)
 
-void hadaq::TrbProcessor::AddSub(SubProcessor* tdc, unsigned id)
+void hadaq::TrbProcessor::AddSub(SubProcessor* sub, unsigned id)
 {
-   fMap[id] = tdc;
+   fMap[id] = sub;
 }
 
 //////////////////////////////////////////////////////////////////////////////
