@@ -530,7 +530,7 @@ void hadaq::HldProcessor::CreatePerTDCHisto()
           fExpectedToTPerTDC = MakeH1("ExpectedToT", "Expected ToT used for calibration per TDC", tdcs.size(), 0, tdcs.size(), opt1.c_str());
 
         if (!fDevPerTDCChannel)
-          fDevPerTDCChannel = MakeH2("DevPerChannel", "Deviation of Tot from calibration per TDC channel",
+          fDevPerTDCChannel = MakeH2("DevPerChannel", "Sigma against expected ToT per TDC channel",
                               tdcs.size(), 0, tdcs.size(),
                                    TrbProcessor::GetDefaultNumCh(), 0, TrbProcessor::GetDefaultNumCh(),
                                    opt2.c_str());

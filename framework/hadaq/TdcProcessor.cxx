@@ -301,6 +301,10 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
          fFallingCalibr = MakeH2("FallingCalibr", "falling edge calibration", numchannels, 0, numchannels, fNumFineBins, 0, fNumFineBins, "ch;fine");
          fTotShifts = MakeH1("TotShifts", "Calibrated time shift for falling edge", numchannels, 0, numchannels, "kind:F;ch;ns");
       }
+      
+      
+        fhSigmaTotVsChannel = MakeH2("ToTSigmaVsChannel", "SigmaToT", numchannels, 0, numchannels, 500, 0, +5, "ch; Sigma ToT [ns]");
+
 
    }
 
@@ -1661,7 +1665,6 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
    //static int ddd = 0;
    //if (ddd++ % 10000 == 0) printf("%s dostore %d istriggered %d hasevt %d kind %d\n", GetName(), dostore, IsTriggeredAnalysis(), mgr()->HasTrigEvent(), GetStoreKind());
-
    uint32_t first_epoch(0);
 
    unsigned epoch_shift = 0;
@@ -1982,10 +1985,16 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                   }
                   DefFillH1(rec.fTot, tot, 1.);
                   rec.rising_new_value = false;
-
+                  // JAM 11-2021: add ToT sigma histogram here:
+                  double totvar=  pow((tot-fToTvalue),2.0);
+                  double totsigma = sqrt(totvar);                  
+                  DefFillH2(fhSigmaTotVsChannel, chid, totsigma, 1.);
+                 
                    // here put something new for global histograms JAM2021:
                     if (fToTPerTDCChannel)
                         {
+                            
+                              
                             // we first always show most recent value, no averaging here;
                             SetH2Content(*fToTPerTDCChannel, fHldId, chid, tot);
 
@@ -2001,6 +2010,13 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 //                            if (nEntries) averagetot= (oldtot * (nEntries-1) + tot) / nEntries;
 //                            SetH2Content(*fToTPerTDCChannel, fHldId, chid, averagetot);
                         }
+                     if(fDevPerTDCChannel)
+                     {
+                            rec.tot_dev+=totvar; // JAM misuse  this data field to get overall sigma of file
+                            rec.tot0d_cnt++; // JAM misuse calibration counter here to evaluate sigma
+                            double currentsigma= sqrt(rec.tot_dev/rec.tot0d_cnt);                        
+                            SetH2Content(*fDevPerTDCChannel, fHldId, chid,  currentsigma);                         
+                    }
 
 
                   // use only raw hit
@@ -2851,10 +2867,10 @@ void hadaq::TdcProcessor::DoHadesHistAnalysis()
            }
 
             //tot_dev - this is not recovered from calibration files! we might not fill it here
-        if(fDevPerTDCChannel)
-             {
-              SetH2Content(*fDevPerTDCChannel, fHldId, iCh,  rec.tot_dev); // JAM DEBUG rec.tot_dev
-             }
+//         if(fDevPerTDCChannel)
+//              {
+//               SetH2Content(*fDevPerTDCChannel, fHldId, iCh,  rec.tot_dev); // JAM DEBUG rec.tot_dev
+//              }
 
     }
 }

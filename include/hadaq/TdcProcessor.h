@@ -235,6 +235,10 @@ namespace hadaq {
          base::H2handle fhTotVsChannel; ///<! histogram of ToT vs channel
          base::H1handle fhTotMoreCounter; ///<! histogram of counter with ToT >20 ns per channel
          base::H1handle fhTotMinusCounter; ///<! histogram of counter with ToT < 0 ns per channel
+         
+         base::H2handle fhSigmaTotVsChannel; ///<! JAM histogram of calibration ToT difference (rms) from expected Tot, vs channel
+         
+         
 
          unsigned fHldId;               ///<! sequence number of processor in HLD
          base::H1handle *fHitsPerHld;   ///<! hits per TDC - from HLD
@@ -287,7 +291,8 @@ namespace hadaq {
          double                   fCalibrTempSum0; ///<! sum0 used to check temperature during calibration
          double                   fCalibrTempSum1; ///<! sum1 used to check temperature during calibration
          double                   fCalibrTempSum2; ///<! sum2 used to check temperature during calibration
-
+         
+       
          std::vector<hadaq::TdcMessageExt>  fDummyVect; ///<! dummy empty vector
          std::vector<hadaq::TdcMessageExt> *pStoreVect; ///<! pointer on store vector
 
