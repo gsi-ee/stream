@@ -1027,10 +1027,11 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
    unsigned tgtindx0(tgtindx), cnt(0),
          hitcnt(0), hit1cnt(0), epochcnt(0), errcnt(0), calibr_indx(0), calibr_num(0),
          nrising(0), nfalling(0),
-         nmatches(0); // try to check sequence of hits, if fails
+         nmatches(0), // try to check sequence of hits, if fails
+         trig_type = sub->GetTrigTypeTrb3();
 
-   bool use_in_calibr = ((1 << sub->GetTrigTypeTrb3()) & fCalibrTriggerMask) != 0;
-   bool is_0d_trig = (sub->GetTrigTypeTrb3() == 0xD);
+   bool use_in_calibr = ((1 << trig_type) & fCalibrTriggerMask) != 0;
+   bool is_0d_trig = (trig_type == 0xD);
 
    if (fAllCalibrMode == 0) {
       use_in_calibr = false;
@@ -1290,6 +1291,9 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
       // detect 0xD trigger ourself
       if (!is_0d_trig && (nrising == nfalling) && (nrising+1 == NumChannels())) is_0d_trig = true;
       if (!is_0d_trig && (nmatches > 16)) is_0d_trig = true;
+
+      // if in calibration mode more than 90% of falling and rising edges - mark as d trigger, HADES workaround
+      if (!is_0d_trig && ((trig_type == 0) || (trig_type == 1)) && (nrising > 0.9*NumChannels()) && (nfalling > 0.9*NumChannels())) is_0d_trig = true;
 
       if (is_0d_trig) fAllDTrigCnt++;
       if ((fAllDTrigCnt>10) && (fAllTotMode<0)) fAllTotMode = 0;
