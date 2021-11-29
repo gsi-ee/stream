@@ -1052,7 +1052,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
 
    uint32_t epoch(0), chid, fine, kind, coarse(0), new_fine,
             idata, *tgtraw = tgt ? (uint32_t *) tgt->RawData() : 0;
-   bool isrising, hard_failure, fast_loop = HistFillLevel() < 2;
+   bool isrising, hard_failure, fast_loop = HistFillLevel() < 2, changed_msg;
    double corr, ch0tm{0};
 
    // if (fAllTotMode==1) printf("%s dtrig %d do_tot %d dofalling %d\n", GetName(), is_0d_trig, do_tot, DoFallingEdge());
@@ -1102,10 +1102,12 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
       chid = msg.getHitChannel();
       fine = msg.getHitTmFine();
       isrising = msg.isHitRisingEdge();
+      changed_msg = false;
 
       // if (fAllTotMode==1) printf("%s ch %u rising %d fine %x\n", GetName(), chid, isrising, fine);
 
       if (fPairedChannels && (chid > 0) && (chid % 2 == 0) && isrising) {
+         changed_msg = true;
          chid--; // previous channel
          isrising = false; // even channels are falling edges for odd channels
       }
@@ -1163,6 +1165,10 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
             if (corr_coarse > 0)
                msg.setHitTmCoarse(coarse - corr_coarse);
          }
+         if (changed_msg) {
+            msg.setHitChannel(chid);
+            msg.setHitEdge(isrising ? 1 : 0);
+         }
          sub->SetData(indx-1, msg.getData());
       } else {
          // copy data to the target, introduce extra messages with calibrated
@@ -1196,7 +1202,13 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
 
          // copy original hit message
          // tgt->SetData(tgtindx++, msg.getData());
-         tgtraw[tgtindx++] = idata;
+         if (changed_msg) {
+            msg.setHitChannel(chid);
+            msg.setHitEdge(isrising ? 1 : 0);
+            tgtraw[tgtindx++] = msg.getData();
+         } else {
+            tgtraw[tgtindx++] = idata;
+         }
       }
 
       if (hard_failure) continue;

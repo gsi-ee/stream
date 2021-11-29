@@ -125,6 +125,8 @@ namespace hadaq {
 
          /** Returns hit channel ID */
          inline uint32_t getHitChannel() const { return (fData >> 22) & 0x7F; }
+         /** Set hit channel */
+         inline void setHitChannel(uint32_t chid) { fData = (fData & ~(0x7F << 22)) | ((chid & 0x7F) << 22); }
 
          /** Returns hit coarse time counter, 11 bit */
          inline uint32_t getHitTmCoarse() const { return fData & 0x7FF; }
@@ -139,6 +141,8 @@ namespace hadaq {
 
          /** Returns hit edge 1 - rising, 0 - falling */
          inline uint32_t getHitEdge() const {  return (fData >> 11) & 0x1; }
+         /** Set hit edge */
+         inline void setHitEdge(uint32_t edge) { fData = (fData & ~(0x1 << 11)) | ((edge & 0x1) << 11); }
 
          /** Is rising edge */
          inline bool isHitRisingEdge() const { return getHitEdge() == 0x1; }
