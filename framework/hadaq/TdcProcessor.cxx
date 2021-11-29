@@ -1105,6 +1105,11 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
 
       // if (fAllTotMode==1) printf("%s ch %u rising %d fine %x\n", GetName(), chid, isrising, fine);
 
+      if (fPairedChannels && (chid > 0) && (chid % 2 == 0) && isrising) {
+         chid--; // previous channel
+         isrising = false; // even channels are falling edges for odd channels
+      }
+
       hard_failure = false;
       if (chid >= NumChannels()) {
          hard_failure = true;
