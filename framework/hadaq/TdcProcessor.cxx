@@ -1137,7 +1137,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
             // simple approach for rising edge - replace data in the source buffer
             // value from 0 to 1000 is 5 ps unit, should be SUB from coarse time value
             uint32_t new_fine = (uint32_t) (corr/5e-12);
-            if (new_fine>=1000) new_fine = 1000;
+            if (new_fine >= 1000) new_fine = 1000;
             if (hard_failure) new_fine = 0x3ff;
             msg.setAsHit2(new_fine);
          } else {
@@ -1145,16 +1145,22 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
             // value from 0 to 500 is 10 ps unit, should be SUB from coarse time value
 
             unsigned corr_coarse = 0;
-            if (rec.tot_shift > 0) {
+            if (rec.tot_shift > 0.) {
                // if tot_shift calibrated (in ns), included it into correction
                // in such case which should add correction into coarse counter
                corr += rec.tot_shift*1e-9;
                corr_coarse = (unsigned) (corr/5e-9);
                corr -= corr_coarse*5e-9;
+            } else if (rec.tot_shift < 0.) {
+               // case of HADES TOF TDC, shift coarse to right
+               corr += rec.tot_shift*1e-9;
+               while ((corr < 0.) && (coarse < 0x7ff)) { corr += 5e-9; coarse++; }
+               if (corr < 0.) 
+                  hard_failure = true;
             }
 
             uint32_t new_fine = (uint32_t) (corr/10e-12);
-            if (new_fine>=500) new_fine = 500;
+            if (new_fine >= 500) new_fine = 500;
 
             if (corr_coarse > coarse)
                new_fine |= 0x200; // indicate that corrected time belongs to the previous epoch
@@ -1162,8 +1168,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
             if (hard_failure) new_fine = 0x3ff;
 
             msg.setAsHit2(new_fine);
-            if (corr_coarse > 0)
-               msg.setHitTmCoarse(coarse - corr_coarse);
+            msg.setHitTmCoarse(coarse - corr_coarse);
          }
          if (changed_msg) {
             msg.setHitChannel(chid);
