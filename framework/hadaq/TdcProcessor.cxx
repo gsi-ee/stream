@@ -1866,6 +1866,15 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                // use correction from special message
 
                uint32_t calibr_fine = calibr.getCalibrFine(ncalibr++);
+               if (calibr_fine == 0x3fff) {
+                  if (first_scan) {
+                     FastFillH1(fErrors, chid);
+                     if (fChErrPerHld) DefFillH2(*fChErrPerHld, fHldId, chid, 1);
+                     ADDERROR(errFine, "Invalid value in calibrated message in channel %u", chid);
+                  }
+                  continue;
+               }
+               
                corr = calibr_fine*5e-9/0x3ffe;
                if (isrising) DefFillH2(fhRaisingFineCalibr, chid, calibr_fine, 1.);
                if (!isrising) corr *= 10.; // range for falling edge is 50 ns.
@@ -2531,6 +2540,14 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
          if (ncalibr < 2) {
             // use correction from special message
             uint32_t calibr_fine = calibr.getCalibrFine(ncalibr++);
+            if (calibr_fine == 0x3fff) {
+               FastFillH1(fErrors, chid);
+               if (fChErrPerHld) DefFillH2(*fChErrPerHld, fHldId, chid, 1);
+               ADDERROR(errFine, "Invalid value in calibratem message for channel %u", chid);
+               iserr = true;
+               continue;
+            }
+            
             corr = calibr_fine*5e-9/0x3ffe;
             if (isrising) DefFillH2(fhRaisingFineCalibr, chid, calibr_fine, 1.);
             if (!isrising) corr *= 10.; // range for falling edge is 50 ns.
