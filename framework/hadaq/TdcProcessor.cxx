@@ -1205,7 +1205,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
          if (changed_msg) {
             msg.setHitChannel(chid);
             msg.setHitEdge(isrising ? 1 : 0);
-            tgtraw[tgtindx++] = msg.getData();
+            tgtraw[tgtindx++] = HADAQ_SWAP4(msg.getData());
          } else {
             tgtraw[tgtindx++] = idata;
          }
