@@ -1179,10 +1179,24 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
          } else {
             // account TOT shift
             corr += rec.tot_shift*1e-9;
-            // falling edge correction used for 50 ns, approx 3.05ps binning
+
+            if (changed_msg && (corr < 0.)) {
+               uint32_t coarse = msg.getHitTmCoarse();
+
+               // move coarse time and compensate correction
+               while ((coarse < 0x7ff) && (corr < 0.)) { coarse++; corr += 5e-9; }
+               msg.setHitTmCoarse(coarse);
+               if (corr < 0.) {
+                  // printf("%s Fail to compensate channel %u\n", GetName(), chid);
+                  corr = 0;
+                  hard_failure = true;
+               }
+            }
+               
             new_fine = (uint32_t) (corr/5e-8*0x3ffe);
          }
-         if ((new_fine > 0x3ffe) || hard_failure) new_fine = 0x3ffe;
+         
+         if ((new_fine > 0x3ffe) || hard_failure) new_fine = 0x3fff;
 
          if (calibr_indx == 0) {
             calibr_indx = tgtindx++;
