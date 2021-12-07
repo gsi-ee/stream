@@ -260,7 +260,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
     fShiftPerTDCChannel= nullptr;  ///< HADAQ calibrated shift per TDC channel, real values
     fExpectedToTPerTDC= nullptr;  ///< HADAQ expected ToT per TDC  used for calibration
     fDevPerTDCChannel= nullptr;
-
+    fTPreviousPerTDCChannel= nullptr;
 
    fToTdflt = true;
    fToTvalue = ToTvalue;
@@ -303,9 +303,9 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
       }
 
 
-        fhSigmaTotVsChannel = MakeH2("ToTSigmaVsChannel", "SigmaToT", numchannels, 0, numchannels, 500, 0, +5, "ch; Sigma ToT [ns]");
+    fhSigmaTotVsChannel = MakeH2("ToTSigmaVsChannel", "SigmaToT", numchannels, 0, numchannels, 500, 0, +5, "ch; Sigma ToT [ns]");
 
-
+    fhRisingPrevDiffVsChannel= MakeH2("RisingChanneslDiff", "Rising dt to reference channel 0 ", numchannels, 0, numchannels, 6000, -300, 300, "ch; Delta t [ns]");
    }
 
    for (unsigned ch=0;ch<numchannels;ch++)
@@ -734,7 +734,7 @@ void hadaq::TdcProcessor::BeforeFill()
    for (unsigned ch = 0; ch < NumChannels(); ch++) {
       ChannelRec &rec = fCh[ch];
       rec.rising_hit_tm = 0;
-      rec.rising_last_tm = 0;
+      rec.rising_last_tm = 0; 
       rec.rising_ref_tm = 0.;
       rec.rising_new_value = false;
       rec.rising_tmds = 0.;
@@ -1970,6 +1970,22 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                rec.rising_cnt++;
 
                bool print_cond = false;
+               
+               //JAM 11-2021: prevdiff histogram against rising edges of previous channel:
+//                if(chid>0 && fCh[chid].rising_last_tm){
+//                     double prevdiff=(fCh[chid-1].rising_last_tm - localtm) * 1e9;
+               // JAM 7-12-21: better plot dt against ref channel?
+                if(chid>0 && ch0time){
+                     double refdiff=(localtm - ch0time) * 1e9;
+                     if(refdiff > -1000 && refdiff < 1000)
+                     {
+                            DefFillH2(fhRisingPrevDiffVsChannel, chid, refdiff, 1.);
+                        if(fTPreviousPerTDCChannel)
+                            SetH2Content(*fTPreviousPerTDCChannel, fHldId, chid,  refdiff);  // show only most recent value
+                     }
+                    
+               }
+               
 
                rec.rising_last_tm = localtm;
                rec.rising_new_value = true;
@@ -2005,6 +2021,10 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                           fine, fCh[0].rising_fine);
                }
 
+              
+               
+               
+               
             } else {
                // processing of falling edge
                if (raw_hit && use_fine_for_stat) {
@@ -2039,6 +2059,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                   // JAM 11-2021: add ToT sigma histogram here:
                   double totvar=  pow((tot-fToTvalue),2.0);
                   double totsigma = sqrt(totvar);
+                  
                   DefFillH2(fhSigmaTotVsChannel, chid, totsigma, 1.);
 
                    // here put something new for global histograms JAM2021:
@@ -2047,7 +2068,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
 
                             // we first always show most recent value, no averaging here;
-                            SetH2Content(*fToTPerTDCChannel, fHldId, chid, tot);
+                            if((tot>0) && (tot < 1000)) // JAM 7-12-21 suppress noise fakes
+                                SetH2Content(*fToTPerTDCChannel, fHldId, chid, tot);
 
                             // TODO: later get previous statistics for this channel and weight new entry correctly for averaging: (performance?!)
 //                             int nBins1, nBins2;
@@ -2061,12 +2083,13 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 //                            if (nEntries) averagetot= (oldtot * (nEntries-1) + tot) / nEntries;
 //                            SetH2Content(*fToTPerTDCChannel, fHldId, chid, averagetot);
                         }
-                     if(fDevPerTDCChannel)
+                     if(fDevPerTDCChannel && (tot>0) && (tot < 1000)) // JAM 7-12-21 suppress noise fakes
                      {
                             rec.tot_dev+=totvar; // JAM misuse  this data field to get overall sigma of file
                             rec.tot0d_cnt++; // JAM misuse calibration counter here to evaluate sigma
                             double currentsigma= sqrt(rec.tot_dev/rec.tot0d_cnt);
-                            SetH2Content(*fDevPerTDCChannel, fHldId, chid,  currentsigma);
+                            if(currentsigma<10)
+                                SetH2Content(*fDevPerTDCChannel, fHldId, chid,  currentsigma);
                     }
 
 

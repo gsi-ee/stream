@@ -56,7 +56,7 @@ hadaq::HldProcessor::HldProcessor(bool auto_create, const char* after_func) :
     fShiftPerTDCChannel = nullptr;  ///< HADAQ calibrated shift per TDC channel, real values
     fExpectedToTPerTDC = nullptr;  ///< HADAQ expected ToT per TDC sed for calibration
     fDevPerTDCChannel = nullptr;  ///< HADAQ ToT deviation per TDC channel from calibration
-
+    fPrevDiffPerTDCChannel  = nullptr;
 
    // printf("Create HldProcessor %s\n", GetName());
 
@@ -535,8 +535,11 @@ void hadaq::HldProcessor::CreatePerTDCHisto()
                                    TrbProcessor::GetDefaultNumCh(), 0, TrbProcessor::GetDefaultNumCh(),
                                    opt2.c_str());
 
-
-
+    if (!fPrevDiffPerTDCChannel)
+    fPrevDiffPerTDCChannel = MakeH2("RisingDtPerChannel", "Rising edge delta t to reference channel, per TDC     channel", tdcs.size(), 0, tdcs.size(),
+                                    TrbProcessor::GetDefaultNumCh(), 0, TrbProcessor::GetDefaultNumCh(),
+                                    opt2.c_str());
+    
    if (hadaq::TdcProcessor::GetHadesMonitorInterval() > 0) {
        if (!fQaFinePerTDCChannel)
           fQaFinePerTDCChannel = MakeH2("QaFinePerChannel", "QA fine time per TDC channel",
@@ -592,7 +595,8 @@ void hadaq::HldProcessor::CreatePerTDCHisto()
       tdc->AssignPerHldHistos(cnt++, &fHitsPerTDC, &fErrPerTDC, &fHitsPerTDCChannel, &fErrPerTDCChannel, &fCorrPerTDCChannel,
           &fQaFinePerTDCChannel, &fQaToTPerTDCChannel, &fQaEdgesPerTDCChannel, &fQaErrorsPerTDCChannel,
 
-           &fToTPerTDCChannel, &fShiftPerTDCChannel, &fExpectedToTPerTDC,  &fDevPerTDCChannel);
+           &fToTPerTDCChannel, &fShiftPerTDCChannel, &fExpectedToTPerTDC,  &fDevPerTDCChannel,
+           &fPrevDiffPerTDCChannel);
 }
 
 

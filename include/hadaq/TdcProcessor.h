@@ -238,7 +238,7 @@ namespace hadaq {
          
          base::H2handle fhSigmaTotVsChannel; ///<! JAM histogram of calibration ToT difference (rms) from expected Tot, vs channel
          
-         
+          base::H2handle fhRisingPrevDiffVsChannel; ///<! JAM histogram time difference (ns) between subsequent rising hits vs channel. Suggested by Jan Michel
 
          unsigned fHldId;               ///<! sequence number of processor in HLD
          base::H1handle *fHitsPerHld;   ///<! hits per TDC - from HLD
@@ -256,7 +256,7 @@ namespace hadaq {
          base::H2handle *fShiftPerTDCChannel;  ///< HADAQ calibrated shift per TDC channel, real values
          base::H1handle *fExpectedToTPerTDC;  ///< HADAQ expected ToT per TDC  used for calibration
          base::H2handle *fDevPerTDCChannel;  ///< HADAQ ToT deviation per TDC channel from calibration
-
+         base::H2handle *fTPreviousPerTDCChannel; 
 
 
          unsigned                 fNumChannels;       ///<! number of channels
@@ -579,7 +579,7 @@ namespace hadaq {
                                               base::H2handle *hQaFine, base::H2handle *hQaToT,
                                               base::H2handle *hQaEdges, base::H2handle *hQaErrors,
                                               base::H2handle *hTot, base::H2handle *hShift,
-                                              base::H1handle *hExpTot, base::H2handle *hDev)
+                                              base::H1handle *hExpTot, base::H2handle *hDev, base::H2handle *hTPrev)
          {
             fHldId = id;
             fHitsPerHld = hHits;
@@ -595,6 +595,7 @@ namespace hadaq {
             fShiftPerTDCChannel = hShift;
             fExpectedToTPerTDC = hExpTot;
             fDevPerTDCChannel = hDev;
+            fTPreviousPerTDCChannel = hTPrev;
          }
 
          /** Set calibration trigger type(s)
