@@ -1328,8 +1328,10 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
       if (!is_0d_trig && (nrising == nfalling) && (nrising+1 == NumChannels())) is_0d_trig = true;
       if (!is_0d_trig && (nmatches > 16)) is_0d_trig = true;
 
+      double limit = GetPairedChannels() ? 0.4 : 0.8;
+
       // if in calibration mode more than 90% of falling and rising edges - mark as d trigger, HADES workaround
-      if (!is_0d_trig && ((trig_type == 0) || (trig_type == 1)) && (nrising > 0.9*NumChannels()) && (nfalling > 0.9*NumChannels())) is_0d_trig = true;
+      if (!is_0d_trig && ((trig_type == 0) || (trig_type == 1)) && (nrising > limit*NumChannels()) && (nfalling > limit*NumChannels())) is_0d_trig = true;
 
       if (is_0d_trig) fAllDTrigCnt++;
       if ((fAllDTrigCnt>10) && (fAllTotMode<0)) fAllTotMode = 0;
