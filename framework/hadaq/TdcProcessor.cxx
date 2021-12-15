@@ -1344,11 +1344,15 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
       for (unsigned ch=1;ch<NumChannels();ch++) {
          ChannelRec& rec = fCh[ch];
 
-         if (rec.hascalibr && (rec.last_tot >= fToThmin) && (rec.last_tot < fToThmax)) {
-            int bin = (int) ((rec.last_tot - fToThmin) / (fToThmax - fToThmin) * TotBins);
-            if (rec.tot0d_hist.empty()) rec.CreateToTHist();
-            rec.tot0d_hist[bin]++;
-            rec.tot0d_cnt++;
+         if (rec.hascalibr) {
+            if ((rec.last_tot >= fToThmin) && (rec.last_tot < fToThmax)) {
+               int bin = (int) ((rec.last_tot - fToThmin) / (fToThmax - fToThmin) * TotBins);
+               if (rec.tot0d_hist.empty()) rec.CreateToTHist();
+               rec.tot0d_hist[bin]++;
+               rec.tot0d_cnt++;
+            } else {
+               rec.tot0d_misscnt++;
+            }
          }
 
          rec.last_tot = 0.;
@@ -2213,14 +2217,18 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
       // when doing TOT calibration, use only last TOT value - before one could find other signals
       if (do_tot)
-         for (unsigned ch=1;ch<NumChannels();ch++) {
+         for (unsigned ch = 1; ch < NumChannels(); ch++) {
             // printf("%s Channel %d last_tot %5.3f has_calibr %d min %5.2f max %5.2f \n", GetName(), ch, fCh[ch].last_tot, fCh[ch].hascalibr, fToThmin, fToThmax);
 
-            if (fCh[ch].hascalibr && (fCh[ch].last_tot >= fToThmin) && (fCh[ch].last_tot < fToThmax)) {
-               if (fCh[ch].tot0d_hist.empty()) fCh[ch].CreateToTHist();
-               int bin = (int) ((fCh[ch].last_tot - fToThmin) / (fToThmax - fToThmin) * TotBins);
-               fCh[ch].tot0d_hist[bin]++;
-               fCh[ch].tot0d_cnt++;
+            if (fCh[ch].hascalibr) {
+               if ((fCh[ch].last_tot >= fToThmin) && (fCh[ch].last_tot < fToThmax)) {
+                  if (fCh[ch].tot0d_hist.empty()) fCh[ch].CreateToTHist();
+                  int bin = (int) ((fCh[ch].last_tot - fToThmin) / (fToThmax - fToThmin) * TotBins);
+                  fCh[ch].tot0d_hist[bin]++;
+                  fCh[ch].tot0d_cnt++;
+               } else {
+                  fCh[ch].tot0d_misscnt++;
+               }
             }
             fCh[ch].last_tot = 0.;
          }
@@ -3525,20 +3533,42 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
 
          printf("%s:%u Check Tot dofalling: %d tot0d_cnt:%ld prelim:%d tot0d_hist:%d \n", GetName(), ch, DoFallingEdge(), rec.tot0d_cnt, preliminary, (int) rec.tot0d_hist.size());
 
-         if ((ch > 0) && DoFallingEdge() && (rec.tot0d_cnt > 100) && !preliminary && !rec.tot0d_hist.empty()) {
-            CalibrateTot(ch, rec.tot0d_hist, rec.tot_shift, rec.tot_dev, 0.05);
+         if ((ch > 0) && DoFallingEdge() && !preliminary) {
 
-            if (!rec.fTot0D && (HistFillLevel() > 2)) {
-               SetSubPrefix2("Ch", ch);
-               rec.fTot0D = MakeH1("Tot0D", "Time over threshold with 0xD trigger", TotBins, fToThmin, fToThmax, "ns");
-               SetSubPrefix2();
-            }
+            std::string name_prefix = std::string(GetName()) + "_ch" + std::to_string(ch) + "_ToT";
 
-            if (rec.fTot0D)
-               for (unsigned n=0;n<TotBins;n++) {
-                  double x = fToThmin + (n + 0.1) / TotBins * (fToThmax-fToThmin);
-                  DefFillH1(rec.fTot0D, x, rec.tot0d_hist[n]);
+            if ((rec.tot0d_cnt > 100)  && !rec.tot0d_hist.empty()) {
+
+               CalibrateTot(ch, rec.tot0d_hist, rec.tot_shift, rec.tot_dev, 0.05);
+
+               if (!rec.fTot0D && (HistFillLevel() > 2)) {
+                  SetSubPrefix2("Ch", ch);
+                  rec.fTot0D = MakeH1("Tot0D", "Time over threshold with 0xD trigger", TotBins, fToThmin, fToThmax, "ns");
+                  SetSubPrefix2();
                }
+
+               if (rec.fTot0D)
+                  for (unsigned n=0;n<TotBins;n++) {
+                     double x = fToThmin + (n + 0.1) / TotBins * (fToThmax-fToThmin);
+                     DefFillH1(rec.fTot0D, x, rec.tot0d_hist[n]);
+                  }
+
+               if (rec.tot0d_misscnt > 0.5*rec.tot0d_cnt) {
+                  printf("%s Ch:%u TOT problem - much values %ld missed histogram range\n", GetName(), ch, rec.tot0d_misscnt);
+                  if (fCalibrQuality > 0.6) {
+                     fCalibrStatus = name_prefix + "_miss_hrange";
+                     fCalibrQuality = 0.6;
+                  }
+                  fCalibrLog.push_back(name_prefix + "_miss_hrange");
+               }
+            } else if (rec.tot0d_misscnt > 100) {
+               printf("%s Ch:%u TOT failure - too much values %ld missed histogram range\n", GetName(), ch, rec.tot0d_misscnt);
+               if (fCalibrQuality > 0.4) {
+                  fCalibrStatus = name_prefix + "_err_hrange";
+                  fCalibrQuality = 0.4;
+               }
+               fCalibrLog.push_back(name_prefix + "_err_hrange");
+            }
          }
 
          //
@@ -3594,6 +3624,7 @@ void hadaq::TdcProcessor::ClearChannelStat(unsigned ch)
    fCh[ch].all_falling_stat = 0;
    fCh[ch].all_rising_stat = 0;
    fCh[ch].tot0d_cnt = 0;
+   fCh[ch].tot0d_misscnt = 0;
    fCh[ch].ReleaseToTHist();
 }
 

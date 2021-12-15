@@ -79,6 +79,7 @@ namespace hadaq {
             std::vector<float> falling_calibr;   ///<! falling calibr
             float last_tot;                 ///<! last tot
             long tot0d_cnt;                 ///<! counter of tot0d statistic for calibration
+            long tot0d_misscnt;             ///<! counter of tot which misses histogram rnage
             std::vector<uint32_t> tot0d_hist;  ///<! histogram used for TOT calibration, allocated only when required
             float tot_shift;                ///<! calibrated tot shift
             float tot_dev;                  ///<! tot shift deviation after calibration
@@ -134,6 +135,7 @@ namespace hadaq {
                falling_calibr(),
                last_tot(0.),
                tot0d_cnt(0),
+               tot0d_misscnt(0),
                tot0d_hist(),
                tot_shift(0.),
                tot_dev(0.),
