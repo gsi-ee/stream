@@ -56,8 +56,10 @@ TFirstStepProcessor::TFirstStepProcessor(const char* name) :
       throw TGo4EventErrorException(this);
    }
 
-   static std::string gFirstCode = "";
-   static std::string gFirstName = "";
+   static std::string gFirstCode;
+   static std::string gFirstName;
+   static std::string gSecondCode;
+   static std::string gSecondName;
    static int gFirstCnt = 0;
 
    if(gFirstCode.empty()) {
@@ -85,16 +87,47 @@ TFirstStepProcessor::TFirstStepProcessor(const char* name) :
    std::string second_name = GetSecondName();
    if (!second_name.empty() && (gSystem->AccessPathName(second_name.c_str()) == 0)) {
 
-      if (gSystem->Getenv("STREAMSYS")==0) {
-         TGo4Log::Error("STREAMSYS shell variable not configured");
+      std::string scode = ReadMacroCode(second_name), exec2, func;
+      if (scode.empty()) {
+         TGo4Log::Error("Cannot load content of %s script", second_name.c_str());
          throw TGo4EventErrorException(this);
       }
 
-      gROOT->ProcessLine(".include $STREAMSYS/include");
-      gROOT->ProcessLine(".include $GO4SYS/include");
+      if (gSecondCode.empty()) {
 
-      std::string exec = second_name + "+";
-      if (ExecuteScript(exec.c_str()) == -1) {
+         if (gSystem->Getenv("STREAMSYS")==0) {
+            TGo4Log::Error("STREAMSYS shell variable not configured");
+            throw TGo4EventErrorException(this);
+         }
+
+         gROOT->ProcessLine(".include $STREAMSYS/include");
+         gROOT->ProcessLine(".include $GO4SYS/include");
+
+         gSecondName = second_name;
+         gSecondCode = scode;
+
+         exec2 = second_name + "+";
+      } else if (gSecondName == second_name) {
+         if (gSecondCode != scode) {
+            TGo4Log::Error("Not allowed to change content of %s file", gSecondName.c_str());
+            throw TGo4EventErrorException(this);
+         } else {
+            std::string::size_type pos = second_name.find(".");
+            func = second_name.substr(0,pos);
+            pos = func.rfind("/");
+            if (pos != std::string::npos) func = func.substr(pos+1, func.length()-pos-1);
+         }
+      } else {
+         gSecondName = second_name;
+         gSecondCode = scode;
+         exec2 = second_name + "+";
+      }
+
+      if (!func.empty()) {
+         TString func_exec = TString::Format("%s()", func.c_str());
+         TGo4Log::Info("Execute function %s", func_exec.Data());
+         gROOT->ProcessLine(func_exec.Data());
+      } else if (ExecuteScript(exec2.c_str()) == -1) {
          TGo4Log::Error("Cannot setup analysis with %s script", second_name.c_str());
          throw TGo4EventErrorException(this);
       }
