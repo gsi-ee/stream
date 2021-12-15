@@ -3156,8 +3156,8 @@ void hadaq::TdcProcessor::SetLinearCalibration(unsigned nch, unsigned finemin, u
 
 double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, bool rising, const std::vector<uint32_t> &statistic, std::vector<float> &calibr, bool use_linear, bool preliminary)
 {
-   double sum(0.), limits(use_linear ? 100 : 1000);
-   unsigned finemin(0), finemax(0);
+   double sum = 0., limits = use_linear ? 100 : 1000;
+   unsigned finemin = 0, finemax = 0;
    std::vector<double> integral(fNumFineBins, 0.);
    for (unsigned n=0;n<fNumFineBins;n++) {
       if (statistic[n]) {
@@ -3286,22 +3286,34 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, bool rising, const st
 
       double sum1 = 0., sum2 = 0., linear = 0, exact = 0.;
 
-      for (unsigned n=0;n<fNumFineBins;n++) {
-         if (n <= finemin)
-            linear = 0.;
-         else if (n >= finemax)
-            linear = 1.;
-         else
-            linear = (n - finemin) / (0. + finemax - finemin);
+      // exclude some cases when several wrong finecounter values measured, which confuses algorithm
+      while ((finemax > finemin) && (integral[finemax] > 0.999*sum)) finemax--;
 
-         sum1 += 1.;
+      double scale_value = (integral[finemax] - statistic[finemax]/2) / sum;
 
-         exact = (integral[n] - statistic[n]/2) / sum;
-         sum2 += (exact - linear) * (exact - linear);
-         calibr[n] = exact * coarse_unit;
+      if (!preliminary && (finemax < (f400Mhz ? 175 : 350))) {
+         std::string log_finemax = std::string("_BadFineMax_") + std::to_string(finemax);
+         err_log.append(log_finemax);
+         if (quality > 0.4) quality = 0.4;
+         if (fCalibrQuality > 0.4) {
+            fCalibrStatus = name_prefix + log_finemax;
+            fCalibrQuality = 0.4;
+         }
       }
 
-      if (!preliminary && (sum1>100)) {
+      for (unsigned n = 0; n < fNumFineBins; n++) {
+         exact = (integral[n] - statistic[n]/2) / sum;
+         calibr[n] = exact * coarse_unit;
+
+         if ((n > finemin) && (n < finemax)) {
+            linear = (n - finemin) / (0. + finemax - finemin) * scale_value;
+
+            sum1 += 1.;
+            sum2 += (exact - linear) * (exact - linear);
+         }
+      }
+
+      if (!preliminary && (sum1 > 100)) {
          double dev = sqrt(sum2/sum1); // average deviation
          printf("%s ch %u cnts %5.0f deviation %5.4f\n", GetName(), nch, sum, dev);
          if (dev > 0.05) {
@@ -3551,8 +3563,6 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
          if (DoFallingEdge())
             CopyCalibration(rec.falling_calibr, rec.fFallingCalibr, ch, fFallingCalibr);
          DefFillH1(fTotShifts, ch, rec.tot_shift);
-
-
        }
     }
 
