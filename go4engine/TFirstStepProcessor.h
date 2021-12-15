@@ -4,6 +4,8 @@
 #include "TGo4EventProcessor.h"
 #include "root/TRootProcMgr.h"
 
+#include <string>
+
 /** Handler for first.C in go4 */
 
 class TFirstStepProcessor : public TGo4EventProcessor,
@@ -14,6 +16,8 @@ class TFirstStepProcessor : public TGo4EventProcessor,
       long fTotalDataSize;  ///< processed data size
       long fNumInpBufs;     ///< processed number of buffers
       long fNumOutEvents;   ///< created number of output events
+
+      std::string ReadMacroCode(const std::string &fname);
 
    public:
 

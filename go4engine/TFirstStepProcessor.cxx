@@ -1,5 +1,9 @@
 #include "TFirstStepProcessor.h"
 
+#include <fstream>
+#include <iterator>
+#include <regex>
+
 #include "TGo4Log.h"
 #include "TH1.h"
 #include "TH2.h"
@@ -10,6 +14,7 @@
 #include "TCanvas.h"
 #include "TTimer.h"
 #include "TSystem.h"
+#include "TInterpreter.h"
 #include "TUrl.h"
 
 #include "TGo4WinCond.h"
@@ -45,18 +50,37 @@ TFirstStepProcessor::TFirstStepProcessor(const char* name) :
 
    SetSortedOrder(true);
 
-   if (gSystem->AccessPathName("first.C") != 0) {
-      TGo4Log::Error("Cannot find first.C script");
+   std::string fcode = ReadMacroCode("first.C");
+   if (fcode.empty()) {
+      TGo4Log::Error("Cannot load content of first.C script");
       throw TGo4EventErrorException(this);
    }
 
-   if (ExecuteScript("first.C+") == -1) {
-      TGo4Log::Warn("Compiled mode of first.C fails, may have a problem to relaunch analysis");
-      if (ExecuteScript("first.C") == -1) {
-         TGo4Log::Error("Cannot setup analysis with first.C script");
+   static std::string gFirstCode = "";
+   static std::string gFirstName = "";
+   static int gFirstCnt = 0;
+
+   if(gFirstCode.empty()) {
+      gFirstCode = fcode;
+      gFirstName = "first";
+      if (!gInterpreter->LoadText(gFirstCode.c_str())) {
+         TGo4Log::Error("Cannot parse code of first.C script");
+         throw TGo4EventErrorException(this);
+      }
+   } else if (gFirstCode != fcode) {
+      // load modified function
+      gFirstName = std::string("first") + std::to_string(gFirstCnt++);
+      gFirstCode = std::regex_replace(fcode, std::regex("first"), gFirstName);
+      gFirstCode = std::regex_replace(gFirstCode, std::regex("after_create"), std::string("after_create_") + std::to_string(gFirstCnt));
+      if (!gInterpreter->LoadText(gFirstCode.c_str())) {
+         TGo4Log::Error("Cannot parse code of %s.C script", gFirstName.c_str());
          throw TGo4EventErrorException(this);
       }
    }
+
+   TString exec = TString::Format("%s()", gFirstName.c_str());
+   TGo4Log::Info("Execute first.C script with command %s", exec.Data());
+   gROOT->ProcessLine(exec.Data());
 
    std::string second_name = GetSecondName();
    if (!second_name.empty() && (gSystem->AccessPathName(second_name.c_str()) == 0)) {
@@ -87,6 +111,16 @@ TFirstStepProcessor::TFirstStepProcessor(const char* name) :
 TFirstStepProcessor::~TFirstStepProcessor()
 {
    TGo4Log::Info("Input %ld  Output %ld  Total processed size = %ld", fNumInpBufs, fNumOutEvents, fTotalDataSize);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// read macro code
+
+std::string TFirstStepProcessor::ReadMacroCode(const std::string &fname)
+{
+   std::ifstream t(fname);
+   std::string str((std::istreambuf_iterator<char>(t)), {});
+   return str;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
