@@ -7,6 +7,8 @@
 
 #include <cstdlib>
 #include <cstring>
+#include <fstream>
+#include <string>
 
 #include "TGo4EventErrorException.h"
 #include "TGo4EventEndException.h"
@@ -216,18 +218,24 @@ Int_t TUserSource::Open()
 {
    TString fname = GetName();
 
+   fIsHLD = kTRUE;
+   if (fname.EndsWith(".dat")) fIsHLD = kFALSE;
+
    if(fname.Contains("*") || fname.Contains("?")) {
       // name indicates wildcard expression
       fNames = TGo4FileSource::ProducesFilesList(fname.Data());
+   } if (fname.EndsWith(".hll")) {
+      fIsHLD = kTRUE;
+      fNames = new TList;
+      std::ifstream filein(fname.Data());
+      for (std::string line; std::getline(filein, line); ) {
+         if (!line.empty())
+            fNames->Add(new TObjString(line.c_str()));
+      }
    } else {
       fNames = new TList;
       fNames->Add(new TObjString(fname.Data()));
    }
-
-   fIsHLD = kTRUE;
-
-   if (fname.EndsWith(".dat")) fIsHLD = kFALSE;
-
 
    fxBuffer = new Char_t[Trb_BUFSIZE];
 
