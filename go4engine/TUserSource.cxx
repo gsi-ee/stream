@@ -224,7 +224,7 @@ Int_t TUserSource::Open()
    if(fname.Contains("*") || fname.Contains("?")) {
       // name indicates wildcard expression
       fNames = TGo4FileSource::ProducesFilesList(fname.Data());
-   } if (fname.EndsWith(".hll")) {
+   } else if (fname.EndsWith(".hll")) {
       fIsHLD = kTRUE;
       fNames = new TList;
       std::ifstream filein(fname.Data());
@@ -240,7 +240,7 @@ Int_t TUserSource::Open()
 
    fxBuffer = new Char_t[Trb_BUFSIZE];
 
-   TGo4Log::Info("%s user source contains %d files", (fIsHLD ? "HLD" : "GET4"), fNames->GetSize());
+   TGo4Log::Info("%s user source contains %d files", (fIsHLD ? "HLD" : "GET4"), fNames ? fNames->GetSize() : 0);
 
    TGo4Analysis::Instance()->SetInputFileName(fname.Data());
 
@@ -260,6 +260,9 @@ Bool_t TUserSource::OpenNextFile()
       return kFALSE;
    }
 
+   printf("Open next file %s\n", fNames->At(0)->GetName());
+
+
    TObject* obj = fNames->First();
    TString nextname = obj->GetName();
    fNames->Remove(fNames->FirstLink());
@@ -275,7 +278,7 @@ Bool_t TUserSource::OpenNextFile()
       ///<! Open connection/file
       if(!fxFile.OpenRead(nextname.Data())) {
          SetCreateStatus(1);
-         SetErrMess(Form("Eror opening user file:%s", nextname.Data()));
+         SetErrMess(Form("Error opening HLD file: %s", nextname.Data()));
          throw TGo4EventErrorException(this);
       }
 
@@ -287,7 +290,7 @@ Bool_t TUserSource::OpenNextFile()
       fxDatFile = fopen(nextname.Data(), "r");
       if (fxDatFile == 0) {
          SetCreateStatus(1);
-         SetErrMess(Form("Eror opening user file:%s", nextname.Data()));
+         SetErrMess(Form("Error opening DAT file: %s", nextname.Data()));
          throw TGo4EventErrorException(this);
       }
 
