@@ -228,7 +228,8 @@ Int_t TUserSource::Open()
       fIsHLD = kTRUE;
       fNames = new TList;
       std::ifstream filein(fname.Data());
-      for (std::string line; std::getline(filein, line); ) {
+      std::string line;
+      while(std::getline(filein, line)) {
          if (!line.empty())
             fNames->Add(new TObjString(line.c_str()));
       }
