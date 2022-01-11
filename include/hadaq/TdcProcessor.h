@@ -361,6 +361,7 @@ namespace hadaq {
          static bool gUseDTrigForRef;    ///<! when true, use special triggers for ref calculations
          static bool gUseAsDTrig;        ///<! when true, all events are analyzed as 0xD trigger
          static int gHadesMonitorInterval; ///<! how often special HADES monitoring procedure called
+         static bool gHadesReducedMonitor; ///<! if true suppress some unrequired histograms for hades tdc calib mon
          static int gTotStatLimit;         ///<! how much statistic required for ToT calibration
          static double gTotRMSLimit;       ///<! allowed RMS value
          static int gDefaultLinearNumPoints;      ///<! number of points when linear calibration is used
@@ -472,6 +473,9 @@ namespace hadaq {
          static void SetHadesMonitorInterval(int tm = -1);
          static int GetHadesMonitorInterval();
 
+         static void SetHadesReducedMonitoring(bool on=true);
+         static bool IsHadesReducedMonitoring();
+         
          static void SetUseDTrigForRef(bool on = true);
 
          static void SetTriggerDWindow(double low = -25, double high = 50);

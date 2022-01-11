@@ -16,6 +16,8 @@
 #include "hadaq/TdcSubEvent.h"
 #include <iostream>
 
+
+
 #define RAWPRINT( args ...) if(IsPrintRawData()) printf( args )
 
 
@@ -33,6 +35,7 @@ double hadaq::TdcProcessor::gTrigDWindowHigh = 0;
 bool hadaq::TdcProcessor::gUseDTrigForRef = false;
 bool hadaq::TdcProcessor::gUseAsDTrig = false;
 int hadaq::TdcProcessor::gHadesMonitorInterval = -111;
+bool hadaq::TdcProcessor::gHadesReducedMonitor = false;
 int hadaq::TdcProcessor::gTotStatLimit = 100;
 double hadaq::TdcProcessor::gTotRMSLimit = 0.15;
 int hadaq::TdcProcessor::gDefaultLinearNumPoints = 2;
@@ -146,6 +149,26 @@ int hadaq::TdcProcessor::GetHadesMonitorInterval()
 {
    return gHadesMonitorInterval;
 }
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// JAM22: with this flag may suppress some histograms for hades tdc calib monitor
+
+void hadaq::TdcProcessor::SetHadesReducedMonitoring(bool on)
+{
+   gHadesReducedMonitor = on;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// Return interval in seconds for HADES monitoring histograms filling
+
+bool hadaq::TdcProcessor::IsHadesReducedMonitoring()
+{
+   return gHadesReducedMonitor;
+}
+
+
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 /// enable storage of calibration tables for V4 TDC
@@ -286,14 +309,21 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
          fMsgsKind = MakeH1("MsgKind", "kind of messages", 8, 0, 8, "xbin:HDR,EPOC,TMDR,TMDT,-,-,-,-;kind");
 
       fAllFine = MakeH2("FineTm", "fine counter value", numchannels, 0, numchannels, (fNumFineBins==1000 ? 100 : fNumFineBins), 0, fNumFineBins, "ch;fine");
+      
+ if (!hadaq::TdcProcessor::IsHadesReducedMonitoring())
+    {
       fhRaisingFineCalibr = MakeH2("RaisingFineTmCalibr", "raising calibrated fine counter value", numchannels, 0, numchannels, (fNumFineBins==1000 ? 100 : fNumFineBins), 0, fNumFineBins, "ch;calibrated fine");
+    } 
+      
       fAllCoarse = MakeH2("CoarseTm", "coarse counter value", numchannels, 0, numchannels, 2048, 0, 2048, "ch;coarse");
 
       fhTotVsChannel = MakeH2("TotVsChannel", "ToT", numchannels, 0, numchannels, gTotRange*100/(gHist2dReduce > 0 ? gHist2dReduce : 1), 0., gTotRange, "ch;ToT [ns]");
 
+      if (!hadaq::TdcProcessor::IsHadesReducedMonitoring())
+        {
       fhTotMoreCounter = MakeH1("TotMoreCounter", "ToT > 20 ns counter in TDC channels", numchannels, 0, numchannels, "ch");
       fhTotMinusCounter = MakeH1("TotMinusCounter", "ToT < 0 ns counter in TDC channels", numchannels, 0, numchannels, "ch");
-
+        }
       if (DoRisingEdge())
          fRisingCalibr  = MakeH2("RisingCalibr",  "rising edge calibration", numchannels, 0, numchannels, fNumFineBins, 0, fNumFineBins, "ch;fine");
 
@@ -305,7 +335,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
 
     fhSigmaTotVsChannel = MakeH2("ToTSigmaVsChannel", "SigmaToT", numchannels, 0, numchannels, 500, 0, +5, "ch; Sigma ToT [ns]");
 
-    fhRisingPrevDiffVsChannel= MakeH2("RisingChanneslDiff", "Rising dt to reference channel 0 ", numchannels, 0, numchannels, 6000, -30, 30, "ch; Delta t [ns]");
+    fhRisingPrevDiffVsChannel= MakeH2("RisingChanneslDiff", "Rising dt to reference channel 0 ", numchannels, 0, numchannels, 2000, -10, 10, "ch; Delta t [ns]");
    }
 
    for (unsigned ch=0;ch<numchannels;ch++)
@@ -1887,7 +1917,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                }
                
                corr = calibr_fine*5e-9/0x3ffe;
-               if (isrising) DefFillH2(fhRaisingFineCalibr, chid, calibr_fine, 1.);
+               if (isrising && fhRaisingFineCalibr!=0) DefFillH2(fhRaisingFineCalibr, chid, calibr_fine, 1.);
                if (!isrising) corr *= 10.; // range for falling edge is 50 ns.
             } else {
 
@@ -2052,10 +2082,11 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                   double tot = (localtm - rec.rising_last_tm)*1e9;
                   // TODO chid
                   DefFillH2(fhTotVsChannel, chid, tot, 1.);
-                  if (tot < 0. ) {
+                  
+                  if (fhTotMinusCounter && (tot < 0. )) {
                       DefFillH1(fhTotMinusCounter, chid, 1.);
                   }
-                  if (tot > fTotUpperLimit) {
+                  if (fhTotMoreCounter && (tot > fTotUpperLimit)) {
                       DefFillH1(fhTotMoreCounter, chid, 1.);
                   }
                   DefFillH1(rec.fTot, tot, 1.);
@@ -2587,7 +2618,7 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
             }
             
             corr = calibr_fine*5e-9/0x3ffe;
-            if (isrising) DefFillH2(fhRaisingFineCalibr, chid, calibr_fine, 1.);
+            if (isrising && fhRaisingFineCalibr!=0) DefFillH2(fhRaisingFineCalibr, chid, calibr_fine, 1.);
             if (!isrising) corr *= 10.; // range for falling edge is 50 ns.
          } else {
 
@@ -2726,10 +2757,10 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
                   double tot = (localtm - rec.rising_last_tm)*1e9;
                   // TODO chid
                   DefFillH2(fhTotVsChannel, chid, tot, 1.);
-                  if (tot < 0. ) {
+                  if (fhTotMinusCounter && (tot < 0. )) {
                      DefFillH1(fhTotMinusCounter, chid, 1.);
                   }
-                  if (tot > fTotUpperLimit) {
+                  if (fhTotMinusCounter && (tot > fTotUpperLimit)) {
                      DefFillH1(fhTotMoreCounter, chid, 1.);
                   }
                   DefFillH1(rec.fTot, tot, 1.);
@@ -2970,28 +3001,32 @@ void hadaq::TdcProcessor::DoHadesHistAnalysis()
 
 double hadaq::TdcProcessor::DoTestToT(int iCh)
 {
-    int nBins1, nBins2;
-    GetH2NBins(fhTotVsChannel, nBins1, nBins2);
+    double dresult =0;
+if (!hadaq::TdcProcessor::IsHadesReducedMonitoring())
+        {
+        int nBins1, nBins2;
+        GetH2NBins(fhTotVsChannel, nBins1, nBins2);
 
-    int nBins = GetH1NBins(fhTotMoreCounter);
-    if (iCh < 0 || iCh >= nBins) return 0.;
-    double moreContent = GetH1Content(fhTotMoreCounter, iCh);
-    double minusContent = GetH1Content(fhTotMinusCounter, iCh);
+        int nBins = GetH1NBins(fhTotMoreCounter);
+        if (iCh < 0 || iCh >= nBins) return 0.;
+        double moreContent = GetH1Content(fhTotMoreCounter, iCh);
+        double minusContent = GetH1Content(fhTotMinusCounter, iCh);
 
-    double nEntries = 0.;
-    for (int i = 0; i < nBins2; i++){
-        nEntries += GetH2Content(fhTotVsChannel, iCh, i);
-    }
+        double nEntries = 0.;
+        for (int i = 0; i < nBins2; i++){
+            nEntries += GetH2Content(fhTotVsChannel, iCh, i);
+        }
 
-    if (nEntries == 0) return 0.;
-    double ratio = (moreContent + minusContent) / nEntries;
+        if (nEntries == 0) return 0.;
+        double ratio = (moreContent + minusContent) / nEntries;
 
-    int result = (int) (100. * (1. - ratio));
-    if (result <= 0) result = 0;
-    if (result >= 99) result = 99;
+        int result = (int) (100. * (1. - ratio));
+        if (result <= 0) result = 0;
+        if (result >= 99) result = 99;
 
-    double resultEntries = (nEntries >= 100) ? 0.99 : (nEntries / 100.);
-    double dresult = 1.*result + resultEntries;
+        double resultEntries = (nEntries >= 100) ? 0.99 : (nEntries / 100.);
+        dresult = 1.*result + resultEntries;
+        }
 
     return dresult;
 }
