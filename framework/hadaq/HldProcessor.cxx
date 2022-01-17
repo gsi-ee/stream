@@ -24,6 +24,7 @@ hadaq::HldProcessor::HldProcessor(bool auto_create, const char* after_func) :
    base::StreamProc("HLD", 0, false),
    fMap(),
    fEventTypeSelect(0xfffff),
+   fFilterStatusEvents(false),
    fPrintRawData(false),
    fAutoCreate(auto_create),
    fAfterFunc(after_func==0 ? "" : after_func),
@@ -52,11 +53,11 @@ hadaq::HldProcessor::HldProcessor(bool auto_create, const char* after_func) :
    fQaErrorsPerTDCChannel = nullptr;  // HADAQ QA errors per TDC channel
    fQaSummary = nullptr; // HADAQ QA summary histogramm
 
-    fToTPerTDCChannel = nullptr;  ///< HADAQ ToT per TDC channel, real values
-    fShiftPerTDCChannel = nullptr;  ///< HADAQ calibrated shift per TDC channel, real values
-    fExpectedToTPerTDC = nullptr;  ///< HADAQ expected ToT per TDC sed for calibration
-    fDevPerTDCChannel = nullptr;  ///< HADAQ ToT deviation per TDC channel from calibration
-    fPrevDiffPerTDCChannel  = nullptr;
+   fToTPerTDCChannel = nullptr;  ///< HADAQ ToT per TDC channel, real values
+   fShiftPerTDCChannel = nullptr;  ///< HADAQ calibrated shift per TDC channel, real values
+   fExpectedToTPerTDC = nullptr;  ///< HADAQ expected ToT per TDC sed for calibration
+   fDevPerTDCChannel = nullptr;  ///< HADAQ ToT deviation per TDC channel from calibration
+   fPrevDiffPerTDCChannel  = nullptr;
 
    // printf("Create HldProcessor %s\n", GetName());
 
@@ -245,6 +246,7 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
       fMsg.seq_nr = ev->GetSeqNr();
 
       if ((fEventTypeSelect <= 0xf) && ((ev->GetId() & 0xf) != fEventTypeSelect)) continue;
+      if (fFilterStatusEvents && (((ev->GetId() & 0xf) == 0x9) || ((ev->GetId() & 0xf) == 0xe))) continue;
 
       if (IsPrintRawData()) ev->Dump();
 
@@ -539,7 +541,7 @@ void hadaq::HldProcessor::CreatePerTDCHisto()
     fPrevDiffPerTDCChannel = MakeH2("RisingDtPerChannel", "Rising edge delta t to reference channel, per TDC     channel", tdcs.size(), 0, tdcs.size(),
                                     TrbProcessor::GetDefaultNumCh(), 0, TrbProcessor::GetDefaultNumCh(),
                                     opt2.c_str());
-    
+
    if ( !hadaq::TdcProcessor::IsHadesReducedMonitoring() && (hadaq::TdcProcessor::GetHadesMonitorInterval() > 0)) {
        if (!fQaFinePerTDCChannel)
           fQaFinePerTDCChannel = MakeH2("QaFinePerChannel", "QA fine time per TDC channel",

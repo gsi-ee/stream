@@ -99,6 +99,7 @@ namespace hadaq {
          TrbProcMap fMap;            ///< map of trb processors
 
          unsigned  fEventTypeSelect; ///< selection for event type (lower 4 bits in event id)
+         bool      fFilterStatusEvents; ///< filter out status events
 
          bool fPrintRawData;         ///< true when raw data should be printed
 
@@ -126,8 +127,8 @@ namespace hadaq {
          base::H2handle fToTPerTDCChannel;  ///< HADAQ ToT per TDC channel, real values
          base::H2handle fShiftPerTDCChannel;  ///< HADAQ calibrated shift per TDC channel, real values
          base::H1handle fExpectedToTPerTDC;  ///< HADAQ expected ToT per TDC sed for calibration
-         base::H2handle fDevPerTDCChannel;  ///< HADAQ ToT deviation per TDC channel 
-         base::H2handle fPrevDiffPerTDCChannel;  ///< HADAQ rising edge time difference to previous channel  
+         base::H2handle fDevPerTDCChannel;  ///< HADAQ ToT deviation per TDC channel
+         base::H2handle fPrevDiffPerTDCChannel;  ///< HADAQ rising edge time difference to previous channel
          HldMessage     fMsg;        ///< used for TTree store
          HldMessage    *pMsg;        ///< used for TTree store
 
@@ -175,6 +176,10 @@ namespace hadaq {
 
          /** Set event type, only used in the analysis */
          void SetEventTypeSelect(unsigned evid) { fEventTypeSelect = evid; }
+         unsigned GetEventTypeSelect() const { return fEventTypeSelect; }
+
+         void SetFilterStatusEvents(bool on = true) { fFilterStatusEvents = on; }
+         bool GetFilterStatusEvents() const { return fFilterStatusEvents; }
 
          virtual void SetTriggerWindow(double left, double right);
 
