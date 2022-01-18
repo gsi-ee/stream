@@ -309,12 +309,12 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
          fMsgsKind = MakeH1("MsgKind", "kind of messages", 8, 0, 8, "xbin:HDR,EPOC,TMDR,TMDT,-,-,-,-;kind");
 
       fAllFine = MakeH2("FineTm", "fine counter value", numchannels, 0, numchannels, (fNumFineBins==1000 ? 100 : fNumFineBins), 0, fNumFineBins, "ch;fine");
-      
+
  if (!hadaq::TdcProcessor::IsHadesReducedMonitoring())
     {
       fhRaisingFineCalibr = MakeH2("RaisingFineTmCalibr", "raising calibrated fine counter value", numchannels, 0, numchannels, (fNumFineBins==1000 ? 100 : fNumFineBins), 0, fNumFineBins, "ch;calibrated fine");
-    } 
-      
+    }
+
       fAllCoarse = MakeH2("CoarseTm", "coarse counter value", numchannels, 0, numchannels, 2048, 0, 2048, "ch;coarse");
 
       fhTotVsChannel = MakeH2("TotVsChannel", "ToT", numchannels, 0, numchannels, gTotRange*100/(gHist2dReduce > 0 ? gHist2dReduce : 1), 0., gTotRange, "ch;ToT [ns]");
@@ -764,7 +764,7 @@ void hadaq::TdcProcessor::BeforeFill()
    for (unsigned ch = 0; ch < NumChannels(); ch++) {
       ChannelRec &rec = fCh[ch];
       rec.rising_hit_tm = 0;
-      rec.rising_last_tm = 0; 
+      rec.rising_last_tm = 0;
       rec.rising_ref_tm = 0.;
       rec.rising_new_value = false;
       rec.rising_tmds = 0.;
@@ -1185,7 +1185,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
                // case of HADES TOF TDC, shift coarse to right
                corr += rec.tot_shift*1e-9;
                while ((corr < 0.) && (coarse < 0x7ff)) { corr += 5e-9; coarse++; }
-               if (corr < 0.) 
+               if (corr < 0.)
                   hard_failure = true;
             }
 
@@ -1227,10 +1227,10 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
                   hard_failure = true;
                }
             }
-               
+
             new_fine = (uint32_t) (corr/5e-8*0x3ffe);
          }
-         
+
          if ((new_fine > 0x3ffe) || hard_failure) new_fine = 0x3fff;
 
          if (calibr_indx == 0) {
@@ -1915,7 +1915,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                   }
                   continue;
                }
-               
+
                corr = calibr_fine*5e-9/0x3ffe;
                if (isrising && fhRaisingFineCalibr!=0) DefFillH2(fhRaisingFineCalibr, chid, calibr_fine, 1.);
                if (!isrising) corr *= 10.; // range for falling edge is 50 ns.
@@ -2004,7 +2004,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                rec.rising_cnt++;
 
                bool print_cond = false;
-               
+
                //JAM 11-2021: prevdiff histogram against rising edges of previous channel:
 //                if(chid>0 && fCh[chid].rising_last_tm){
 //                     double prevdiff=(fCh[chid-1].rising_last_tm - localtm) * 1e9;
@@ -2017,9 +2017,9 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                         if(fTPreviousPerTDCChannel)
                             SetH2Content(*fTPreviousPerTDCChannel, fHldId, chid,  refdiff);  // show only most recent value
                      }
-                    
+
                }
-               
+
 
                rec.rising_last_tm = localtm;
                rec.rising_new_value = true;
@@ -2055,10 +2055,10 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                           fine, fCh[0].rising_fine);
                }
 
-              
-               
-               
-               
+
+
+
+
             } else {
                // processing of falling edge
                if (raw_hit && use_fine_for_stat) {
@@ -2082,7 +2082,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                   double tot = (localtm - rec.rising_last_tm)*1e9;
                   // TODO chid
                   DefFillH2(fhTotVsChannel, chid, tot, 1.);
-                  
+
                   if (fhTotMinusCounter && (tot < 0. )) {
                       DefFillH1(fhTotMinusCounter, chid, 1.);
                   }
@@ -2094,7 +2094,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                   // JAM 11-2021: add ToT sigma histogram here:
                   double totvar=  pow((tot-fToTvalue),2.0);
                   double totsigma = sqrt(totvar);
-                  
+
                   DefFillH2(fhSigmaTotVsChannel, chid, totsigma, 1.);
 
                    // here put something new for global histograms JAM2021:
@@ -2616,7 +2616,7 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
                iserr = true;
                continue;
             }
-            
+
             corr = calibr_fine*5e-9/0x3ffe;
             if (isrising && fhRaisingFineCalibr!=0) DefFillH2(fhRaisingFineCalibr, chid, calibr_fine, 1.);
             if (!isrising) corr *= 10.; // range for falling edge is 50 ns.
@@ -3381,8 +3381,8 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, bool rising, const st
 
 bool hadaq::TdcProcessor::CalibrateTot(unsigned nch, std::vector<uint32_t> &hist, float &tot_shift, float &tot_dev, float cut)
 {
-   int left(0), right(TotBins);
-   double sum0(0), sum1(0), sum2(0);
+   int left = 0, right = TotBins;
+   double sum0 = 0., sum1 = 0., sum2 = 0.;
    tot_dev = 0.;
 
    std::string name_prefix = std::string(GetName()) + "_ch" + std::to_string(nch) + "_ToT";
