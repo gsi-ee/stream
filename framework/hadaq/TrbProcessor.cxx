@@ -701,6 +701,12 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
          unsigned nCTSwords = nInputs*2 + nTrigChannels*2 +
                               bIncludeLastIdle*2 + bIncludeCounters*3 + bIncludeTimestamp*1;
 
+         // corrupted data - fully ignore them
+         if (nCTSwords > datalen) {
+            RAWPRINT("Error: Corrupted CTS data, check system config\n");
+            continue;
+         }
+
          RAWPRINT("     CTS trigtype: 0x%04x, nExtTrigFlag: 0x%02x, datalen: %u, nCTSwords: %u\n", trigtype, nExtTrigFlag, datalen, nCTSwords);
 
          // we skip all the information from the CTS right now,
@@ -943,7 +949,6 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
             printf("%s: Saw ID 0x%04x in autocreate mode\n", GetName(), dataid);
          }
       }
-
 
       RAWPRINT("Unknown header 0x%04x length %u in TRB 0x%04x subevent\n", data & 0xFFFF, datalen, GetID());
       ix+=datalen;
