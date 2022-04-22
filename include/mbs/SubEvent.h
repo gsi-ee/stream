@@ -16,13 +16,13 @@ namespace mbs {
          virtual ~SubEvent() {}
 
          /** clear */
-         virtual void Clear() {}
+         void Clear() override {}
 
          /** sort */
-         virtual void Sort() {}
+         void Sort() override {}
 
          /** Method returns event multiplicity - that ever it means */
-         virtual unsigned Multiplicity() const { return 1; }
+         unsigned Multiplicity() const override { return 1; }
    };
 }
 

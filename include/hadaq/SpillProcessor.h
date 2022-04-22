@@ -107,7 +107,7 @@ public:
    SpillProcessor();
    virtual ~SpillProcessor();
 
-   virtual bool FirstBufferScan(const base::Buffer &buf);
+   bool FirstBufferScan(const base::Buffer &buf) override;
 
    /** Set TDC range */
    void SetTdcRange(unsigned min, unsigned max)

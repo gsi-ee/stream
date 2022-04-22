@@ -27,7 +27,7 @@ namespace base {
 
          /** Returns true when processor used to select trigger signal
           * TRB3 not yet able to perform trigger selection */
-         virtual bool doTriggerSelection() const { return false; }
+         bool doTriggerSelection() const override  { return false; }
 
          void AddSub(SysCoreProc* tdc, unsigned id);
 
@@ -36,7 +36,7 @@ namespace base {
          OpticSplitter(unsigned brdid = 0xff);
          virtual ~OpticSplitter();
 
-         virtual bool FirstBufferScan(const base::Buffer& buf);
+         bool FirstBufferScan(const base::Buffer& buf) override ;
 
    };
 }

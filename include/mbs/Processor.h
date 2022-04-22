@@ -20,11 +20,11 @@ namespace mbs {
 
          /** Returns true when processor used to select trigger signal
           * TRB3 not yet able to perform trigger selection */
-         virtual bool doTriggerSelection() const { return false; }
+         bool doTriggerSelection() const override { return false; }
 
          /** This is maximum disorder time for MBS
           * TODO: derive this value from sub-items */
-         virtual double MaximumDisorderTm() const { return 1e-6; }
+         double MaximumDisorderTm() const override { return 1e-6; }
 
       public:
 
@@ -33,9 +33,9 @@ namespace mbs {
          virtual ~Processor();
 
          /** Scan all messages, find reference signals */
-         virtual bool FirstBufferScan(const base::Buffer& buf);
+         bool FirstBufferScan(const base::Buffer& buf) override;
 
-         virtual bool SecondBufferScan(const base::Buffer& buf);
+         bool SecondBufferScan(const base::Buffer& buf) override;
 
    };
 }

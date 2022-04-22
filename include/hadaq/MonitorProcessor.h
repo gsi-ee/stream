@@ -21,14 +21,14 @@ namespace hadaq {
 
       protected:
 
-         unsigned fMonitorProcess;                    ///< counter
+         unsigned fMonitorProcess{0};                    ///< counter
 
          std::vector<hadaq::MessageMonitor>  fDummyVect; ///<! dummy empty vector
-         std::vector<hadaq::MessageMonitor> *pStoreVect; ///<! pointer on store vector
+         std::vector<hadaq::MessageMonitor> *pStoreVect{nullptr}; ///<! pointer on store vector
 
-         virtual void ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3runid, unsigned trb3seqid);
+         void ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3runid, unsigned trb3seqid) override;
 
-         virtual void CreateBranch(TTree* t);
+         void CreateBranch(TTree* t) override;
 
       public:
 
@@ -40,8 +40,8 @@ namespace hadaq {
          /** get number of words */
          unsigned GetNWords() const { return fMonitorProcess; }
 
-         virtual void Store(base::Event*);
-         virtual void ResetStore();
+         void Store(base::Event*) override;
+         void ResetStore() override;
    };
 }
 

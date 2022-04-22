@@ -119,13 +119,13 @@ namespace base {
          std::vector<MsgClass>* vect_ptr() { return &fExtMessages; }
 
          /** Returns subevent multiplicity  */
-         virtual unsigned Multiplicity() const { return Size(); }
+         unsigned Multiplicity() const override { return Size(); }
 
          /** Clear subevent - remove all messages */
-         virtual void Clear() { fExtMessages.clear(); }
+         void Clear() override { fExtMessages.clear(); }
 
          /** Do time sorting of messages */
-         virtual void Sort()
+         void Sort() override
          {
             std::sort(fExtMessages.begin(), fExtMessages.end());
          }

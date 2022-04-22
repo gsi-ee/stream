@@ -10,16 +10,16 @@ namespace hadaq {
 class StartProcessor : public base::StreamProc {
 
 protected:
-   base::H1handle fEvType;    ///< HADAQ event type
-   base::H1handle fEvSize;    ///< HADAQ event size
-   base::H1handle fSubevSize; ///< HADAQ sub-event size
+   base::H1handle fEvType{nullptr};    ///< HADAQ event type
+   base::H1handle fEvSize{nullptr};    ///< HADAQ event size
+   base::H1handle fSubevSize{nullptr}; ///< HADAQ sub-event size
 
-   base::H1handle fEpochDiff;  ///< epoch differences
+   base::H1handle fEpochDiff{nullptr};  ///< epoch differences
 
-   unsigned fStartId; ///< HUB with start detector
+   unsigned fStartId{0}; ///< HUB with start detector
 
-   unsigned fTdcMin; ///< minimal TDC id
-   unsigned fTdcMax; ///< maximal TDC id
+   unsigned fTdcMin{0}; ///< minimal TDC id
+   unsigned fTdcMax{0}; ///< maximal TDC id
 
    /** Calculates most realistic difference between epochs */
    inline int EpochDiff(unsigned ep1, unsigned ep2)
@@ -36,7 +36,7 @@ public:
    StartProcessor();
    virtual ~StartProcessor();
 
-   virtual bool FirstBufferScan(const base::Buffer &buf);
+   bool FirstBufferScan(const base::Buffer &buf) override;
 
    /** set start id */
    void SetStartId(unsigned id)

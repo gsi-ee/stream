@@ -47,7 +47,7 @@ namespace nx {
          void AssignBufferTo(nx::Iterator& iter, const base::Buffer& buf);
 
          // this constant identify to which extend NX time can be disordered
-         virtual double MaximumDisorderTm() const { return fNXDisorderTm; }
+         double MaximumDisorderTm() const override { return fNXDisorderTm; }
 
          static double fNXDisorderTm;
          static bool fLastEpochCorr;
@@ -61,10 +61,10 @@ namespace nx {
          bool LoadTextBaseline(const std::string& fname);
 
          /** Scan NX messages for SYNC, AUX and all other kind of messages */
-         virtual bool FirstBufferScan(const base::Buffer& buf);
+         bool FirstBufferScan(const base::Buffer& buf) override;
 
          /** Scan buffer for selecting them inside trigger */
-         virtual bool SecondBufferScan(const base::Buffer& buf);
+         bool SecondBufferScan(const base::Buffer& buf) override;
 
          static void SetDisorderTm(double v) { fNXDisorderTm = v; }
          static void SetLastEpochCorr(bool on) { fLastEpochCorr = on; }

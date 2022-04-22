@@ -33,7 +33,7 @@ namespace get4 {
          base::H1handle fMsgsKind;   ///<! histogram with messages kinds
          base::H1handle fSysTypes;   ///<! histogram with system types
          base::H1handle fMsgPerGet4;   ///<! histogram with system types
-         
+
          base::H2handle fSlMsgPerGet4; ///<! histogram with slow control per GET4
          base::H2handle fScalerPerGet4; ///<! histogram with slow control scaler per GET4
          base::H2handle fDeadPerGet4; ///<! histogram with slow control dead time per GET4
@@ -55,10 +55,10 @@ namespace get4 {
          void AssignBufferTo(get4::Iterator& iter, const base::Buffer& buf);
 
          // this constant identify to which extend NX time can be disordered
-         virtual double MaximumDisorderTm() const { return 1e-6; }
+         double MaximumDisorderTm() const override { return 1e-6; }
 
          /** Returns true when processor used to select trigger signal */
-         virtual bool doTriggerSelection() const { return (fTriggerSignal < 4) || (fTriggerSignal==10) || (fTriggerSignal==11); }
+         bool doTriggerSelection() const override { return (fTriggerSignal < 4) || (fTriggerSignal==10) || (fTriggerSignal==11); }
 
          int Get4TimeDiff(uint64_t t1, uint64_t t2) { return t1<=t2 ? t2-t1 : -1*((int) (t1-t2)); }
 
@@ -72,10 +72,10 @@ namespace get4 {
          void SetIgnore250Mhz(bool on = true) { fIgnore250Mhz = on; }
 
          /** Scan all messages, find reference signals */
-         virtual bool FirstBufferScan(const base::Buffer& buf);
+         bool FirstBufferScan(const base::Buffer& buf) override;
 
          /** Scan buffer for selecting them inside trigger */
-         virtual bool SecondBufferScan(const base::Buffer& buf);
+         bool SecondBufferScan(const base::Buffer& buf) override;
    };
 }
 

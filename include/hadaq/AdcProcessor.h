@@ -26,21 +26,12 @@ protected:
 
    /** Channel record */
    struct ChannelRec {
-   public:
-      ChannelRec() :
-         fHValues(0),
-         fHWaveform(0),
-         fHIntegral(0),
-         fHSamples(0),
-         fHCoarseTiming(0),
-         fHFineTiming(0)
-      {}
-      base::H1handle fHValues;          ///<! histogram of values distribution in channel
-      base::H2handle fHWaveform;        ///<! histogram of integrated raw waveform of channel (debug)
-      base::H1handle fHIntegral;        ///<! histogram of integrals from CFD feature extraction
-      base::H2handle fHSamples;         ///<! histogram of fine timings from CFD feature extraction
-      base::H1handle fHCoarseTiming;    ///<! ADC samples since trigger detected
-      base::H1handle fHFineTiming;      ///<! histogram of timing of single channel to trigger
+      base::H1handle fHValues{nullptr};          ///<! histogram of values distribution in channel
+      base::H2handle fHWaveform{nullptr};        ///<! histogram of integrated raw waveform of channel (debug)
+      base::H1handle fHIntegral{nullptr};        ///<! histogram of integrals from CFD feature extraction
+      base::H2handle fHSamples{nullptr};         ///<! histogram of fine timings from CFD feature extraction
+      base::H1handle fHCoarseTiming{nullptr};    ///<! ADC samples since trigger detected
+      base::H1handle fHFineTiming{nullptr};      ///<! histogram of timing of single channel to trigger
    };
 
    const double fSamplingPeriod;      ///< ADC sampling period in seconds
@@ -54,7 +45,7 @@ protected:
    std::vector<hadaq::AdcMessage>   fStoreVect; ///<! dummy empty vector
    std::vector<hadaq::AdcMessage>  *pStoreVect; ///<! pointer on store vector
 
-   virtual void CreateBranch(TTree*);
+   void CreateBranch(TTree*) override;
 
 public:
 
@@ -67,13 +58,13 @@ public:
 
    /** Scan all messages, find reference signals
      * if returned false, buffer has error and must be discarded */
-   virtual bool FirstBufferScan(const base::Buffer& buf);
+   bool FirstBufferScan(const base::Buffer& buf) override;
 
    /** Scan buffer for selecting messages inside trigger window */
-   virtual bool SecondBufferScan(const base::Buffer& buf);
+   bool SecondBufferScan(const base::Buffer& buf) override;
 
-   virtual void Store(base::Event*);
-   virtual void ResetStore();
+   void Store(base::Event*) override;
+   void ResetStore() override;
 };
 
 }

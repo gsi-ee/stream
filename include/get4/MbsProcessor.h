@@ -143,10 +143,10 @@ namespace get4 {
          void SetWriteCalibr(const std::string& fname) { fWriteCalibr = fname; }
 
          /** Scan all messages, find reference signals */
-         virtual bool FirstBufferScan(const base::Buffer& buf);
+         bool FirstBufferScan(const base::Buffer& buf) override;
 
-         virtual void UserPreLoop();
-         virtual void UserPostLoop();
+         void UserPreLoop() override;
+         void UserPostLoop() override;
    };
 }
 

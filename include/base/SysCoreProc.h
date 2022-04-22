@@ -42,7 +42,7 @@ namespace base {
 
          /** Returns true when processor used to select trigger signal
           * In subclass one could have alternative ways of trigger or ROI selections */
-         virtual bool doTriggerSelection() const { return (fTriggerSignal < 4) || (fTriggerSignal==10) || (fTriggerSignal==11); }
+         bool doTriggerSelection() const override { return (fTriggerSignal < 4) || (fTriggerSignal==10) || (fTriggerSignal==11); }
 
          void CreateBasicHistograms();
 
