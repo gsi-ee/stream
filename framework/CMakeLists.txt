@@ -128,6 +128,7 @@ if(ROOT_FOUND)
          root/TRootProcMgr.cxx
       LIBRARIES
          Stream
+      NOWARN
    )
 
    ROOT_GENERATE_DICTIONARY(G__StreamDict ${base_hdrs} ${dabc_hdrs} ${get4_hdrs} ${hadaq_hdrs} ${mbs_hdrs} ${nx_hdrs} ${root_hdrs}

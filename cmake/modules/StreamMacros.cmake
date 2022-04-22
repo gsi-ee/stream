@@ -43,7 +43,7 @@ endfunction()
 #                       DEFINITIONS def1 def2      : library definitions
 #)
 function(STREAM_LINK_LIBRARY libname)
-   cmake_parse_arguments(ARG "NOEXPORT" "" "SOURCES;LIBRARIES;DEFINITIONS;DEPENDENCIES" ${ARGN})
+   cmake_parse_arguments(ARG "NOEXPORT;NOWARN" "" "SOURCES;LIBRARIES;DEFINITIONS;DEPENDENCIES" ${ARGN})
 
    add_library(${libname} SHARED ${ARG_SOURCES})
 
@@ -51,7 +51,9 @@ function(STREAM_LINK_LIBRARY libname)
 
    target_compile_definitions(${libname} PUBLIC ${ARG_DEFINITIONS})
 
-   target_compile_options(${libname} PRIVATE -Wall)
+   if(NOT ARG_NOWARN)
+      target_compile_options(${libname} PRIVATE -Wall $<$<CXX_COMPILER_ID:GNU>:-Wsuggest-override>)
+   endif()
 
    target_link_libraries(${libname} ${ARG_LIBRARIES})
 
