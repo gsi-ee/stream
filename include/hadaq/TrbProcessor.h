@@ -116,7 +116,7 @@ namespace hadaq {
 
          /** Returns true when processor used to select trigger signal
           * TRB3 not yet able to perform trigger selection */
-         virtual bool doTriggerSelection() const { return false; }
+         bool doTriggerSelection() const override { return false; }
 
          void AccountTriggerId(unsigned id);
 
@@ -133,7 +133,7 @@ namespace hadaq {
 
          void BuildFastTDCVector();
 
-         virtual void CreateBranch(TTree* t);
+         void CreateBranch(TTree* t) override;
 
          void EventError(const char *msg);
          void EventLog(const char *msg);
@@ -172,14 +172,14 @@ namespace hadaq {
          /** deprecated, keep for backward compatibility, can be ignored */
          void SetHadaqSUBId(unsigned) {}
 
-         virtual void UserPreLoop();
-         virtual void UserPostLoop();
+         void UserPreLoop() override;
+         void UserPostLoop() override;
 
-         virtual void SetTriggerWindow(double left, double right);
+         void SetTriggerWindow(double left, double right) override;
 
-         virtual void SetStoreKind(unsigned kind = 1);
+         void SetStoreKind(unsigned kind = 1) override;
 
-         virtual bool FirstBufferScan(const base::Buffer& buf);
+         bool FirstBufferScan(const base::Buffer& buf) override;
 
          /** Enables printing of raw data */
          void SetPrintRawData(bool on = true) { fPrintRawData = on; }

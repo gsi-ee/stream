@@ -20,15 +20,9 @@ namespace hadaq {
      * Data extracted by \ref hadaq::HldProcessor and stored in \ref hadaq::HldSubEvent */
 
    struct HldMessage {
-      uint8_t trig_type; ///< trigger type
-      uint32_t seq_nr;   ///< event sequence number
-      uint32_t run_nr;   ///< run number
-
-      /** constructor */
-      HldMessage() : trig_type(0), seq_nr(0), run_nr(0) {}
-
-      /** copy constructor */
-      HldMessage(const HldMessage& src) : trig_type(src.trig_type), seq_nr(src.seq_nr), run_nr(src.run_nr) {}
+      uint8_t trig_type{0}; ///< trigger type
+      uint32_t seq_nr{0};   ///< event sequence number
+      uint32_t run_nr{0};   ///< run number
    };
 
    /** \brief HLD subevent
@@ -49,7 +43,7 @@ namespace hadaq {
          virtual ~HldSubEvent() {}
 
          /** Method returns event multiplicity - that ever it means */
-         virtual unsigned Multiplicity() const { return 1; }
+         unsigned Multiplicity() const override { return 1; }
    };
 
    /** \brief HLD filter
@@ -61,7 +55,7 @@ namespace hadaq {
 
    class HldFilter : public base::EventProc {
       protected:
-         unsigned fOnlyTrig;   ///< configured trigger to filter
+         unsigned fOnlyTrig{0};   ///< configured trigger to filter
       public:
 
          /** constructor */
@@ -71,12 +65,12 @@ namespace hadaq {
          virtual ~HldFilter() {}
 
          /** process event */
-         virtual bool Process(base::Event* ev)
+         bool Process(base::Event* ev) override
          {
             hadaq::HldSubEvent* sub =
                   dynamic_cast<hadaq::HldSubEvent*> (ev->GetSubEvent("HLD"));
 
-            if (sub==0) return false;
+            if (!sub) return false;
 
             return sub->fMsg.trig_type == fOnlyTrig;
          }
@@ -138,15 +132,15 @@ namespace hadaq {
 
          /** Returns true when processor used to select trigger signal
           * TRB3 not yet able to perform trigger selection */
-         virtual bool doTriggerSelection() const { return false; }
+         bool doTriggerSelection() const override { return false; }
 
          /** Way to register trb processor */
          void AddTrb(TrbProcessor* trb, unsigned id);
 
-         virtual void CreateBranch(TTree*);
+         void CreateBranch(TTree*) override;
 
-         virtual void Store(base::Event* ev);
-         virtual void ResetStore();
+         void Store(base::Event* ev) override;
+         void ResetStore() override;
 
          void CreatePerTDCHisto();
 
@@ -181,12 +175,12 @@ namespace hadaq {
          void SetFilterStatusEvents(bool on = true) { fFilterStatusEvents = on; }
          bool GetFilterStatusEvents() const { return fFilterStatusEvents; }
 
-         virtual void SetTriggerWindow(double left, double right);
+         void SetTriggerWindow(double left, double right) override;
 
-         virtual void SetStoreKind(unsigned kind = 1);
+         void SetStoreKind(unsigned kind = 1) override;
 
          /** Scan all messages, find reference signals */
-         virtual bool FirstBufferScan(const base::Buffer& buf);
+         bool FirstBufferScan(const base::Buffer& buf) override;
 
          void SetPrintRawData(bool on = true);
          /** Returns true if print raw data configured */
@@ -195,9 +189,9 @@ namespace hadaq {
          /** Enable auto-create mode */
          void SetAutoCreate(bool on = true) { fAutoCreate = on; }
 
-         unsigned TransformEvent(void* src, unsigned len, void* tgt = 0, unsigned tgtlen = 0);
+         unsigned TransformEvent(void* src, unsigned len, void* tgt = nullptr, unsigned tgtlen = 0);
 
-         virtual void UserPreLoop();
+         void UserPreLoop() override;
 
          /** Return reference on last event header structure */
          hadaqs::RawEvent& GetLastEventHdr() { return fLastEvHdr; }

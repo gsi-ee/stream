@@ -115,9 +115,9 @@ namespace base {
          virtual bool InternalHistFormat() const { return true; }
 
          /** Add run log */
-         virtual void AddRunLog(const char *msg) {}
+         virtual void AddRunLog(const char * /* msg */) {}
          /** Add error log */
-         virtual void AddErrLog(const char *msg) {}
+         virtual void AddErrLog(const char * /* msg */) {}
          /** Returns true if logging is enabled */
          virtual bool DoLog() { return false; }
          virtual void PrintLog(const char *msg);

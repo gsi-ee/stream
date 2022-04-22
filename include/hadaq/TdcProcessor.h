@@ -237,9 +237,9 @@ namespace hadaq {
          base::H2handle fhTotVsChannel; ///<! histogram of ToT vs channel
          base::H1handle fhTotMoreCounter; ///<! histogram of counter with ToT >20 ns per channel
          base::H1handle fhTotMinusCounter; ///<! histogram of counter with ToT < 0 ns per channel
-         
+
          base::H2handle fhSigmaTotVsChannel; ///<! JAM histogram of calibration ToT difference (rms) from expected Tot, vs channel
-         
+
           base::H2handle fhRisingPrevDiffVsChannel; ///<! JAM histogram time difference (ns) between subsequent rising hits vs channel. Suggested by Jan Michel
 
          unsigned fHldId;               ///<! sequence number of processor in HLD
@@ -258,7 +258,7 @@ namespace hadaq {
          base::H2handle *fShiftPerTDCChannel;  ///< HADAQ calibrated shift per TDC channel, real values
          base::H1handle *fExpectedToTPerTDC;  ///< HADAQ expected ToT per TDC  used for calibration
          base::H2handle *fDevPerTDCChannel;  ///< HADAQ ToT deviation per TDC channel from calibration
-         base::H2handle *fTPreviousPerTDCChannel; 
+         base::H2handle *fTPreviousPerTDCChannel;
 
 
          unsigned                 fNumChannels;       ///<! number of channels
@@ -293,8 +293,8 @@ namespace hadaq {
          double                   fCalibrTempSum0; ///<! sum0 used to check temperature during calibration
          double                   fCalibrTempSum1; ///<! sum1 used to check temperature during calibration
          double                   fCalibrTempSum2; ///<! sum2 used to check temperature during calibration
-         
-       
+
+
          std::vector<hadaq::TdcMessageExt>  fDummyVect; ///<! dummy empty vector
          std::vector<hadaq::TdcMessageExt> *pStoreVect; ///<! pointer on store vector
 
@@ -349,7 +349,7 @@ namespace hadaq {
 
          /** Returns true when processor used to select trigger signal
           * TDC not yet able to perform trigger selection */
-         virtual bool doTriggerSelection() const { return false; }
+         bool doTriggerSelection() const override { return false; }
 
          static unsigned gNumFineBins;   ///<! default value for number of bins in histograms for fine bins
          static unsigned gTotRange;      ///<! default range for TOT histogram
@@ -368,11 +368,11 @@ namespace hadaq {
          static bool gIgnoreCalibrMsgs;    ///<! ignore calibration messages
          static bool gStoreCalibrTables;   ///<! when enabled, store calibration tables for v4 TDC
 
-         virtual void AppendTrbSync(uint32_t syncid);
+         void AppendTrbSync(uint32_t syncid) override;
 
          /** This is maximum disorder time for TDC messages
           * TODO: derive this value from sub-items */
-         virtual double MaximumDisorderTm() const { return 2e-6; }
+         double MaximumDisorderTm() const override { return 2e-6; }
 
          bool DoBufferScan(const base::Buffer &buf, bool isfirst);
          bool DoBuffer4Scan(const base::Buffer &buf, bool isfirst);
@@ -383,8 +383,8 @@ namespace hadaq {
          double DoTestFineTimeH2(int iCh, base::H2handle h);
          double DoTestFineTime(double hRebin[], int nBinsRebin, int nEntries);
 
-         virtual void BeforeFill();
-         virtual void AfterFill(SubProcMap* = 0);
+         void BeforeFill() override;
+         void AfterFill(SubProcMap* = nullptr) override;
 
          long CheckChannelStat(unsigned ch);
 
@@ -429,7 +429,7 @@ namespace hadaq {
 
          void FindFMinMax(const std::vector<float> &func, int nbin, int &fmin, int &fmax);
 
-         virtual void CreateBranch(TTree*);
+         void CreateBranch(TTree*) override;
 
          void AddError(unsigned code, const char *args, ...);
 
@@ -475,7 +475,7 @@ namespace hadaq {
 
          static void SetHadesReducedMonitoring(bool on=true);
          static bool IsHadesReducedMonitoring();
-         
+
          static void SetUseDTrigForRef(bool on = true);
 
          static void SetTriggerDWindow(double low = -25, double high = 50);
@@ -727,7 +727,7 @@ namespace hadaq {
          /** Return last TDC header, seen by the processor */
          const TdcMessage& GetLastTdcTrailer() const { return fLastTdcTrailer; }
 
-         virtual void UserPostLoop();
+         void UserPostLoop() override;
 
          /** Get ref histogram for specified channel */
          base::H1handle GetChannelRefHist(unsigned ch, bool = true)
@@ -742,13 +742,13 @@ namespace hadaq {
 
          /** Scan all messages, find reference signals
           * if returned false, buffer has error and must be discarded */
-         virtual bool FirstBufferScan(const base::Buffer& buf)
+         bool FirstBufferScan(const base::Buffer& buf) override
          {
             return fVersion4 ? DoBuffer4Scan(buf, true) : DoBufferScan(buf, true);
          }
 
          /** Scan buffer for selecting messages inside trigger window */
-         virtual bool SecondBufferScan(const base::Buffer& buf)
+         bool SecondBufferScan(const base::Buffer& buf) override
          {
             return fVersion4 ? DoBuffer4Scan(buf, false) : DoBufferScan(buf, false);
          }
@@ -766,11 +766,11 @@ namespace hadaq {
 
          void StoreCalibration(const std::string& fname, unsigned fileid = 0);
 
-         virtual void Store(base::Event*);
+         void Store(base::Event*) override;
 
-         virtual void ResetStore();
+         void ResetStore() override;
 
-         unsigned TransformTdcData(hadaqs::RawSubevent* sub, uint32_t *rawdata, unsigned indx, unsigned datalen, hadaqs::RawSubevent* tgt = 0, unsigned tgtindx = 0);
+         unsigned TransformTdcData(hadaqs::RawSubevent* sub, uint32_t *rawdata, unsigned indx, unsigned datalen, hadaqs::RawSubevent* tgt = nullptr, unsigned tgtindx = 0);
 
          void EmulateTransform(int dummycnt);
 
