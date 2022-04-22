@@ -51,10 +51,10 @@ namespace base {
          unsigned                 fTimeMasterIndex;    ///<! processor index, which time is used for all other subsystems
          AnalysisKind             fAnalysisKind;       ///<! ignore all events, only single scan, not output events
          TTree                   *fTree{nullptr};      ///<! abstract tree pointer, will be used in ROOT implementation
-         int                      fDfltHistLevel;      ///<! default histogram fill level for any new created processor
-         int                      fDfltStoreKind;      ///<! default store kind for any new created processor
+         int                      fDfltHistLevel{0};   ///<! default histogram fill level for any new created processor
+         int                      fDfltStoreKind{0};   ///<! default store kind for any new created processor
          base::Event             *fTrigEvent{nullptr}; ///<! current event, filled when performing triggered analysis
-         int                      fDebug{0};            ///<! debug level
+         int                      fDebug{0};           ///<! debug level
 
          static ProcMgr* fInstance;                     ///<! instance
 
@@ -127,7 +127,7 @@ namespace base {
          /** Returns true if histograms folders created in sorted alphabetical order */
          virtual bool IsSortedOrder() { return false; }
 
-         virtual H1handle MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle = 0);
+         virtual H1handle MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle = nullptr);
          virtual bool GetH1NBins(H1handle h1, int &nbins);
          virtual void FillH1(H1handle h1, double x, double weight = 1.);
          virtual double GetH1Content(H1handle h1, int bin);
@@ -135,20 +135,20 @@ namespace base {
          virtual void ClearH1(H1handle h1);
          virtual void CopyH1(H1handle tgt, H1handle src);
          /** Set histogram title */
-         virtual void SetH1Title(H1handle h1, const char* title) {}
+         virtual void SetH1Title(H1handle, const char*) {}
          /** Tag histogram time */
-         virtual void TagH1Time(H1handle h1) {}
+         virtual void TagH1Time(H1handle) {}
 
-         virtual H2handle MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options = 0);
+         virtual H2handle MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options = nullptr);
          virtual bool GetH2NBins(H2handle h2, int &nbins1, int &nbins2);
          virtual void FillH2(H2handle h2, double x, double y, double weight = 1.);
          virtual double GetH2Content(H2handle h2, int bin1, int bin2);
          virtual void SetH2Content(H2handle h2, int bin1, int bin2, double v = 0.);
          virtual void ClearH2(H2handle h2);
          /** Set histogram title */
-         virtual void SetH2Title(H2handle h1, const char* title) {}
+         virtual void SetH2Title(H2handle, const char*) {}
          /** Tag histogram time */
-         virtual void TagH2Time(H2handle h2) {}
+         virtual void TagH2Time(H2handle) {}
 
          /** Clear all histograms */
          virtual void ClearAllHistograms() {}
@@ -159,23 +159,23 @@ namespace base {
          virtual double GetC1Limit(C1handle c1, bool isleft = true);
 
          /** create data store, for the moment - ROOT tree */
-         virtual bool CreateStore(const char* storename) { return false; }
+         virtual bool CreateStore(const char* /* storename */) { return false; }
          /** Close store */
          virtual bool CloseStore() { return false; }
          /** Create branch */
-         virtual bool CreateBranch(const char* name, const char* class_name, void** obj) { return false; }
+         virtual bool CreateBranch(const char* /* name */, const char* /* class_name */, void** /* obj */) { return false; }
          /** Create branch */
-         virtual bool CreateBranch(const char* name, void* member, const char* kind) { return false; }
+         virtual bool CreateBranch(const char* /* name */, void* /* member */, const char* /* kind */) { return false; }
          /** Store event */
          virtual bool StoreEvent() { return false; }
 
          /** method to register ROOT objects, object should be derived from TObject class
           * if returns true, object is registered and will be owned by framework */
-         virtual bool RegisterObject(TObject* tobj, const char* subfolder = nullptr) { return false; }
+         virtual bool RegisterObject(TObject* /* tobj */, const char* /* subfolder */ = nullptr) { return false; }
 
 
          /** method to call function by name */
-         virtual bool CallFunc(const char* funcname, void* arg) { return false; }
+         virtual bool CallFunc(const char* /* funcname */, void* /* arg */) { return false; }
 
          // this is list of generic methods for common data processing
 
