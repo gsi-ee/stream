@@ -12,13 +12,13 @@ class THookProc : public base::StreamProc {
 
    protected:
       TString fCmd;           ///< command to execute
-      Double_t fPeriod;       ///< period
+      Double_t fPeriod{0};    ///< period
       TStopwatch fWatch;      ///< time measuring
 
    public:
       THookProc(const char* cmd, Double_t period = 0.);
 
-      virtual bool ScanNewBuffers();
+      bool ScanNewBuffers() override;
 };
 
 #endif

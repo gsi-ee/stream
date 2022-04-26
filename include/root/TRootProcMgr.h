@@ -10,15 +10,15 @@ class TRootProcMgr : public base::ProcMgr {
       TRootProcMgr();
       virtual ~TRootProcMgr();
 
-      virtual bool CreateStore(const char* storename);
-      virtual bool CloseStore();
+      bool CreateStore(const char* storename) override;
+      bool CloseStore() override;
 
-      virtual bool CreateBranch(const char* name, const char* class_name, void** obj);
-      virtual bool CreateBranch(const char* name, void* member, const char* kind);
+      bool CreateBranch(const char* name, const char* class_name, void** obj) override;
+      bool CreateBranch(const char* name, void* member, const char* kind) override;
 
-      virtual bool StoreEvent();
+      bool StoreEvent() override;
 
-      bool CallFunc(const char* funcname, void* arg);
+      bool CallFunc(const char* funcname, void* arg) override;
 };
 
 #endif

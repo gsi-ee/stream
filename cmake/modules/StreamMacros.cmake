@@ -22,7 +22,7 @@ set(STREAM_LIBRARY_PROPERTIES
 #---------------------------------------------------------------------------------------------------
 function(STREAM_INSTALL_HEADERS subdir)
   cmake_parse_arguments(ARG "" "" "" ${ARGN})
-  foreach (include_file ${ARG_UNPARSED_ARGUMENTS})
+  foreach(include_file ${ARG_UNPARSED_ARGUMENTS})
     set(src ${CMAKE_SOURCE_DIR}/include/${include_file})
     set(dst ${CMAKE_BINARY_DIR}/include/${include_file})
     add_custom_command(
