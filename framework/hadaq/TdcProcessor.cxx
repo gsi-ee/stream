@@ -3787,7 +3787,7 @@ uint16_t gen_crc16(const uint32_t *data, unsigned size, unsigned last_bitlen)
     int bits_read = 0, bit_flag, bitlen = 32;
 
     /* Sanity check: */
-    if(data == NULL)
+    if(!data)
         return 0;
 
     while(size > 0)
@@ -3840,7 +3840,7 @@ void hadaq::TdcProcessor::CreateV4CalibrTable(unsigned ch, uint32_t *table)
 {
    ChannelRec &rec = fCh[ch];
 
-   for (int i=0; i<256; i++)
+   for (int i = 0; i < 256; i++)
       table[i] = 0;
 
    // user data 0x00 .. 0x1F empty for the moment
