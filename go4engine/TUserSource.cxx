@@ -93,18 +93,18 @@ TUserSource::~TUserSource()
 
    if (fxBuffer) {
       delete [] fxBuffer;
-      fxBuffer = 0;
+      fxBuffer = nullptr;
    }
 
    if (fxDatFile) {
       fclose(fxDatFile);
-      fxDatFile = 0;
+      fxDatFile = nullptr;
    }
 
    if (fNames) {
       fNames->Delete();
       delete fNames;
-      fNames = 0;
+      fNames = nullptr;
    }
 }
 
@@ -123,10 +123,10 @@ Bool_t TUserSource::BuildDatEvent(TGo4MbsEvent* evnt)
 {
    char buf[100];
 
-   if ((fxDatFile==0) || feof(fxDatFile))
+   if (!fxDatFile || feof(fxDatFile))
       if (!OpenNextFile()) return kFALSE;
 
-   int cnt=0;
+   int cnt = 0;
 
    uint32_t arr[1000];
    arr[cnt++] = 0xaaaa0000; // mark all data as coming from get4 0
@@ -134,14 +134,15 @@ Bool_t TUserSource::BuildDatEvent(TGo4MbsEvent* evnt)
    while (!feof(fxDatFile) && (cnt<1000)) {
       if (fgets(buf, sizeof(buf), fxDatFile)==0) {
          fclose(fxDatFile);
-         fxDatFile = 0;
+         fxDatFile = nullptr;
          break;
       }
 
-      if (strlen(buf)<10) { printf("VERY SHORT LINE %s!!!\n", buf); break; }
+      if (strlen(buf) < 10) { printf("VERY SHORT LINE %s!!!\n", buf); break; }
 
 
-      unsigned value; long tm;
+      unsigned value;
+      long tm;
 
       if (sscanf(buf,"%ld ps %X", &tm, &value)!=2) break;
 
@@ -150,7 +151,7 @@ Bool_t TUserSource::BuildDatEvent(TGo4MbsEvent* evnt)
       arr[cnt++] = value;
    }
 
-   if (cnt==0) return kFALSE;
+   if (cnt == 0) return kFALSE;
 
    uint32_t bufsize = cnt*sizeof(uint32_t);
 
@@ -174,7 +175,7 @@ Bool_t TUserSource::BuildDatEvent(TGo4MbsEvent* evnt)
 Bool_t TUserSource::BuildEvent(TGo4EventElement* dest)
 {
    TGo4MbsEvent* evnt = dynamic_cast<TGo4MbsEvent*> (dest);
-   if ((evnt==0) || (fxBuffer==0)) return kFALSE;
+   if (!evnt || !fxBuffer) return kFALSE;
 
    if (!fIsHLD) return BuildDatEvent(evnt);
 
@@ -252,7 +253,7 @@ Int_t TUserSource::Open()
 
 Bool_t TUserSource::OpenNextFile()
 {
-   if ((fNames==0) || (fNames->GetSize()==0)) {
+   if (!fNames || (fNames->GetSize() == 0)) {
       SetCreateStatus(1);
       SetErrMess("End of file input");
       SetEventStatus(1);
@@ -285,10 +286,10 @@ Bool_t TUserSource::OpenNextFile()
       TGo4Log::Info("Open HLD file %s", nextname.Data());
    } else {
 
-      if (fxDatFile) { fclose(fxDatFile); fxDatFile = 0; }
+      if (fxDatFile) { fclose(fxDatFile); fxDatFile = nullptr; }
 
       fxDatFile = fopen(nextname.Data(), "r");
-      if (fxDatFile == 0) {
+      if (!fxDatFile) {
          SetCreateStatus(1);
          SetErrMess(Form("Error opening DAT file: %s", nextname.Data()));
          throw TGo4EventErrorException(this);

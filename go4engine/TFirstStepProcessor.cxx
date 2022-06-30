@@ -288,7 +288,7 @@ base::H1handle TFirstStepProcessor::MakeH1(const char* name, const char* title, 
    char kind = 'I';
    Bool_t useexisting = kFALSE, clear_protect = kFALSE;
 
-   TObjArray* arr = (xtitle!=0) && strlen(xtitle)!=0 ? TString(xtitle).Tokenize(";") : 0;
+   TObjArray* arr = xtitle && strlen(xtitle) ? TString(xtitle).Tokenize(";") : nullptr;
 
    for (int n=0; n <= (arr ? arr->GetLast() : -1); n++) {
       TString part = arr->At(n)->GetName();
