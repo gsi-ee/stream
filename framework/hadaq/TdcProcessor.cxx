@@ -259,10 +259,10 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fFallingCalibr = nullptr;
    fTotShifts = nullptr;
    fTempDistr = 0;
-   fhRaisingFineCalibr = 0;
-   fhTotVsChannel = 0;
-   fhTotMoreCounter = 0;
-   fhTotMinusCounter = 0;
+   fhRaisingFineCalibr = nullptr;
+   fhTotVsChannel = nullptr;
+   fhTotMoreCounter = nullptr;
+   fhTotMinusCounter = nullptr;
    fHitsRate = 0;
    fRateCnt = 0;
    fLastRateTm = -1;
@@ -279,11 +279,13 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fQaErrorsPerHld = nullptr;  ///<! QA Errors per TDC channel - from HLD
 
     // JAM2021: additional histos for HADES TDC calib monitor
-    fToTPerTDCChannel= nullptr;  ///< HADAQ ToT per TDC channel, real values
-    fShiftPerTDCChannel= nullptr;  ///< HADAQ calibrated shift per TDC channel, real values
-    fExpectedToTPerTDC= nullptr;  ///< HADAQ expected ToT per TDC  used for calibration
-    fDevPerTDCChannel= nullptr;
-    fTPreviousPerTDCChannel= nullptr;
+   fToTPerTDCChannel= nullptr;  ///< HADAQ ToT per TDC channel, real values
+   fShiftPerTDCChannel= nullptr;  ///< HADAQ calibrated shift per TDC channel, real values
+   fExpectedToTPerTDC= nullptr;  ///< HADAQ expected ToT per TDC  used for calibration
+   fDevPerTDCChannel= nullptr;
+   fTPreviousPerTDCChannel= nullptr;
+   fhSigmaTotVsChannel = nullptr;
+   fhRisingPrevDiffVsChannel = nullptr;
 
    fToTdflt = true;
    fToTvalue = ToTvalue;
@@ -310,20 +312,22 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
 
       fAllFine = MakeH2("FineTm", "fine counter value", numchannels, 0, numchannels, (fNumFineBins==1000 ? 100 : fNumFineBins), 0, fNumFineBins, "ch;fine");
 
- if (!hadaq::TdcProcessor::IsHadesReducedMonitoring())
-    {
-      fhRaisingFineCalibr = MakeH2("RaisingFineTmCalibr", "raising calibrated fine counter value", numchannels, 0, numchannels, (fNumFineBins==1000 ? 100 : fNumFineBins), 0, fNumFineBins, "ch;calibrated fine");
-    }
+      if (!hadaq::TdcProcessor::IsHadesReducedMonitoring()) {
+         fhRaisingFineCalibr =
+            MakeH2("RaisingFineTmCalibr", "raising calibrated fine counter value", numchannels, 0, numchannels,
+                   (fNumFineBins == 1000 ? 100 : fNumFineBins), 0, fNumFineBins, "ch;calibrated fine");
+      }
 
       fAllCoarse = MakeH2("CoarseTm", "coarse counter value", numchannels, 0, numchannels, 2048, 0, 2048, "ch;coarse");
 
       fhTotVsChannel = MakeH2("TotVsChannel", "ToT", numchannels, 0, numchannels, gTotRange*100/(gHist2dReduce > 0 ? gHist2dReduce : 1), 0., gTotRange, "ch;ToT [ns]");
 
-      if (!hadaq::TdcProcessor::IsHadesReducedMonitoring())
-        {
-      fhTotMoreCounter = MakeH1("TotMoreCounter", "ToT > 20 ns counter in TDC channels", numchannels, 0, numchannels, "ch");
-      fhTotMinusCounter = MakeH1("TotMinusCounter", "ToT < 0 ns counter in TDC channels", numchannels, 0, numchannels, "ch");
-        }
+      if (!hadaq::TdcProcessor::IsHadesReducedMonitoring()) {
+         fhTotMoreCounter =
+            MakeH1("TotMoreCounter", "ToT > 20 ns counter in TDC channels", numchannels, 0, numchannels, "ch");
+         fhTotMinusCounter =
+            MakeH1("TotMinusCounter", "ToT < 0 ns counter in TDC channels", numchannels, 0, numchannels, "ch");
+      }
       if (DoRisingEdge())
          fRisingCalibr  = MakeH2("RisingCalibr",  "rising edge calibration", numchannels, 0, numchannels, fNumFineBins, 0, fNumFineBins, "ch;fine");
 
@@ -1917,7 +1921,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                }
 
                corr = calibr_fine*5e-9/0x3ffe;
-               if (isrising && fhRaisingFineCalibr!=0) DefFillH2(fhRaisingFineCalibr, chid, calibr_fine, 1.);
+               if (isrising && fhRaisingFineCalibr) DefFillH2(fhRaisingFineCalibr, chid, calibr_fine, 1.);
                if (!isrising) corr *= 10.; // range for falling edge is 50 ns.
             } else {
 
@@ -2011,9 +2015,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                // JAM 7-12-21: better plot dt against ref channel?
                 if(chid>0 && ch0time){
                      double refdiff=(localtm - ch0time) * 1e9;
-                     if(refdiff > -1000 && refdiff < 1000)
-                     {
-                            DefFillH2(fhRisingPrevDiffVsChannel, chid, refdiff, 1.);
+                     if(refdiff > -1000 && refdiff < 1000) {
+                        DefFillH2(fhRisingPrevDiffVsChannel, chid, refdiff, 1.);
                         if(fTPreviousPerTDCChannel)
                             SetH2Content(*fTPreviousPerTDCChannel, fHldId, chid,  refdiff);  // show only most recent value
                      }
@@ -2054,10 +2057,6 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                           coarse, fCh[0].rising_coarse, (int) (coarse - fCh[0].rising_coarse),
                           fine, fCh[0].rising_fine);
                }
-
-
-
-
 
             } else {
                // processing of falling edge
@@ -2618,7 +2617,7 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
             }
 
             corr = calibr_fine*5e-9/0x3ffe;
-            if (isrising && fhRaisingFineCalibr!=0) DefFillH2(fhRaisingFineCalibr, chid, calibr_fine, 1.);
+            if (isrising && fhRaisingFineCalibr) DefFillH2(fhRaisingFineCalibr, chid, calibr_fine, 1.);
             if (!isrising) corr *= 10.; // range for falling edge is 50 ns.
          } else {
 
@@ -3001,9 +3000,8 @@ void hadaq::TdcProcessor::DoHadesHistAnalysis()
 
 double hadaq::TdcProcessor::DoTestToT(int iCh)
 {
-    double dresult =0;
-if (!hadaq::TdcProcessor::IsHadesReducedMonitoring())
-        {
+   double dresult =0;
+   if (!hadaq::TdcProcessor::IsHadesReducedMonitoring() && fhTotVsChannel && fhTotMoreCounter && fhTotMinusCounter) {
         int nBins1, nBins2;
         GetH2NBins(fhTotVsChannel, nBins1, nBins2);
 
@@ -3026,7 +3024,7 @@ if (!hadaq::TdcProcessor::IsHadesReducedMonitoring())
 
         double resultEntries = (nEntries >= 100) ? 0.99 : (nEntries / 100.);
         dresult = 1.*result + resultEntries;
-        }
+     }
 
     return dresult;
 }

@@ -442,9 +442,9 @@ namespace hadaq {
             errEpoch,          ///< wrong/missing epoch
             errFine,           ///< bad fine counter
             err3ff,            ///< 0x3ff error
-            errCh0,            ///< nissig channel 0
+            errCh0,            ///< missing channel 0
             errMismatchDouble, ///<
-            errUncknHdr,       ///< uncknown header
+            errUncknHdr,       ///< unknown header
             errDesignId,       ///< mismatch in design id
             errMisc            ///< all other errors
          };
@@ -452,7 +452,7 @@ namespace hadaq {
          /** edges mask */
          enum EEdgesMasks {
             edge_Rising = 1,        ///< process only rising edge
-            edge_BothIndepend = 2,  ///< process rising and falling endges independent
+            edge_BothIndepend = 2,  ///< process rising and falling edges independent
             edge_ForceRising  = 3,  ///< use rising edge calibration for falling
             edge_CommonStatistic = 4  ///< accumulate common statistic for both
          };
