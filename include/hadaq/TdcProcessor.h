@@ -107,7 +107,7 @@ namespace hadaq {
                fRisingRef(0),
                fRisingRefCond(0),
                fRisingCalibr(0),
-               fRisingRef2D(0),
+               fRisingRef2D(nullptr),
                fRisingRefRef(0),
                fRisingDoubleRef(0),
                fRisingTmdsRef(0),
@@ -219,46 +219,46 @@ namespace hadaq {
          TdcIterator fIter1;         ///<! iterator for the first scan
          TdcIterator fIter2;         ///<! iterator for the second scan
 
-         base::H1handle fChannels;   ///<! histogram with messages per channel
-         base::H1handle fHits;       ///<! histogram with hits per channel
-         base::H1handle fErrors;     ///<! histogram with errors per channel
-         base::H1handle fUndHits;    ///<! histogram with undetected hits per channel
-         base::H1handle fCorrHits;   ///<! histogram with corrected hits per channel
-         base::H1handle fMsgsKind;   ///<! messages kinds
-         base::H2handle fAllFine;    ///<! histogram of all fine counters
-         base::H2handle fAllCoarse;  ///<! histogram of all coarse counters
-         base::H2handle fRisingCalibr;///<! histogram with all rising calibrations
-         base::H2handle fFallingCalibr; ///<! histogram all rising calibrations
-         base::H1handle fHitsRate;    ///<! histogram with data rate
-         base::H1handle fTotShifts;  ///<! histogram with all TOT shifts
-         base::H1handle fTempDistr;   ///<! temperature distribution
+         base::H1handle fChannels{nullptr};   ///<! histogram with messages per channel
+         base::H1handle fHits{nullptr};       ///<! histogram with hits per channel
+         base::H1handle fErrors{nullptr};     ///<! histogram with errors per channel
+         base::H1handle fUndHits{nullptr};    ///<! histogram with undetected hits per channel
+         base::H1handle fCorrHits{nullptr};   ///<! histogram with corrected hits per channel
+         base::H1handle fMsgsKind{nullptr};   ///<! messages kinds
+         base::H2handle fAllFine{nullptr};    ///<! histogram of all fine counters
+         base::H2handle fAllCoarse{nullptr};  ///<! histogram of all coarse counters
+         base::H2handle fRisingCalibr{nullptr};///<! histogram with all rising calibrations
+         base::H2handle fFallingCalibr{nullptr}; ///<! histogram all rising calibrations
+         base::H1handle fHitsRate{nullptr};    ///<! histogram with data rate
+         base::H1handle fTotShifts{nullptr};  ///<! histogram with all TOT shifts
+         base::H1handle fTempDistr{nullptr};   ///<! temperature distribution
 
-         base::H2handle fhRaisingFineCalibr; ///<! histogram of calibrated raising fine counter vs channel
-         base::H2handle fhTotVsChannel; ///<! histogram of ToT vs channel
-         base::H1handle fhTotMoreCounter; ///<! histogram of counter with ToT >20 ns per channel
-         base::H1handle fhTotMinusCounter; ///<! histogram of counter with ToT < 0 ns per channel
+         base::H2handle fhRaisingFineCalibr{nullptr}; ///<! histogram of calibrated raising fine counter vs channel
+         base::H2handle fhTotVsChannel{nullptr}; ///<! histogram of ToT vs channel
+         base::H1handle fhTotMoreCounter{nullptr}; ///<! histogram of counter with ToT >20 ns per channel
+         base::H1handle fhTotMinusCounter{nullptr}; ///<! histogram of counter with ToT < 0 ns per channel
 
-         base::H2handle fhSigmaTotVsChannel; ///<! JAM histogram of calibration ToT difference (rms) from expected Tot, vs channel
+         base::H2handle fhSigmaTotVsChannel{nullptr}; ///<! JAM histogram of calibration ToT difference (rms) from expected Tot, vs channel
 
-          base::H2handle fhRisingPrevDiffVsChannel; ///<! JAM histogram time difference (ns) between subsequent rising hits vs channel. Suggested by Jan Michel
+         base::H2handle fhRisingPrevDiffVsChannel{nullptr}; ///<! JAM histogram time difference (ns) between subsequent rising hits vs channel. Suggested by Jan Michel
 
-         unsigned fHldId;               ///<! sequence number of processor in HLD
-         base::H1handle *fHitsPerHld;   ///<! hits per TDC - from HLD
-         base::H1handle *fErrPerHld;    ///<! errors per TDC - from HLD
-         base::H2handle *fChHitsPerHld; ///<! hits per TDC channel - from HLD
-         base::H2handle *fChErrPerHld;  ///<! errors per TDC channel - from HLD
-         base::H2handle *fChCorrPerHld;  ///<! corrections per TDC channel - from HLD
-         base::H2handle *fQaFinePerHld;  ///<! QA fine counter per TDC channel - from HLD
-         base::H2handle *fQaToTPerHld;  ///<! QA ToT per TDC channel - from HLD
-         base::H2handle *fQaEdgesPerHld;  ///<! QA Edges per TDC channel - from HLD
-         base::H2handle *fQaErrorsPerHld;  ///<! QA Errors per TDC channel - from HLD
+         unsigned fHldId{0};               ///<! sequence number of processor in HLD
+         base::H1handle *fHitsPerHld{nullptr};   ///<! hits per TDC - from HLD
+         base::H1handle *fErrPerHld{nullptr};    ///<! errors per TDC - from HLD
+         base::H2handle *fChHitsPerHld{nullptr}; ///<! hits per TDC channel - from HLD
+         base::H2handle *fChErrPerHld{nullptr};  ///<! errors per TDC channel - from HLD
+         base::H2handle *fChCorrPerHld{nullptr};  ///<! corrections per TDC channel - from HLD
+         base::H2handle *fQaFinePerHld{nullptr};  ///<! QA fine counter per TDC channel - from HLD
+         base::H2handle *fQaToTPerHld{nullptr};  ///<! QA ToT per TDC channel - from HLD
+         base::H2handle *fQaEdgesPerHld{nullptr};  ///<! QA Edges per TDC channel - from HLD
+         base::H2handle *fQaErrorsPerHld{nullptr};  ///<! QA Errors per TDC channel - from HLD
 
          // JAM 8-10-2021 something new for calibration monitor:
-         base::H2handle *fToTPerTDCChannel;  ///< HADAQ ToT per TDC channel, real values
-         base::H2handle *fShiftPerTDCChannel;  ///< HADAQ calibrated shift per TDC channel, real values
-         base::H1handle *fExpectedToTPerTDC;  ///< HADAQ expected ToT per TDC  used for calibration
-         base::H2handle *fDevPerTDCChannel;  ///< HADAQ ToT deviation per TDC channel from calibration
-         base::H2handle *fTPreviousPerTDCChannel;
+         base::H2handle *fToTPerTDCChannel{nullptr};  ///< HADAQ ToT per TDC channel, real values
+         base::H2handle *fShiftPerTDCChannel{nullptr};  ///< HADAQ calibrated shift per TDC channel, real values
+         base::H1handle *fExpectedToTPerTDC{nullptr};  ///< HADAQ expected ToT per TDC  used for calibration
+         base::H2handle *fDevPerTDCChannel{nullptr};  ///< HADAQ ToT deviation per TDC channel from calibration
+         base::H2handle *fTPreviousPerTDCChannel{nullptr};
 
 
          unsigned                 fNumChannels;       ///<! number of channels

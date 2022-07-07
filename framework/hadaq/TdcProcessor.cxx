@@ -253,11 +253,11 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fUndHits = 0;
    fCorrHits = 0;
    fMsgsKind = 0;
-   fAllFine = 0;
-   fAllCoarse = 0;
-   fRisingCalibr = 0;
-   fFallingCalibr = 0;
-   fTotShifts = 0;
+   fAllFine = nullptr;
+   fAllCoarse = nullptr;
+   fRisingCalibr = nullptr;
+   fFallingCalibr = nullptr;
+   fTotShifts = nullptr;
    fTempDistr = 0;
    fhRaisingFineCalibr = 0;
    fhTotVsChannel = 0;
@@ -591,13 +591,13 @@ void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned re
       SetSubPrefix2("Ch", ch);
       if (DoRisingEdge()) {
 
-         if (fCh[ch].fRisingRef == 0) {
+         if (!fCh[ch].fRisingRef) {
             snprintf(sbuf, sizeof(sbuf), "difference to %s", refname);
             snprintf(saxis, sizeof(saxis), "Ch%u - %s, ns", ch, refname);
             fCh[ch].fRisingRef = MakeH1("RisingRef", sbuf, npoints, left, right, saxis);
          }
 
-         if (twodim && (fCh[ch].fRisingRef2D==0)) {
+         if (twodim && !fCh[ch].fRisingRef2D) {
             snprintf(sbuf, sizeof(sbuf), "corr diff %s and fine counter", refname);
             snprintf(saxis, sizeof(saxis), "Ch%u - %s, ns;fine counter", ch, refname);
             fCh[ch].fRisingRef2D = MakeH2("RisingRef2D", sbuf, 500, left, right, 100, 0, 500, saxis);
@@ -799,7 +799,7 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
       unsigned reftdc = rec.reftdc;
       if (reftdc>=0xffff) reftdc = GetID();
 
-      TdcProcessor* refproc = 0;
+      TdcProcessor* refproc = nullptr;
       if (reftdc == GetID())
          refproc = this;
       else if (fTrb)
@@ -858,11 +858,11 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
          ref = rec.doublerefch;
          reftdc = rec.doublereftdc;
          if (reftdc>=0xffff) reftdc = GetID();
-         refproc = 0;
+         refproc = nullptr;
          if (reftdc == GetID()) refproc = this; else
-         if (fTrb!=0) refproc = fTrb->FindTDC(reftdc);
+         if (fTrb) refproc = fTrb->FindTDC(reftdc);
 
-         if ((refproc==0) && (subprocmap!=0)) {
+         if (!refproc && subprocmap) {
             SubProcMap::iterator iter = subprocmap->find(reftdc);
             if ((iter != subprocmap->end()) && iter->second->IsTDC())
                refproc = (TdcProcessor*) iter->second;
