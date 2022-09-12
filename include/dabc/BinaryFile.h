@@ -38,28 +38,28 @@ namespace dabc {
 
          virtual ~FileInterface() {}
 
-         virtual Handle fopen(const char* fname, const char* mode, const char* = 0) { return (Handle) ::fopen(fname, mode); }
+         virtual Handle fopen(const char* fname, const char* mode, const char* = nullptr) { return (Handle) ::fopen(fname, mode); }
 
-         virtual void fclose(Handle f) { if (f!=0) ::fclose((FILE*)f); }
+         virtual void fclose(Handle f) { if (f) ::fclose((FILE*)f); }
 
          virtual size_t fwrite(const void* ptr, size_t sz, size_t nmemb, Handle f)
-           { return ((f==0) || (ptr==0)) ? 0 : ::fwrite(ptr, sz, nmemb, (FILE*) f); }
+           { return (!f || !ptr) ? 0 : ::fwrite(ptr, sz, nmemb, (FILE*) f); }
 
          virtual size_t fread(void* ptr, size_t sz, size_t nmemb, Handle f)
-           { return ((f==0) || (ptr==0)) ? 0 : ::fread(ptr, sz, nmemb, (FILE*) f); }
+           { return (!f || !ptr) ? 0 : ::fread(ptr, sz, nmemb, (FILE*) f); }
 
          virtual bool feof(Handle f)
-           { return f==0 ? false : ::feof((FILE*)f)>0; }
+           { return !f ? false : ::feof((FILE*)f) > 0; }
 
          virtual bool fflush(Handle f)
-         { return f==0 ? false : ::fflush((FILE*)f)==0; }
+         { return !f ? false : ::fflush((FILE*)f) == 0; }
 
          virtual bool fseek(Handle f, long int offset, bool relative = true)
-         { return f==0 ? false : ::fseek((FILE*)f, offset, relative ? SEEK_CUR : SEEK_SET) == 0; }
+         { return !f ? false : ::fseek((FILE*)f, offset, relative ? SEEK_CUR : SEEK_SET) == 0; }
 
          /** Produce list of files, object must be explicitly destroyed with ref.Destroy call
           * One could decide if files or directories should be listed */
-         virtual Object* fmatch(const char* fmask, bool select_files = true) { return 0; }
+         virtual Object* fmatch(const char* fmask, bool select_files = true) { return nullptr; }
 
          virtual bool mkdir(const char* path) { return false; }
 
@@ -83,30 +83,30 @@ namespace dabc {
 
    class BasicFile {
       protected:
-         FileInterface* io;              ///<!  interface to the file system
-         bool iowoner;                   ///<!  if true, io object owned by file
-         FileInterface::Handle fd;       ///<!  file descriptor
-         bool  fReadingMode;             ///<!  reading/writing mode
+         FileInterface* io{nullptr};              ///<!  interface to the file system
+         bool iowoner{false};                     ///<!  if true, io object owned by file
+         FileInterface::Handle fd{nullptr};       ///<!  file descriptor
+         bool  fReadingMode{false};               ///<!  reading/writing mode
 
          bool CloseBasicFile()
          {
             if (fd && io) io->fclose(fd);
-            fd = 0;
+            fd = nullptr;
             fReadingMode = true;
             return true;
          }
 
          void CheckIO()
          {
-            if (io==0) { io = new FileInterface; iowoner = true; }
+            if (!io) { io = new FileInterface; iowoner = true; }
          }
 
       public:
 
          BasicFile() :
-            io(0),
+            io(nullptr),
             iowoner(false),
-            fd(0),
+            fd(nullptr),
             fReadingMode(false)
          {
          }
@@ -122,11 +122,11 @@ namespace dabc {
          {
             CloseBasicFile();
             if (iowoner && io) delete io;
-            io = 0; iowoner = false;
+            io = nullptr; iowoner = false;
          }
 
          // returns true if file is opened
-         inline bool isOpened() const { return (io!=0) && (fd!=0); }
+         inline bool isOpened() const { return io && fd; }
 
          inline bool isReading() const { return isOpened() && fReadingMode; }
 
@@ -152,8 +152,8 @@ namespace dabc {
 
    /** \brief Binary file header structure */
    struct BinaryFileHeader {
-      uint64_t magic;    ///< special word, expected in the beginning of the file
-      uint64_t version;  ///< version number of the binary file
+      uint64_t magic{0};    ///< special word, expected in the beginning of the file
+      uint64_t version{0};  ///< version number of the binary file
 
       /** \brief Default constructor */
       BinaryFileHeader() : magic(0), version(0) {}
@@ -163,8 +163,8 @@ namespace dabc {
 
    /** \brief Binary file buffer header structure */
    struct BinaryFileBufHeader {
-      uint64_t datalength;   ///< overall length of buffer
-      uint64_t buftype;      ///< type id of the buffer
+      uint64_t datalength{0};   ///< overall length of buffer
+      uint64_t buftype{0};      ///< type id of the buffer
 
       /** \brief Default constructor */
       BinaryFileBufHeader() : datalength(0), buftype(0) {}
@@ -198,7 +198,7 @@ namespace dabc {
          {
             if (isOpened()) return false;
 
-            if (fname==0 || *fname==0) {
+            if (!fname || *fname==0) {
                fprintf(stderr, "file name not specified\n");
                return false;
             }
@@ -206,7 +206,7 @@ namespace dabc {
             CheckIO();
 
             fd = io->fopen(fname,  "r");
-            if (fd==0) {
+            if (!fd) {
                fprintf(stderr, "File open failed %s for reading\n", fname);
                return false;
             }
@@ -228,7 +228,7 @@ namespace dabc {
          {
             if (isOpened()) return false;
 
-            if (fname==0 || *fname==0) {
+            if (!fname || *fname==0) {
                fprintf(stderr, "file name not specified\n");
                return false;
             }
@@ -236,7 +236,7 @@ namespace dabc {
             CheckIO();
 
             fd = io->fopen(fname, "w");
-            if (fd==0) {
+            if (!fd) {
                fprintf(stderr, "File open failed %s for writing\n", fname);
                return false;
             }
@@ -287,7 +287,7 @@ namespace dabc {
 
          bool WriteBufPayload(const void* ptr, uint64_t sz)
          {
-            if (!isWriting() || (ptr==0) || (sz==0)) return false;
+            if (!isWriting() || !ptr || (sz==0)) return false;
 
             if (fBufHdr.datalength < sz) {
                fprintf(stderr, "Appropriate header was not written for buffer %u\n", (unsigned) sz);
@@ -297,7 +297,7 @@ namespace dabc {
 
             fBufHdr.datalength -= sz;
 
-            if (io->fwrite(ptr, sz, 1, fd)!=1) {
+            if (io->fwrite(ptr, sz, 1, fd) !=1 ) {
                fprintf(stderr, "fail to write buffer payload of size %u\n", (unsigned) sz);
                Close();
                return false;
@@ -314,7 +314,7 @@ namespace dabc {
          }
 
 
-         bool ReadBufHeader(uint64_t* size, uint64_t* typ = 0)
+         bool ReadBufHeader(uint64_t* size, uint64_t* typ = nullptr)
          {
             if (!isReading()) return false;
 
@@ -336,7 +336,7 @@ namespace dabc {
 
          bool ReadBufPayload(void* ptr, uint64_t sz)
          {
-            if (!isReading() || (ptr==0) || (sz==0)) return false;
+            if (!isReading() || !ptr || (sz == 0)) return false;
 
             if (fBufHdr.datalength < sz) {
                fprintf(stderr, "Appropriate header was not read from buffer %u\n", (unsigned) sz);
@@ -355,9 +355,9 @@ namespace dabc {
             return true;
          }
 
-         bool ReadBuffer(void* ptr, uint64_t* sz, uint64_t* typ = 0)
+         bool ReadBuffer(void* ptr, uint64_t* sz, uint64_t* typ = nullptr)
          {
-            if ((ptr==0) || (sz==0) || (*sz == 0)) return false;
+            if (!ptr || !sz || (*sz == 0)) return false;
 
             uint64_t maxsz = *sz; *sz = 0;
 

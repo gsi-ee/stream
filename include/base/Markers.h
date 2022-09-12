@@ -57,16 +57,16 @@ namespace base {
    /** global time marker */
 
    struct GlobalMarker {
-      GlobalTime_t globaltm;     ///< global time - reference time of marker
-      GlobalTime_t lefttm;       ///< left range for hit selection
-      GlobalTime_t righttm;      ///< right range for hit selection
+      GlobalTime_t globaltm{0};      ///< global time - reference time of marker
+      GlobalTime_t lefttm{0};        ///< left range for hit selection
+      GlobalTime_t righttm{0};       ///< right range for hit selection
 
-      SubEvent*     subev;        ///< structure with data, selected for the trigger, ownership
-      bool          isflush;      ///< indicate that trigger is just for flushing, no real data is important
+      SubEvent*     subev{nullptr};  ///< structure with data, selected for the trigger, ownership
+      bool          isflush{false};  ///< indicate that trigger is just for flushing, no real data is important
 
       /** constructor */
       GlobalMarker(GlobalTime_t tm = 0.) :
-         globaltm(tm), lefttm(0.), righttm(0.), subev(0), isflush(false) {}
+         globaltm(tm), lefttm(0.), righttm(0.), subev(nullptr), isflush(false) {}
 
       /** constructor */
       GlobalMarker(const GlobalMarker& src) :
@@ -76,16 +76,16 @@ namespace base {
       ~GlobalMarker() { /** should we here destroy subevent??? */ }
 
       /** is null */
-      bool null() const { return globaltm<=0.; }
+      bool null() const { return globaltm <= 0.; }
       /** reset */
-      void reset() { globaltm = 0.; isflush = false; subev = 0; }
+      void reset() { globaltm = 0.; isflush = false; subev = nullptr; }
 
       /** return true when interval defines normal event */
       bool normal() const { return !isflush; }
 
       void SetInterval(double left, double right);
 
-      int TestHitTime(const GlobalTime_t& hittime, double* dist = 0);
+      int TestHitTime(const GlobalTime_t& hittime, double* dist = nullptr);
    };
 
    typedef RecordsQueue<GlobalMarker, false> GlobalMarksQueue;

@@ -69,7 +69,7 @@ namespace base {
          base::SubEvent* GetSubEvent(const std::string& name) const
          {
             EventsMap::const_iterator iter = fMap.find(name);
-            return (iter != fMap.end()) ? iter->second : 0;
+            return (iter != fMap.end()) ? iter->second : nullptr;
          }
 
          /** Return subevent by name with index

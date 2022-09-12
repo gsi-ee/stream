@@ -53,7 +53,7 @@ namespace base {
 
       public:
 
-         SysCoreProc(const char* name, unsigned brdid, OpticSplitter* spl = 0);
+         SysCoreProc(const char* name, unsigned brdid, OpticSplitter* spl = nullptr);
          virtual ~SysCoreProc();
 
          /** Set signal id, used for time synchronization

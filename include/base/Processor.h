@@ -97,7 +97,7 @@ namespace base {
          /** Set subprefix for histograms and conditions, index uses 2 symbols */
          void SetSubPrefix2(const char* subname = "", int indx = -1, const char* subname2 = "", int indx2 = -1);
 
-         H1handle MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle = 0);
+         H1handle MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle = nullptr);
 
          /** Fill 1-D histogram */
          inline void FillH1(H1handle h1, double x, double weight = 1.)
@@ -146,7 +146,7 @@ namespace base {
             mgr()->SetH1Title(h1, title);
          }
 
-         H2handle MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options = 0);
+         H2handle MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options = nullptr);
 
          /** Fill 2-D histogram */
          inline void FillH2(H1handle h2, double x, double y, double weight = 1.)
@@ -188,12 +188,12 @@ namespace base {
             mgr()->SetH2Title(h2, title);
          }
 
-         C1handle MakeC1(const char* name, double left, double right, H1handle h1 = 0);
+         C1handle MakeC1(const char* name, double left, double right, H1handle h1 = nullptr);
 
          void ChangeC1(C1handle c1, double left, double right);
 
          /** Test condition */
-         inline int TestC1(C1handle c1, double value, double* dist = 0)
+         inline int TestC1(C1handle c1, double value, double* dist = nullptr)
          {
             return mgr()->TestC1(c1, value, dist);
          }
@@ -204,7 +204,7 @@ namespace base {
          virtual void CreateBranch(TTree*) {}
 
          /** Register object */
-         virtual bool RegisterObject(TObject* tobj, const char* subfolder = 0)
+         virtual bool RegisterObject(TObject* tobj, const char* subfolder = nullptr)
          {
             return mgr()->RegisterObject(tobj, subfolder);
          }
@@ -244,7 +244,6 @@ namespace base {
          /** post loop */
          virtual void UserPostLoop() {}
    };
-
 
 }
 

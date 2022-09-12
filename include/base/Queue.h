@@ -61,35 +61,20 @@ namespace base {
 
          friend class Queue<T,canexpand>::Iterator;
 
-         T*         fQueue;     ///< queue
-         T*         fBorder;    ///< maximum pointer value
-         unsigned   fCapacity;  ///< capacity
-         unsigned   fSize;      ///< size
-         T*         fHead;      ///< head
-         T*         fTail;      ///< tail
-         unsigned   fInitSize;  ///< original size of the queue, restored then clear() method is called
+         T*         fQueue{nullptr};  ///< queue
+         T*         fBorder{nullptr}; ///< maximum pointer value
+         unsigned   fCapacity{0};     ///< capacity
+         unsigned   fSize{0};         ///< size
+         T*         fHead{nullptr};   ///< head
+         T*         fTail{nullptr};   ///< tail
+         unsigned   fInitSize{0};     ///< original size of the queue, restored then clear() method is called
 
       public:
          /** default constructor */
-         Queue() :
-            fQueue(0),
-            fBorder(0),
-            fCapacity(0),
-            fSize(0),
-            fHead(0),
-            fTail(0),
-            fInitSize(0)
-         {
-         }
+         Queue() { }
 
          /** constructor with capacity */
          Queue(unsigned _capacity) :
-            fQueue(0),
-            fBorder(0),
-            fCapacity(0),
-            fSize(0),
-            fHead(0),
-            fTail(0),
             fInitSize(_capacity)
          {
             Allocate(_capacity);
@@ -99,7 +84,7 @@ namespace base {
          virtual ~Queue()
          {
             delete[] fQueue;
-            fQueue = 0;
+            fQueue = nullptr;
          }
 
          /** init queue */
@@ -115,8 +100,8 @@ namespace base {
             if (fCapacity>0) {
                delete[] fQueue;
                fCapacity = 0;
-               fQueue = 0;
-               fBorder = 0;
+               fQueue = nullptr;
+               fBorder = nullptr;
             }
 
             if (_capacity>0) {
@@ -153,7 +138,7 @@ namespace base {
                newcapacity = fCapacity * 2;
             if (newcapacity < 16) newcapacity = 16;
             T* q = new T [newcapacity];
-            if (q==0) return false;
+            if (!q) return false;
 
             CopyTo(q);
 
@@ -170,7 +155,7 @@ namespace base {
          /** remove value from queue */
          bool Remove(T value)
          {
-            if (size()==0) return false;
+            if (size() == 0) return false;
 
             T *i_tgt(fTail), *i_src(fTail);
 
@@ -191,7 +176,7 @@ namespace base {
          /** erase item with index */
          bool erase_item(unsigned indx)
          {
-            if (indx>=fSize) return false;
+            if (indx >= fSize) return false;
 
             T* tgt = fTail + indx;
             if (tgt>=fBorder) tgt -= fCapacity;
@@ -430,7 +415,6 @@ namespace base {
 
             return res;
          }
-
 
    };
 

@@ -8,22 +8,22 @@ namespace base {
    /** Internal raw data for base::Buffer */
 
    struct RawDataRec {
-      int           refcnt;   ///< number of references
+      int           refcnt{0};   ///< number of references
 
-      unsigned      kind;       ///< like ROC event, SPADIC or MBS or ..
-      unsigned      boardid;    ///< board id
-      unsigned      format;     ///< raw data format like optic, Ethernet for ROC and so on
+      unsigned      kind{0};       ///< like ROC event, SPADIC or MBS or ..
+      unsigned      boardid{0};    ///< board id
+      unsigned      format{0};     ///< raw data format like optic, Ethernet for ROC and so on
 
-      GlobalTime_t  local_tm;    ///< buffer head time in local scale,
-      GlobalTime_t  global_tm;   ///< buffer head time in global time
+      GlobalTime_t  local_tm{0};    ///< buffer head time in local scale,
+      GlobalTime_t  global_tm{0};   ///< buffer head time in global time
 
-      void*         buf;        ///< raw data
-      unsigned      datalen;    ///< length of raw data
+      void*         buf{nullptr};        ///< raw data
+      unsigned      datalen{0};    ///< length of raw data
 
-      unsigned      user_tag;   ///< arbitrary data, can be used for any additional data
+      unsigned      user_tag{0};   ///< arbitrary data, can be used for any additional data
 
       /** constructor */
-      RawDataRec() : refcnt(0), kind(0), boardid(0), format(0), local_tm(0), global_tm(0), buf(0), datalen(0), user_tag(0) {}
+      RawDataRec() : refcnt(0), kind(0), boardid(0), format(0), local_tm(0), global_tm(0), buf(nullptr), datalen(0), user_tag(0) {}
 
       /** reset */
       void reset()
@@ -34,7 +34,7 @@ namespace base {
          format = 0;
          local_tm = 0;
          global_tm = 0;
-         buf = 0;
+         buf = nullptr;
          datalen = 0;
          user_tag = 0;
       }
@@ -84,7 +84,7 @@ namespace base {
          bool setdatalen(unsigned newlen);
 
          /** return pointer with shift */
-         void* ptr(unsigned shift = 0) const { return fRec ? (shift <= fRec->datalen ? (char*)fRec->buf + shift : 0) : 0; }
+         void* ptr(unsigned shift = 0) const { return fRec ? (shift <= fRec->datalen ? (char*)fRec->buf + shift : nullptr) : nullptr; }
 
          /** get uint32_t at given index */
          uint32_t getuint32(unsigned indx) const { return ((uint32_t*) ptr())[indx]; }

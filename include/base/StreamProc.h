@@ -89,7 +89,7 @@ namespace base {
            *  and have minimal distance to previous trigger */
          bool AddTriggerMarker(LocalTimeMarker& marker, double tm_range = 0.);
 
-         GlobalTime_t LocalToGlobalTime(GlobalTime_t localtm, unsigned* sync_index = 0);
+         GlobalTime_t LocalToGlobalTime(GlobalTime_t localtm, unsigned* sync_index = nullptr);
 
          /** Method return true when sync_index is means interpolation of time */
          bool IsSyncIndexWithInterpolation(unsigned indx) const
