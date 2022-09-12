@@ -20,9 +20,9 @@ base::SysCoreProc::SysCoreProc(const char* name, unsigned brdid, OpticSplitter* 
    fPrintRight(-1.),
    fAnyPrinted(false),
    fSplitBuf(),
-   fSplitPtr(0)
+   fSplitPtr(nullptr)
 {
-   if (spl!=0) spl->AddSub(this, brdid);
+   if (spl) spl->AddSub(this, brdid);
 
    char sbuf1[100], sbuf2[100];
    snprintf(sbuf1, sizeof(sbuf1), "MsgPer%s", name);

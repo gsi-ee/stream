@@ -9,10 +9,10 @@
 
 void base::Buffer::reset()
 {
-   if (fRec!=0) {
+   if (fRec) {
       if (--fRec->refcnt == 0)
          free(fRec);
-      fRec = 0;
+      fRec = nullptr;
    }
 }
 
@@ -21,9 +21,9 @@ void base::Buffer::reset()
 
 bool base::Buffer::setdatalen(unsigned newlen)
 {
-   if (newlen>datalen()) return false;
+   if (newlen > datalen()) return false;
 
-   if (newlen==0)
+   if (newlen == 0)
       reset();
    else
       fRec->datalen = newlen;
@@ -62,7 +62,7 @@ void base::Buffer::makecopyof(void* buf, unsigned datalen)
 {
    reset();
 
-   if ((buf==0) || (datalen==0)) return;
+   if (!buf || (datalen == 0)) return;
 
    fRec = (RawDataRec*) malloc(sizeof(RawDataRec) + datalen);
 
@@ -89,7 +89,7 @@ void base::Buffer::makereferenceof(void* buf, unsigned datalen)
 {
    reset();
 
-   if ((buf==0) || (datalen==0)) return;
+   if (!buf || (datalen == 0)) return;
 
    fRec = (RawDataRec*) malloc(sizeof(RawDataRec));
    if (!fRec) {

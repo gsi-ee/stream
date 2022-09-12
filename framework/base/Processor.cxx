@@ -12,7 +12,7 @@
 base::Processor::Processor(const char* name, unsigned brdid) :
    fName(name),
    fID(0),
-   fMgr(0),
+   fMgr(nullptr),
    fPrefix(),
    fSubPrefixD(),
    fSubPrefixN(),
@@ -59,7 +59,7 @@ void base::Processor::SetManager(base::ProcMgr* m)
 
 void base::Processor::SetSubPrefix(const char* name, int indx, const char* subname2, int indx2)
 {
-   if ((name==0) || (*name==0)) {
+   if (!name || (*name==0)) {
       fSubPrefixD.clear();
       fSubPrefixN.clear();
       return;
@@ -76,7 +76,7 @@ void base::Processor::SetSubPrefix(const char* name, int indx, const char* subna
    fSubPrefixD.append("/");
    fSubPrefixN.append("_");
 
-   if ((subname2!=0) && (*subname2!=0)) {
+   if (subname2 && (*subname2 != 0)) {
       fSubPrefixD.append(subname2);
       fSubPrefixN.append(subname2);
       if (indx2>=0) {
@@ -95,7 +95,7 @@ void base::Processor::SetSubPrefix(const char* name, int indx, const char* subna
 
 void base::Processor::SetSubPrefix2(const char* name, int indx, const char* subname2, int indx2)
 {
-   if ((name==0) || (*name==0)) {
+   if (!name || (*name==0)) {
       fSubPrefixD.clear();
       fSubPrefixN.clear();
       return;
@@ -112,7 +112,7 @@ void base::Processor::SetSubPrefix2(const char* name, int indx, const char* subn
    fSubPrefixD.append("/");
    fSubPrefixN.append("_");
 
-   if ((subname2!=0) && (*subname2!=0)) {
+   if (subname2 && (*subname2 != 0)) {
       fSubPrefixD.append(subname2);
       fSubPrefixN.append(subname2);
       if (indx2>=0) {
@@ -131,7 +131,7 @@ void base::Processor::SetSubPrefix2(const char* name, int indx, const char* subn
 
 base::H1handle base::Processor::MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle)
 {
-   if ((mgr()==0) || !IsHistFilling()) return 0;
+   if (!mgr() || !IsHistFilling()) return nullptr;
 
    std::string hname = fPathPrefix + "/";
    if (!fSubPrefixD.empty()) hname += fSubPrefixD;
@@ -153,7 +153,7 @@ base::H1handle base::Processor::MakeH1(const char* name, const char* title, int 
 
 base::H2handle base::Processor::MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options)
 {
-   if ((mgr()==0) ||!IsHistFilling()) return 0;
+   if (!mgr() ||!IsHistFilling()) return nullptr;
 
    std::string hname = fPathPrefix + "/";
    if (!fSubPrefixD.empty()) hname += fSubPrefixD;
@@ -174,7 +174,7 @@ base::H2handle base::Processor::MakeH2(const char* name, const char* title, int 
 
 base::C1handle base::Processor::MakeC1(const char* name, double left, double right, H1handle h1)
 {
-   if (mgr()==0) return 0;
+   if (!mgr()) return nullptr;
 
    std::string cname = fPathPrefix + "/";
    if (!fSubPrefixD.empty()) cname += fSubPrefixD;

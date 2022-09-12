@@ -5,7 +5,7 @@
 
 base::Iterator::Iterator(int fmt) :
    fFormat(fmt),
-   fBuffer(0),
+   fBuffer(nullptr),
    fBufferLen(0),
    fBufferPos(0),
    fMsgSize(0)

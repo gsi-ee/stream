@@ -29,9 +29,9 @@ base::StreamProc::StreamProc(const char* name, unsigned brdid, bool basehist) :
    fGlobalTrigScanIndex(0),
    fGlobalTrigRightIndex(0),
    fTimeSorting(false),
-   fTriggerTm(0),
-   fMultipl(0),
-   fTriggerWindow(0)
+   fTriggerTm(nullptr),
+   fMultipl(nullptr),
+   fTriggerWindow(nullptr)
 {
    fMgr = base::ProcMgr::AddProc(this);
 
@@ -90,7 +90,7 @@ base::GlobalTime_t base::StreamProc::LocalToGlobalTime(base::GlobalTime_t localt
    if ((fSynchronisationKind==sync_Inter) && (numReadySyncs()>1)) {
 
       // we should try to use helper index only if it is inside existing sync range
-      bool try_indx = (indx!=0) && (*indx>0) && (*indx < (numReadySyncs() - 1));
+      bool try_indx = indx && (*indx > 0) && (*indx < (numReadySyncs() - 1));
 
       for (unsigned cnt=0; cnt<numReadySyncs(); cnt++) {
          unsigned n = 0;
@@ -144,7 +144,7 @@ base::GlobalTime_t base::StreamProc::LocalToGlobalTime(base::GlobalTime_t localt
 
       unsigned cnt = 0;
       bool use_selected = false;
-      if ((indx!=0) && (*indx < numReadySyncs())) { cnt = *indx; use_selected = true; }
+      if (indx && (*indx < numReadySyncs())) { cnt = *indx; use_selected = true; }
 
       while (cnt < numReadySyncs()) {
 
@@ -529,7 +529,7 @@ bool base::StreamProc::DistributeTriggers(const base::GlobalMarksQueue& queue)
       fGlobalMarks.push(queue.item(indx));
 
       // when trigger window not specified and trigger analysis is configured, than accept all hits
-      if (IsTriggeredAnalysis() && (fTriggerWindow==0))
+      if (IsTriggeredAnalysis() && !fTriggerWindow)
          fGlobalMarks.back().SetInterval(-1e50, 1e50);
       else
          fGlobalMarks.back().SetInterval(GetC1Limit(fTriggerWindow, true), GetC1Limit(fTriggerWindow, false));
@@ -561,20 +561,20 @@ bool base::StreamProc::AppendSubevent(base::Event* evt)
    if (fGlobalMarks.front().normal())
       FillH1(fMultipl, fGlobalMarks.front().subev ? fGlobalMarks.front().subev->Multiplicity() : 0);
 
-   if (fGlobalMarks.front().subev!=0) {
-      if (evt!=0) {
+   if (fGlobalMarks.front().subev) {
+      if (evt) {
          if (IsTimeSorting()) fGlobalMarks.front().subev->Sort();
          evt->AddSubEvent(GetName(), fGlobalMarks.front().subev);
       } else {
          fprintf(stderr, "Something went wrong - subevent could not be assigned normal %d!!!!\n", fGlobalMarks.front().normal());
          delete fGlobalMarks.front().subev;
       }
-      fGlobalMarks.front().subev = 0;
+      fGlobalMarks.front().subev = nullptr;
    }
 
    fGlobalMarks.pop();
 
-   if (fGlobalTrigScanIndex==0) {
+   if (fGlobalTrigScanIndex == 0) {
       printf("Index of ready event is 0 - how to understand???\n");
       exit(12);
    } else {

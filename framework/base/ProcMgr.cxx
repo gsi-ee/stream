@@ -7,7 +7,7 @@
 #include "base/StreamProc.h"
 #include "base/EventProc.h"
 
-base::ProcMgr* base::ProcMgr::fInstance = 0;
+base::ProcMgr* base::ProcMgr::fInstance = nullptr;
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 /// constructor
@@ -19,10 +19,10 @@ base::ProcMgr::ProcMgr() :
    fTriggers(10000),                // FIXME: size should be configurable
    fTimeMasterIndex(DummyIndex),
    fAnalysisKind(kind_Stream),
-   fTree(0),
+   fTree(nullptr),
    fDfltHistLevel(0),
    fDfltStoreKind(0),
-   fTrigEvent(0)
+   fTrigEvent(nullptr)
 {
    if (!fInstance) fInstance = this;
 
@@ -74,7 +74,7 @@ base::StreamProc* base::ProcMgr::FindProc(const char* name) const
       // printf("Delete processor %u %p\n", n, fProc[n]);
       if (strcmp(name, fProc[n]->GetName())==0) return fProc[n];
    }
-   return 0;
+   return nullptr;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////
@@ -85,7 +85,7 @@ void base::ProcMgr::DeleteAllProcessors()
    for (unsigned n=0;n<fProc.size();n++) {
       // printf("Delete processor %u %p\n", n, fProc[n]);
       delete fProc[n];
-      fProc[n] = 0;
+      fProc[n] = nullptr;
    }
 
    fProc.clear();
@@ -251,7 +251,7 @@ void base::ProcMgr::CopyH1(H1handle tgt, H1handle src)
 
 base::H2handle base::ProcMgr::MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options)
 {
-   if (!InternalHistFormat()) return 0;
+   if (!InternalHistFormat()) return nullptr;
 
    double* bins = new double[(nbins1+2)*(nbins2+2)+6];
    bins[0] = nbins1;
@@ -351,7 +351,7 @@ void base::ProcMgr::ClearH2(base::H2handle h2)
 base::C1handle base::ProcMgr::MakeC1(const char* name, double left, double right, base::H1handle h1)
 {
    // put dummy virtual function here to avoid ACLiC warnings
-   return 0;
+   return nullptr;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////
@@ -385,8 +385,8 @@ double base::ProcMgr::GetC1Limit(C1handle c1, bool isleft)
 void base::ProcMgr::UserPreLoop(Processor* only_proc, bool call_when_running)
 {
    for (unsigned n=0;n<fProc.size();n++) {
-      if (fProc[n]==0) continue;
-      if ((only_proc!=0) && (fProc[n]!=only_proc)) continue;
+      if (!fProc[n]) continue;
+      if (only_proc && (fProc[n] != only_proc)) continue;
 
       if (fProc[n]->fAnalysisKind != kind_RawOnly)
          fProc[n]->fAnalysisKind = fAnalysisKind;
@@ -402,8 +402,8 @@ void base::ProcMgr::UserPreLoop(Processor* only_proc, bool call_when_running)
    }
 
    for (unsigned n=0;n<fEvProc.size();n++) {
-      if (fEvProc[n]==0) continue;
-      if ((only_proc!=0) && (fEvProc[n]!=only_proc)) continue;
+      if (!fEvProc[n]) continue;
+      if (only_proc && (fEvProc[n] != only_proc)) continue;
 
       if (fTree && fEvProc[n]->IsStoreEnabled())
          fEvProc[n]->CreateBranch(fTree);
@@ -419,17 +419,17 @@ void base::ProcMgr::UserPreLoop(Processor* only_proc, bool call_when_running)
 void base::ProcMgr::UserPostLoop(Processor* only_proc)
 {
    for (unsigned n=0;n<fProc.size();n++) {
-      if ((only_proc!=0) && (fProc[n]!=only_proc)) continue;
+      if (only_proc && (fProc[n] != only_proc)) continue;
       if (fProc[n]) fProc[n]->UserPostLoop();
    }
 
    for (unsigned n=0;n<fEvProc.size();n++) {
-      if ((only_proc!=0) && (fEvProc[n]!=only_proc)) continue;
+      if (only_proc && (fEvProc[n] != only_proc)) continue;
       if (fEvProc[n]) fEvProc[n]->UserPostLoop();
    }
 
    // close store file already here
-   if (only_proc==0) CloseStore();
+   if (!only_proc) CloseStore();
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////
@@ -573,7 +573,7 @@ bool base::ProcMgr::AnalyzeSyncMarkers()
    }
 
 
-   StreamProc* master = 0;
+   StreamProc* master = nullptr;
 
    // if no synchronization at all, return
    if (fTimeMasterIndex == NoSyncIndex) {
@@ -770,7 +770,7 @@ bool base::ProcMgr::AnalyzeNewData(base::Event* &evt)
    // if triggered analysis configured, fill event at the same time
 
    if (IsTriggeredAnalysis()) {
-      if (evt==0)
+      if (!evt)
          evt = new base::Event;
       else
          evt->DestroyEvents();
@@ -785,7 +785,7 @@ bool base::ProcMgr::AnalyzeNewData(base::Event* &evt)
    if (IsRawAnalysis()) return false;
 
    if (IsTriggeredAnalysis()) {
-      fTrigEvent = 0;
+      fTrigEvent = nullptr;
       return true;
    }
 
@@ -848,13 +848,13 @@ bool base::ProcMgr::ProduceNextEvent(base::Event* &evt)
       if (fTriggers.front().isflush) {
          // printf("Remove flush event %12.9f\n", fTriggers.front().globaltm*1e-9);
          for (unsigned n=0;n<fProc.size();n++)
-            fProc[n]->AppendSubevent(0);
+            fProc[n]->AppendSubevent(nullptr);
          fTriggers.pop();
          numready--;
          continue;
       }
 
-      if (evt==0)
+      if (!evt)
          evt = new base::Event;
       else
          evt->DestroyEvents();

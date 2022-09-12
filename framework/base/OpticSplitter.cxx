@@ -55,7 +55,7 @@ bool base::OpticSplitter::FirstBufferScan(const base::Buffer& buf)
       if (iter != fMap.end()) {
          SysCoreProc* proc = iter->second;
 
-         if (proc->fSplitPtr == 0) {
+         if (!proc->fSplitPtr) {
             proc->fSplitBuf.makenew(buf.datalen());
             proc->fSplitPtr = (uint64_t*) proc->fSplitBuf.ptr();
          }
@@ -70,7 +70,7 @@ bool base::OpticSplitter::FirstBufferScan(const base::Buffer& buf)
 
    for (SysCoreMap::iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
       SysCoreProc* proc = iter->second;
-      if (proc->fSplitPtr != 0) {
+      if (proc->fSplitPtr) {
          proc->fSplitBuf.setdatalen((proc->fSplitPtr - (uint64_t*) proc->fSplitBuf.ptr())*8);
 
          proc->fSplitBuf.rec().kind = buf.rec().kind;
@@ -79,7 +79,7 @@ bool base::OpticSplitter::FirstBufferScan(const base::Buffer& buf)
 
          proc->AddNextBuffer(proc->fSplitBuf);
 
-         proc->fSplitPtr = 0;
+         proc->fSplitPtr = nullptr;
          proc->fSplitBuf.reset();
       }
    }
