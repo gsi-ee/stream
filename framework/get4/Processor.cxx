@@ -10,13 +10,13 @@
 
 get4::Get4Rec::Get4Rec() :
    used(false),
-   fChannels(0)
+   fChannels(nullptr)
 {
    for(unsigned n=0;n<NumChannels;n++) {
-      fRisCoarseTm[n] = 0;
-      fFalCoarseTm[n] = 0;
-      fRisFineTm[n] = 0;
-      fFalFineTm[n] = 0;
+      fRisCoarseTm[n] = nullptr;
+      fFalCoarseTm[n] = nullptr;
+      fRisFineTm[n] = nullptr;
+      fFalFineTm[n] = nullptr;
    }
 }
 
@@ -28,7 +28,7 @@ get4::Processor::Processor(unsigned rocid, unsigned get4mask, base::OpticSplitte
    // only if configured without splitter,
    // processor should subscribe for data
 
-   if (spl==0) {
+   if (!spl) {
       mgr()->RegisterProc(this, base::proc_RocEvent, rocid);
       mgr()->RegisterProc(this, base::proc_RawData, rocid);
    }

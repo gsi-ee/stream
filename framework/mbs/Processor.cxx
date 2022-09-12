@@ -59,7 +59,7 @@ bool mbs::Processor::FirstBufferScan(const base::Buffer& buf)
       double localtm = fConv1.ToSeconds(sync_num);
 
 //      printf("MBS SYNC %u tm %12.1f  \n", sync_num, localtm);
-      
+
       base::SyncMarker marker;
       marker.uniqueid = sync_num;
       marker.localid = 0;
@@ -117,7 +117,7 @@ bool mbs::Processor::SecondBufferScan(const base::Buffer& buf)
       if (indx < fGlobalMarks.size()) {
          mbs::SubEvent* ev = (mbs::SubEvent*) fGlobalMarks.item(indx).subev;
 
-         if (ev==0) {
+         if (!ev) {
             ev = new mbs::SubEvent;
             fGlobalMarks.item(indx).subev = ev;
          }

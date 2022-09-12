@@ -21,12 +21,10 @@ nx::Processor::Processor(unsigned rocid, unsigned nxmask, base::OpticSplitter* s
    // only if configured without splitter,
    // processor should subscribe for data
 
-   if (spl==0) {
+   if (!spl) {
       mgr()->RegisterProc(this, base::proc_RocEvent, rocid);
       mgr()->RegisterProc(this, base::proc_RawData, rocid);
    }
-
-//   printf("Start histo creation\n");
 
    fMsgsKind = MakeH1("MsgKind", "kind of messages", 8, 0, 8, "xbin:NOP,HIT,EPOCH,SYNC,AUX,-,-,SYS;kind");
    fSysTypes = MakeH1("SysTypes", "Distribution of system messages", 16, 0, 16, "systype");

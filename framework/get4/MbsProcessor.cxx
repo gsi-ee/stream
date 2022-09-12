@@ -354,7 +354,7 @@ void get4::MbsProcessor::StoreCalibration(const std::string& fname)
    if (fname.empty()) return;
 
    FILE* f = fopen(fname.c_str(),"w");
-   if (f==0) {
+   if (!f) {
       printf("%s Cannot open file %s for writing calibration\n", GetName(), fname.c_str());
       return;
    }
@@ -383,7 +383,7 @@ bool get4::MbsProcessor::LoadCalibration(const std::string& fname)
    if (fname.empty()) return false;
 
    FILE* f = fopen(fname.c_str(),"r");
-   if (f==0) {
+   if (!f) {
       printf("Cannot open file %s for reading calibration\n", fname.c_str());
       return false;
    }
