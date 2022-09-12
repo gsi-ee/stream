@@ -25,7 +25,7 @@ hadaq::SubProcessor::SubProcessor(TrbProcessor *trb, const char* nameprefix, uns
       pref.append(GetName());
       SetPathPrefix(pref);
 
-      if ((mgr()==0) && (trb->mgr()!=0)) trb->mgr()->AddProcessor(this);
+      if (!mgr() && trb->mgr()) trb->mgr()->AddProcessor(this);
 
       trb->AddSub(this, subid);
       fPrintRawData = trb->IsPrintRawData();

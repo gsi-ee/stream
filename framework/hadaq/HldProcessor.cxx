@@ -27,12 +27,12 @@ hadaq::HldProcessor::HldProcessor(bool auto_create, const char* after_func) :
    fFilterStatusEvents(false),
    fPrintRawData(false),
    fAutoCreate(auto_create),
-   fAfterFunc(after_func==0 ? "" : after_func),
+   fAfterFunc(!after_func ? "" : after_func),
    fCalibrName(),
    fCalibrPeriod(-111),
    fCalibrTriggerMask(0xFFFF),
    fMsg(),
-   pMsg(0),
+   pMsg(nullptr),
    fLastEvHdr(),
    fLastHadesTm(0)
 {
@@ -100,7 +100,7 @@ hadaq::TrbProcessor* hadaq::HldProcessor::GetTRB(unsigned indx) const
       if (indx==0) return iter->second;
       indx--;
    }
-   return 0;
+   return nullptr;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -109,7 +109,7 @@ hadaq::TrbProcessor* hadaq::HldProcessor::GetTRB(unsigned indx) const
 hadaq::TrbProcessor* hadaq::HldProcessor::FindTRB(unsigned trbid) const
 {
    TrbProcMap::const_iterator iter = fMap.find(trbid);
-   return iter == fMap.end() ? 0 : iter->second;
+   return iter == fMap.end() ? nullptr : iter->second;
 }
 
 
@@ -135,7 +135,7 @@ hadaq::TdcProcessor* hadaq::HldProcessor::GetTDC(unsigned indx) const
       indx -= num;
    }
 
-   return 0;
+   return nullptr;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -145,9 +145,9 @@ hadaq::TdcProcessor* hadaq::HldProcessor::FindTDC(unsigned tdcid) const
 {
    for (TrbProcMap::const_iterator iter = fMap.begin(); iter != fMap.end(); iter++) {
       hadaq::TdcProcessor* res = iter->second->GetTDC(tdcid, true);
-      if (res!=0) return res;
+      if (res) return res;
    }
-   return 0;
+   return nullptr;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -372,7 +372,7 @@ void hadaq::HldProcessor::Store(base::Event* ev)
          dynamic_cast<hadaq::HldSubEvent*> (ev->GetSubEvent(GetName()));
 
       // when subevent exists, use directly pointer on message
-      if (sub!=0)
+      if (sub)
          pMsg = &(sub->fMsg);
       else
          pMsg = &fMsg;
@@ -395,25 +395,23 @@ unsigned hadaq::HldProcessor::TransformEvent(void* src, unsigned len, void* tgt,
    hadaq::TrbIterator iter(src, len);
 
    // only single event is transformed
-   if (iter.nextEvent() == 0) return 0;
+   if (!iter.nextEvent()) return 0;
 
-   if ((tgt!=0) && (tgtlen<len)) {
+   if (tgt && (tgtlen < len)) {
       fprintf(stderr,"HLD requires larger output buffer than original\n");
       return 0;
    }
 
-   hadaqs::RawSubevent* sub = 0;
-
    unsigned reslen = 0;
    unsigned char* curr = (unsigned char*) tgt;
-   if (tgt!=0) {
+   if (tgt) {
       // copy event header
       memcpy(tgt, iter.currEvent(), sizeof(hadaqs::RawEvent));
       reslen += sizeof(hadaqs::RawEvent);
       curr += sizeof(hadaqs::RawEvent);
    }
 
-   while ((sub = iter.nextSubevent()) != 0) {
+   while (auto sub = iter.nextSubevent()) {
       TrbProcMap::iterator iter = fMap.find(sub->GetId());
       if (iter != fMap.end()) {
          if (curr && (tgtlen-reslen < sub->GetPaddedSize())) {
@@ -434,14 +432,14 @@ unsigned hadaq::HldProcessor::TransformEvent(void* src, unsigned len, void* tgt,
       }
    }
 
-   if (tgt==0) {
+   if (!tgt) {
       reslen = len;
    } else {
       // set new event size
       ((hadaqs::RawEvent*) tgt)->SetSize(reslen);
    }
 
-   if (iter.nextEvent() != 0) {
+   if (iter.nextEvent()) {
       fprintf(stderr,"HLD should transform only single event\n");
       return 0;
    }
@@ -454,7 +452,7 @@ unsigned hadaq::HldProcessor::TransformEvent(void* src, unsigned len, void* tgt,
 
 void hadaq::HldProcessor::UserPreLoop()
 {
-   if (!fAutoCreate && (fAfterFunc.length()>0))
+   if (!fAutoCreate && (fAfterFunc.length() > 0))
       mgr()->CallFunc(fAfterFunc.c_str(), this);
 
    if (!fAutoCreate) CreatePerTDCHisto();

@@ -129,7 +129,7 @@ hadaq::TrbProcessor::~TrbProcessor()
 hadaq::TdcProcessor* hadaq::TrbProcessor::FindTDC(unsigned tdcid) const
 {
    hadaq::TdcProcessor* res = GetTDC(tdcid, true);
-   if ((res==0) && (fHldProc!=0)) res = fHldProc->FindTDC(tdcid);
+   if (!res && fHldProc) res = fHldProc->FindTDC(tdcid);
    return res;
 }
 
@@ -235,7 +235,7 @@ int hadaq::TrbProcessor::CreateTDC(unsigned id1, unsigned id2, unsigned id3, uns
       }
       if (tdcid==0) continue;
 
-      if (GetTDC(tdcid, true)!=0) {
+      if (GetTDC(tdcid, true)) {
          printf("TDC id 0x%04x already exists\n", tdcid);
          continue;
       }

@@ -50,23 +50,19 @@ bool hadaq::StartProcessor::FirstBufferScan(const base::Buffer& buf)
 
    hadaq::TrbIterator iter(buf().buf, buf().datalen);
 
-   hadaqs::RawEvent* ev = 0;
-
    unsigned evcnt = 0;
 
    hadaq::TdcMessage calibr;
-   unsigned ncalibr(20); // position in calibr
+   unsigned ncalibr = 20; // position in calibr
 
-   while ((ev = iter.nextEvent()) != 0) {
+   while (auto ev = iter.nextEvent()) {
 
       evcnt++;
 
       DefFillH1(fEvType, (ev->GetId() & 0xf), 1.);
       DefFillH1(fEvSize, ev->GetPaddedSize(), 1.);
 
-      hadaqs::RawSubevent* sub = 0;
-
-      while ((sub = iter.nextSubevent()) != 0) {
+      while (auto sub = iter.nextSubevent()) {
 
          if (sub->GetId() != fStartId) continue;
 

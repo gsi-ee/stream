@@ -222,11 +222,9 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
 
    hadaq::TrbIterator iter(buf().buf, buf().datalen);
 
-   hadaqs::RawEvent* ev = 0;
-
    unsigned evcnt = 0;
 
-   while ((ev = iter.nextEvent()) != 0) {
+   while (auto ev = iter.nextEvent()) {
 
       evcnt++;
 
@@ -245,9 +243,7 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
 
       int numhits = 0;
 
-      hadaqs::RawSubevent* sub = 0;
-
-      while ((sub = iter.nextSubevent()) != 0) {
+      while (auto sub = iter.nextSubevent()) {
          DefFillH1(fSubevSize, sub->GetSize(), 1.);
 
          unsigned ix = 0;           // cursor

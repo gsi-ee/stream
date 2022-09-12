@@ -8,8 +8,8 @@
 hadaq::TrbIterator::TrbIterator(void* data, unsigned datalen) :
    fData(data),
    fDatalen(datalen),
-   fEvCursor(0),
-   fSubCursor(0),
+   fEvCursor(nullptr),
+   fSubCursor(nullptr),
    fSubLen(0)
 {
 }
@@ -19,7 +19,7 @@ hadaq::TrbIterator::TrbIterator(void* data, unsigned datalen) :
 
 hadaqs::RawEvent* hadaq::TrbIterator::nextEvent()
 {
-   if (fEvCursor == 0) {
+   if (!fEvCursor) {
 
       fEvCursor = fData;
       fEvLen = fDatalen;
@@ -32,7 +32,7 @@ hadaqs::RawEvent* hadaq::TrbIterator::nextEvent()
       if (fulllen >= fEvLen) {
          if (fulllen > fEvLen)
             printf("hadaqs::RawEvent length mismatch %u %u\n", fulllen, fEvLen);
-         fEvCursor = 0;
+         fEvCursor = nullptr;
          fEvLen = 0;
       } else {
          fEvCursor = ((uint8_t*) fEvCursor) + fulllen;
@@ -40,13 +40,13 @@ hadaqs::RawEvent* hadaq::TrbIterator::nextEvent()
       }
    }
 
-   if ((fEvCursor!=0) && (fEvLen!=0) && (fEvLen < sizeof(hadaqs::RawEvent))) {
+   if (fEvCursor && (fEvLen != 0) && (fEvLen < sizeof(hadaqs::RawEvent))) {
       printf("Strange hadaqs::RawEvent length %u minumum %u\n", (unsigned) fEvLen, (unsigned) sizeof(hadaqs::RawEvent));
-      fEvCursor = 0;
+      fEvCursor = nullptr;
       fEvLen = 0;
    }
 
-   fSubCursor = 0;
+   fSubCursor = nullptr;
    fSubLen = 0;
 
    return (hadaqs::RawEvent*) fEvCursor;
@@ -59,9 +59,9 @@ hadaqs::RawSubevent* hadaq::TrbIterator::nextSubevent()
 {
    hadaqs::RawEvent* ev = currEvent();
 
-   if (ev==0) return 0;
+   if (!ev) return nullptr;
 
-   if (fSubCursor == 0) {
+   if (!fSubCursor) {
       fSubCursor = ((uint8_t*) ev) + sizeof(hadaqs::RawEvent);
 
       fSubLen = ev->GetPaddedSize();
@@ -102,9 +102,9 @@ hadaqs::RawSubevent* hadaq::TrbIterator::nextSubevent()
       }
    }
 
-   if ((fSubLen==0) || ((fSubLen!=0) && (fSubLen < sizeof(hadaqs::RawSubevent)))) {
+   if ((fSubLen == 0) || ((fSubLen != 0) && (fSubLen < sizeof(hadaqs::RawSubevent)))) {
       // printf("Strange hadaq::Subevent length %u\n", fSubLen);
-      fSubCursor = 0;
+      fSubCursor = nullptr;
       fSubLen = 0;
    }
 

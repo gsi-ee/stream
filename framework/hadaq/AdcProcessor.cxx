@@ -109,13 +109,13 @@ bool hadaq::AdcProcessor::SecondBufferScan(const base::Buffer& buf)
                (((arr[n] >> 8) & 0xff) << 16)
                + ((arr[n+1] >> 16) & 0xffff);
          const int samplesSinceTrigger = epochCounter - ADC_trigger_epoch; // TODO: detect 24bit overflow
-         if(r.fHCoarseTiming==0)
+         if(!r.fHCoarseTiming)
             r.fHCoarseTiming = MakeH1("CoarseTiming","Coarse timing to external trigger",10000,0,1000,"t / ns");;
          FillH1(r.fHCoarseTiming, 1e9*samplesSinceTrigger*fSamplingPeriod);
 
          // integral is in the lower 16bits
          const short integral = arr[n+1] & 0xffff;
-         if(r.fHIntegral==0)
+         if(!r.fHIntegral)
             r.fHIntegral = MakeH1("Integral","Summed integral",10000,0,10000,"integral");
          FillH1(r.fHIntegral, integral);
 
@@ -125,11 +125,11 @@ bool hadaq::AdcProcessor::SecondBufferScan(const base::Buffer& buf)
          const double fraction = (double)valBeforeZeroX/(valBeforeZeroX-valAfterZeroX);
          const double fineTiming = (samplesSinceTrigger + fraction)*fSamplingPeriod;
 
-         if(r.fHFineTiming==0)
+         if(!r.fHFineTiming)
             r.fHFineTiming = MakeH1("FineTiming","Fine timing to external trigger",10000,0,1000,"t / ns");
          FillH1(r.fHFineTiming, 1e9*fineTiming);
 
-         if(r.fHSamples==0)
+         if(!r.fHSamples)
             r.fHSamples = MakeH2("Samples","Samples of the zero crossing",2,0,2,1000,-500,500,"crossing;value");
          FillH2(r.fHSamples, 0, valBeforeZeroX);
          FillH2(r.fHSamples, 1, valAfterZeroX);
@@ -164,7 +164,7 @@ bool hadaq::AdcProcessor::SecondBufferScan(const base::Buffer& buf)
 
          ChannelRec& r = fCh[ch]; // helpful shortcut
 
-         if(r.fHValues == 0)
+         if(!r.fHValues)
             r.fHValues = MakeH1("Values","Distribution of values (unsigned)", 1<<10, 0, 1<<10, "value");
          FillH1(r.fHValues, value);
 
@@ -178,7 +178,7 @@ bool hadaq::AdcProcessor::SecondBufferScan(const base::Buffer& buf)
             nSample++;
          }
 
-         if(r.fHWaveform==0)
+         if(!r.fHWaveform)
             r.fHWaveform = MakeH2("Waveform", "Integrated Waveform", 512, 0, 512, 1<<11, -(1<<10), 1<<10, "sample;value");
          FillH2(r.fHWaveform, nSample, value);
 
@@ -211,7 +211,7 @@ void hadaq::AdcProcessor::Store(base::Event* ev)
          dynamic_cast<hadaq::AdcSubEvent*> (ev->GetSubEvent(GetName()));
 
    // when subevent exists, use directly pointer on messages vector
-   if (sub!=0)
+   if (sub)
       pStoreVect = sub->vect_ptr();
    else
       pStoreVect = &fStoreVect;

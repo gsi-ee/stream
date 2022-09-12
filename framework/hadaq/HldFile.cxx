@@ -34,7 +34,7 @@ bool hadaq::HldFile::OpenWrite(const char* fname, uint32_t runid)
 {
    if (isOpened()) return false;
 
-   if (fname==0 || *fname==0) {
+   if (!fname || *fname==0) {
       fprintf(stderr, "file name not specified\n");
       return false;
    }
@@ -42,7 +42,7 @@ bool hadaq::HldFile::OpenWrite(const char* fname, uint32_t runid)
    CheckIO();
 
    fd = io->fopen(fname, "w");
-   if (fd==0) {
+   if (!fd) {
       fprintf(stderr, "File open failed %s for writing\n", fname);
       return false;
    }
@@ -66,7 +66,7 @@ bool hadaq::HldFile::OpenRead(const char* fname)
 {
    if (isOpened()) return false;
 
-   if (fname==0 || *fname==0) {
+   if (!fname || *fname==0) {
       fprintf(stderr, "file name not specified\n");
       return false;
    }
@@ -74,7 +74,7 @@ bool hadaq::HldFile::OpenRead(const char* fname)
    CheckIO();
 
    fd = io->fopen(fname,  "r");
-   if (fd==0) {
+   if (!fd) {
       fprintf(stderr, "File open failed %s for reading\n", fname);
       return false;
    }
@@ -126,7 +126,7 @@ void hadaq::HldFile::Close()
 
 bool hadaq::HldFile::WriteBuffer(void* buf, uint32_t bufsize)
 {
-   if (!isWriting() || (buf==0) || (bufsize==0)) return false;
+   if (!isWriting() || !buf || (bufsize == 0)) return false;
 
    if (io->fwrite(buf, bufsize, 1, fd)!=1) {
       fprintf(stderr, "fail to write buffer payload of size %u\n", (unsigned) bufsize);
@@ -139,7 +139,7 @@ bool hadaq::HldFile::WriteBuffer(void* buf, uint32_t bufsize)
 
 bool hadaq::HldFile::ReadBuffer(void* ptr, uint32_t* sz, bool onlyevent)
 {
-   if (!isReading() || (ptr==0) || (sz==0) || (*sz < sizeof(hadaqs::HadTu))) return false;
+   if (!isReading() || !ptr || !sz || (*sz < sizeof(hadaqs::HadTu))) return false;
 
    uint64_t maxsz = *sz; *sz = 0;
 

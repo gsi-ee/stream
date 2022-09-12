@@ -209,11 +209,11 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fCalibrTempSum1(0),
    fCalibrTempSum2(0),
    fDummyVect(),
-   pStoreVect(0),
+   pStoreVect(nullptr),
    fDummyFloat(),
-   pStoreFloat(0),
+   pStoreFloat(nullptr),
    fDummyDouble(),
-   pStoreDouble(0),
+   pStoreDouble(nullptr),
    fEdgeMask(edge_mask),
    fCalibrCounts(0),
    fAutoCalibr(false),
@@ -247,23 +247,23 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
       fCompensateEpochReset = trb->fCompensateEpochReset;
    }
 
-   fChannels = 0;
-   fHits = 0;
-   fErrors = 0;
-   fUndHits = 0;
-   fCorrHits = 0;
-   fMsgsKind = 0;
+   fChannels = nullptr;
+   fHits = nullptr;
+   fErrors = nullptr;
+   fUndHits = nullptr;
+   fCorrHits = nullptr;
+   fMsgsKind = nullptr;
    fAllFine = nullptr;
    fAllCoarse = nullptr;
    fRisingCalibr = nullptr;
    fFallingCalibr = nullptr;
    fTotShifts = nullptr;
-   fTempDistr = 0;
+   fTempDistr = nullptr;
    fhRaisingFineCalibr = nullptr;
    fhTotVsChannel = nullptr;
    fhTotMoreCounter = nullptr;
    fhTotMinusCounter = nullptr;
-   fHitsRate = 0;
+   fHitsRate = nullptr;
    fRateCnt = 0;
    fLastRateTm = -1;
 
@@ -407,8 +407,8 @@ bool hadaq::TdcProcessor::CheckPrintError()
 void hadaq::TdcProcessor::AddError(unsigned code, const char *fmt, ...)
 {
    va_list args;
-   int length(256);
-   char *buffer(0);
+   int length = 256;
+   char *buffer = nullptr;
 
    std::string sbuf(GetName());
    while (true) {
@@ -441,7 +441,7 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
 
    SetSubPrefix2("Ch", ch);
 
-   if (DoRisingEdge() && (fCh[ch].fRisingFine==0)) {
+   if (DoRisingEdge() && !fCh[ch].fRisingFine) {
       fCh[ch].fRisingFine = MakeH1("RisingFine", "Rising fine counter", fNumFineBins, 0, fNumFineBins, "fine");
       fCh[ch].fRisingMult = MakeH1("RisingMult", "Rising event multiplicity", 128, 0, 128, "nhits");
       fCh[ch].fRisingCalibr = MakeH1("RisingCalibr", "Rising calibration function", fNumFineBins, 0, fNumFineBins, "fine;kind:F");
@@ -449,7 +449,7 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
       CopyCalibration(fCh[ch].rising_calibr, fCh[ch].fRisingCalibr, ch, fRisingCalibr);
    }
 
-   if (DoFallingEdge() && (fCh[ch].fFallingFine==0) && ((ch>0) || fVersion4)) {
+   if (DoFallingEdge() && !fCh[ch].fFallingFine && ((ch > 0) || fVersion4)) {
       fCh[ch].fFallingFine = MakeH1("FallingFine", "Falling fine counter", fNumFineBins, 0, fNumFineBins, "fine");
       fCh[ch].fFallingCalibr = MakeH1("FallingCalibr", "Falling calibration function", fNumFineBins, 0, fNumFineBins, "fine;kind:F");
       fCh[ch].fFallingMult = MakeH1("FallingMult", "Falling event multiplicity", 128, 0, 128, "nhits");
@@ -532,7 +532,7 @@ void hadaq::TdcProcessor::UserPostLoop()
 
 void hadaq::TdcProcessor::CreateHistograms(int *arr)
 {
-   if (arr==0) {
+   if (!arr) {
       for (unsigned ch=0;ch<NumChannels();ch++)
          CreateChannelHistograms(ch);
    } else
@@ -641,7 +641,7 @@ void hadaq::TdcProcessor::SetRefTmds(unsigned ch, unsigned refch, int npoints, d
    if ((left < right) && (npoints > 1) && DoRisingEdge()) {
       SetSubPrefix2("Ch", ch);
 
-      if (fCh[ch].fRisingTmdsRef == 0) {
+      if (!fCh[ch].fRisingTmdsRef) {
          snprintf(sbuf, sizeof(sbuf), "TMDS difference to %s", refname);
          snprintf(saxis, sizeof(saxis), "Ch%u - %s, ns", ch, refname);
          fCh[ch].fRisingTmdsRef = MakeH1("RisingTmdsRef", sbuf, npoints, left, right, saxis);
@@ -687,7 +687,7 @@ bool hadaq::TdcProcessor::SetDoubleRefChannel(unsigned ch1, unsigned ch2,
 
    if (DoRisingEdge()) {
 
-      if ((fCh[ch].fRisingRefRef == 0) && (npy == 0)) {
+      if (!fCh[ch].fRisingRefRef && (npy == 0)) {
          if (reftdc == GetID()) {
             snprintf(sbuf, sizeof(sbuf), "double reference with Ch%u", refch);
             snprintf(saxis, sizeof(saxis), "(ch%u-ch%u) - (refch%u) ns", ch, fCh[ch].refch, refch);
@@ -702,7 +702,7 @@ bool hadaq::TdcProcessor::SetDoubleRefChannel(unsigned ch1, unsigned ch2,
       }
 
 
-      if ((fCh[ch].fRisingDoubleRef == 0) && (npy>0)) {
+      if (!fCh[ch].fRisingDoubleRef && (npy>0)) {
          if (reftdc == GetID()) {
             snprintf(sbuf, sizeof(sbuf), "double correlation to Ch%u", refch);
             snprintf(saxis, sizeof(saxis), "ch%u-ch%u ns;ch%u-ch%u ns", ch, fCh[ch].refch, refch, fCh[refch].refch);
@@ -809,7 +809,7 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
       else if (fTrb)
          refproc = fTrb->FindTDC(reftdc);
 
-      if ((refproc==0) && (subprocmap!=0)) {
+      if (!refproc && subprocmap) {
          SubProcMap::iterator iter = subprocmap->find(reftdc);
          if ((iter != subprocmap->end()) && iter->second->IsTDC())
             refproc = (TdcProcessor*) iter->second;
@@ -819,7 +819,7 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
 
       // printf("TDC %s %d %d same %d %p %p  %f %f \n", GetName(), ch, ref, (this==refproc), this, refproc, rec.rising_hit_tm, refproc->fCh[ref].rising_hit_tm);
 
-      if ((refproc!=0) && ((ref>0) || (refproc!=this)) && (ref<refproc->NumChannels()) && ((ref!=ch) || (refproc!=this))) {
+      if (refproc && ((ref > 0) || (refproc != this)) && (ref<refproc->NumChannels()) && ((ref!=ch) || (refproc != this))) {
          if (DoRisingEdge() && (rec.rising_hit_tm != 0) && (refproc->fCh[ref].rising_hit_tm != 0)) {
 
             double tm = rec.rising_hit_tm; // relative time to ch0 on same TDC
@@ -857,7 +857,7 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
       }
 
       // fill double-reference histogram, using data from any reference TDC
-      if ((rec.doublerefch < NumChannels()) && ((rec.fRisingDoubleRef!=0) || (rec.fRisingRefRef!=0))) {
+      if ((rec.doublerefch < NumChannels()) && (rec.fRisingDoubleRef || rec.fRisingRefRef)) {
 
          ref = rec.doublerefch;
          reftdc = rec.doublereftdc;
@@ -872,7 +872,7 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
                refproc = (TdcProcessor*) iter->second;
          }
 
-         if ((refproc!=0) && (ref<refproc->NumChannels()) && ((ref!=ch) || (refproc!=this))) {
+         if (refproc && (ref<refproc->NumChannels()) && ((ref != ch) || (refproc != this))) {
             if ((rec.rising_ref_tm != 0) && (refproc->fCh[ref].rising_ref_tm != 0)) {
                DefFillH1(rec.fRisingRefRef, (rec.rising_ref_tm - refproc->fCh[ref].rising_ref_tm)*1e9, 1.);
                DefFillH2(rec.fRisingDoubleRef, rec.rising_ref_tm*1e9, refproc->fCh[ref].rising_ref_tm*1e9, 1.);
@@ -1084,10 +1084,10 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
       }
    }
 
-   uint32_t epoch(0), chid, fine, kind, coarse(0), new_fine,
-            idata, *tgtraw = tgt ? (uint32_t *) tgt->RawData() : 0;
+   uint32_t epoch = 0, chid, fine, kind, coarse(0), new_fine,
+            idata, *tgtraw = tgt ? (uint32_t *) tgt->RawData() : nullptr;
    bool isrising, hard_failure, fast_loop = HistFillLevel() < 2, changed_msg;
-   double corr, ch0tm{0};
+   double corr, ch0tm = 0;
 
    // if (fAllTotMode==1) printf("%s dtrig %d do_tot %d dofalling %d\n", GetName(), is_0d_trig, do_tot, DoFallingEdge());
 
@@ -1326,7 +1326,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
       FastFillH1(fHits, (chid*2 + (isrising ? 0 : 1)));
       DefFastFillH2(fAllFine, chid, fine);
       DefFastFillH2(fAllCoarse, chid, coarse);
-      if ((HistFillLevel()>2) && ((rec.fRisingFine==0) || (rec.fFallingFine==0)))
+      if ((HistFillLevel() > 2) && (!rec.fRisingFine || !rec.fFallingFine))
          CreateChannelHistograms(chid);
 
       if (isrising) {
@@ -1552,9 +1552,9 @@ unsigned BubbleCheck(unsigned* bubble, int &p1, int &p2) {
 }
 
 
-unsigned* rom_encoder_rising = 0;
+unsigned* rom_encoder_rising = nullptr;
 unsigned rom_encoder_rising_cnt = 0;
-unsigned* rom_encoder_falling = 0;
+unsigned* rom_encoder_falling = nullptr;
 unsigned rom_encoder_falling_cnt = 0;
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -1563,7 +1563,7 @@ unsigned rom_encoder_falling_cnt = 0;
 
 unsigned BubbleCheckCahit(unsigned* bubble, int &p1, int &p2, bool debug = false, int maskid = 0, int shift = 0, bool = false) {
 
-   if (rom_encoder_rising == 0) {
+   if (!rom_encoder_rising) {
 
       rom_encoder_rising = new unsigned[400];
       rom_encoder_falling = new unsigned[400];
@@ -1573,13 +1573,13 @@ unsigned BubbleCheckCahit(unsigned* bubble, int &p1, int &p2, bool debug = false
       FILE* f = fopen(fname, "r");
       if (!f) return -1;
 
-      char sbuf[1000], ddd[100], *res;
-      unsigned  *tgt = 0, *tgtcnt = 0;
+      char sbuf[1000], ddd[100], *res = nullptr;
+      unsigned  *tgt = nullptr, *tgtcnt = nullptr;
 
       unsigned mask, code;
       int num, dcnt = 1;
 
-      while ((res = fgets(sbuf, sizeof(sbuf)-1, f)) != 0) {
+      while ((res = fgets(sbuf, sizeof(sbuf)-1, f))) {
          if (strlen(res) < 5) continue;
          if (strstr(res,"Rising")) { tgt = rom_encoder_rising; tgtcnt = &rom_encoder_rising_cnt; continue; }
          if (strstr(res,"Falling")) { tgt = rom_encoder_falling; tgtcnt = &rom_encoder_falling_cnt; continue; }
@@ -1588,7 +1588,7 @@ unsigned BubbleCheckCahit(unsigned* bubble, int &p1, int &p2, bool debug = false
 
          num = sscanf(res,"%x %s : %u", &mask, ddd, &code);
 
-         if ((num!=3) || (tgt==0)) continue;
+         if ((num!=3) || !tgt) continue;
 
          //unsigned swap = 0;
          //for (unsigned k=0;k<9;++k)
@@ -1967,7 +1967,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             }
 
             // ensure that histograms are created
-            if ((HistFillLevel()>2) && (rec.fRisingFine == 0))
+            if ((HistFillLevel() > 2) && !rec.fRisingFine)
                CreateChannelHistograms(chid);
 
             bool use_fine_for_stat = true;
@@ -2275,7 +2275,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       if ((temp!=0) && (temp < 2400)) {
          fCurrentTemp = temp/16.;
 
-         if ((HistFillLevel() > 1) && (fTempDistr == 0))  {
+         if ((HistFillLevel() > 1) && !fTempDistr)  {
             printf("%s FirstTemp:%5.2f CalibrTemp:%5.2f UseTemp:%d\n", GetName(), fCurrentTemp, fCalibrTemp, fCalibrUseTemp);
 
             int mid = round(fCurrentTemp);
@@ -2662,7 +2662,7 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
             }
 
             // ensure that histograms are created
-            if ((HistFillLevel()>2) && (rec.fRisingFine == 0))
+            if ((HistFillLevel() > 2) && !rec.fRisingFine)
                CreateChannelHistograms(chid);
 
             bool raw_hit = true;
@@ -3908,7 +3908,7 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
    snprintf(fname, sizeof(fname), "%s%04x.cal", fprefix.c_str(), GetID());
 
    FILE* f = fopen(fname,"r");
-   if (f==0) {
+   if (!f) {
       printf("Cannot open file %s for reading calibration\n", fname);
       return false;
    }
@@ -3997,7 +3997,7 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
    fclose(f);
 
    // workaround for testing, remove later !!!
-   if (strstr(fname, "cal/global_")!=0)
+   if (strstr(fname, "cal/global_"))
       switch (GetID()) {
          case 0x941: fTempCorrection = -1.58; break;
          case 0x942: fTempCorrection = -1.68; break;
