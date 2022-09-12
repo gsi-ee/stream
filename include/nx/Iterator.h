@@ -44,7 +44,7 @@ namespace nx {
 
          inline bool next()
          {
-            if ((fBuffer==0) || (fBufferPos>=fBufferLen)) return false;
+            if (!fBuffer || (fBufferPos >= fBufferLen)) return false;
 
             if (fMsg.assign((uint8_t*) fBuffer + fBufferPos, fFormat)) {
                fBufferPos += fMsgSize;
@@ -66,7 +66,7 @@ namespace nx {
          // can be used only inside buffer, not with board source
          inline bool last()
          {
-            if ((fBuffer==0) || (fBufferLen<fMsgSize)) return false;
+            if (!fBuffer || (fBufferLen < fMsgSize)) return false;
 
             fBufferPos = (fBufferLen - fMsgSize) / fMsgSize * fMsgSize;
 
@@ -76,7 +76,7 @@ namespace nx {
          // can be used only inside buffer, not with board source
          inline bool prev()
          {
-            if ((fBuffer==0) || (fBufferPos<fMsgSize*2)) return false;
+            if (!fBuffer || (fBufferPos<fMsgSize*2)) return false;
 
             fBufferPos -= fMsgSize*2;
 

@@ -102,20 +102,20 @@ namespace hadaq {
                docalibr(true),
                hascalibr(false),
                check_calibr(false),
-               fRisingFine(0),
-               fRisingMult(0),
-               fRisingRef(0),
-               fRisingRefCond(0),
-               fRisingCalibr(0),
+               fRisingFine(nullptr),
+               fRisingMult(nullptr),
+               fRisingRef(nullptr),
+               fRisingRefCond(nullptr),
+               fRisingCalibr(nullptr),
                fRisingRef2D(nullptr),
-               fRisingRefRef(0),
-               fRisingDoubleRef(0),
-               fRisingTmdsRef(0),
-               fFallingFine(0),
-               fFallingMult(0),
-               fTot(0),
-               fTot0D(0),
-               fFallingCalibr(0),
+               fRisingRefRef(nullptr),
+               fRisingDoubleRef(nullptr),
+               fRisingTmdsRef(nullptr),
+               fFallingFine(nullptr),
+               fFallingMult(nullptr),
+               fTot(nullptr),
+               fTot0D(nullptr),
+               fFallingCalibr(nullptr),
                rising_cnt(0),
                falling_cnt(0),
                rising_hit_tm(0.),
@@ -389,7 +389,7 @@ namespace hadaq {
          long CheckChannelStat(unsigned ch);
 
          double CalibrateChannel(unsigned nch, bool rising, const std::vector<uint32_t> &statistic, std::vector<float> &calibr, bool use_linear = false, bool preliminary = false);
-         void CopyCalibration(const std::vector<float> &calibr, base::H1handle hcalibr, unsigned ch = 0, base::H2handle h2calibr = 0);
+         void CopyCalibration(const std::vector<float> &calibr, base::H1handle hcalibr, unsigned ch = 0, base::H2handle h2calibr = nullptr);
 
          bool CalibrateTot(unsigned ch, std::vector<uint32_t> &hist, float &tot_shift, float &tot_dev, float cut = 0.);
 
@@ -561,22 +561,23 @@ namespace hadaq {
          /** Get histogram by index and channel id */
          base::H1handle GetHist(unsigned ch, int k = 0)
          {
-            if (ch>=NumChannels()) return 0;
+            if (ch >= NumChannels())
+               return nullptr;
             switch (k) {
                case 0: return fCh[ch].fRisingFine;
-               case 1: return 0;
+               case 1: return nullptr;
                case 2: return fCh[ch].fRisingRef;
                case 3: return fCh[ch].fFallingFine;
-               case 4: return 0;
+               case 4: return nullptr;
                case 5: return fCh[ch].fTot;
                case 6: return fCh[ch].fRisingMult;
                case 7: return fCh[ch].fFallingMult;
                case 8: return fCh[ch].fRisingTmdsRef;
             }
-            return 0;
+            return nullptr;
          }
 
-         void CreateHistograms(int *arr = 0);
+         void CreateHistograms(int *arr = nullptr);
 
          /** Assign per HLD histos */
          void AssignPerHldHistos(unsigned id, base::H1handle *hHits, base::H1handle *hErrs,
@@ -731,7 +732,7 @@ namespace hadaq {
 
          /** Get ref histogram for specified channel */
          base::H1handle GetChannelRefHist(unsigned ch, bool = true)
-            { return ch < fCh.size() ? fCh[ch].fRisingRef : 0; }
+            { return ch < fCh.size() ? fCh[ch].fRisingRef : nullptr; }
 
          /** Clear ref histogram for specified channel */
          void ClearChannelRefHist(unsigned ch, bool rising = true)

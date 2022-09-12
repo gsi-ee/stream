@@ -64,7 +64,7 @@ namespace get4 {
 
       public:
 
-         Processor(unsigned rocid, unsigned get4mask = 0x3, base::OpticSplitter* spl = 0);
+         Processor(unsigned rocid, unsigned get4mask = 0x3, base::OpticSplitter* spl = nullptr);
          virtual ~Processor();
 
          void setRefChannel(unsigned ref_get4, unsigned ref_ch, unsigned ref_edge = 0);

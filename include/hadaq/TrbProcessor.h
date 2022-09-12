@@ -226,7 +226,7 @@ namespace hadaq {
                if (indx==0) return iter->second;
                indx--;
             }
-            return 0;
+            return nullptr;
          }
 
          /** Returns TDC processor according to it ID */
@@ -238,7 +238,7 @@ namespace hadaq {
             if ((iter == fMap.end()) && !fullid) iter = fMap.find(tdcid & 0xff);
 
             // ignore integrated TDCs, they have upper 16bits set
-            return ((iter != fMap.end()) && ((iter->first >> 16) == 0) && iter->second->IsTDC()) ? (TdcProcessor*) iter->second : 0;
+            return ((iter != fMap.end()) && ((iter->first >> 16) == 0) && iter->second->IsTDC()) ? (TdcProcessor*) iter->second : nullptr;
          }
 
          /** Returns number of TDC processors */
@@ -259,7 +259,7 @@ namespace hadaq {
                if (indx == 0) return (TdcProcessor*) iter->second;
                indx--;
             }
-            return 0;
+            return nullptr;
          }
 
          void AddBufferToTDC(

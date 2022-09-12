@@ -10,11 +10,11 @@ namespace get4 {
           FineCounterBins = 0x80 };
 
    struct Get4MbsChRec {
-      base::H1handle fRisFineTm;   ///< histograms of rising stamp for each channel
-      base::H1handle fRisCal;      ///< calibration of rising edge
-      base::H1handle fFalFineTm;   ///< histograms of falling stamp for each channel
-      base::H1handle fFalCal;      ///< calibration of falling edge
-      base::H1handle fTotTm;       ///< histograms of time-over threshold for each channel
+      base::H1handle fRisFineTm{nullptr};   ///< histograms of rising stamp for each channel
+      base::H1handle fRisCal{nullptr};      ///< calibration of rising edge
+      base::H1handle fFalFineTm{nullptr};   ///< histograms of falling stamp for each channel
+      base::H1handle fFalCal{nullptr};      ///< calibration of falling edge
+      base::H1handle fTotTm{nullptr};       ///< histograms of time-over threshold for each channel
 
       double firstr;
       double firstf;
@@ -42,9 +42,11 @@ namespace get4 {
 
       void init()
       {
-         fRisFineTm = 0; fRisCal = 0;
-         fFalFineTm = 0; fFalCal = 0;
-         fTotTm = 0;
+         fRisFineTm = nullptr;
+         fRisCal = nullptr;
+         fFalFineTm = nullptr;
+         fFalCal = nullptr;
+         fTotTm = nullptr;
          clearTimes();
 
          for (unsigned i=0;i<FineCounterBins;i++) {
@@ -68,8 +70,8 @@ namespace get4 {
 
       Get4MbsRec() :
          used(false),
-         fChannels(0),
-         fErrors(0)
+         fChannels(nullptr),
+         fErrors(nullptr)
       {
          for(unsigned n=0;n<NumGet4Channels;n++) CH[n].init();
       }
@@ -81,11 +83,9 @@ namespace get4 {
    };
 
    struct Get4MbsRef {
-      unsigned g1,ch1, g2, ch2;
-      bool r1, r2;
-      base::H1handle fHist;  ///<! histogram with channels
-
-      Get4MbsRef() : g1(0), ch1(0), g2(0), ch2(0), r1(true), r2(true), fHist(0) {}
+      unsigned g1{0}, ch1{0}, g2{0}, ch2{0};
+      bool r1{true}, r2{true};
+      base::H1handle fHist{nullptr};  ///<! histogram with channels
    };
 
    /** Only for Get4 debug, produce no output data */
@@ -94,14 +94,14 @@ namespace get4 {
 
       protected:
 
-         bool         fIs32mode;     // is 32 bit mode
-         unsigned     fTotMult;      // multiplier of tot in 32 bit mode
-         std::string  fWriteCalibr;   ///<! file name to write calibrations at the end
-         bool         fUseCalibr;     ///<! if true, calibration will be used
-         long         fAutoCalibr;    ///<! if positive, will try to calibrate get4 channels
+         bool         fIs32mode{false};    // is 32 bit mode
+         unsigned     fTotMult{0};         // multiplier of tot in 32 bit mode
+         std::string  fWriteCalibr;        ///<! file name to write calibrations at the end
+         bool         fUseCalibr{false};   ///<! if true, calibration will be used
+         long         fAutoCalibr{0};      ///<! if positive, will try to calibrate get4 channels
 
-         base::H1handle fMsgPerGet4;   ///<! histogram with messages per get4
-         base::H1handle fErrPerGet4;   ///<! histogram with errors per get4
+         base::H1handle fMsgPerGet4{nullptr};   ///<! histogram with messages per get4
+         base::H1handle fErrPerGet4{nullptr};   ///<! histogram with errors per get4
 
 //         base::H2handle fSlMsgPerGet4; ///<! histogram with slow control per GET4
 //         base::H2handle fScalerPerGet4; ///<! histogram with slow control scaler per GET4

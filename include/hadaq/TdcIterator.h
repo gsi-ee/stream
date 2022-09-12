@@ -18,28 +18,20 @@ namespace hadaq {
 
          enum { DummyEpoch = 0xffffffff };
 
-         uint32_t*  fBuf;        ///<! pointer on raw data
-         uint32_t*  fLastBuf;    ///<! pointer on last extracted message
-         unsigned   fBuflen;     ///<! length of raw data
-         bool       fSwapped;    ///<! true if raw data are swapped
+         uint32_t*  fBuf{nullptr};     ///<! pointer on raw data
+         uint32_t*  fLastBuf{nullptr}; ///<! pointer on last extracted message
+         unsigned   fBuflen{0};        ///<! length of raw data
+         bool       fSwapped{false};   ///<! true if raw data are swapped
 
-         hadaq::TdcMessage fMsg; ///<! current message
-         uint32_t  fCurEpoch;    ///<! current epoch
+         hadaq::TdcMessage fMsg;          ///<! current message
+         uint32_t  fCurEpoch{DummyEpoch};  ///<! current epoch
 
          base::LocalStampConverter  fConv;   ///<! use to covert time stamps in seconds
 
       public:
 
          /** constructor */
-         TdcIterator(unsigned epochbitlen = 28) :
-            fBuf(0),
-            fLastBuf(0),
-            fBuflen(0),
-            fSwapped(false),
-            fMsg(),
-            fCurEpoch(DummyEpoch),
-            fConv()
-         {
+         TdcIterator(unsigned epochbitlen = 28) {
             // we have 11 bits for coarse stamp and 28 bits for epoch
             // each bin is 5 ns
             fConv.SetTimeSystem(epochbitlen + 11, hadaq::TdcMessage::CoarseUnit());
@@ -49,19 +41,19 @@ namespace hadaq {
          void assign(uint32_t* buf, unsigned len, bool swapped = true)
          {
             fBuf = buf;
-            fLastBuf = 0;
+            fLastBuf = nullptr;
             fBuflen = len;
             fSwapped = swapped;
             fMsg.assign(0);
 
-            if (fBuflen == 0) fBuf = 0;
+            if (fBuflen == 0) fBuf = nullptr;
             fCurEpoch = DummyEpoch;
          }
 
          /** assign data from sub event */
          void assign(hadaqs::RawSubevent* subev, unsigned indx, unsigned datalen)
          {
-            if (subev!=0)
+            if (subev)
                assign(subev->GetDataPtr(indx), datalen, subev->IsSwapped());
          }
 
@@ -110,7 +102,8 @@ namespace hadaq {
          /** try to check forward message - without shifting iterator */
          bool lookForwardMsg(TdcMessage &msg)
          {
-            if (fBuf==0) return false;
+            if (!fBuf)
+               return false;
             if (fSwapped)
                msg.assign((((uint8_t *) fBuf)[0] << 24) | (((uint8_t *) fBuf)[1] << 16) | (((uint8_t *) fBuf)[2] << 8) | (((uint8_t *) fBuf)[3]));
             else
