@@ -810,7 +810,7 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
          refproc = fTrb->FindTDC(reftdc);
 
       if (!refproc && subprocmap) {
-         SubProcMap::iterator iter = subprocmap->find(reftdc);
+         auto iter = subprocmap->find(reftdc);
          if ((iter != subprocmap->end()) && iter->second->IsTDC())
             refproc = (TdcProcessor*) iter->second;
       }
@@ -867,7 +867,7 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
          if (fTrb) refproc = fTrb->FindTDC(reftdc);
 
          if (!refproc && subprocmap) {
-            SubProcMap::iterator iter = subprocmap->find(reftdc);
+            auto iter = subprocmap->find(reftdc);
             if ((iter != subprocmap->end()) && iter->second->IsTDC())
                refproc = (TdcProcessor*) iter->second;
          }

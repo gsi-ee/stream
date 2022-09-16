@@ -169,8 +169,8 @@ void hadaq::HldProcessor::ConfigureCalibration(const std::string& fileprefix, lo
    fCalibrName = fileprefix;
    fCalibrPeriod = period;
    fCalibrTriggerMask = trigmask;
-   for (TrbProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
-      iter->second->ConfigureCalibration(fileprefix, period, trigmask);
+   for (auto &entry : fMap)
+      entry.second->ConfigureCalibration(fileprefix, period, trigmask);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -180,8 +180,8 @@ void hadaq::HldProcessor::SetTriggerWindow(double left, double right)
 {
    base::StreamProc::SetTriggerWindow(left, right);
 
-   for (TrbProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
-      iter->second->SetTriggerWindow(left, right);
+   for (auto &entry : fMap)
+      entry.second->SetTriggerWindow(left, right);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -191,8 +191,8 @@ void hadaq::HldProcessor::SetStoreKind(unsigned kind)
 {
    base::StreamProc::SetStoreKind(kind);
 
-   for (TrbProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
-      iter->second->SetStoreKind(kind);
+   for (auto &entry : fMap)
+      entry.second->SetStoreKind(kind);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -201,8 +201,8 @@ void hadaq::HldProcessor::SetStoreKind(unsigned kind)
 void hadaq::HldProcessor::SetPrintRawData(bool on)
 {
    fPrintRawData = on;
-   for (TrbProcMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
-      iter->second->SetPrintRawData(on);
+   for (auto &entry : fMap)
+      entry.second->SetPrintRawData(on);
 }
 
 
@@ -252,8 +252,8 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
 
       DefFillH1(fEvSize, ev->GetPaddedSize(), 1.);
 
-      for (TrbProcMap::iterator diter = fMap.begin(); diter != fMap.end(); diter++)
-         diter->second->BeforeEventScan();
+      for (auto &entry : fMap)
+         entry.second->BeforeEventScan();
 
       hadaqs::RawSubevent* sub = nullptr;
 
@@ -266,12 +266,11 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
          // use only 16-bit in trigger number while CTS make a lot of errors in higher 8 bits
          // AccountTriggerId((sub->GetTrigNr() >> 8) & 0xffff);
 
-         TrbProcMap::iterator iter = fMap.find(sub->GetId());
+         auto iter = fMap.find(sub->GetId());
 
          if (iter != fMap.end())
             iter->second->ScanSubEvent(sub, fMsg.run_nr, fMsg.seq_nr);
-         else
-         if (fAutoCreate) {
+         else if (fAutoCreate) {
             TrbProcessor* trb = new TrbProcessor(sub->GetId(), this);
             trb->SetAutoCreate(true);
             trb->SetHadaqCTSId(sub->GetId());
@@ -290,11 +289,11 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
          }
       }
 
-      for (TrbProcMap::iterator diter = fMap.begin(); diter != fMap.end(); diter++)
-         diter->second->AfterEventScan();
+      for (auto &entry : fMap)
+         entry.second->AfterEventScan();
 
-      for (TrbProcMap::iterator diter = fMap.begin(); diter != fMap.end(); diter++)
-         diter->second->AfterEventFill();
+      for (auto &entry : fMap)
+         entry.second->AfterEventFill();
 
       if (fAutoCreate) {
          fAutoCreate = false; // with first event
@@ -412,7 +411,7 @@ unsigned hadaq::HldProcessor::TransformEvent(void* src, unsigned len, void* tgt,
    }
 
    while (auto sub = iter.nextSubevent()) {
-      TrbProcMap::iterator iter = fMap.find(sub->GetId());
+      auto iter = fMap.find(sub->GetId());
       if (iter != fMap.end()) {
          if (curr && (tgtlen-reslen < sub->GetPaddedSize())) {
             fprintf(stderr,"not enough space for subevent in output buffer\n");
@@ -585,6 +584,6 @@ void hadaq::HldProcessor::CreatePerTDCHisto()
 
 void hadaq::HldProcessor::SetCrossProcess(bool on)
 {
-   for (TrbProcMap::iterator diter = fMap.begin(); diter != fMap.end(); diter++)
-      diter->second->SetCrossProcess(on);
+   for (auto &entry : fMap)
+      entry.second->SetCrossProcess(on);
 }

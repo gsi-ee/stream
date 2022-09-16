@@ -501,13 +501,13 @@ void base::ProcMgr::ProvideRawData(const Buffer& buf)
 
    unsigned index = buf().kind * MaxBrdId + buf().boardid;
 
-   StreamProcMap::iterator it = fMap.find(index);
+   auto iter = fMap.find(index);
 
-   if (it == fMap.end()) return;
+   if (iter == fMap.end()) return;
 
    // printf("Provide new data kind %d  board %u\n", buf().kind, buf().boardid);
 
-   it->second->AddNextBuffer(buf);
+   iter->second->AddNextBuffer(buf);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////

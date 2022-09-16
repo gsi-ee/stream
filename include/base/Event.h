@@ -39,17 +39,17 @@ namespace base {
          /** destroy all events */
          void DestroyEvents()
          {
-            for (EventsMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
-               delete iter->second;
+            for (auto &elem : fMap)
+               delete elem.second;
             fMap.clear();
          }
 
          /** reset events */
          void ResetEvents()
          {
-            for (EventsMap::iterator iter = fMap.begin(); iter != fMap.end(); iter++)
-               if (iter->second)
-                  iter->second->Clear();
+            for (auto &elem : fMap)
+               if (elem.second)
+                  elem.second->Clear();
 
             fTriggerTm = 0;
          }
@@ -57,8 +57,11 @@ namespace base {
          /** add subevent */
          void AddSubEvent(const std::string& name, base::SubEvent* ev)
          {
-            EventsMap::iterator iter = fMap.find(name);
-            if (iter != fMap.end()) delete iter->second;
+            auto iter = fMap.find(name);
+            if (iter != fMap.end()) {
+               delete iter->second;
+               iter->second = nullptr;
+            }
             fMap[name] = ev;
          }
 

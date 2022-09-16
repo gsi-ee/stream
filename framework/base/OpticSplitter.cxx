@@ -43,14 +43,14 @@ bool base::OpticSplitter::FirstBufferScan(const base::Buffer& buf)
    // TODO: one can treat special case when buffer data only from single board
    // in this case one could deliver buffer as is to the SysCoreProc
 
-   uint64_t* ptr = (uint64_t*) buf.ptr();
+   uint64_t *ptr = (uint64_t*) buf.ptr();
 
    unsigned len = buf.datalen();
 
-   while(len>0) {
+   while(len > 0) {
       unsigned brdid = (*ptr & 0xffff);
 
-      SysCoreMap::iterator iter = fMap.find(brdid);
+      auto iter = fMap.find(brdid);
 
       if (iter != fMap.end()) {
          SysCoreProc* proc = iter->second;
@@ -68,14 +68,14 @@ bool base::OpticSplitter::FirstBufferScan(const base::Buffer& buf)
       ptr++;
    }
 
-   for (SysCoreMap::iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
-      SysCoreProc* proc = iter->second;
+   for (auto &entry : fMap) {
+      SysCoreProc* proc = entry.second;
       if (proc->fSplitPtr) {
          proc->fSplitBuf.setdatalen((proc->fSplitPtr - (uint64_t*) proc->fSplitBuf.ptr())*8);
 
          proc->fSplitBuf.rec().kind = buf.rec().kind;
          proc->fSplitBuf.rec().format = buf.rec().format;
-         proc->fSplitBuf.rec().boardid = iter->first;
+         proc->fSplitBuf.rec().boardid = entry.first;
 
          proc->AddNextBuffer(proc->fSplitBuf);
 
