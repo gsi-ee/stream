@@ -569,14 +569,14 @@ void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned re
    // ignore invalid settings
    if ((ch==refch) && ((reftdc & 0xffff) == GetID())) return;
 
-   if ((refch==0) && (ch!=0) && ((reftdc & 0xffff) != GetID())) {
+   if ((refch == 0) && (ch != 0) && ((reftdc & 0xffff) != GetID())) {
       printf("%s cannot set reference to zero channel from other TDC\n", GetName());
       return;
    }
 
    fCh[ch].refch = refch;
    fCh[ch].reftdc = reftdc & 0xffff;
-   fCh[ch].refabs = ((reftdc & 0xf0000) == 0x70000);
+   fCh[ch].refabs = (reftdc & 0xf0000) == 0x70000;
 
    // if other TDC configured as ref channel, enable cross processing
    if (fTrb) fTrb->SetCrossProcessAll();
@@ -801,7 +801,7 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
       if (ref > 0xffff) continue; // no any settings for ref channel, can ignore
 
       unsigned reftdc = rec.reftdc;
-      if (reftdc>=0xffff) reftdc = GetID();
+      if (reftdc >= 0xffff) reftdc = GetID();
 
       TdcProcessor* refproc = nullptr;
       if (reftdc == GetID())
@@ -819,13 +819,13 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
 
       // printf("TDC %s %d %d same %d %p %p  %f %f \n", GetName(), ch, ref, (this==refproc), this, refproc, rec.rising_hit_tm, refproc->fCh[ref].rising_hit_tm);
 
-      if (refproc && ((ref > 0) || (refproc != this)) && (ref<refproc->NumChannels()) && ((ref!=ch) || (refproc != this))) {
+      if (refproc && ((ref > 0) || (refproc != this)) && (ref < refproc->NumChannels()) && ((ref != ch) || (refproc != this))) {
          if (DoRisingEdge() && (rec.rising_hit_tm != 0) && (refproc->fCh[ref].rising_hit_tm != 0)) {
 
             double tm = rec.rising_hit_tm; // relative time to ch0 on same TDC
             double tm_ref = refproc->fCh[ref].rising_hit_tm; // relative time to ch0 on referenced TDC
 
-            if ((refproc!=this) && (ch>0) && (ref>0) && rec.refabs) {
+            if ((refproc != this) && (ch > 0) && (ref > 0) && rec.refabs) {
                tm += fCh[0].rising_hit_tm; // produce again absolute time for channel
                tm_ref += refproc->fCh[0].rising_hit_tm; // produce again absolute time for reference channel
             }
@@ -1713,9 +1713,9 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    // use temperature compensation only when temperature available
    bool do_temp_comp = fCalibrUseTemp && (fCurrentTemp > 0) && (fCalibrTemp > 0) && (fabs(fCurrentTemp - fCalibrTemp) < 30.);
 
-   unsigned cnt(0), hitcnt(0);
+   unsigned cnt = 0, hitcnt = 0;
 
-   bool iserr(false), isfirstepoch(false), rawprint(false), missinghit(false), dostore(false);
+   bool iserr = false, isfirstepoch = false, rawprint = false, missinghit = false, dostore = false;
 
    if (first_scan && IsTriggeredAnalysis() && IsStoreEnabled() && mgr()->HasTrigEvent()) {
       dostore = true;
@@ -1760,13 +1760,13 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    else
       iter.assign((uint32_t*) buf.ptr(0), buf.datalen()/4, buf().format==2);
 
-   unsigned help_index(0);
+   unsigned help_index = 0;
 
-   double localtm(0.), minimtm(0), ch0time(0);
+   double localtm = 0., minimtm = 0., ch0time = 0.;
 
    hadaq::TdcMessage& msg = iter.msg();
    hadaq::TdcMessage calibr;
-   unsigned ncalibr(20), temp(0), lowid(0), highid(0); // clear indicate that no calibration data present
+   unsigned ncalibr = 20, temp = 0, lowid = 0, highid = 0; // clear indicate that no calibration data present
 
    if (fSkipTdcMessages > 0) {
       unsigned skipcnt = fSkipTdcMessages;
@@ -2033,7 +2033,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                   rec.rising_fine = fine;
 
                   if ((rec.rising_cond_prnt > 0) && (rec.reftdc == GetID()) &&
-                      (rec.refch < NumChannels()) && (fCh[rec.refch].rising_hit_tm!=0)) {
+                      (rec.refch < NumChannels()) && (fCh[rec.refch].rising_hit_tm != 0.)) {
                      double diff = (localtm - fCh[rec.refch].rising_hit_tm) * 1e9;
                      if (TestC1(rec.fRisingRefCond, diff) == 0) {
                         rec.rising_cond_prnt--;
@@ -2097,9 +2097,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                   DefFillH2(fhSigmaTotVsChannel, chid, totsigma, 1.);
 
                    // here put something new for global histograms JAM2021:
-                    if (fToTPerTDCChannel)
-                        {
-
+                   if (fToTPerTDCChannel) {
 
                             // we first always show most recent value, no averaging here;
                             if((tot>0) && (tot < 1000)) // JAM 7-12-21 suppress noise fakes
@@ -2134,7 +2132,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
             if (!iserr) {
                hitcnt++;
-               if ((minimtm==0) || (localtm < minimtm)) minimtm = localtm;
+               if ((minimtm == 0.) || (localtm < minimtm)) minimtm = localtm;
 
                if (dostore)
                   switch(GetStoreKind()) {
@@ -2154,7 +2152,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          } else
 
          // for second scan we check if hit can be assigned to the events
-         if (((chid>0) || fCh0Enabled) && !iserr) {
+         if (((chid > 0) || fCh0Enabled) && !iserr) {
 
             base::GlobalTime_t globaltm = LocalToGlobalTime(localtm, &help_index);
 
@@ -2702,7 +2700,7 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
                rec.rising_last_tm = localtm;
                rec.rising_new_value = true;
 
-               if (use_for_ref && ((rec.rising_hit_tm == 0.) || fUseLastHit)) {
+               if (use_for_ref && (fUseLastHit || (rec.rising_hit_tm == 0.))) {
                   rec.rising_hit_tm = (chid > 0) ? localtm : ch0time;
                   rec.rising_coarse = coarse;
                   rec.rising_fine = fine;
