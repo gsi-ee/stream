@@ -1690,25 +1690,28 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       return false;
    }
 
-   uint32_t syncid(0xffffffff);
+   uint32_t syncid = 0xffffffff;
    // copy first 4 bytes - it is syncid
    if (buf().format==0)
       memcpy(&syncid, buf.ptr(), 4);
 
+
+   int buf_kind = buf().kind;
+
    // if data could be used for calibration
-   int use_for_calibr = first_scan && (((1 << buf().kind) & fCalibrTriggerMask) != 0) ? 1 : 0;
+   int use_for_calibr = first_scan && (((1 << buf_kind) & fCalibrTriggerMask) != 0) ? 1 : 0;
 
    // use in ref calculations only physical trigger, exclude 0xD or 0xE
-   bool use_for_ref = buf().kind < (gUseDTrigForRef ? 0xE : 0xD);
+   bool use_for_ref = buf_kind < (gUseDTrigForRef ? 0xE : 0xD);
 
    // disable taking last hit for trigger DD
-   if ((use_for_calibr > 0) && ((buf().kind == 0xD) || gUseAsDTrig)) {
+   if ((use_for_calibr > 0) && ((buf_kind == 0xD) || gUseAsDTrig)) {
       if (IsTriggeredAnalysis() &&  (gTrigDWindowLow < gTrigDWindowHigh)) use_for_calibr = 3; // accept time stamps only for inside window
       // use_for_calibr = 2; // always use only last hit
    }
 
    // if data could be used for TOT calibration
-   bool do_tot = (use_for_calibr > 0) && ((buf().kind == 0xD) || gUseAsDTrig) && DoFallingEdge();
+   bool do_tot = (use_for_calibr > 0) && ((buf_kind == 0xD) || gUseAsDTrig) && DoFallingEdge();
 
    // use temperature compensation only when temperature available
    bool do_temp_comp = fCalibrUseTemp && (fCurrentTemp > 0) && (fCalibrTemp > 0) && (fabs(fCurrentTemp - fCalibrTemp) < 30.);
@@ -2045,7 +2048,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                if (print_cond) rawprint = true;
 
                // special case - when ref channel defined as 0, fill all hits
-               if ((chid!=0) && (rec.refch==0) && (rec.reftdc == GetID()) && use_for_ref) {
+               if ((chid != 0) && (rec.refch == 0) && (rec.reftdc == GetID()) && use_for_ref) {
                   rec.rising_ref_tm = localtm;
 
                   DefFillH1(rec.fRisingRef, (localtm*1e9), 1.);
@@ -2366,20 +2369,22 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
    if (buf().format==0)
       memcpy(&syncid, buf.ptr(), 4);
 
+   int buf_kind = buf().kind;
+
    // if data could be used for calibration
-   int use_for_calibr = first_scan && (((1 << buf().kind) & fCalibrTriggerMask) != 0) ? 1 : 0;
+   int use_for_calibr = first_scan && (((1 << buf_kind) & fCalibrTriggerMask) != 0) ? 1 : 0;
 
    // use in ref calculations only physical trigger, exclude 0xD or 0xE
-   bool use_for_ref = buf().kind < (gUseDTrigForRef ? 0xE : 0xD);
+   bool use_for_ref = buf_kind < (gUseDTrigForRef ? 0xE : 0xD);
 
    // disable taking last hit for trigger DD
-   if ((use_for_calibr > 0) && ((buf().kind == 0xD) || gUseAsDTrig)) {
+   if ((use_for_calibr > 0) && ((buf_kind == 0xD) || gUseAsDTrig)) {
       if (IsTriggeredAnalysis() &&  (gTrigDWindowLow < gTrigDWindowHigh)) use_for_calibr = 3; // accept time stamps only for inside window
       // use_for_calibr = 2; // always use only last hit
    }
 
    // if data could be used for TOT calibration
-   bool do_tot = (use_for_calibr > 0) && ((buf().kind == 0xD) || gUseAsDTrig) && DoFallingEdge();
+   bool do_tot = (use_for_calibr > 0) && ((buf_kind == 0xD) || gUseAsDTrig) && DoFallingEdge();
 
    // use temperature compensation only when temperature available
    bool do_temp_comp = fCalibrUseTemp && (fCurrentTemp > 0) && (fCalibrTemp > 0) && (fabs(fCurrentTemp - fCalibrTemp) < 30.);
