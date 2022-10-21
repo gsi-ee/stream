@@ -232,7 +232,9 @@ namespace hadaq {
          base::H2handle fAllFine{nullptr};    ///<! histogram of all fine counters
          base::H2handle fAllCoarse{nullptr};  ///<! histogram of all coarse counters
          base::H2handle fRisingCalibr{nullptr};///<! histogram with all rising calibrations
-         base::H2handle fFallingCalibr{nullptr}; ///<! histogram all rising calibrations
+         base::H2handle fFallingCalibr{nullptr}; ///<! histogram with all falling calibrations
+         base::H2handle fRisingPCalibr{nullptr};///<! histogram with prevented all rising calibrations
+         base::H2handle fFallingPCalibr{nullptr}; ///<! histogram with prevented all falling calibrations
          base::H1handle fHitsRate{nullptr};    ///<! histogram with data rate
          base::H1handle fTotShifts{nullptr};  ///<! histogram with all TOT shifts
          base::H1handle fTempDistr{nullptr};   ///<! temperature distribution

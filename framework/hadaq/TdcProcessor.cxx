@@ -264,6 +264,8 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fAllCoarse = nullptr;
    fRisingCalibr = nullptr;
    fFallingCalibr = nullptr;
+   fRisingPCalibr = nullptr;
+   fFallingPCalibr = nullptr;
    fTotShifts = nullptr;
    fTempDistr = nullptr;
    fhRaisingFineCalibr = nullptr;
@@ -338,10 +340,16 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
       if (DoRisingEdge())
          fRisingCalibr  = MakeH2("RisingCalibr",  "rising edge calibration", numchannels, 0, numchannels, fNumFineBins, 0, fNumFineBins, "ch;fine");
 
+      if (DoRisingEdge() && gPreventFineCalibration)
+         fRisingPCalibr  = MakeH2("RisingPCalibr",  "prevented rising edge calibration", numchannels, 0, numchannels, fNumFineBins, 0, fNumFineBins, "ch;fine");
+
       if (DoFallingEdge()) {
          fFallingCalibr = MakeH2("FallingCalibr", "falling edge calibration", numchannels, 0, numchannels, fNumFineBins, 0, fNumFineBins, "ch;fine");
          fTotShifts = MakeH1("TotShifts", "Calibrated time shift for falling edge", numchannels, 0, numchannels, "kind:F;ch;ns");
       }
+
+      if (DoFallingEdge() && gPreventFineCalibration)
+         fFallingPCalibr = MakeH2("FallingPCalibr", "prevented falling edge calibration", numchannels, 0, numchannels, fNumFineBins, 0, fNumFineBins, "ch;fine");
 
 
     fhSigmaTotVsChannel = MakeH2("ToTSigmaVsChannel", "SigmaToT", numchannels, 0, numchannels, 500, 0, +5, "ch; Sigma ToT [ns]");
@@ -3663,11 +3671,10 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
                CopyCalibration(rec.falling_calibr, rec.fFallingCalibr, ch, fFallingCalibr);
          } else {
             if (DoRisingEdge())
-               CopyCalibration(rising_pcalibr, rec.fRisingPCalibr, ch, nullptr);
+               CopyCalibration(rising_pcalibr, rec.fRisingPCalibr, ch, fRisingPCalibr);
             if (DoFallingEdge())
-               CopyCalibration(falling_pcalibr, rec.fFallingPCalibr, ch, nullptr);
+               CopyCalibration(falling_pcalibr, rec.fFallingPCalibr, ch, fFallingPCalibr);
          }
-
 
          DefFillH1(fTotShifts, ch, rec.tot_shift);
        }
