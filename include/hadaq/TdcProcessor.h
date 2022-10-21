@@ -51,6 +51,7 @@ namespace hadaq {
             base::H1handle fRisingRef;     ///<! histogram of time diff to ref channel
             base::C1handle fRisingRefCond; ///<! condition to print raw events
             base::H1handle fRisingCalibr;  ///<! histogram of channel calibration function
+            base::H1handle fRisingPCalibr; ///<! histogram of prevented channel calibration function
             base::H2handle fRisingRef2D;   ///<! histogram
             base::H1handle fRisingRefRef;  ///<! difference of two ref times, connected with double ref
             base::H2handle fRisingDoubleRef; ///<! correlation with diff time from other channel
@@ -60,6 +61,7 @@ namespace hadaq {
             base::H1handle fTot;           ///<! histogram of time-over-threshold measurement
             base::H1handle fTot0D;         ///<! TOT from 0xD trigger (used for shift calibration)
             base::H1handle fFallingCalibr; ///<! histogram of channel calibration function
+            base::H1handle fFallingPCalibr; ///<! histogram of channel calibration function
             int rising_cnt;                ///<! number of rising hits in last event
             int falling_cnt;               ///<! number of falling hits in last event
             double rising_hit_tm;          ///<! leading edge time, used in correlation analysis. can be first or last time
@@ -107,6 +109,7 @@ namespace hadaq {
                fRisingRef(nullptr),
                fRisingRefCond(nullptr),
                fRisingCalibr(nullptr),
+               fRisingPCalibr(nullptr),
                fRisingRef2D(nullptr),
                fRisingRefRef(nullptr),
                fRisingDoubleRef(nullptr),
@@ -116,6 +119,7 @@ namespace hadaq {
                fTot(nullptr),
                fTot0D(nullptr),
                fFallingCalibr(nullptr),
+               fFallingPCalibr(nullptr),
                rising_cnt(0),
                falling_cnt(0),
                rising_hit_tm(0.),
@@ -367,6 +371,7 @@ namespace hadaq {
          static int gDefaultLinearNumPoints;      ///<! number of points when linear calibration is used
          static bool gIgnoreCalibrMsgs;    ///<! ignore calibration messages
          static bool gStoreCalibrTables;   ///<! when enabled, store calibration tables for v4 TDC
+         static bool gPreventFineCalibration;  ///<! when enabled, not produce calibration but just fill extra histograms
 
          void AppendTrbSync(uint32_t syncid) override;
 
@@ -487,6 +492,8 @@ namespace hadaq {
          static void SetUseAsDTrig(bool on = true);
 
          static void SetStoreCalibrTables(bool on = true);
+
+         static void SetPreventFineCalibration(bool on = true);
 
          /** Set number of TDC messages, which should be skipped from subevent before analyzing it */
          void SetSkipTdcMessages(unsigned cnt = 0) { fSkipTdcMessages = cnt; }

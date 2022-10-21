@@ -41,6 +41,7 @@ double hadaq::TdcProcessor::gTotRMSLimit = 0.15;
 int hadaq::TdcProcessor::gDefaultLinearNumPoints = 2;
 bool hadaq::TdcProcessor::gIgnoreCalibrMsgs = false;
 bool hadaq::TdcProcessor::gStoreCalibrTables = false;
+bool hadaq::TdcProcessor::gPreventFineCalibration = false;
 
 unsigned BUBBLE_SIZE = 19;
 
@@ -167,15 +168,21 @@ bool hadaq::TdcProcessor::IsHadesReducedMonitoring()
    return gHadesReducedMonitor;
 }
 
-
-
-
 //////////////////////////////////////////////////////////////////////////////////////////////
 /// enable storage of calibration tables for V4 TDC
 
 void hadaq::TdcProcessor::SetStoreCalibrTables(bool on)
 {
    gStoreCalibrTables = on;
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// Prevent calibration of fine time, just fill extra histograms
+
+void hadaq::TdcProcessor::SetPreventFineCalibration(bool on)
+{
+   gPreventFineCalibration = on;
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -437,7 +444,7 @@ void hadaq::TdcProcessor::AddError(unsigned code, const char *fmt, ...)
 
 bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
 {
-   if ((HistFillLevel() < 3) || (ch>=NumChannels())) return false;
+   if ((HistFillLevel() < 3) || (ch >= NumChannels())) return false;
 
    SetSubPrefix2("Ch", ch);
 
@@ -447,6 +454,9 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
       fCh[ch].fRisingCalibr = MakeH1("RisingCalibr", "Rising calibration function", fNumFineBins, 0, fNumFineBins, "fine;kind:F");
       // copy calibration only when histogram created
       CopyCalibration(fCh[ch].rising_calibr, fCh[ch].fRisingCalibr, ch, fRisingCalibr);
+
+      if (gPreventFineCalibration)
+         fCh[ch].fRisingPCalibr = MakeH1("RisingPCalibr", "Prevented rising calibration", fNumFineBins, 0, fNumFineBins, "fine;kind:F");
    }
 
    if (DoFallingEdge() && !fCh[ch].fFallingFine && ((ch > 0) || fVersion4)) {
@@ -457,6 +467,10 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
       // fCh[ch].fTot0D = MakeH1("Tot0D", "Time over threshold with 0xD trigger", TotBins, fToThmin, fToThmax, "ns");
       // copy calibration only when histogram created
       CopyCalibration(fCh[ch].falling_calibr, fCh[ch].fFallingCalibr, ch, fFallingCalibr);
+
+      if (gPreventFineCalibration)
+         fCh[ch].fFallingPCalibr = MakeH1("FallingPCalibr", "Prevented falling calibration", fNumFineBins, 0, fNumFineBins, "fine;kind:F");
+
    }
 
    SetSubPrefix2();
@@ -3527,9 +3541,27 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
       ClearH1(fTotShifts);
    }
 
+   std::vector<float> rising_pcalibr, falling_pcalibr;
+
+
    for (unsigned ch=0;ch<NumChannels();ch++) {
 
       ChannelRec &rec = fCh[ch];
+
+      std::vector<float> *rising_calibr{nullptr}, *falling_calibr{nullptr};
+
+      if (gPreventFineCalibration) {
+         // prepare array for calibration, which not be preserved
+         rising_pcalibr.resize(rec.rising_calibr.size());
+         falling_pcalibr.resize(rec.falling_calibr.size());
+
+         rising_calibr = &rising_pcalibr;
+         falling_calibr = &falling_pcalibr;
+      } else {
+         rising_calibr = &rec.rising_calibr;
+         falling_calibr = &rec.falling_calibr;
+      }
+
 
       if (!preliminary) {
          rec.calibr_stat_rising = rec.calibr_stat_falling = 0;
@@ -3556,13 +3588,13 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
          bool res = false;
 
          if (DoRisingEdge() && (rec.all_rising_stat > 0)) {
-            rec.calibr_quality_rising = CalibrateChannel(ch, true, rec.rising_stat, rec.rising_calibr, use_linear, preliminary);
+            rec.calibr_quality_rising = CalibrateChannel(ch, true, rec.rising_stat, *rising_calibr, use_linear, preliminary);
             rec.calibr_stat_rising = rec.all_rising_stat;
             res = (rec.calibr_quality_rising > 0.5);
          }
 
          if (DoFallingEdge() && (rec.all_falling_stat > 0) && (fEdgeMask == edge_BothIndepend)) {
-            rec.calibr_quality_falling = CalibrateChannel(ch, false, rec.falling_stat, rec.falling_calibr, use_linear, preliminary);
+            rec.calibr_quality_falling = CalibrateChannel(ch, false, rec.falling_stat, *falling_calibr, use_linear, preliminary);
             rec.calibr_stat_falling = rec.all_falling_stat;
             if (rec.calibr_quality_falling <= 0.5) res = false;
          }
@@ -3614,7 +3646,7 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
          rec.hascalibr = res;
 
          if ((fEdgeMask == edge_CommonStatistic) || (fEdgeMask == edge_ForceRising)) {
-            rec.falling_calibr = rec.rising_calibr;
+            *falling_calibr = *rising_calibr;
             rec.calibr_stat_falling = rec.calibr_stat_rising;
             rec.calibr_quality_falling = rec.calibr_quality_rising;
          }
@@ -3624,10 +3656,19 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
       }
 
       if (!preliminary) {
-         if (DoRisingEdge())
-            CopyCalibration(rec.rising_calibr, rec.fRisingCalibr, ch, fRisingCalibr);
-         if (DoFallingEdge())
-            CopyCalibration(rec.falling_calibr, rec.fFallingCalibr, ch, fFallingCalibr);
+         if (!gPreventFineCalibration) {
+            if (DoRisingEdge())
+               CopyCalibration(rec.rising_calibr, rec.fRisingCalibr, ch, fRisingCalibr);
+            if (DoFallingEdge())
+               CopyCalibration(rec.falling_calibr, rec.fFallingCalibr, ch, fFallingCalibr);
+         } else {
+            if (DoRisingEdge())
+               CopyCalibration(rising_pcalibr, rec.fRisingPCalibr, ch, nullptr);
+            if (DoFallingEdge())
+               CopyCalibration(falling_pcalibr, rec.fFallingPCalibr, ch, nullptr);
+         }
+
+
          DefFillH1(fTotShifts, ch, rec.tot_shift);
        }
     }
