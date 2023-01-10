@@ -15,3 +15,5 @@ GO4_USER_ANALYSIS(
    TARGET_DIR
       ${CMAKE_BINARY_DIR}/lib
 )
+
+STREAM_INSTALL_HEADERS(go4engine TStreamEvent.h TUserSource.h TFirstStepProcessor.h)

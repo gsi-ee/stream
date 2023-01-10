@@ -47,7 +47,6 @@ if(NOT CMAKE_CXX_STANDARD)
 endif()
 
 
-
 configure_file(${CMAKE_SOURCE_DIR}/cmake/scripts/StreamConfig.cmake.in
                ${CMAKE_BINARY_DIR}/StreamConfig.cmake COPYONLY)
 
@@ -61,3 +60,5 @@ if(Go4_FOUND)
    add_subdirectory(go4engine)
 endif()
 
+get_property(__allHeaders GLOBAL PROPERTY STREAM_HEADER_TARGETS)
+add_custom_target(move_headers ALL DEPENDS ${__allHeaders})

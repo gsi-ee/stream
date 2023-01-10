@@ -138,6 +138,3 @@ if(ROOT_FOUND)
                             NOINSTALL)
 
 endif()
-
-get_property(__allHeaders GLOBAL PROPERTY STREAM_HEADER_TARGETS)
-add_custom_target(move_headers ALL DEPENDS ${__allHeaders})

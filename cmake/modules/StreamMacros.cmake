@@ -23,8 +23,13 @@ set(STREAM_LIBRARY_PROPERTIES
 function(STREAM_INSTALL_HEADERS subdir)
   cmake_parse_arguments(ARG "" "" "" ${ARGN})
   foreach(include_file ${ARG_UNPARSED_ARGUMENTS})
-    set(src ${CMAKE_SOURCE_DIR}/include/${include_file})
-    set(dst ${CMAKE_BINARY_DIR}/include/${include_file})
+    if(subdir STREQUAL go4engine)
+       set(src ${CMAKE_SOURCE_DIR}/${subdir}/${include_file})
+       set(dst ${CMAKE_BINARY_DIR}/include/${include_file})
+    else()
+       set(src ${CMAKE_SOURCE_DIR}/include/${include_file})
+       set(dst ${CMAKE_BINARY_DIR}/include/${include_file})
+    endif()
     add_custom_command(
       OUTPUT ${dst}
       COMMAND ${CMAKE_COMMAND} -E copy ${src} ${dst}
