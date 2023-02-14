@@ -37,6 +37,9 @@ protected:
    std::vector<hadaq::MdcMessage> fDummyFloat;  ///<! vector with messages
    std::vector<hadaq::MdcMessage> *pStoreFloat{nullptr}; ///<! pointer on store vector
 
+   void CreateBranch(TTree *) override;
+   void Store(base::Event* ev) override;
+
 public:
 
    MdcProcessor(TrbProcessor *trb, unsigned subid);

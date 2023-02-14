@@ -13,7 +13,6 @@ hadaq::MdcProcessor::MdcProcessor(TrbProcessor* trb, unsigned subid) :
    deltaT_ToT = MakeH2("deltaT_ToT", "", 6000, -1199.8, 1200.2, 1500, 0.2, 600.2);
    Errors = MakeH1("Errors", "", 33, -1, 32);
    for (unsigned i = 0; i < TDCCHANNELS + 1; i++) {
-
       char chno[16];
       sprintf(chno, "Ch%02d_t1", i);
       t1_h[i] = MakeH1(chno, chno, 6000, -1199.8, 1200.2, "ns");
@@ -24,10 +23,54 @@ hadaq::MdcProcessor::MdcProcessor(TrbProcessor* trb, unsigned subid) :
    }
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// Create TTree branch
+
+void hadaq::MdcProcessor::CreateBranch(TTree*)
+{
+   if(GetStoreKind() > 0) {
+      pStoreFloat = &fDummyFloat;
+      mgr()->CreateBranch(GetName(), "std::vector<hadaq::MdcMessage>", (void**) &pStoreFloat);
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// Store event
+
+void hadaq::MdcProcessor::Store(base::Event* ev)
+{
+   // always set to dummy
+   pStoreFloat = &fDummyFloat;
+
+   // in case of triggered analysis all pointers already set
+   if (!ev /*|| IsTriggeredAnalysis()*/) return;
+
+   auto sub0 = ev->GetSubEvent(GetName());
+   if (!sub0) return;
+
+   if (GetStoreKind() > 0) {
+      auto sub = dynamic_cast<hadaq::MdcSubEvent *> (sub0);
+      // when subevent exists, use directly pointer on messages vector
+      if (sub) {
+         pStoreFloat = sub->vect_ptr();
+      }
+   }
+}
+
+
 bool hadaq::MdcProcessor::FirstBufferScan(const base::Buffer &buf)
 {
    uint32_t *arr = (uint32_t *)buf.ptr();
    unsigned len = buf.datalen() / 4;
+
+   bool dostore = false;
+
+   if (IsTriggeredAnalysis() && IsStoreEnabled() && mgr()->HasTrigEvent() && (GetStoreKind() > 0)) {
+      dostore = true;
+      auto subevnt = new hadaq::MdcSubEvent(len - 1); // expected number of messages
+      mgr()->AddToTrigEvent(GetName(), subevnt);
+      pStoreFloat = subevnt->vect_ptr();
+   }
 
    uint32_t data = arr[0];
    FillH2(HitsPerBinRising, -1, data & 0x7);
@@ -52,6 +95,10 @@ bool hadaq::MdcProcessor::FirstBufferScan(const base::Buffer &buf)
          float timeToT = (fallingHit - risingHit) * 0.4;
          if (timeToT < 0)
             timeToT += 8192 * 0.4;
+
+         if (dostore) {
+            pStoreFloat->emplace_back(channel, timeDiff, timeToT);
+         }
 
          //      if(timeDiff < -1050 || timeDiff > 1100) {
          //        printf("%i\t%i\t%f\t%i\t%f\n",risingHit,reference,timeDiff/.4,fallingHit,timeToT/.4);

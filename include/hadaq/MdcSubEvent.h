@@ -14,8 +14,8 @@ namespace hadaq {
 
    struct MdcMessage {
       uint8_t ch{0};    ///< channel
-      float   stamp{0}; ///< time stamp minus channel0 time, ns
-      float   tot{0}; ///< time stamp minus channel0 time, ns
+      float   stamp{0.}; ///< time stamp minus channel0 time, ns
+      float   tot{0.}; ///< time stamp minus channel0 time, ns
 
       /**  channel */
       uint8_t getCh() const { return ch; }
