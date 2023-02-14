@@ -72,6 +72,7 @@
 #pragma link C++ class hadaq::SubProcessor+;
 #pragma link C++ class hadaq::AdcProcessor+;
 #pragma link C++ class hadaq::TdcProcessor+;
+#pragma link C++ class hadaq::MdcProcessor+;
 #pragma link C++ class hadaq::TrbMessage+;
 #pragma link C++ class hadaq::TrbProcessor+;
 #pragma link C++ class hadaq::HldMessage+;
