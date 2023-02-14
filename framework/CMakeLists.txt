@@ -50,6 +50,7 @@ set(hadaq_hdrs
    hadaq/TdcProcessor.h
    hadaq/TdcSubEvent.h
    hadaq/MdcProcessor.h
+   hadaq/MdcSubEvent.h
    hadaq/TrbIterator.h
    hadaq/TrbProcessor.h
    hadaq/MonitorSubEvent.h
