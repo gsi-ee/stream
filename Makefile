@@ -64,8 +64,8 @@ $(LOGINFILE):
 	@echo "echo Configure stream v0.10.0 at $(STREAMSYS)" >> $@
 	@echo "" >> $@
 	@echo 'export STREAMSYS=$(STREAMSYS)' >> $@
-	@echo 'export GO4EXTRAINCLUDE=$(STREAMSYS)/include' >> $@
 ifdef IS_GO4
+	@echo 'export GO4EXTRAINCLUDE=$(STREAMSYS)/include' >> $@
 	@echo 'export ROOT_INCLUDE_PATH=$(STREAMSYS)/go4engine:$$ROOT_INCLUDE_PATH' >> $@
 endif
 ifeq ($(shell uname),Darwin)
