@@ -630,14 +630,16 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
 
 //   RAWPRINT("Scan TRB3 raw event 4-bytes size %u\n", trbSubEvSize);
 
+   bool standalone_subevnt = (sub->GetDecoding() & hadaqs::EvtDecoding_AloneSubevt) != 0;
+
    while (ix < trbSubEvSize) {
 
       uint32_t data;
       unsigned datalen, dataid;
 
-      if((sub->GetDecoding() & hadaqs::EvtDecoding_AloneSubevt) && (ix == 0)) {
+      if(standalone_subevnt && (ix == 0)) {
          data = 0; // unused
-         datalen = trbSubEvSize - 2; // whole sub event beside last 2 words which should be 0xx5555
+         datalen = trbSubEvSize > 2 ? trbSubEvSize - 2 : 0; // whole sub event beside last 2 words which should be 0xx5555
          dataid = sub->GetId();  // inherit ID
       } else {
          ///<! Extract data portion from the whole packet (in a loop)
@@ -807,6 +809,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
 
          // don't forget to skip the words for the TDC (if any)
          ix += datalen;
+         if (standalone_subevnt) break;
 
          continue;
       }
@@ -830,8 +833,8 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
 
          AddBufferToTDC(sub, tdcproc, ix, datalen);
 
-         ix+=datalen;
-
+         ix += datalen;
+         if (standalone_subevnt) break;
          continue; // go to next block
       }  // end of if TDC header
 
@@ -868,8 +871,10 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
       if (subproc) {
          RAWPRINT ("   SUB header: 0x%08x, id=0x%04x, size=%u\n", (unsigned) data, dataid, datalen);
 
-         if(datalen==0)
+         if(datalen == 0) {
+            if (standalone_subevnt) break;
             continue;
+         }
 
          base::Buffer buf;
 
@@ -903,8 +908,8 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
          subproc->AddNextBuffer(buf);
          subproc->SetNewDataFlag(true);
 
-         ix+=datalen;
-
+         ix += datalen;
+         if (standalone_subevnt) break;
          continue; // go to next block
       }  // end of if SUB header
 
@@ -951,7 +956,8 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
       }
 
       RAWPRINT("Unknown header 0x%04x length %u in TRB 0x%04x subevent\n", data & 0xFFFF, datalen, GetID());
-      ix+=datalen;
+      ix += datalen;
+      if (standalone_subevnt) break;
    }
 
    if (did_create_tdc) {
@@ -1125,7 +1131,7 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent *sub, void *
 
       if (standalone_subevnt && (ix == 0)) {
          data = 0; // unused
-         datalen = trbSubEvSize - 2; // whole subevent beside last two word which should be 0x5555
+         datalen = trbSubEvSize > 2 ? trbSubEvSize - 2 : 0; // whole subevent beside last two word which should be 0x5555
          id = sub->GetId();
       } else {
          data = rawdata[ix++];
@@ -1164,7 +1170,7 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent *sub, void *
       if (subproc) {
 //         grd.Next("trans");
 
-         if (standalone_subevnt && (ix==0)) {
+         if (standalone_subevnt && (ix == 0)) {
             unsigned newlen = subproc->TransformTdcData(sub, rawdata, ix, datalen, tgt, tgtix);
             if (tgt) tgtix += newlen;
          } else {
@@ -1175,6 +1181,7 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent *sub, void *
             }
          }
          ix += datalen;
+         if (standalone_subevnt) break;
          continue; // go to next block
       }  // end of if TDC header
 
@@ -1193,6 +1200,7 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent *sub, void *
 
       // all other blocks are ignored
       ix += datalen;
+      if (standalone_subevnt) break;
    }
 
 //   grd.Next("finish", 15);
