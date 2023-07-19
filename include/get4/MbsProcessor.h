@@ -6,8 +6,9 @@
 namespace get4 {
 
    enum { NumGet4Channels = 4,
-          BinWidthPs = 50,
           FineCounterBins = 0x80 };
+
+   double BinWidthPs() { return 50.; }
 
    struct Get4MbsChRec {
       base::H1handle fRisFineTm{nullptr};   ///< histograms of rising stamp for each channel
@@ -50,8 +51,8 @@ namespace get4 {
          clearTimes();
 
          for (unsigned i=0;i<FineCounterBins;i++) {
-            rising_calibr[i] = 1.*BinWidthPs*i;
-            falling_calibr[i] = 1.*BinWidthPs*i;
+            rising_calibr[i] = BinWidthPs()*i;
+            falling_calibr[i] = BinWidthPs()*i;
             rising_stat[i] = 0;
             falling_stat[i] = 0;
          }

@@ -61,7 +61,7 @@ get4::MbsProcessor::MbsProcessor(unsigned get4mask, bool is32bit, unsigned totmu
          GET4[get4].CH[n].fFalFineTm = MakeH1("FallingFine", "falling fine time", FineCounterBins, 0, FineCounterBins, "bin");
          GET4[get4].CH[n].fFalCal = MakeH1("FallingCal", "falling edge calibration", FineCounterBins, 0, FineCounterBins, "bin;ps");
 
-         GET4[get4].CH[n].fTotTm = MakeH1("ToT", "time-over-threshold", 1000, 0, 1000*BinWidthPs*fTotMult, "ps");
+         GET4[get4].CH[n].fTotTm = MakeH1("ToT", "time-over-threshold", 1000, 0, 1000*get4::BinWidthPs()*fTotMult, "ps");
       }
    }
 
@@ -206,10 +206,10 @@ bool get4::MbsProcessor::FirstBufferScan(const base::Buffer& buf)
 
             uint64_t fullstamp = (((uint64_t) epoch) << 19) | stamp;
 
-            double fulltm = 1.*BinWidthPs*fullstamp;
+            double fulltm = get4::BinWidthPs()*fullstamp;
 
             if (fUseCalibr) {
-               fulltm = 1.*BinWidthPs*(fullstamp & 0xffffffffffff80LLU);
+               fulltm = get4::BinWidthPs()*(fullstamp & 0xffffffffffff80LLU);
                if (rising) fulltm += chrec.rising_calibr[fine];
                       else fulltm += chrec.falling_calibr[fine];
             }
@@ -253,15 +253,15 @@ bool get4::MbsProcessor::FirstBufferScan(const base::Buffer& buf)
 
             uint64_t fulltm = (((uint64_t) epoch) << 19) | stamp;
 
-            chrec.lastr = 1.*BinWidthPs*fulltm;
+            chrec.lastr = get4::BinWidthPs()*fulltm;
 
             //static int mmm = 0;
             //if (++mmm<1000) printf("fine %3u  add %7.1f\n", fine, chrec.rising_calibr[fine]);
 
             if (fUseCalibr)
-               chrec.lastr = 1.*BinWidthPs*(fulltm & 0xffffffffffff80LLU) + chrec.rising_calibr[fine];
+               chrec.lastr = get4::BinWidthPs()*(fulltm & 0xffffffffffff80LLU) + chrec.rising_calibr[fine];
 
-            chrec.lastf = chrec.lastr + 1.*BinWidthPs*tot*fTotMult;
+            chrec.lastf = chrec.lastr + get4::BinWidthPs()*tot*fTotMult;
 
             if (chrec.firstr==0) chrec.firstr = chrec.lastr;
             if (chrec.firstf==0) chrec.firstf = chrec.lastf;
@@ -308,7 +308,7 @@ bool get4::MbsProcessor::CalibrateChannel(unsigned get4id, unsigned nch, long* s
 
    for (unsigned n=0;n<FineCounterBins;n++) {
 
-      calibr[n] = (integral[n]-statistic[n]/2.) / sum * BinWidthPs * FineCounterBins;
+      calibr[n] = (integral[n]-statistic[n]/2.) / sum * get4::BinWidthPs() * FineCounterBins;
 
       // printf("  bin:%3u val:%7.2f\n", n, calibr[n]);
    }
@@ -428,8 +428,8 @@ void get4::MbsProcessor::SetAutoCalibr(long stat_limit)
       for (unsigned ch=0;ch<NumGet4Channels;ch++) {
          Get4MbsChRec& rec = GET4[get4id].CH[ch];
          for (unsigned bin=0;bin<FineCounterBins;bin++) {
-            rec.rising_calibr[bin] = 1.*BinWidthPs * bin;
-            rec.falling_calibr[bin] = 1.*BinWidthPs * bin;
+            rec.rising_calibr[bin] = get4::BinWidthPs() * bin;
+            rec.falling_calibr[bin] = get4::BinWidthPs() * bin;
          }
          CopyCalibration(rec.rising_calibr, rec.fRisCal);
          CopyCalibration(rec.falling_calibr, rec.fFalCal);
