@@ -307,10 +307,7 @@ bool get4::MbsProcessor::CalibrateChannel(unsigned get4id, unsigned nch, long* s
 
 
    for (unsigned n=0;n<FineCounterBins;n++) {
-
-      calibr[n] = (integral[n]-statistic[n]/2.) / sum * get4::BinWidthPs() * FineCounterBins;
-
-      // printf("  bin:%3u val:%7.2f\n", n, calibr[n]);
+      calibr[n] = (integral[n]-statistic[n]/2.) / sum * get4::BinWidthPs() * (int) FineCounterBins;
    }
 
    printf("get4:%2u ch:%u Cnts: %7.0f produce calibration\n", get4id, nch, sum);
