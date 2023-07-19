@@ -38,7 +38,7 @@ void base::Buffer::makenew(unsigned datalen)
 {
    reset();
 
-   if (datalen==0) return;
+   if (datalen == 0) return;
 
    fRec = (RawDataRec*) malloc(sizeof(RawDataRec) + datalen);
    if (!fRec) {
@@ -66,7 +66,6 @@ void base::Buffer::makecopyof(void* buf, unsigned datalen)
 
    fRec = (RawDataRec*) malloc(sizeof(RawDataRec) + datalen);
 
-   fRec = (RawDataRec*) malloc(sizeof(RawDataRec));
    if (!fRec) {
       printf("Buffer allocation error makecopyof sz %ld\n", (long) (sizeof(RawDataRec) + datalen));
       return;
