@@ -65,11 +65,11 @@ $(LOGINFILE):
 	@echo "" >> $@
 	@echo 'export STREAMSYS=$(STREAMSYS)' >> $@
 ifdef IS_GO4
-	@echo 'export GO4EXTRAINCLUDE=$(STREAMSYS)/include' >> $@
-	@echo 'export ROOT_INCLUDE_PATH=$(STREAMSYS)/go4engine:$(STREAMSYS)/include:$$ROOT_INCLUDE_PATH' >> $@
+	@echo 'export GO4EXTRAINCLUDE=$$STREAMSYS/include' >> $@
+	@echo 'export ROOT_INCLUDE_PATH=$$STREAMSYS/go4engine:$$STREAMSYS/include:$$ROOT_INCLUDE_PATH' >> $@
 else
 ifdef IS_ROOT
-	@echo 'export ROOT_INCLUDE_PATH=$(STREAMSYS)/include:$$ROOT_INCLUDE_PATH' >> $@
+	@echo 'export ROOT_INCLUDE_PATH=$$STREAMSYS/include:$$ROOT_INCLUDE_PATH' >> $@
 endif 	
 endif
 ifeq ($(shell uname),Darwin)
