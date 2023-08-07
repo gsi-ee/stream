@@ -1402,7 +1402,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
 
          if (rec.hascalibr) {
             if ((rec.last_tot >= fToThmin) && (rec.last_tot < fToThmax)) {
-               int bin = (int) ((rec.last_tot - fToThmin) / (fToThmax - fToThmin) * TotBins);
+               int bin = (int) ((rec.last_tot - fToThmin) / (fToThmax - fToThmin) * (TotBins + 0) );
                if (rec.tot0d_hist.empty()) rec.CreateToTHist();
                rec.tot0d_hist[bin]++;
                rec.tot0d_cnt++;
@@ -2276,7 +2276,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             if (fCh[ch].hascalibr) {
                if ((fCh[ch].last_tot >= fToThmin) && (fCh[ch].last_tot < fToThmax)) {
                   if (fCh[ch].tot0d_hist.empty()) fCh[ch].CreateToTHist();
-                  int bin = (int) ((fCh[ch].last_tot - fToThmin) / (fToThmax - fToThmin) * TotBins);
+                  int bin = (int) ((fCh[ch].last_tot - fToThmin) / (fToThmax - fToThmin) * (TotBins + 0));
                   fCh[ch].tot0d_hist[bin]++;
                   fCh[ch].tot0d_cnt++;
                } else {
@@ -2888,7 +2888,7 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
 
             if (fCh[ch].hascalibr && (fCh[ch].last_tot >= fToThmin) && (fCh[ch].last_tot < fToThmax)) {
                if (fCh[ch].tot0d_hist.empty()) fCh[ch].CreateToTHist();
-               int bin = (int) ((fCh[ch].last_tot - fToThmin) / (fToThmax - fToThmin) * TotBins);
+               int bin = (int) ((fCh[ch].last_tot - fToThmin) / (fToThmax - fToThmin) * (TotBins + 0));
                fCh[ch].tot0d_hist[bin]++;
                fCh[ch].tot0d_cnt++;
             }
@@ -3437,7 +3437,7 @@ bool hadaq::TdcProcessor::CalibrateTot(unsigned nch, std::vector<uint32_t> &hist
    sum0 = 0;
 
    for (int n = left; n < right; n++) {
-      double x = fToThmin + (n + 0.5) / TotBins * (fToThmax-fToThmin); // x coordinate of center bin
+      double x = fToThmin + (n + 0.5) / (TotBins + 0) * (fToThmax - fToThmin); // x coordinate of center bin
 
       sum0 += hist[n];
       sum1 += hist[n]*x;
@@ -3624,8 +3624,8 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
                }
 
                if (rec.fTot0D)
-                  for (unsigned n=0;n<TotBins;n++) {
-                     double x = fToThmin + (n + 0.1) / TotBins * (fToThmax-fToThmin);
+                  for (unsigned n = 0; n < TotBins; n++) {
+                     double x = fToThmin + (n + 0.1) / (TotBins + 0) * (fToThmax - fToThmin);
                      DefFillH1(rec.fTot0D, x, rec.tot0d_hist[n]);
                   }
 
