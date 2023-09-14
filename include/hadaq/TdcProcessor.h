@@ -517,6 +517,8 @@ namespace hadaq {
 
          /** Returns number of TDC channels */
          inline unsigned NumChannels() const { return fNumChannels; }
+         /** Returns number of fine TDC bins */
+         inline unsigned NumFineBins() const { return fNumFineBins; }
          /** Returns true if processing rising edge */
          inline bool DoRisingEdge() const { return true; }
          /** Returns true if processing falling */
@@ -775,6 +777,11 @@ namespace hadaq {
          void SetCalibrTemp(float v) { fCalibrTemp = v; }
 
          void StoreCalibration(const std::string& fname, unsigned fileid = 0);
+
+         float GetCalibrFunc(unsigned ch, bool isrising, unsigned bin)
+         {
+            return ExtractCalibrDirect(isrising ? fCh[ch].rising_calibr : fCh[ch].falling_calibr, bin);
+         }
 
          void Store(base::Event*) override;
 
