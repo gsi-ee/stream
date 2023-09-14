@@ -787,6 +787,8 @@ namespace hadaq {
          void DoHadesHistAnalysis();
 
          void FillToTHistogram();
+
+         static TdcProcessor *CreateFromCalibr(TrbProcessor *trb, const std::string &fname);
    };
 
 }

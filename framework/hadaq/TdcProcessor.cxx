@@ -3964,7 +3964,7 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
       return false;
    }
 
-   uint64_t num(0);
+   uint64_t num = 0;
 
    fread(&num, sizeof(num), 1, f);
 
@@ -3972,7 +3972,7 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
    ClearH2(fFallingCalibr);
    ClearH1(fTotShifts);
 
-   if (num!=NumChannels()) {
+   if (num != NumChannels()) {
       printf("%s in file %s mismatch of channels number in calibrations  %u and in processor %u\n", GetName(), fname, (unsigned) num, NumChannels());
    }
 
@@ -4147,5 +4147,48 @@ void hadaq::TdcProcessor::ResetStore()
    pStoreVect = &fDummyVect;
    pStoreFloat = &fDummyFloat;
    pStoreDouble = &fDummyDouble;
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// create instance using calibration file, used in root_converter
+
+hadaq::TdcProcessor *hadaq::TdcProcessor::CreateFromCalibr(hadaq::TrbProcessor *trb, const std::string &fname)
+{
+   FILE* f = fopen(fname.c_str(), "r");
+   if (!f) {
+      printf("Cannot access file %s for reading calibration\n", fname.c_str());
+      return nullptr;
+   }
+   uint64_t num = 0;
+   fread(&num, sizeof(num), 1, f);
+
+   fseek(f, 0, SEEK_END);
+
+   auto fsize = ftell(f);
+
+   fclose(f);
+
+   printf("File %s size is %ld numchannels %u\n", fname.c_str(), fsize, (unsigned) num);
+
+   auto pos = fname.find(".cal");
+   if ((pos == std::string::npos) || (pos < 5)) {
+      printf("File %s has no .cal extension", fname.c_str());
+      return nullptr;
+   }
+
+   auto id = std::stoi(fname.substr(pos - 4, 4), nullptr, 16);
+
+   std::string prefix = fname.substr(0, pos - 4);
+
+   printf("File %s has prefix %s id %x\n", fname.c_str(), prefix.c_str(), id);
+
+   auto tdc = new TdcProcessor(trb, id, num, edge_BothIndepend);
+
+   if (!tdc->LoadCalibration(prefix)) {
+      delete tdc; tdc = nullptr;
+   }
+
+   return tdc;
 }
 
