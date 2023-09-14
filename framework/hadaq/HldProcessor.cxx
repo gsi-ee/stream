@@ -272,13 +272,16 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
             iter->second->ScanSubEvent(sub, fMsg.run_nr, fMsg.seq_nr);
          else if (fAutoCreate) {
             TrbProcessor* trb = new TrbProcessor(sub->GetId(), this);
+            unsigned numch = fCustomNumChFunc ? fCustomNumChFunc(sub->GetId()) : 0;
+            if (numch) trb->SetNumCh(numch);
+
             trb->SetAutoCreate(true);
             trb->SetHadaqCTSId(sub->GetId());
             trb->SetStoreKind(GetStoreKind());
 
             mgr()->UserPreLoop(trb); // while loop already running, call it once again for new processor
 
-            printf("Create TRB 0x%04x procmgr %p hlvl %d \n", sub->GetId(), trb->mgr(), trb->HistFillLevel());
+            printf("Create TRB 0x%04x numch %u  histlvl %d\n", trb->GetID(), numch, trb->HistFillLevel());
 
             // in auto mode only TDC processors should be created
             trb->ScanSubEvent(sub, fMsg.run_nr, fMsg.seq_nr);

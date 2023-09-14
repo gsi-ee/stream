@@ -47,6 +47,13 @@ unsigned hadaq::TrbProcessor::GetDefaultNumCh()
    return gNumChannels;
 }
 
+
+unsigned hadaq::TrbProcessor::GetNumCh() const
+{
+   return fCustomNumChannels ? fCustomNumChannels : GetDefaultNumCh();
+}
+
+
 //////////////////////////////////////////////////////////////////////////////
 /// Constructor, one could specify histogram fill level
 
@@ -250,7 +257,7 @@ int hadaq::TrbProcessor::CreateTDC(unsigned id1, unsigned id2, unsigned id3, uns
          continue;
       }
 
-      hadaq::TdcProcessor *tdc = new hadaq::TdcProcessor(this, tdcid, gNumChannels, gEdgesMask);
+      hadaq::TdcProcessor *tdc = new hadaq::TdcProcessor(this, tdcid, GetNumCh(), gEdgesMask);
 
       tdc->SetCalibrTriggerMask(fCalibrTriggerMask);
 
@@ -792,7 +799,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
 
                // here should be channel/edge/min/max selection based on TDC design ID
                bool ver4 = TdcMessage(sub->Data(ix)).IsVer4Header();
-               unsigned numch = gNumChannels, edges = gEdgesMask;
+               unsigned numch = GetNumCh(), edges = gEdgesMask;
 
                tdcproc = new TdcProcessor(this, fHadaqCTSId, numch, edges, ver4);
 
@@ -930,7 +937,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
             if ((datalen > 0) && TdcMessage(sub->Data(ix)).isHeaderMsg()) {
                // here should be channel/edge/min/max selection based on TDC design ID
                bool ver4 = TdcMessage(sub->Data(ix)).IsVer4Header();
-               unsigned numch = gNumChannels, edges = gEdgesMask;
+               unsigned numch = GetNumCh(), edges = gEdgesMask;
 
                TdcProcessor* tdcproc = new TdcProcessor(this, dataid, numch, edges, ver4);
 

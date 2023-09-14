@@ -104,6 +104,8 @@ namespace hadaq {
          unsigned fCurrentRunId;           ///<! current runid
          unsigned fCurrentEventId;         ///<! current processed event id, used in log msg
 
+         unsigned fCustomNumChannels{0};   ///<! custom number of TDC channels
+
          static unsigned gNumChannels;     ///< default number of channels
          static unsigned gEdgesMask;       ///< default edges mask
          static bool gIgnoreSync;          ///< ignore sync in analysis, very rare used for sync with other data sources
@@ -166,6 +168,9 @@ namespace hadaq {
             if (id3!=0) AddHadaqHUBId(id3);
             if (id4!=0) AddHadaqHUBId(id4);
          }
+
+         void SetNumCh(unsigned num) { fCustomNumChannels = num; }
+         unsigned GetNumCh() const;
 
          /** deprecated, keep for backward compatibility, can be ignored */
          void SetHadaqTDCId(unsigned) {}

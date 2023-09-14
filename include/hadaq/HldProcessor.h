@@ -7,6 +7,8 @@
 
 #include "hadaq/TrbProcessor.h"
 
+#include <functional>
+
 namespace hadaq {
 
 
@@ -128,6 +130,8 @@ namespace hadaq {
 
          hadaqs::RawEvent  fLastEvHdr;    ///<! copy of last event header (without data)
 
+         std::function<unsigned(unsigned)> fCustomNumChFunc;
+
          long fLastHadesTm;               ///<! last hades time
 
          /** Returns true when processor used to select trigger signal
@@ -195,6 +199,8 @@ namespace hadaq {
 
          /** Return reference on last event header structure */
          hadaqs::RawEvent& GetLastEventHdr() { return fLastEvHdr; }
+
+         void SetCustomNumCh(const std::function<unsigned(unsigned)> &func) { fCustomNumChFunc = func; }
    };
 
 }
