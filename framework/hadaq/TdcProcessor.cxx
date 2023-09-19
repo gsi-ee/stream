@@ -245,7 +245,8 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
 {
    fIsTDC = true;
 
-   if (fNumFineBins==0) fNumFineBins = FineCounterBins;
+   if (fNumFineBins == 0)
+      fNumFineBins = FineCounterBins;
 
    if (trb) {
       // when normal trigger is used as sync points, than use trigger time on right side to calculate global time
@@ -357,10 +358,10 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
     fhRisingPrevDiffVsChannel= MakeH2("RisingChanneslDiff", "Rising dt to reference channel 0 ", numchannels, 0, numchannels, 2000, -10, 10, "ch; Delta t [ns]");
    }
 
-   for (unsigned ch=0;ch<numchannels;ch++)
+   for (unsigned ch = 0; ch < numchannels; ch++)
       fCh.emplace_back();
 
-   for (unsigned ch=0;ch<numchannels;ch++)
+   for (unsigned ch = 0; ch < numchannels; ch++)
       fCh[ch].CreateCalibr(fNumFineBins, fVersion4 ? hadaq::TdcMessage::CoarseUnit280() : hadaq::TdcMessage::CoarseUnit());
 
    // always create histograms for channel 0
@@ -1001,7 +1002,7 @@ void hadaq::TdcProcessor::BeginCalibration(long cnt)
    fCalibrAmount = 0;
 
    // ensure that calibration statistic is empty
-   for (unsigned ch=0;ch<NumChannels();ch++)
+   for (unsigned ch = 0;ch < NumChannels(); ch++)
       ClearChannelStat(ch);
 }
 
@@ -1010,7 +1011,7 @@ void hadaq::TdcProcessor::BeginCalibration(long cnt)
 
 void hadaq::TdcProcessor::CompleteCalibration(bool dummy, const std::string &filename, const std::string &subname)
 {
-   if (fAllCalibrMode<=0) return;
+   if (fAllCalibrMode <= 0) return;
    fAllCalibrMode = 0;
    fCalibrCounts = 0;
    fAllTotMode = -1;
