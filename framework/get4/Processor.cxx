@@ -131,7 +131,7 @@ bool get4::Processor::FirstBufferScan(const base::Buffer& buf)
 
    get4::Message& msg = fIter1.msg();
 
-   unsigned cnt(0), msgcnt(0);
+   unsigned cnt = 0, msgcnt = 0;
 
    bool first = true;
 

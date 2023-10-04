@@ -1081,10 +1081,10 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
 
    hadaq::TdcMessage msg, calibr;
 
-   unsigned tgtindx0(tgtindx), cnt(0),
-         hitcnt(0), hit1cnt(0), epochcnt(0), errcnt(0), calibr_indx(0), calibr_num(0),
-         nrising(0), nfalling(0),
-         nmatches(0), // try to check sequence of hits, if fails
+   unsigned tgtindx0 = tgtindx, cnt = 0,
+         hitcnt = 0, hit1cnt = 0, epochcnt = 0, errcnt = 0, calibr_indx = 0, calibr_num = 0,
+         nrising = 0, nfalling = 0,
+         nmatches = 0, // try to check sequence of hits, if fails
          trig_type = sub->GetTrigTypeTrb3();
 
    bool use_in_calibr = ((1 << trig_type) & fCalibrTriggerMask) != 0;
@@ -1107,7 +1107,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
       }
    }
 
-   uint32_t epoch = 0, chid, fine, kind, coarse(0), new_fine,
+   uint32_t epoch = 0, chid, fine, kind, coarse = 0, new_fine,
             idata, *tgtraw = tgt ? (uint32_t *) tgt->RawData() : nullptr;
    bool isrising, hard_failure, fast_loop = HistFillLevel() < 2, changed_msg;
    double corr, ch0tm = 0;
@@ -2412,9 +2412,9 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
    // use temperature compensation only when temperature available
    bool do_temp_comp = fCalibrUseTemp && (fCurrentTemp > 0) && (fCalibrTemp > 0) && (fabs(fCurrentTemp - fCalibrTemp) < 30.);
 
-   unsigned cnt(0), hitcnt(0);
+   unsigned cnt = 0, hitcnt = 0;
 
-   bool iserr(false), isfirstepoch(false), rawprint(false), missinghit(false), dostore(false);
+   bool iserr = false, isfirstepoch = false, rawprint = false, missinghit = false, dostore = false;
 
    if (first_scan && IsTriggeredAnalysis() && IsStoreEnabled() && mgr()->HasTrigEvent()) {
       dostore = true;
@@ -2462,11 +2462,11 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
 
    unsigned help_index(0);
 
-   double localtm(0.), minimtm(0), ch0time(0);
+   double localtm = 0., minimtm = 0., ch0time = 0.;
 
    hadaq::TdcMessage& msg = iter.msg();
    hadaq::TdcMessage calibr;
-   unsigned ncalibr(20), lowid(0), highid(0); // clear indicate that no calibration data present
+   unsigned ncalibr = 20, lowid = 0, highid = 0; // clear indicate that no calibration data present
    bool nextTMDTfailure = false;
 
    if (fSkipTdcMessages > 0) {

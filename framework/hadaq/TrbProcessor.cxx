@@ -1113,7 +1113,7 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent *sub, void *
 
 //   grd.Next("hdr");
 
-   hadaqs::RawSubevent* tgt = (hadaqs::RawSubevent*) tgtbuf;
+   hadaqs::RawSubevent *tgt = (hadaqs::RawSubevent *) tgtbuf;
    // copy complete header first
    if (tgt) {
       // copy header
@@ -1121,7 +1121,7 @@ unsigned hadaq::TrbProcessor::TransformSubEvent(hadaqs::RawSubevent *sub, void *
       tgtlen = (tgtlen - sizeof(hadaqs::RawSubevent)) / 4; // how many 32-bit values can be used
    }
 
-   unsigned ix(0), tgtix(0); // cursor
+   unsigned ix = 0, tgtix = 0; // cursor
 
    unsigned trbSubEvSize = (sub->GetSize() - sizeof(hadaqs::RawSubevent)) / 4;
 
