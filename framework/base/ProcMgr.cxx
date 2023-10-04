@@ -62,7 +62,7 @@ void base::ProcMgr::ClearInstancePointer(ProcMgr *mgr)
 
 void base::ProcMgr::PrintLog(const char *msg)
 {
-   printf("%s", msg);
+   printf("%s\n", msg);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////

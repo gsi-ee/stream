@@ -530,7 +530,7 @@ void hadaq::TdcProcessor::ConfigureToTByHwType(unsigned hwtype)
 
    if (recognized) {
       char msg[1000];
-      snprintf(msg, sizeof(msg), "%s assign ToT config len:%4.1f hmin:%4.1f hmax:%4.1f\n", GetName(), fToTvalue, fToThmin, fToThmax);
+      snprintf(msg, sizeof(msg), "%s assign ToT config len:%4.1f hmin:%4.1f hmax:%4.1f", GetName(), fToTvalue, fToThmin, fToThmax);
       mgr()->PrintLog(msg);
    }
 }
