@@ -252,6 +252,7 @@ void hadaq::HldProcessor::SetUseThreads(bool on)
 {
    fUseThreads = on;
    fThreadsCreated = false;
+   fThrdEventsProcessed = 0;
 }
 
 void hadaq::HldProcessor::WorkingThread(hadaq::ThreadData *data) {
@@ -259,7 +260,7 @@ void hadaq::HldProcessor::WorkingThread(hadaq::ThreadData *data) {
    // notify main thread - we are started
    data->cv.notify_one();
 
-   // printf("Enter thread loop for %s\n", data->trb->GetName());
+   // printf("ENTER thread loop for %s\n", data->trb->GetName());
 
    while (!data->canceled) {
       {
@@ -315,6 +316,7 @@ void hadaq::HldProcessor::CreateThreads()
 
       data->thrd = std::thread(WorkingThread, data);
 
+      // printf("Starting thread for %s\n", data->trb->GetName());
       // wait that thread is started
       std::unique_lock lk(data->m);
       data->cv.wait(lk);
@@ -359,7 +361,7 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
 
 //   RAWPRINT("TRB3 - first scan of buffer %u\n", buf().datalen);
 
-   bool use_threads = fUseThreads && !fAutoCreate;
+   bool use_threads = fUseThreads && !fAutoCreate && (fThrdEventsProcessed > 5);
 
    if (use_threads && !fThreadsCreated)
       CreateThreads();
@@ -496,6 +498,8 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
          DoHadesHistSummary();
       }
    }
+
+   fThrdEventsProcessed += evcnt;
 
    return true;
 }

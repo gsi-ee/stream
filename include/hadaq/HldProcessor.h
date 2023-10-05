@@ -104,6 +104,7 @@ namespace hadaq {
          std::string fAfterFunc;     ///< function called after new elements are created
          bool fUseThreads{false};     ///< enables multi-threading for TRB3 processing
          bool fThreadsCreated{false}; ///< flag set when threads already  created
+         unsigned fThrdEventsProcessed{0}; ///< events processed
 
          std::string fCalibrName;      ///< name of calibration for (auto)created components
          long fCalibrPeriod;           ///< how often calibration should be performed
