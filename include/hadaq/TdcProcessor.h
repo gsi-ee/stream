@@ -665,6 +665,12 @@ namespace hadaq {
             if (ch < fCh.size()) fCh[ch].tot_shift = tot_shift;
          }
 
+         /** Returns channel TOT shift in nano-seconds */
+         double GetChannelTotShift(unsigned ch) const
+         {
+            return (ch < fCh.size()) ? fCh[ch].tot_shift : 0;
+         }
+
          void DisableCalibrationFor(unsigned firstch, unsigned lastch = 0);
 
          void SetRefChannel(unsigned ch, unsigned refch, unsigned reftdc = 0xffff, int npoints = 5000, double left = -10., double right = 10., bool twodim = false);
