@@ -28,6 +28,7 @@ hadaq::HldProcessor::HldProcessor(bool auto_create, const char* after_func) :
    fPrintRawData(false),
    fAutoCreate(auto_create),
    fAfterFunc(!after_func ? "" : after_func),
+   fUseThreads(false),
    fCalibrName(),
    fCalibrPeriod(-111),
    fCalibrTriggerMask(0xFFFF),
@@ -73,6 +74,8 @@ hadaq::HldProcessor::HldProcessor(bool auto_create, const char* after_func) :
 
 hadaq::HldProcessor::~HldProcessor()
 {
+   if (fUseThreads && fThreadsCreated)
+      DeleteThreads();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -217,6 +220,133 @@ void hadaq::HldProcessor::CreateBranch(TTree*)
    }
 }
 
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+
+namespace hadaq {
+
+class ThreadData {
+public:
+
+   std::thread thrd;
+   std::mutex m;
+   std::condition_variable cv;
+
+   TrbProcessor* trb{nullptr};
+
+   bool working{false};
+   bool canceled{false};
+   unsigned run_nr{0};
+   unsigned seq_nr{0};
+   std::vector<hadaqs::RawSubevent*> subevents; ///< vectors of subevents to process
+};
+
+}
+
+////////////////////////////////////////////////////////////////////////////////////////
+/// Enables threads usage - if supported
+
+void hadaq::HldProcessor::SetUseThreads(bool on)
+{
+   fUseThreads = on;
+   fThreadsCreated = false;
+}
+
+void hadaq::HldProcessor::WorkingThread(hadaq::ThreadData *data) {
+
+   // notify main thread - we are started
+   data->cv.notify_one();
+
+   printf("Enter thread loop for %s\n", data->trb->GetName());
+
+   while (!data->canceled) {
+      {
+         std::unique_lock lk(data->m);
+         // data->cv.wait(lk, [data]{ return data->canceled; } );
+         data->cv.wait(lk);
+         data->working = true;
+      }
+
+      if (data->canceled)
+         break;
+
+      // now process events
+      for (auto subev : data->subevents) {
+         data->trb->BeforeEventScan();
+         data->trb->ScanSubEvent(subev, data->run_nr, data->seq_nr);
+         data->trb->AfterEventScan();
+         data->trb->AfterEventFill();
+      }
+
+      data->subevents.clear();
+
+      {
+         std::unique_lock lk(data->m);
+         data->working = false;
+      }
+
+      // callback main thread to get finish
+      data->cv.notify_one();
+   }
+
+   printf("LEAVE thread loop for %s\n", data->trb->GetName());
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////
+/// Create TRB threads
+
+void hadaq::HldProcessor::CreateThreads()
+{
+   fThreadsCreated = true;
+
+   for (auto &entry : fMap) {
+      if (entry.second->fThreadData)
+         continue;
+
+      auto data = new hadaq::ThreadData;
+
+      entry.second->fThreadData = data;
+
+      data->trb = entry.second;
+
+      data->thrd = std::thread(WorkingThread, data);
+
+      // wait that thread is started
+      std::unique_lock lk(data->m);
+      data->cv.wait(lk);
+   }
+
+}
+
+////////////////////////////////////////////////////////////////////////////////////////
+/// Delete TRB threads
+
+void hadaq::HldProcessor::DeleteThreads()
+{
+   fThreadsCreated = false;
+   for (auto &entry : fMap) {
+
+      if (!entry.second->fThreadData)
+         continue;
+
+      auto data = entry.second->fThreadData;
+
+      entry.second->fThreadData = nullptr;
+
+      if (!data->canceled) {
+         data->canceled = true;
+         data->cv.notify_one();
+
+         data->thrd.join();
+      }
+
+      delete data;
+   }
+
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////
 /// Perform scan of data in the buffer
 /// Central entry point for all analysis
@@ -226,6 +356,11 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
    if (buf.null()) return false;
 
 //   RAWPRINT("TRB3 - first scan of buffer %u\n", buf().datalen);
+
+   bool use_threads = fUseThreads && !fAutoCreate;
+
+   if (use_threads && !fThreadsCreated)
+      CreateThreads();
 
    hadaq::TrbIterator iter(buf().buf, buf().datalen);
 
@@ -252,8 +387,10 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
 
       DefFillH1(fEvSize, ev->GetPaddedSize(), 1.);
 
-      for (auto &entry : fMap)
-         entry.second->BeforeEventScan();
+      if (!use_threads) {
+         for (auto &entry : fMap)
+            entry.second->BeforeEventScan();
+      }
 
       hadaqs::RawSubevent* sub = nullptr;
 
@@ -268,9 +405,13 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
 
          auto iter = fMap.find(sub->GetId());
 
-         if (iter != fMap.end())
-            iter->second->ScanSubEvent(sub, fMsg.run_nr, fMsg.seq_nr);
-         else if (fAutoCreate) {
+         if (iter != fMap.end()) {
+            if (use_threads && iter->second->fThreadData) {
+               iter->second->fThreadData->subevents.emplace_back(sub);
+            } else {
+               iter->second->ScanSubEvent(sub, fMsg.run_nr, fMsg.seq_nr);
+            }
+         } else if (fAutoCreate) {
             TrbProcessor* trb = new TrbProcessor(sub->GetId(), this);
             unsigned numch = fCustomNumChFunc ? fCustomNumChFunc(sub->GetId()) : 0;
             if (numch) trb->SetNumCh(numch);
@@ -292,18 +433,43 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
          }
       }
 
-      for (auto &entry : fMap)
-         entry.second->AfterEventScan();
+      if (!use_threads) {
 
-      for (auto &entry : fMap)
-         entry.second->AfterEventFill();
+         for (auto &entry : fMap)
+            entry.second->AfterEventScan();
 
-      if (fAutoCreate) {
-         fAutoCreate = false; // with first event
-         if (fAfterFunc.length()>0) mgr()->CallFunc(fAfterFunc.c_str(), this);
-         CreatePerTDCHisto();
+         for (auto &entry : fMap)
+            entry.second->AfterEventFill();
+
+         if (fAutoCreate) {
+            fAutoCreate = false; // with first event
+            if (fAfterFunc.length()>0) mgr()->CallFunc(fAfterFunc.c_str(), this);
+            CreatePerTDCHisto();
+         }
       }
    }
+
+   if (use_threads) {
+
+      for (auto &entry : fMap) {
+         auto data = entry.second->fThreadData;
+         if (!data) continue;
+         data->run_nr = fMsg.run_nr;
+         data->seq_nr = fMsg.seq_nr;
+         // trigger condition to start processing
+         data->cv.notify_one();
+      }
+
+      // and then check every thread until it ready
+      for (auto &entry : fMap) {
+         auto data = entry.second->fThreadData;
+         if (!data) continue;
+         std::unique_lock lk(data->m);
+         if (data->working)
+            data->cv.wait(lk);
+      }
+   }
+
 
    if (mgr()->IsTriggeredAnalysis() && mgr()->HasTrigEvent()) {
       if (evcnt>1)

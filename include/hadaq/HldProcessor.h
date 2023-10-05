@@ -11,6 +11,7 @@
 
 namespace hadaq {
 
+   class ThreadData;
 
    /** map of trb processors */
    typedef std::map<unsigned,TrbProcessor*> TrbProcMap;
@@ -100,7 +101,9 @@ namespace hadaq {
          bool fPrintRawData;         ///< true when raw data should be printed
 
          bool fAutoCreate;           ///< when true, TRB/TDC processors will be created automatically
-         std::string fAfterFunc; ///< function called after new elements are created
+         std::string fAfterFunc;     ///< function called after new elements are created
+         bool fUseThreads{false};     ///< enables multi-threading for TRB3 processing
+         bool fThreadsCreated{false}; ///< flag set when threads already  created
 
          std::string fCalibrName;      ///< name of calibration for (auto)created components
          long fCalibrPeriod;           ///< how often calibration should be performed
@@ -152,6 +155,11 @@ namespace hadaq {
 
          void SetCrossProcess(bool on);
 
+         void CreateThreads();
+         void DeleteThreads();
+
+         static void WorkingThread(ThreadData *);
+
       public:
 
          HldProcessor(bool auto_create = false, const char* after_func = "");
@@ -192,6 +200,8 @@ namespace hadaq {
 
          /** Enable auto-create mode */
          void SetAutoCreate(bool on = true) { fAutoCreate = on; }
+
+         void SetUseThreads(bool on = true);
 
          unsigned TransformEvent(void* src, unsigned len, void* tgt = nullptr, unsigned tgtlen = 0);
 

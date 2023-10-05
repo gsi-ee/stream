@@ -13,6 +13,8 @@ namespace hadaq {
 
    class HldProcessor;
 
+   class ThreadData;
+
    /** message used for ROOT tree storage, similar to TdcMessage and AdcMessage */
    struct TrbMessage {
       bool fTrigSyncIdFound;              ///<  is sync id found
@@ -105,6 +107,8 @@ namespace hadaq {
          unsigned fCurrentEventId;         ///<! current processed event id, used in log msg
 
          unsigned fCustomNumChannels{0};   ///<! custom number of TDC channels
+
+         ThreadData *fThreadData{nullptr}; ///<! thread data, assigned from HldProcessor
 
          static unsigned gNumChannels;     ///< default number of channels
          static unsigned gEdgesMask;       ///< default edges mask
