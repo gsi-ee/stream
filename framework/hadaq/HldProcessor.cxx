@@ -237,6 +237,7 @@ public:
 
    bool working{false};
    bool canceled{false};
+   bool new_data{false};
    unsigned run_nr{0};
    unsigned seq_nr{0};
    std::vector<hadaqs::RawSubevent*> subevents; ///< vectors of subevents to process
@@ -258,13 +259,13 @@ void hadaq::HldProcessor::WorkingThread(hadaq::ThreadData *data) {
    // notify main thread - we are started
    data->cv.notify_one();
 
-   printf("Enter thread loop for %s\n", data->trb->GetName());
+   // printf("Enter thread loop for %s\n", data->trb->GetName());
 
    while (!data->canceled) {
       {
          std::unique_lock lk(data->m);
-         // data->cv.wait(lk, [data]{ return data->canceled; } );
-         data->cv.wait(lk);
+         data->cv.wait(lk, [data]{ return data->canceled || data->new_data; } );
+         // data->cv.wait(lk);
          data->working = true;
       }
 
@@ -280,6 +281,7 @@ void hadaq::HldProcessor::WorkingThread(hadaq::ThreadData *data) {
       }
 
       data->subevents.clear();
+      data->new_data = false;
 
       {
          std::unique_lock lk(data->m);
@@ -290,7 +292,7 @@ void hadaq::HldProcessor::WorkingThread(hadaq::ThreadData *data) {
       data->cv.notify_one();
    }
 
-   printf("LEAVE thread loop for %s\n", data->trb->GetName());
+   // printf("LEAVE thread loop for %s\n", data->trb->GetName());
 }
 
 
@@ -453,9 +455,11 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
 
       for (auto &entry : fMap) {
          auto data = entry.second->fThreadData;
-         if (!data) continue;
+         if (!data || data->subevents.empty()) continue;
+
          data->run_nr = fMsg.run_nr;
          data->seq_nr = fMsg.seq_nr;
+         data->new_data = true;
          // trigger condition to start processing
          data->cv.notify_one();
       }
@@ -465,8 +469,10 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
          auto data = entry.second->fThreadData;
          if (!data) continue;
          std::unique_lock lk(data->m);
-         if (data->working)
-            data->cv.wait(lk);
+         if (data->working) {
+            // data->cv.wait(lk);
+            data->cv.wait(lk, [data]{ return data->canceled || !data->working; });
+         }
       }
    }
 
