@@ -241,7 +241,8 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fSkipTdcMessages(0),
    f400Mhz(false),
    fCustomMhz(200.),
-   fPairedChannels(false)
+   fPairedChannels(false),
+   fModifiedFallingEdges(false)
 {
    fIsTDC = true;
 
@@ -1847,6 +1848,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       if (msg.isCalibrMsg()) {
          if ((use_for_calibr == 0) && !gIgnoreCalibrMsgs) {
             // take into account calibration messages only when data not used for calibration
+            // or when one wants to repair message modified by HADES DAQ
             ncalibr = 0;
             calibr = msg;
          }
@@ -1935,7 +1937,6 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
             if (ncalibr < 2) {
                // use correction from special message
-
                uint32_t calibr_fine = calibr.getCalibrFine(ncalibr++);
                if (calibr_fine == 0x3fff) {
                   if (first_scan) {
@@ -1950,8 +1951,6 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                if (isrising && fhRaisingFineCalibr) DefFillH2(fhRaisingFineCalibr, chid, calibr_fine, 1.);
                if (!isrising) corr *= 10.; // range for falling edge is 50 ns.
             } else {
-
-               // main calibration for fine counter
                corr = ExtractCalibr(isrising ? rec.rising_calibr : rec.falling_calibr, fine);
 
                // apply TOT shift for falling edge (should it be also temp dependent)?
@@ -2049,9 +2048,10 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
                }
 
-
-               rec.rising_last_tm = localtm;
-               rec.rising_new_value = true;
+               if (use_fine_for_stat) {
+                  rec.rising_last_tm = localtm;
+                  rec.rising_new_value = true;
+               }
 
                if (use_for_ref && ((rec.rising_hit_tm == 0.) || fUseLastHit)) {
                   rec.rising_hit_tm = (chid > 0) ? localtm : ch0time;
@@ -2103,7 +2103,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
                rec.falling_cnt++;
 
-               if (rec.rising_new_value && (rec.rising_last_tm!=0)) {
+               if (rec.rising_new_value && (rec.rising_last_tm != 0) && use_fine_for_stat) {
+
                   double tot = (localtm - rec.rising_last_tm)*1e9;
                   // TODO chid
                   DefFillH2(fhTotVsChannel, chid, tot, 1.);
@@ -2117,7 +2118,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                   DefFillH1(rec.fTot, tot, 1.);
                   rec.rising_new_value = false;
                   // JAM 11-2021: add ToT sigma histogram here:
-                  double totvar=  pow((tot-fToTvalue),2.0);
+                  double totvar = (tot - fToTvalue) * (tot - fToTvalue);
                   double totsigma = sqrt(totvar);
 
                   DefFillH2(fhSigmaTotVsChannel, chid, totsigma, 1.);
@@ -3412,7 +3413,9 @@ bool hadaq::TdcProcessor::CalibrateTot(unsigned nch, std::vector<uint32_t> &hist
    std::string name_prefix = std::string(GetName()) + "_ch" + std::to_string(nch) + "_ToT";
    std::string err_log;
 
-   for (int n = left; n < right; n++) sum0 += hist[n];
+   for (int n = left; n < right; n++)
+      sum0 += hist[n];
+
    if (sum0 < fTotStatLimit) {
       printf("%s Ch:%u TOT failed - not enough statistic %5.0f\n", GetName(), nch, sum0);
 
@@ -3425,7 +3428,23 @@ bool hadaq::TdcProcessor::CalibrateTot(unsigned nch, std::vector<uint32_t> &hist
       return false; // no statistic for small number of counts
    }
 
-   if ((cut > 0) && (cut < 0.3)) {
+
+   if (fModifiedFallingEdges) {
+      // in such situation one expects double or even multiple peak
+      // the only chance to repeat calibration here - find maximal peak and use surranding
+      int pmax = left;
+      for (int n = left; n < right; n++)
+         if (hist[n] > hist[pmax])
+            pmax = n;
+
+      // take range +-4ns around maximum, all double peaks should be at distance of 5 ns
+      int dn = (int) (4.0 / (fToThmax - fToThmin) * (double) TotBins);
+      if (pmax - dn > left)
+         left = pmax - dn;
+      if (pmax + dn < right)
+         right = pmax + dn;
+
+   } else if ((cut > 0) && (cut < 0.3)) {
       double suml = 0., sumr = 0.;
 
       while ((left < right-3) && (suml < sum0*cut))
@@ -3461,7 +3480,7 @@ bool hadaq::TdcProcessor::CalibrateTot(unsigned nch, std::vector<uint32_t> &hist
    tot_dev = rms;
 
    if (rms > fTotRMSLimit) {
-      printf("%s Ch:%u TOT failed - RMS %5.3f too high\n", GetName(), nch, rms);
+      printf("%s Ch:%u TOT failed - RMS %5.3f too high hmin %5.2f hmax %5.2f\n", GetName(), nch, rms, fToThmin, fToThmax);
 
       if (fCalibrQuality > 0.4) {
          fCalibrStatus = name_prefix + "_highrms";

@@ -350,6 +350,7 @@ namespace hadaq {
          bool      f400Mhz;              ///<! is 400Mhz mode (debug)
          double    fCustomMhz;           ///<! new design Mhz
          bool      fPairedChannels;      ///<! special mode when rising/falling edges splitted on different channels
+         bool      fModifiedFallingEdges; ///<! true when file taken with HADES and falling edges may be modified,
 
          std::vector<std::string> fCalibrLog; ///<! error log messages during calibration
 
@@ -503,6 +504,12 @@ namespace hadaq {
          void Set400Mhz(bool on = true);
 
          void SetCustomMhz(float freq = 400.);
+
+         /** When file taken with HADES and falling edges may be modified while ToT offset can be negative
+          *  Resulting fine-time offset also can be negative and therefore coarse message counter is modified
+          *  Enable flag to be able recognize and repair such shifts.
+          *  Works only if ToT offset is not less than -1 ns, otherwise overflows too many and algorithm may not work */
+         void SetModifiedFallingEdges(bool on = true) { fModifiedFallingEdges = on; }
 
          /** Set paired channels mode
           * In such case odd channels are normal rising edge but even channels are falling edge of previous one */
