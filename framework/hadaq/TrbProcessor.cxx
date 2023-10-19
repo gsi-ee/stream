@@ -454,7 +454,7 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
       BeforeEventScan();
 
       hadaqs::RawSubevent* sub = nullptr;
-      unsigned subcnt(0);
+      unsigned subcnt = 0;
 
       while ((sub = iter.nextSubevent()) != nullptr) {
 
@@ -627,7 +627,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
 
    bool did_create_tdc = false;
 
-   if ((fMinTdc == 0) && (fMaxTdc == 0) && (fTdcsVect.size()==0) && (fMap.size() > 0)) {
+   if ((fMinTdc == 0) && (fMaxTdc == 0) && (fTdcsVect.size() == 0) && (fMap.size() > 0)) {
       BuildFastTDCVector();
    }
 
@@ -669,7 +669,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
       if (std::find(fHadaqHUBId.begin(), fHadaqHUBId.end(), dataid) != fHadaqHUBId.end()) {
          RAWPRINT ("   HUB header: 0x%08x, hub=0x%04x, size=%u (ignore)\n", (unsigned) data, (unsigned) dataid, datalen);
 
-         if (maxhublen==0) {
+         if (maxhublen == 0) {
             maxhublen = datalen;
          } else {
             maxhublen--; // just decrement
@@ -726,7 +726,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
 
 
          // handle the ETM module and extract syncNumber
-         if(nExtTrigFlag==0x1) {
+         if(nExtTrigFlag == 0x1) {
             // ETM sends one word, is probably MBS Vulom Recv
             // this is not really tested
             data = sub->Data(ix++); datalen--;
@@ -747,7 +747,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
             // success
             fMsg.fTrigSyncIdFound = true;
             //printf("EventId=%d\n",fMsg.fTrigSyncId);
-         } else if(nExtTrigFlag==0x0) {
+         } else if(nExtTrigFlag == 0x0) {
 
             fMsg.Reset();
 
@@ -996,9 +996,7 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
 
 bool hadaq::TrbProcessor::CollectMissingTDCs(hadaqs::RawSubevent *sub, std::vector<unsigned> &ids)
 {
-   // bool isany = false;
-
-   unsigned ix(0); // cursor
+   unsigned ix = 0; // cursor
 
    unsigned trbSubEvSize = (sub->GetSize() - sizeof(hadaqs::RawSubevent)) / 4;
 

@@ -935,7 +935,7 @@ long hadaq::TdcProcessor::CheckChannelStat(unsigned ch)
 
 double hadaq::TdcProcessor::TestCanCalibrate(bool fillhist, std::string *status)
 {
-   if (fCalibrCounts<=0) return 0.;
+   if (fCalibrCounts <= 0) return 0.;
 
    bool isany = false;
    long min = 1000000000L, max = 0;
@@ -1716,7 +1716,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
    uint32_t syncid = 0xffffffff;
    // copy first 4 bytes - it is syncid
-   if (buf().format==0)
+   if (buf().format == 0)
       memcpy(&syncid, buf.ptr(), 4);
 
 
@@ -1782,7 +1782,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
    TdcIterator& iter = first_scan ? fIter1 : fIter2;
 
-   if (buf().format==0)
+   if (buf().format == 0)
       iter.assign((uint32_t*) buf.ptr(4), buf.datalen()/4-1, false);
    else
       iter.assign((uint32_t*) buf.ptr(0), buf.datalen()/4, buf().format==2);
@@ -1810,7 +1810,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       if (first_scan)
          FastFillH1(fMsgsKind, msg.getKind() >> 29);
 
-      if (cnt==1) {
+      if (cnt == 1) {
          if (!msg.isHeaderMsg()) {
             iserr = true;
             ADDERROR(errNoHeader, "Missing header message");
@@ -1838,7 +1838,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          }
 
          // second message always should be epoch of channel 0
-         if (cnt==2) {
+         if (cnt == 2) {
             isfirstepoch = true;
             first_epoch = ep;
          }
@@ -1964,10 +1964,10 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          // apply correction
          localtm -= corr;
 
-         if ((chid==0) && (ch0time==0)) ch0time = localtm;
+         if ((chid == 0) && (ch0time == 0)) ch0time = localtm;
 
          if (IsTriggeredAnalysis()) {
-            if (ch0time==0)
+            if (ch0time == 0)
                ADDERROR(errCh0, "channel 0 time not found when first HIT in channel %u appears", chid);
 
             localtm -= ch0time;
@@ -1980,7 +1980,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
             // if (chid>0) printf("%s HIT ch %u tm %12.9f diff %12.9f\n", GetName(), chid, localtm, localtm - ch0time);
 
-            if (chid==0) {
+            if (chid == 0) {
                if (fLastRateTm < 0) fLastRateTm = ch0time;
                if (ch0time - fLastRateTm > 1) {
                   FillH1(fHitsRate, fRateCnt / (ch0time - fLastRateTm));
@@ -2038,7 +2038,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 //                if(chid>0 && fCh[chid].rising_last_tm){
 //                     double prevdiff=(fCh[chid-1].rising_last_tm - localtm) * 1e9;
                // JAM 7-12-21: better plot dt against ref channel?
-                if(chid>0 && ch0time){
+                if(chid > 0 && ch0time){
                      double refdiff=(localtm - ch0time) * 1e9;
                      if(refdiff > -1000 && refdiff < 1000) {
                         DefFillH2(fhRisingPrevDiffVsChannel, chid, refdiff, 1.);
@@ -2123,34 +2123,32 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
                   DefFillH2(fhSigmaTotVsChannel, chid, totsigma, 1.);
 
-                   // here put something new for global histograms JAM2021:
-                   if (fToTPerTDCChannel) {
+                  // here put something new for global histograms JAM2021:
+                  if (fToTPerTDCChannel) {
 
-                            // we first always show most recent value, no averaging here;
-                            if((tot>0) && (tot < 1000)) // JAM 7-12-21 suppress noise fakes
-                                SetH2Content(*fToTPerTDCChannel, fHldId, chid, tot);
+                     // we first always show most recent value, no averaging here;
+                     if((tot > 0) && (tot < 1000)) // JAM 7-12-21 suppress noise fakes
+                        SetH2Content(*fToTPerTDCChannel, fHldId, chid, tot);
 
-                            // TODO: later get previous statistics for this channel and weight new entry correctly for averaging: (performance?!)
-//                             int nBins1, nBins2;
-//                             GetH2NBins(fhTotVsChannel, nBins1, nBins2);
-//                             double nEntries = 0.;
-//                             for (int i = 0; i < nBins2; i++){
-//                                 nEntries += GetH2Content(fhTotVsChannel, chid, i);
-//                                 }
-//                            double oldtot= GetH2Content(*fToTPerTDCChannel, fHldId, chid);
-//                            double averagetot=tot;
-//                            if (nEntries) averagetot= (oldtot * (nEntries-1) + tot) / nEntries;
-//                            SetH2Content(*fToTPerTDCChannel, fHldId, chid, averagetot);
-                        }
-                     if(fDevPerTDCChannel && (tot>0) && (tot < 1000)) // JAM 7-12-21 suppress noise fakes
-                     {
-                            rec.tot_dev+=totvar; // JAM misuse  this data field to get overall sigma of file
-                            rec.tot0d_cnt++; // JAM misuse calibration counter here to evaluate sigma
-                            double currentsigma= sqrt(rec.tot_dev/rec.tot0d_cnt);
-                            if(currentsigma<10)
-                                SetH2Content(*fDevPerTDCChannel, fHldId, chid,  currentsigma);
-                    }
-
+                     // TODO: later get previous statistics for this channel and weight new entry correctly for averaging: (performance?!)
+//                        int nBins1, nBins2;
+//                        GetH2NBins(fhTotVsChannel, nBins1, nBins2);
+//                        double nEntries = 0.;
+//                        for (int i = 0; i < nBins2; i++){
+//                           nEntries += GetH2Content(fhTotVsChannel, chid, i);
+//                        }
+//                        double oldtot= GetH2Content(*fToTPerTDCChannel, fHldId, chid);
+//                        double averagetot=tot;
+//                        if (nEntries) averagetot= (oldtot * (nEntries-1) + tot) / nEntries;
+//                        SetH2Content(*fToTPerTDCChannel, fHldId, chid, averagetot);
+                  }
+                  if(fDevPerTDCChannel && (tot>0) && (tot < 1000)) { // JAM 7-12-21 suppress noise fakes
+                     rec.tot_dev += totvar; // JAM misuse  this data field to get overall sigma of file
+                     rec.tot0d_cnt++; // JAM misuse calibration counter here to evaluate sigma
+                     double currentsigma= sqrt(rec.tot_dev/rec.tot0d_cnt);
+                     if(currentsigma<10)
+                        SetH2Content(*fDevPerTDCChannel, fHldId, chid,  currentsigma);
+                  }
 
                   // use only raw hit
                   if (raw_hit && do_tot) rec.last_tot = tot + rec.tot_shift;
@@ -2297,7 +2295,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          fDesignId = id;
       }
 
-      if ((temp!=0) && (temp < 2400)) {
+      if ((temp != 0) && (temp < 2400)) {
          fCurrentTemp = temp/16.;
 
          if ((HistFillLevel() > 1) && !fTempDistr)  {
