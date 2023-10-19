@@ -37,6 +37,8 @@ namespace hadaq {
             fConv.SetTimeSystem(epochbitlen + 11, hadaq::TdcMessage::CoarseUnit());
          }
 
+         unsigned remain_length() const { return fBuflen; }
+
          /** assign buffer */
          void assign(uint32_t* buf, unsigned len, bool swapped = true)
          {

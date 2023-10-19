@@ -1790,7 +1790,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    if (buf().format == 0)
       iter.assign((uint32_t*) buf.ptr(4), buf.datalen()/4-1, false);
    else
-      iter.assign((uint32_t*) buf.ptr(0), buf.datalen()/4, buf().format==2);
+      iter.assign((uint32_t*) buf.ptr(0), buf.datalen()/4, buf().format == 2);
 
    unsigned help_index = 0;
 
@@ -1820,7 +1820,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       if (cnt == 1) {
          if (!msg.isHeaderMsg()) {
             iserr = true;
-            ADDERROR(errNoHeader, "Missing header message");
+            ADDERROR(errNoHeader, "Missing header message ");
+            // fprintf(stderr, "%s buf %u remain %u raw %p buf_null %d msgcnt %d\n", GetName(), buf.datalen()/4, iter.remain_length(), buf.ptr(), buf.null(), cnt);
          } else {
 
             if (first_scan) fLastTdcHeader = msg;

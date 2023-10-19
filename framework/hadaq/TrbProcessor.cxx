@@ -433,8 +433,7 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
 
 //   RAWPRINT("TRB3 - first scan of buffer %u\n", buf().datalen);
 
-//   printf("Scan TRB buffer size %u\n", buf().datalen);
-
+   // printf("%s Scan TRB buffer size %u\n", GetName(), buf().datalen);
 
    hadaq::TrbIterator iter(buf().buf, buf().datalen);
 

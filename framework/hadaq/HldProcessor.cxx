@@ -276,7 +276,6 @@ void hadaq::HldProcessor::WorkingThread(hadaq::ThreadData *data) {
       // now process events
       for (auto subev : data->subevents) {
          try {
-
             data->trb->BeforeEventScan();
             data->trb->ScanSubEvent(subev, data->run_nr, data->seq_nr);
             data->trb->AfterEventScan();
@@ -455,7 +454,8 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
 
          if (fAutoCreate) {
             fAutoCreate = false; // with first event
-            if (fAfterFunc.length()>0) mgr()->CallFunc(fAfterFunc.c_str(), this);
+            if (!fAfterFunc.empty())
+               mgr()->CallFunc(fAfterFunc.c_str(), this);
             CreatePerTDCHisto();
          }
       }
