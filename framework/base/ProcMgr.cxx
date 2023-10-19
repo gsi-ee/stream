@@ -62,7 +62,8 @@ void base::ProcMgr::ClearInstancePointer(ProcMgr *mgr)
 
 void base::ProcMgr::PrintLog(const char *msg)
 {
-   printf("%s\n", msg);
+   if (fDebug >= 0)
+      printf("%s\n", msg);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////

@@ -275,10 +275,15 @@ void hadaq::HldProcessor::WorkingThread(hadaq::ThreadData *data) {
 
       // now process events
       for (auto subev : data->subevents) {
-         data->trb->BeforeEventScan();
-         data->trb->ScanSubEvent(subev, data->run_nr, data->seq_nr);
-         data->trb->AfterEventScan();
-         data->trb->AfterEventFill();
+         try {
+
+            data->trb->BeforeEventScan();
+            data->trb->ScanSubEvent(subev, data->run_nr, data->seq_nr);
+            data->trb->AfterEventScan();
+            data->trb->AfterEventFill();
+         } catch(...) {
+            fprintf(stderr, " %s Catch exception\n", data->trb->GetName());
+         }
       }
 
       data->subevents.clear();

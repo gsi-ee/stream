@@ -1785,7 +1785,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
    TdcIterator& iter = first_scan ? fIter1 : fIter2;
 
-   RANGE_CHECK(buf.datalen() > 1e8, "%s too large buffer %u\n", GetName(), buf.datalen());
+   RANGE_CHECK(buf.datalen() > 1e4, "%s too large buffer %u\n", GetName(), buf.datalen());
 
    if (buf().format == 0)
       iter.assign((uint32_t*) buf.ptr(4), buf.datalen()/4-1, false);
@@ -2288,9 +2288,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                   if (fCh[ch].tot0d_hist.empty())
                      fCh[ch].CreateToTHist();
                   int bin = (int) ((fCh[ch].last_tot - fToThmin) / (fToThmax - fToThmin) * (TotBins + 0));
-                  if ((bin < 0) || (bin >= TotBins))
-                     fprintf(stderr, "%s Wrong bin number %d\n", GetName(), bin);
-
+                  RANGE_CHECK((bin < 0) || (bin >= TotBins), "%s Wrong bin number %d min %f max %f\n", GetName(), bin, fToThmin, fToThmax);
                   fCh[ch].tot0d_hist[bin]++;
                   fCh[ch].tot0d_cnt++;
                } else {
