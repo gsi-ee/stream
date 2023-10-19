@@ -557,7 +557,7 @@ void hadaq::TrbProcessor::AddBufferToTDC(hadaqs::RawSubevent* sub,
 
    base::Buffer buf;
 
-   if (gIgnoreSync && (sub->Alignment()==4)) {
+   if (gIgnoreSync && (sub->Alignment() == 4)) {
       // special case - could use data directly without copying
       buf.makereferenceof((char*)sub->RawData() + 4*ix, 4*datalen);
       buf().kind = sub->GetTrigTypeTrb3();

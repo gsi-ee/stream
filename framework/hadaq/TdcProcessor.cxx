@@ -17,6 +17,9 @@
 #include <iostream>
 
 
+// #define RANGE_CHECK(cond, msg, args ...) if(cond) fprintf(stderr, msg, args);
+
+#define RANGE_CHECK(cond, msg, args ...)
 
 #define RAWPRINT( args ...) if(IsPrintRawData()) printf( args )
 
@@ -354,9 +357,9 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
          fFallingPCalibr = MakeH2("FallingPCalibr", "prevented falling edge calibration", numchannels, 0, numchannels, fNumFineBins, 0, fNumFineBins, "ch;fine");
 
 
-    fhSigmaTotVsChannel = MakeH2("ToTSigmaVsChannel", "SigmaToT", numchannels, 0, numchannels, 500, 0, +5, "ch; Sigma ToT [ns]");
+      fhSigmaTotVsChannel = MakeH2("ToTSigmaVsChannel", "SigmaToT", numchannels, 0, numchannels, 500, 0, +5, "ch; Sigma ToT [ns]");
 
-    fhRisingPrevDiffVsChannel= MakeH2("RisingChanneslDiff", "Rising dt to reference channel 0 ", numchannels, 0, numchannels, 2000, -10, 10, "ch; Delta t [ns]");
+      fhRisingPrevDiffVsChannel= MakeH2("RisingChanneslDiff", "Rising dt to reference channel 0 ", numchannels, 0, numchannels, 2000, -10, 10, "ch; Delta t [ns]");
    }
 
    for (unsigned ch = 0; ch < numchannels; ch++)
@@ -806,7 +809,7 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
 {
 
    // complete logic only when hist level is specified
-   if (HistFillLevel()>=4)
+   if (HistFillLevel() >= 4)
    for (unsigned ch=0;ch<NumChannels();ch++) {
 
       ChannelRec &rec = fCh[ch];
@@ -1772,7 +1775,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
    //static int ddd = 0;
    //if (ddd++ % 10000 == 0) printf("%s dostore %d istriggered %d hasevt %d kind %d\n", GetName(), dostore, IsTriggeredAnalysis(), mgr()->HasTrigEvent(), GetStoreKind());
-   uint32_t first_epoch(0);
+   uint32_t first_epoch = 0;
 
    unsigned epoch_shift = 0;
    if (fCompensateEpochReset) {
@@ -1781,6 +1784,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    }
 
    TdcIterator& iter = first_scan ? fIter1 : fIter2;
+
+   RANGE_CHECK(buf.datalen() > 1e8, "%s too large buffer %u\n", GetName(), buf.datalen());
 
    if (buf().format == 0)
       iter.assign((uint32_t*) buf.ptr(4), buf.datalen()/4-1, false);
@@ -1800,6 +1805,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       while (skipcnt-- > 0)
          if (!iter.next()) break;
    }
+
+   // printf("%s start processing buf %u\n", GetName(), buf.datalen());
 
    while (iter.next()) {
 
@@ -2038,14 +2045,13 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 //                if(chid>0 && fCh[chid].rising_last_tm){
 //                     double prevdiff=(fCh[chid-1].rising_last_tm - localtm) * 1e9;
                // JAM 7-12-21: better plot dt against ref channel?
-                if(chid > 0 && ch0time){
-                     double refdiff=(localtm - ch0time) * 1e9;
-                     if(refdiff > -1000 && refdiff < 1000) {
-                        DefFillH2(fhRisingPrevDiffVsChannel, chid, refdiff, 1.);
-                        if(fTPreviousPerTDCChannel)
-                            SetH2Content(*fTPreviousPerTDCChannel, fHldId, chid,  refdiff);  // show only most recent value
-                     }
-
+               if(chid > 0 && ch0time && fhRisingPrevDiffVsChannel) {
+                  double refdiff = (localtm - ch0time) * 1e9;
+                  if(refdiff > -1000 && refdiff < 1000) {
+                     DefFillH2(fhRisingPrevDiffVsChannel, chid, refdiff, 1.);
+                     if(fTPreviousPerTDCChannel)
+                         SetH2Content(*fTPreviousPerTDCChannel, fHldId, chid,  refdiff);  // show only most recent value
+                  }
                }
 
                if (use_fine_for_stat) {
@@ -2240,6 +2246,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       }
    }
 
+   // printf("%s did processing buf %u\n", GetName(), buf.datalen());
+
    if (isfirstepoch && !iserr) {
       // if we want to compensate epoch reset, use epoch of trigger channel+1
       // +1 to exclude small probability of hits after trigger with epoch+1 value
@@ -2253,15 +2261,17 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
       // special case for 0xD trigger - use only last hit messages for accumulating statistic
       if (use_for_calibr == 2)
-         for (unsigned ch=0;ch<NumChannels();ch++) {
+         for (unsigned ch = 0;ch < NumChannels(); ch++) {
             ChannelRec& rec = fCh[ch];
             if (rec.last_rising_fine > 0) {
+               RANGE_CHECK(rec.last_rising_fine >= rec.rising_stat.size(), "%s Wrong rising fine value %u\n", GetName(), rec.last_rising_fine);
                rec.rising_stat[rec.last_rising_fine]++;
                rec.all_rising_stat++;
                rec.last_rising_fine = 0;
                if (fCalHitsPerBrd) DefFillH2(*fCalHitsPerBrd, fSeqeunceId, ch, 1.); // accumulate only rising edges
             }
             if (rec.last_falling_fine > 0) {
+               RANGE_CHECK(rec.last_falling_fine >= rec.falling_stat.size(), "%s Wrong falling fine value %u\n", GetName(), rec.last_rising_fine);
                rec.falling_stat[rec.last_falling_fine]++;
                rec.all_falling_stat++;
                rec.last_falling_fine = 0;
@@ -2275,8 +2285,12 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
             if (fCh[ch].hascalibr) {
                if ((fCh[ch].last_tot >= fToThmin) && (fCh[ch].last_tot < fToThmax)) {
-                  if (fCh[ch].tot0d_hist.empty()) fCh[ch].CreateToTHist();
+                  if (fCh[ch].tot0d_hist.empty())
+                     fCh[ch].CreateToTHist();
                   int bin = (int) ((fCh[ch].last_tot - fToThmin) / (fToThmax - fToThmin) * (TotBins + 0));
+                  if ((bin < 0) || (bin >= TotBins))
+                     fprintf(stderr, "%s Wrong bin number %d\n", GetName(), bin);
+
                   fCh[ch].tot0d_hist[bin]++;
                   fCh[ch].tot0d_cnt++;
                } else {
@@ -2315,7 +2329,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       }
 
       // if we use trigger as time marker
-      if (fUseNativeTrigger && (ch0time!=0)) {
+      if (fUseNativeTrigger && (ch0time != 0)) {
          base::LocalTimeMarker marker;
          marker.localid = 1;
          marker.localtm = ch0time;
@@ -2325,7 +2339,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          AddTriggerMarker(marker);
       }
 
-      if ((syncid != 0xffffffff) && (ch0time!=0)) {
+      if ((syncid != 0xffffffff) && (ch0time != 0)) {
 
          // printf("%s Create SYNC %u tm %12.9f\n", GetName(), syncid, ch0time);
          base::SyncMarker marker;
@@ -2355,7 +2369,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    } else {
 
       // use first channel only for flushing
-      if (ch0time!=0)
+      if (ch0time != 0)
          TestHitTime(LocalToGlobalTime(ch0time, &help_index), false, true);
    }
 
@@ -2365,10 +2379,10 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    if (rawprint && first_scan) {
       printf("%s RAW data event 0x%x\n", GetName(), (unsigned) (GetHLD() ? GetHLD()->GetEventId() : 0));
       TdcIterator iter;
-      if (buf().format==0)
+      if (buf().format == 0)
          iter.assign((uint32_t*) buf.ptr(4), buf.datalen()/4-1, false);
       else
-         iter.assign((uint32_t*) buf.ptr(0), buf.datalen()/4, buf().format==2);
+         iter.assign((uint32_t*) buf.ptr(0), buf.datalen()/4, buf().format == 2);
       while (iter.next()) iter.printmsg();
    }
 
