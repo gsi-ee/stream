@@ -2283,19 +2283,24 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          for (unsigned ch = 1; ch < NumChannels(); ch++) {
             // printf("%s Channel %d last_tot %5.3f has_calibr %d min %5.2f max %5.2f \n", GetName(), ch, fCh[ch].last_tot, fCh[ch].hascalibr, fToThmin, fToThmax);
 
-            if (fCh[ch].hascalibr) {
-               if ((fCh[ch].last_tot >= fToThmin) && (fCh[ch].last_tot < fToThmax)) {
-                  if (fCh[ch].tot0d_hist.empty())
-                     fCh[ch].CreateToTHist();
-                  int bin = (int) ((fCh[ch].last_tot - fToThmin) / (fToThmax - fToThmin) * (TotBins + 0));
-                  RANGE_CHECK((bin < 0) || (bin >= TotBins), "%s Wrong bin number %d min %f max %f\n", GetName(), bin, fToThmin, fToThmax);
-                  fCh[ch].tot0d_hist[bin]++;
-                  fCh[ch].tot0d_cnt++;
+            auto &rec = fCh[ch];
+
+            if (rec.hascalibr) {
+               if ((rec.last_tot >= fToThmin) && (rec.last_tot < fToThmax)) {
+                  if (rec.tot0d_hist.empty())
+                     rec.CreateToTHist();
+                  int bin = (int) ((rec.last_tot - fToThmin) / (fToThmax - fToThmin) * (TotBins + 0));
+                  if ((bin >= 0) && (bin < (int) rec.tot0d_hist.size())) {
+                     rec.tot0d_hist[bin]++;
+                     rec.tot0d_cnt++;
+                  } else {
+                     fprintf(stderr, "%s ch %u Wrong bin number %d tot %5.2f min %5.2f max %5.2f\n", GetName(), ch, bin, rec.last_tot, fToThmin, fToThmax);
+                  }
                } else {
-                  fCh[ch].tot0d_misscnt++;
+                  rec.tot0d_misscnt++;
                }
             }
-            fCh[ch].last_tot = 0.;
+            rec.last_tot = 0.;
          }
 
       if (lowid || highid) {
@@ -4077,16 +4082,9 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
 
    fclose(f);
 
-   // workaround for testing, remove later !!!
-   if (strstr(fname, "cal/global_"))
-      switch (GetID()) {
-         case 0x941: fTempCorrection = -1.58; break;
-         case 0x942: fTempCorrection = -1.68; break;
-         case 0x943: fTempCorrection = -1.32; break;
-         default: fTempCorrection = 0; break;
-      }
-
-   printf("%s reading calibration from %s, tcorr:%5.1f uset:%d done\n", GetName(), fname, fTempCorrection, fCalibrUseTemp);
+   char msg[2000];
+   snprintf(msg, sizeof(msg), "%s reading calibration from %s, tcorr:%5.1f uset:%d done\n", GetName(), fname, fTempCorrection, fCalibrUseTemp);
+   mgr()->PrintLog(msg);
 
    fCalibrStatus = "CalibrFile";
 
@@ -4187,7 +4185,7 @@ hadaq::TdcProcessor *hadaq::TdcProcessor::CreateFromCalibr(hadaq::TrbProcessor *
 {
    FILE* f = fopen(fname.c_str(), "r");
    if (!f) {
-      printf("Cannot access file %s for reading calibration\n", fname.c_str());
+      fprintf(stderr, "Cannot access file %s for reading calibration\n", fname.c_str());
       return nullptr;
    }
    uint64_t num = 0;

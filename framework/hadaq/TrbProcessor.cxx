@@ -948,7 +948,9 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
 
                did_create_tdc = true;
 
-               printf("%s: Create %s 0x%04x nch:%u edges:%u\n", GetName(), ver4 ? "TDC4" : "TDC", dataid, numch, edges);
+               char msg[1000];
+               snprintf(msg, sizeof(msg), "%s: Create %s 0x%04x nch:%u edges:%u\n", GetName(), ver4 ? "TDC4" : "TDC", dataid, numch, edges);
+               mgr()->PrintLog(msg);
 
                // in auto-create mode buffers are not processed - normally it is only first event
                // AddBufferToTDC(sub, tdcproc, ix, datalen);
