@@ -282,6 +282,9 @@ base::H1handle TFirstStepProcessor::MakeH1(const char* name, const char* title, 
    // For instance, labels for each bin:
    //      xbin:EPOCH,HIT,SYNC,AUX,,,SYS;
 
+   if (IsBlockHistCreation())
+      return (base::H1handle) nullptr;
+
    TString newxtitle, newytitle;
    TString xbins;
 
@@ -322,7 +325,7 @@ base::H1handle TFirstStepProcessor::MakeH1(const char* name, const char* title, 
 
 bool TFirstStepProcessor::GetH1NBins(base::H1handle h1, int &nbins)
 {
-   if (h1==0) return false;
+   if (!h1) return false;
 
    TH1* histo1 = (TH1*) h1;
    nbins = histo1->GetNbinsX();
@@ -334,11 +337,11 @@ bool TFirstStepProcessor::GetH1NBins(base::H1handle h1, int &nbins)
 
 void TFirstStepProcessor::FillH1(base::H1handle h1, double x, double weight)
 {
-   if (h1==0) return;
+   if (!h1) return;
 
    TH1* histo1 = (TH1*) h1;
 
-   if (weight!=1.)
+   if (weight != 1.)
       histo1->Fill(x, weight);
    else
       histo1->Fill(x);
@@ -349,7 +352,7 @@ void TFirstStepProcessor::FillH1(base::H1handle h1, double x, double weight)
 
 double TFirstStepProcessor::GetH1Content(base::H1handle h1, int nbin)
 {
-   if (h1==0) return 0.;
+   if (!h1) return 0.;
 
    TH1* histo1 = (TH1*) h1;
 
@@ -414,6 +417,9 @@ base::H2handle TFirstStepProcessor::MakeH2(const char* name, const char* title, 
    //      xbin:EPOCH,HIT,SYNC,AUX,,,SYS;
    // Default arguments are xtitle;ytitle
 
+   if (IsBlockHistCreation())
+      return (base::H2handle) nullptr;
+
    TString xbins, ybins, xtitle, ytitle;
 
    TObjArray* arr = (options && *options) ? TString(options).Tokenize(";") : 0;
@@ -461,7 +467,7 @@ base::H2handle TFirstStepProcessor::MakeH2(const char* name, const char* title, 
 
 bool TFirstStepProcessor::GetH2NBins(base::H2handle h2, int &nbins1, int &nbins2)
 {
-   if (h2==0) return false;
+   if (!h2) return false;
    TH2* histo2 = (TH2*) h2;
    nbins1 = histo2->GetNbinsX();
    nbins2 = histo2->GetNbinsY();
@@ -473,7 +479,7 @@ bool TFirstStepProcessor::GetH2NBins(base::H2handle h2, int &nbins1, int &nbins2
 
 void TFirstStepProcessor::FillH2(base::H2handle h2, double x, double y, double weight)
 {
-   if (h2==0) return;
+   if (!h2) return;
 
    TH2* histo2 = (TH2*) h2;
 
@@ -488,7 +494,7 @@ void TFirstStepProcessor::FillH2(base::H2handle h2, double x, double y, double w
 
 double TFirstStepProcessor::GetH2Content(base::H2handle h2, int bin1, int bin2)
 {
-   if (h2==0) return 0.;
+   if (!h2) return 0.;
 
    TH2* histo2 = (TH2*) h2;
 
@@ -500,7 +506,7 @@ double TFirstStepProcessor::GetH2Content(base::H2handle h2, int bin1, int bin2)
 
 void TFirstStepProcessor::SetH2Content(base::H2handle h2, int bin1, int bin2, double v)
 {
-   if (h2==0) return;
+   if (!h2) return;
 
    TH2* histo2 = (TH2*) h2;
 
@@ -512,7 +518,7 @@ void TFirstStepProcessor::SetH2Content(base::H2handle h2, int bin1, int bin2, do
 
 void TFirstStepProcessor::ClearH2(base::H2handle h2)
 {
-   if (h2==0) return;
+   if (!h2) return;
 
    TH2* histo2 = (TH2*) h2;
    histo2->Reset();
@@ -544,6 +550,9 @@ void TFirstStepProcessor::ClearAllHistograms()
 
 base::C1handle TFirstStepProcessor::MakeC1(const char* name, double left, double right, base::H1handle h1)
 {
+   if (IsBlockHistCreation())
+      return (base::C1handle) nullptr;
+
    TH1* histo1 = (TH1*) h1;
 
    TGo4WinCond* cond = MakeWinCond(name, left, right, histo1 ? histo1->GetName() : 0);

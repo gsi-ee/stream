@@ -55,6 +55,7 @@ namespace base {
          int                      fDfltStoreKind{0};   ///<! default store kind for any new created processor
          base::Event             *fTrigEvent{nullptr}; ///<! current event, filled when performing triggered analysis
          int                      fDebug{0};           ///<! debug level
+         bool                     fBlockHistCreation{false}; ///<! if true no new histogram should be created
 
          static ProcMgr* fInstance;                     ///<! instance
 
@@ -107,6 +108,9 @@ namespace base {
          void SetDebug(int lvl = 0) { fDebug = lvl; }
          /** Returns debug level */
          int GetDebug() const { return fDebug; }
+
+         void SetBlockHistCreation(bool on = true) { fBlockHistCreation = on; }
+         bool IsBlockHistCreation() const { return fBlockHistCreation; }
 
          /** Set store kind for all processors */
          virtual void SetStoreKind(unsigned kind = 1);

@@ -141,7 +141,8 @@ void base::ProcMgr::SetStoreKind(unsigned kind)
 
 base::H1handle base::ProcMgr::MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle)
 {
-   if (!InternalHistFormat()) return nullptr;
+   if (!InternalHistFormat() || IsBlockHistCreation())
+      return nullptr;
 
    double* arr = new double[nbins+5];
    arr[0] = nbins;
@@ -251,16 +252,18 @@ void base::ProcMgr::CopyH1(H1handle tgt, H1handle src)
 
 base::H2handle base::ProcMgr::MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options)
 {
-   if (!InternalHistFormat()) return nullptr;
+   if (!InternalHistFormat() || IsBlockHistCreation())
+      return nullptr;
 
-   double* bins = new double[(nbins1+2)*(nbins2+2)+6];
+   double *bins = new double[(nbins1+2)*(nbins2+2)+6];
    bins[0] = nbins1;
    bins[1] = left1;
    bins[2] = right1;
    bins[3] = nbins2;
    bins[4] = left2;
    bins[5] = right2;
-   for (int n=0;n<nbins1*nbins2;n++) bins[n+6] = 0.;
+   for (int n = 0; n < nbins1*nbins2; n++)
+      bins[n+6] = 0.;
 
    return (base::H2handle) bins;
 }
@@ -360,7 +363,6 @@ base::C1handle base::ProcMgr::MakeC1(const char* name, double left, double right
 void base::ProcMgr::ChangeC1(C1handle, double, double)
 {
 }
-
 
 /////////////////////////////////////////////////////////////////////////
 /// Condition check 0 - inside, -1 left , +1 - right

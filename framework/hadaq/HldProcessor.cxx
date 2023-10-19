@@ -304,6 +304,9 @@ void hadaq::HldProcessor::CreateThreads()
 {
    fThreadsCreated = true;
 
+   // no new histograms should be created when threads are started
+   mgr()->SetBlockHistCreation(true);
+
    for (auto &entry : fMap) {
       if (entry.second->fThreadData)
          continue;
