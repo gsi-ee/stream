@@ -17,10 +17,6 @@
 #include <iostream>
 
 
-// #define RANGE_CHECK(cond, msg, args ...) if(cond) fprintf(stderr, msg, args);
-
-#define RANGE_CHECK(cond, msg, args ...)
-
 #define RAWPRINT( args ...) if(IsPrintRawData()) printf( args )
 
 
@@ -1713,7 +1709,7 @@ unsigned BubbleCheckCahit(unsigned* bubble, int &p1, int &p2, bool debug = false
 bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 {
    if (buf.null()) {
-      if (first_scan) printf("Something wrong - empty buffer should not appear in the first scan/n");
+      if (first_scan) printf("%s Something wrong - empty buffer should not appear in the first scan\n", GetName());
       return false;
    }
 
@@ -1784,8 +1780,6 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    }
 
    TdcIterator& iter = first_scan ? fIter1 : fIter2;
-
-   RANGE_CHECK(buf.datalen() > 1e4, "%s too large buffer %u\n", GetName(), buf.datalen());
 
    if (buf().format == 0)
       iter.assign((uint32_t*) buf.ptr(4), buf.datalen()/4-1, false);
@@ -2264,15 +2258,13 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       if (use_for_calibr == 2)
          for (unsigned ch = 0;ch < NumChannels(); ch++) {
             ChannelRec& rec = fCh[ch];
-            if (rec.last_rising_fine > 0) {
-               RANGE_CHECK(rec.last_rising_fine >= rec.rising_stat.size(), "%s Wrong rising fine value %u\n", GetName(), rec.last_rising_fine);
+            if ((rec.last_rising_fine > 0) && (rec.last_rising_fine < rec.rising_stat.size())) {
                rec.rising_stat[rec.last_rising_fine]++;
                rec.all_rising_stat++;
                rec.last_rising_fine = 0;
                if (fCalHitsPerBrd) DefFillH2(*fCalHitsPerBrd, fSeqeunceId, ch, 1.); // accumulate only rising edges
             }
-            if (rec.last_falling_fine > 0) {
-               RANGE_CHECK(rec.last_falling_fine >= rec.falling_stat.size(), "%s Wrong falling fine value %u\n", GetName(), rec.last_rising_fine);
+            if ((rec.last_falling_fine > 0) && (rec.last_falling_fine < rec.falling_stat.size())) {
                rec.falling_stat[rec.last_falling_fine]++;
                rec.all_falling_stat++;
                rec.last_falling_fine = 0;
@@ -2400,7 +2392,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan)
 {
    if (buf.null()) {
-      if (first_scan) printf("Something wrong - empty buffer should not appear in the first scan/n");
+      if (first_scan) printf("Something wrong - empty buffer should not appear in the first scan\n");
       return false;
    }
 
@@ -4084,7 +4076,7 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
    fclose(f);
 
    char msg[2000];
-   snprintf(msg, sizeof(msg), "%s reading calibration from %s, tcorr:%5.1f uset:%d done\n", GetName(), fname, fTempCorrection, fCalibrUseTemp);
+   snprintf(msg, sizeof(msg), "%s reading calibration from %s, tcorr:%5.1f uset:%d done", GetName(), fname, fTempCorrection, fCalibrUseTemp);
    mgr()->PrintLog(msg);
 
    fCalibrStatus = "CalibrFile";
