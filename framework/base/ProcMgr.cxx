@@ -493,7 +493,7 @@ void base::ProcMgr::SetTimeSorting(bool on)
 /////////////////////////////////////////////////////////////////////////////////////////////
 /// Method to provide raw data on base of data kind to the processor
 
-void base::ProcMgr::ProvideRawData(const Buffer& buf)
+void base::ProcMgr::ProvideRawData(const Buffer& buf, bool fast_process)
 {
    if (buf.null()) return;
 
@@ -508,9 +508,10 @@ void base::ProcMgr::ProvideRawData(const Buffer& buf)
 
    if (iter == fMap.end()) return;
 
-   // printf("Provide new data kind %d  board %u\n", buf().kind, buf().boardid);
-
    iter->second->AddNextBuffer(buf);
+
+   if (fast_process)
+      iter->second->ScanNewBuffers();
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////
@@ -782,10 +783,11 @@ bool base::ProcMgr::AnalyzeNewData(base::Event* &evt)
    }
 
    // scan new data in the processors
-   for (unsigned n=0;n<fProc.size();n++)
+   for (unsigned n = 0; n < fProc.size(); n++)
       fProc[n]->ScanNewBuffers();
 
-   if (IsRawAnalysis()) return false;
+   if (IsRawAnalysis())
+      return false;
 
    if (IsTriggeredAnalysis()) {
       fTrigEvent = nullptr;

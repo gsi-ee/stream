@@ -204,7 +204,7 @@ namespace base {
          /** Specify processor index, which is used as time reference for all others */
          void SetTimeMasterIndex(unsigned indx) { fTimeMasterIndex = indx; }
 
-         void ProvideRawData(const Buffer& buf);
+         void ProvideRawData(const Buffer& buf, bool fast_process = false);
 
          bool AnalyzeSyncMarkers();
 
