@@ -264,7 +264,7 @@ void hadaq::HldProcessor::WorkingThread(hadaq::ThreadData *data) {
 
    while (!data->canceled) {
       {
-         std::unique_lock lk(data->m);
+         std::unique_lock<std::mutex> lk(data->m);
          data->cv.wait(lk, [data]{ return data->canceled || data->new_data; } );
          // data->cv.wait(lk);
          data->working = true;
@@ -289,7 +289,7 @@ void hadaq::HldProcessor::WorkingThread(hadaq::ThreadData *data) {
       data->new_data = false;
 
       {
-         std::unique_lock lk(data->m);
+         std::unique_lock<std::mutex> lk(data->m);
          data->working = false;
       }
 
@@ -325,7 +325,7 @@ void hadaq::HldProcessor::CreateThreads()
 
       // printf("Starting thread for %s\n", data->trb->GetName());
       // wait that thread is started
-      std::unique_lock lk(data->m);
+      std::unique_lock<std::mutex> lk(data->m);
       data->cv.wait(lk);
    }
 
@@ -478,7 +478,7 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
       for (auto &entry : fMap) {
          auto data = entry.second->fThreadData;
          if (!data) continue;
-         std::unique_lock lk(data->m);
+         std::unique_lock<std::mutex> lk(data->m);
          if (data->working) {
             // data->cv.wait(lk);
             data->cv.wait(lk, [data]{ return data->canceled || !data->working; });
