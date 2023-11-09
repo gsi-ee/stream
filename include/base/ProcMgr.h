@@ -46,6 +46,14 @@ namespace base {
          struct HistBinning {
             int nbins{0};
             double left{0.}, right{0};
+            HistBinning() = default;
+            HistBinning(int _nbins, double _left, double _right) : nbins(_nbins), left(_left), right(_right) {}
+            HistBinning& operator=(const HistBinning& src) {
+               nbins = src.nbins;
+               left = src.left;
+               right = src.right;
+               return *this;
+            }
          };
 
          std::string              fSecondName;         ///<! name of second.C script
@@ -162,7 +170,7 @@ namespace base {
 
          void SetCustomBinning(const char *name, int nbins, double left, double right)
          {
-            fCustomBinning[name] = {nbins, left, right};
+            fCustomBinning[name] = HistBinning(nbins, left, right);
          }
 
          /** Clear all histograms */
