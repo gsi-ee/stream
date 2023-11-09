@@ -144,6 +144,13 @@ base::H1handle base::Processor::MakeH1(const char* name, const char* title, int 
    if (!fSubPrefixN.empty()) htitle += fSubPrefixN.substr(0, fSubPrefixN.length()-1) + " ";
    htitle.append(title);
 
+   auto iter = mgr()->fCustomBinning.find(name);
+   if (iter != mgr()->fCustomBinning.end()) {
+      nbins = iter->second.nbins;
+      left = iter->second.left;
+      right = iter->second.right;
+   }
+
    return mgr()->MakeH1(hname.c_str(), htitle.c_str(), nbins, left, right, xtitle);
 }
 
@@ -153,7 +160,7 @@ base::H1handle base::Processor::MakeH1(const char* name, const char* title, int 
 
 base::H2handle base::Processor::MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options)
 {
-   if (!mgr() ||!IsHistFilling()) return nullptr;
+   if (!mgr() || !IsHistFilling()) return nullptr;
 
    std::string hname = fPathPrefix + "/";
    if (!fSubPrefixD.empty()) hname += fSubPrefixD;
@@ -165,6 +172,13 @@ base::H2handle base::Processor::MakeH2(const char* name, const char* title, int 
    htitle.append(" ");
    if (!fSubPrefixN.empty()) htitle += fSubPrefixN.substr(0, fSubPrefixN.length()-1) + " ";
    htitle.append(title);
+
+   auto iter = mgr()->fCustomBinning.find(name);
+   if (iter != mgr()->fCustomBinning.end()) {
+      nbins2 = iter->second.nbins;
+      left2 = iter->second.left;
+      right2 = iter->second.right;
+   }
 
    return mgr()->MakeH2(hname.c_str(), htitle.c_str(), nbins1, left1, right1, nbins2, left2, right2, options);
 }

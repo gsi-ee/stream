@@ -43,6 +43,11 @@ namespace base {
          /** map of stream processors */
          typedef std::map<unsigned,StreamProc*> StreamProcMap;
 
+         struct HistBinning {
+            int nbins{0};
+            double left{0.}, right{0};
+         };
+
          std::string              fSecondName;         ///<! name of second.C script
          std::vector<StreamProc*> fProc;               ///<! all stream processors
          StreamProcMap            fMap;                ///<! map for fast access
@@ -56,6 +61,7 @@ namespace base {
          base::Event             *fTrigEvent{nullptr}; ///<! current event, filled when performing triggered analysis
          int                      fDebug{0};           ///<! debug level
          bool                     fBlockHistCreation{false}; ///<! if true no new histogram should be created
+         std::map<std::string,HistBinning> fCustomBinning; ///<! custom binning
 
          static ProcMgr* fInstance;                     ///<! instance
 
@@ -153,6 +159,11 @@ namespace base {
          virtual void SetH2Title(H2handle, const char*) {}
          /** Tag histogram time */
          virtual void TagH2Time(H2handle) {}
+
+         void SetCustomBinning(const char *name, int nbins, double left, double right)
+         {
+            fCustomBinning[name] = {nbins, left, right};
+         }
 
          /** Clear all histograms */
          virtual void ClearAllHistograms() {}
