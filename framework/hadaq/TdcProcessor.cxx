@@ -1242,16 +1242,18 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
             // account TOT shift
             corr += rec.tot_shift*1e-9;
 
-            if (changed_msg && (corr < 0.)) {
+            if (changed_msg && ((corr < 0.) || (corr > 5e-8))) {
                uint32_t coarse = msg.getHitTmCoarse();
 
                // move coarse time and compensate correction
                while ((coarse < 0x7ff) && (corr < 0.)) { coarse++; corr += 5e-9; }
-               msg.setHitTmCoarse(coarse);
-               if (corr < 0.) {
+               while ((coarse > 0) && (corr > 5e-8)) { coarse--; corr -= 5e-9; }
+               if ((corr < 0.) || (corr > 5e-8)) {
                   // printf("%s Fail to compensate channel %u\n", GetName(), chid);
                   corr = 0;
                   hard_failure = true;
+               } else {
+                  msg.setHitTmCoarse(coarse);
                }
             }
 
