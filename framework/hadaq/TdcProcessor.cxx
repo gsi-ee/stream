@@ -301,7 +301,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fToTvalue = ToTvalue;
    fToThmin = ToThmin;
    fToThmax = ToThmax;
-   fTotUpperLimit = 20;
+   fTotUpperLimit = 1000;
    fTotStatLimit = gTotStatLimit;
    fTotRMSLimit = gTotRMSLimit;
 
@@ -334,7 +334,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
 
       if (!hadaq::TdcProcessor::IsHadesReducedMonitoring()) {
          fhTotMoreCounter =
-            MakeH1("TotMoreCounter", "ToT > 20 ns counter in TDC channels", numchannels, 0, numchannels, "ch");
+            MakeH1("TotMoreCounter", "ToT > 1000 ns counter in TDC channels", numchannels, 0, numchannels, "ch");
          fhTotMinusCounter =
             MakeH1("TotMinusCounter", "ToT < 0 ns counter in TDC channels", numchannels, 0, numchannels, "ch");
       }
@@ -3053,12 +3053,17 @@ double hadaq::TdcProcessor::DoTestToT(int iCh)
         if (nEntries == 0) return 0.;
         double ratio = (moreContent + minusContent) / nEntries;
 
-        int result = (int) (100. * (1. - ratio));
-        if (result <= 0) result = 0;
-        if (result >= 99) result = 99;
-
-        double resultEntries = (nEntries >= 100) ? 0.99 : (nEntries / 100.);
-        dresult = 1.*result + resultEntries;
+        // int result = (int) (100. * (1. - ratio));
+        // if (result <= 0) result = 0;
+        // if (result >= 99) result = 99;
+        // double resultEntries = (nEntries >= 100) ? 0.99 : (nEntries / 100.);
+        // dresult = 1.*result + resultEntries;
+        
+        // JAM 8-12-24: replace old evaluation by more simple one:
+         dresult =  100. * (1. - ratio);
+         if (dresult < 0) dresult = 0.;
+         //if (dresult > 100) dresult = 100.; // never come here !? 
+         // should be between 0 and 100% always        
      }
 
     return dresult;
@@ -3111,17 +3116,22 @@ double hadaq::TdcProcessor::DoTestEdges(int iCh)
     if (nEntries < 10) return 0.;
     double ratio = std::fabs(raising - falling) / (0.5 * nEntries);
 
-    int result = (int) (100. * (1. - ratio));
-    if (result <= 0) result = 0;
-    if (result >= 100) result = 100;
+    // int result = (int) (100. * (1. - ratio));
+    // if (result <= 0) result = 0;
+    // if (result >= 100) result = 100;
 
-    // change scale by factor 6, starting from 100
-    // idea to expand range [90..100] to [70..100] where 70 is visible boundary on histogram
-    result = 100 - (100-result) * 3;
-    if (result < 0) result = 0; else if (result > 99) result = 99;
+    // // change scale by factor 6, starting from 100
+    // // idea to expand range [90..100] to [70..100] where 70 is visible boundary on histogram
+    // result = 100 - (100-result) * 3;
+    // if (result < 0) result = 0; else if (result > 99) result = 99;
 
-    double resultEntries = (nEntries >= 100) ? 0.99 : (nEntries / 100.);
-    double dresult = 1.*result + resultEntries;
+    // double resultEntries = (nEntries >= 100) ? 0.99 : (nEntries / 100.);
+    // double dresult = 1.*result + resultEntries;
+
+    
+    double dresult =   100. * (1. - ratio);
+    if (dresult < 0) dresult = 0.;
+    if (dresult > 100) dresult = 100.;
     return dresult;
 }
 

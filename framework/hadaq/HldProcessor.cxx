@@ -526,18 +526,18 @@ void hadaq::HldProcessor::DoHadesHistSummary()
     for (int x = 0; x < nBinsX; x++){
         for (int y = 0; y < nBinsY; y++){
             double cFine = GetH2Content(fQaFinePerTDCChannel, x, y);
-            if (cFine > 0. && cFine < 50.) nBadFine++;
+            if (cFine > 0. && cFine < 80.) nBadFine++;
 
             double cToT = GetH2Content(fQaToTPerTDCChannel, x, y);
-            if (cToT > 0. && cToT < 50.) nBadToT++;
+            if (cToT > 0. && cToT < 80.) nBadToT++;
 
             double cEdges = GetH2Content(fQaEdgesPerTDCChannel, x, y);
-            if (cEdges > 0. && cEdges < 50.) nBadEdges++;
+            if (cEdges > 0. && cEdges < 80.) nBadEdges++;
 
             double cErrors = GetH2Content(fQaErrorsPerTDCChannel, x, y);
             double cErrors1;
             double cErrors2 = std::modf(cErrors, &cErrors1);
-            if (cErrors > 0. && cErrors < 50. && cErrors2 >= 0.99) nBadErrors++;
+            if (cErrors > 0. && cErrors < 80. && cErrors2 >= 0.99) nBadErrors++;
         }
     }
     SetH1Content(fQaSummary, 0, nBadFine);
