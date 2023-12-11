@@ -296,6 +296,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fTPreviousPerTDCChannel= nullptr;
    fhSigmaTotVsChannel = nullptr;
    fhRisingPrevDiffVsChannel = nullptr;
+   fToTCountPerTDCChannel = nullptr;
 
    fToTdflt = true;
    fToTvalue = ToTvalue;
@@ -2099,7 +2100,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                      case 2:
                         rec.last_falling_fine = fine;
                         break;
-                  }
+                  } 
                }
 
                if (raw_hit) FastFillH1(rec.fFallingFine, fine);
@@ -2145,6 +2146,12 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 //                        if (nEntries) averagetot= (oldtot * (nEntries-1) + tot) / nEntries;
 //                        SetH2Content(*fToTPerTDCChannel, fHldId, chid, averagetot);
                   }
+
+                  // JAM 11-12-2023: just a scaler how many ToTs we've got for each channel:
+                  if (fToTCountPerTDCChannel) {
+                      DefFastFillH2(*fToTCountPerTDCChannel, fHldId, chid);
+                  }
+                  
                   if(fDevPerTDCChannel && (tot>0) && (tot < 1000)) { // JAM 7-12-21 suppress noise fakes
                      rec.tot_dev += totvar; // JAM misuse  this data field to get overall sigma of file
                      rec.tot0d_cnt++; // JAM misuse calibration counter here to evaluate sigma

@@ -265,7 +265,7 @@ namespace hadaq {
          base::H1handle *fExpectedToTPerTDC{nullptr};  ///< HADAQ expected ToT per TDC  used for calibration
          base::H2handle *fDevPerTDCChannel{nullptr};  ///< HADAQ ToT deviation per TDC channel from calibration
          base::H2handle *fTPreviousPerTDCChannel{nullptr};
-
+         base::H2handle *fToTCountPerTDCChannel{nullptr};  ///< HADAQ number of evaluated ToTs per TDC channel JAM 12/2023
 
          unsigned                 fNumChannels;       ///<! number of channels
          unsigned                 fNumFineBins;       ///<! number of fine-counter bins
@@ -604,7 +604,8 @@ namespace hadaq {
                                               base::H2handle *hQaFine, base::H2handle *hQaToT,
                                               base::H2handle *hQaEdges, base::H2handle *hQaErrors,
                                               base::H2handle *hTot, base::H2handle *hShift,
-                                              base::H1handle *hExpTot, base::H2handle *hDev, base::H2handle *hTPrev)
+                                 base::H1handle *hExpTot, base::H2handle *hDev, base::H2handle *hTPrev, base::H2handle *hTotCount
+                                 )
          {
             fHldId = id;
             fHitsPerHld = hHits;
@@ -621,6 +622,7 @@ namespace hadaq {
             fExpectedToTPerTDC = hExpTot;
             fDevPerTDCChannel = hDev;
             fTPreviousPerTDCChannel = hTPrev;
+            fToTCountPerTDCChannel = hTotCount;
          }
 
          /** Set calibration trigger type(s)

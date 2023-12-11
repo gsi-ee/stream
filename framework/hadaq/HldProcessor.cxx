@@ -59,7 +59,7 @@ hadaq::HldProcessor::HldProcessor(bool auto_create, const char* after_func) :
    fExpectedToTPerTDC = nullptr;  ///< HADAQ expected ToT per TDC sed for calibration
    fDevPerTDCChannel = nullptr;  ///< HADAQ ToT deviation per TDC channel from calibration
    fPrevDiffPerTDCChannel  = nullptr;
-
+   fToTCountPerTDCChannel= nullptr; ///< HADAQ number of evaluated ToTs per TDC channel JAM new 12/23
    // printf("Create HldProcessor %s\n", GetName());
 
    // this is raw-scan processor, therefore no synchronization is required for it
@@ -705,6 +705,12 @@ void hadaq::HldProcessor::CreatePerTDCHisto()
                               tdcs.size(), 0, tdcs.size(),
                                    TrbProcessor::GetDefaultNumCh(), 0, TrbProcessor::GetDefaultNumCh(),
                                    opt2.c_str());
+       if (!fToTCountPerTDCChannel)
+          fToTCountPerTDCChannel = MakeH2("ToTCountPerChannel", "Number of evaluated ToTs per TDC channel",
+                              tdcs.size(), 0, tdcs.size(),
+                                   TrbProcessor::GetDefaultNumCh(), 0, TrbProcessor::GetDefaultNumCh(),
+                                   opt2.c_str());
+       
 
         if (!fShiftPerTDCChannel)
           fShiftPerTDCChannel = MakeH2("ShiftPerChannel", "Calibrated time shift of falling edge per TDC channel",
@@ -759,11 +765,10 @@ void hadaq::HldProcessor::CreatePerTDCHisto()
    for (auto &tdc : tdcs)
       tdc->AssignPerHldHistos(cnt++, &fHitsPerTDC, &fErrPerTDC, &fHitsPerTDCChannel, &fErrPerTDCChannel, &fCorrPerTDCChannel,
           &fQaFinePerTDCChannel, &fQaToTPerTDCChannel, &fQaEdgesPerTDCChannel, &fQaErrorsPerTDCChannel,
-
            &fToTPerTDCChannel, &fShiftPerTDCChannel, &fExpectedToTPerTDC,  &fDevPerTDCChannel,
-           &fPrevDiffPerTDCChannel);
+                              &fPrevDiffPerTDCChannel, &fToTCountPerTDCChannel);
 }
-
+ 
 
 ////////////////////////////////////////////////////////////////////////////////////////
 /// Enable cross-processing of data

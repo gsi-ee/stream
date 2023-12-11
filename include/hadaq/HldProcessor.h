@@ -125,6 +125,7 @@ namespace hadaq {
          base::H1handle fQaSummary;  ///< HADAQ QA summary histogram
          // JAM2021: some new histograms for hades tdc calibration check
          base::H2handle fToTPerTDCChannel;  ///< HADAQ ToT per TDC channel, real values
+         base::H2handle fToTCountPerTDCChannel;  ///< HADAQ number of evaluated ToTs per TDC channel JAM new 12/23
          base::H2handle fShiftPerTDCChannel;  ///< HADAQ calibrated shift per TDC channel, real values
          base::H1handle fExpectedToTPerTDC;  ///< HADAQ expected ToT per TDC sed for calibration
          base::H2handle fDevPerTDCChannel;  ///< HADAQ ToT deviation per TDC channel
