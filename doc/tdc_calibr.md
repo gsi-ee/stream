@@ -240,18 +240,18 @@ extern "C" void after_create(hadaq::HldProcessor* hld)
 {
    printf("Called after all sub-components are created\n");
 
-   if (hld==0) return;
+   if (!hld) return;
 
    for (unsigned k=0;k<hld->NumberOfTRB();k++) {
       hadaq::TrbProcessor* trb = hld->GetTRB(k);
-      if (trb==0) continue;
+      if (!trb) continue;
       printf("Configure %s!\n", trb->GetName());
       trb->SetPrintErrors(10);
    }
 
    for (unsigned k=0;k<hld->NumberOfTDC();k++) {
       hadaq::TdcProcessor* tdc = hld->GetTDC(k);
-      if (tdc==0) continue;
+      if (!tdc) continue;
 
       printf("Configure %s!\n", tdc->GetName());
 
