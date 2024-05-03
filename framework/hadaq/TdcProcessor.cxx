@@ -2100,7 +2100,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                      case 2:
                         rec.last_falling_fine = fine;
                         break;
-                  } 
+                  }
                }
 
                if (raw_hit) FastFillH1(rec.fFallingFine, fine);
@@ -2151,7 +2151,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                   if (fToTCountPerTDCChannel) {
                       DefFastFillH2(*fToTCountPerTDCChannel, fHldId, chid);
                   }
-                  
+
                   if(fDevPerTDCChannel && (tot>0) && (tot < 1000)) { // JAM 7-12-21 suppress noise fakes
                      rec.tot_dev += totvar; // JAM misuse  this data field to get overall sigma of file
                      rec.tot0d_cnt++; // JAM misuse calibration counter here to evaluate sigma
@@ -3067,12 +3067,12 @@ double hadaq::TdcProcessor::DoTestToT(int iCh)
         // if (result >= 99) result = 99;
         // double resultEntries = (nEntries >= 100) ? 0.99 : (nEntries / 100.);
         // dresult = 1.*result + resultEntries;
-        
+
         // JAM 8-12-24: replace old evaluation by more simple one:
          dresult =  100. * (1. - ratio);
          if (dresult < 0) dresult = 0.;
-         //if (dresult > 100) dresult = 100.; // never come here !? 
-         // should be between 0 and 100% always        
+         //if (dresult > 100) dresult = 100.; // never come here !?
+         // should be between 0 and 100% always
      }
 
     return dresult;
@@ -3137,7 +3137,7 @@ double hadaq::TdcProcessor::DoTestEdges(int iCh)
     // double resultEntries = (nEntries >= 100) ? 0.99 : (nEntries / 100.);
     // double dresult = 1.*result + resultEntries;
 
-    
+
     double dresult =   100. * (1. - ratio);
     if (dresult < 0) dresult = 0.;
     if (dresult > 100) dresult = 100.;
@@ -3507,7 +3507,7 @@ bool hadaq::TdcProcessor::CalibrateTot(unsigned nch, std::vector<uint32_t> &hist
    tot_dev = rms;
 
    if (rms > fTotRMSLimit) {
-      printf("%s Ch:%u TOT failed - RMS %5.3f too high hmin %5.2f hmax %5.2f\n", GetName(), nch, rms, fToThmin, fToThmax);
+      printf("%s Ch:%u TOT failed - RMS %5.3f too high hmin %5.2f hmax %5.2f mean %5.2f\n", GetName(), nch, rms, fToThmin, fToThmax, mean);
 
       if (fCalibrQuality > 0.4) {
          fCalibrStatus = name_prefix + "_highrms";
