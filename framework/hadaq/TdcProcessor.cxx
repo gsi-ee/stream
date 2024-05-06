@@ -2427,6 +2427,8 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
    // if data could be used for TOT calibration
    bool do_tot = (use_for_calibr > 0) && ((buf_kind == 0xD) || gUseAsDTrig) && DoFallingEdge();
 
+   // printf("Name %s ToT %d\n", GetName(), (int) do_tot);
+
    // use temperature compensation only when temperature available
    bool do_temp_comp = fCalibrUseTemp && (fCurrentTemp > 0) && (fCalibrTemp > 0) && (fabs(fCurrentTemp - fCalibrTemp) < 30.);
 
@@ -2455,7 +2457,6 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
             pStoreDouble = subevnt->vect_ptr();
             break;
          }
-
          default: break; // not supported
       }
    }
@@ -2463,7 +2464,7 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
    //static int ddd = 0;
    //if (ddd++ % 10000 == 0) printf("%s dostore %d istriggered %d hasevt %d kind %d\n", GetName(), dostore, IsTriggeredAnalysis(), mgr()->HasTrigEvent(), GetStoreKind());
 
-   uint32_t first_epoch(0);
+   uint32_t first_epoch = 0;
 
    unsigned epoch_shift = 0;
    if (fCompensateEpochReset) {
@@ -2473,12 +2474,12 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
 
    TdcIterator& iter = first_scan ? fIter1 : fIter2;
 
-   if (buf().format==0)
+   if (buf().format == 0)
       iter.assign((uint32_t*) buf.ptr(4), buf.datalen()/4-1, false);
    else
       iter.assign((uint32_t*) buf.ptr(0), buf.datalen()/4, buf().format==2);
 
-   unsigned help_index(0);
+   unsigned help_index = 0;
 
    double localtm = 0., minimtm = 0., ch0time = 0.;
 
@@ -2499,7 +2500,7 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
 
       cnt++;
 
-      if (cnt==1) {
+      if (cnt == 1) {
          if (!msg.isHDR()) {
             iserr = true;
             ADDERROR(errNoHeader, "Missing header message");
@@ -2615,7 +2616,7 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
 
          // localtm = iter.getMsgTimeCoarse();
 
-         localtm = (((uint64_t) iter.getCurEpoch()) << 12 | coarse) * hadaq::TdcMessage::CoarseUnit280(); // 280 MHz
+         localtm = ((((uint64_t) iter.getCurEpoch()) << 12) | coarse) * hadaq::TdcMessage::CoarseUnit280(); // 280 MHz
 
          if (chid >= NumChannels()) {
             ADDERROR(errChId, "Channel number %u bigger than configured %u", chid, NumChannels());
@@ -2678,7 +2679,7 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
          // apply correction
          localtm -= corr;
 
-         if ((chid==0) && (ch0time==0) && isrising) ch0time = localtm;
+         if ((chid == 0) && (ch0time == 0) && isrising) ch0time = localtm;
 
          if (IsTriggeredAnalysis()) {
             if (ch0time==0)
@@ -2809,10 +2810,6 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
                   DefFillH1(rec.fTot, tot, 1.);
                   rec.rising_new_value = false;
 
-
-
-
-
                   // use only raw hit
                   if (raw_hit && do_tot) rec.last_tot = tot + rec.tot_shift;
                }
@@ -2840,7 +2837,7 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
          } else
 
          // for second scan we check if hit can be assigned to the events
-         if (((chid>0) || fCh0Enabled) && !iserr) {
+         if (((chid > 0) || fCh0Enabled) && !iserr) {
 
             base::GlobalTime_t globaltm = LocalToGlobalTime(localtm, &help_index);
 
@@ -2855,7 +2852,7 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
                      AddMessage(indx, (hadaq::TdcSubEvent*) fGlobalMarks.item(indx).subev, hadaq::TdcMessageExt(msg, chid>0 ? globaltm : ch0time));
                      break;
                   case 2:
-                     if (chid>0)
+                     if (chid > 0)
                         AddMessage(indx, (hadaq::TdcSubEventFloat*) fGlobalMarks.item(indx).subev, hadaq::MessageFloat(chid, isrising, (globaltm - ch0time)*1e9));
                      break;
                   case 3:
@@ -2902,9 +2899,7 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
 
       // when doing TOT calibration, use only last TOT value - before one could find other signals
       if (do_tot)
-         for (unsigned ch=1;ch<NumChannels();ch++) {
-            // printf("%s Channel %d last_tot %5.3f has_calibr %d min %5.2f max %5.2f \n", GetName(), ch, fCh[ch].last_tot, fCh[ch].hascalibr, fToThmin, fToThmax);
-
+         for (unsigned ch = 1; ch < NumChannels(); ch++) {
             if (fCh[ch].hascalibr && (fCh[ch].last_tot >= fToThmin) && (fCh[ch].last_tot < fToThmax)) {
                if (fCh[ch].tot0d_hist.empty()) fCh[ch].CreateToTHist();
                int bin = (int) ((fCh[ch].last_tot - fToThmin) / (fToThmax - fToThmin) * (TotBins + 0));
@@ -3286,7 +3281,9 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, bool rising, const st
       }
    }
 
-   if (!preliminary && (finemax < (f400Mhz ? 200 : 400))) {
+   unsigned finemaxlimit = fVersion4 ? 300 : (f400Mhz ? 200 : 400);
+
+   if (!preliminary && (finemax < finemaxlimit)) {
       std::string log_finemax = std::string("_BadFineMax_") + std::to_string(finemax);
       err_log.append(log_finemax);
       if (quality > 0.4) quality = 0.4;
@@ -3296,9 +3293,13 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, bool rising, const st
       }
    }
 
-   double coarse_unit = hadaq::TdcMessage::CoarseUnit();
-   if (f400Mhz) coarse_unit *= 200. / fCustomMhz;
-   if (fVersion4) coarse_unit = hadaq::TdcMessage::CoarseUnit280();
+   double coarse_unit = 0;
+   if (fVersion4) {
+      coarse_unit = hadaq::TdcMessage::CoarseUnit280();
+   } else {
+      coarse_unit = hadaq::TdcMessage::CoarseUnit();
+      if (f400Mhz) coarse_unit *= 200. / fCustomMhz;
+   }
 
    if (sum <= limits) {
 
@@ -3386,7 +3387,7 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, bool rising, const st
 
       double scale_value = (integral[finemax] - statistic[finemax]/2) / sum;
 
-      if (!preliminary && (finemax < (f400Mhz ? 175 : 350))) {
+      if (!preliminary && (finemax < finemaxlimit*0.875)) {
          std::string log_finemax = std::string("_BadFineMax_") + std::to_string(finemax);
          err_log.append(log_finemax);
          if (quality > 0.4) quality = 0.4;
@@ -3617,7 +3618,6 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
          falling_calibr = &rec.falling_calibr;
       }
 
-
       if (!preliminary) {
          rec.calibr_stat_rising = rec.calibr_stat_falling = 0;
          rec.calibr_quality_rising = rec.calibr_quality_falling = -1.;
@@ -3632,7 +3632,7 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
             rec.all_rising_stat += rec.all_falling_stat;
             if (fCalHitsPerBrd) DefFillH2(*fCalHitsPerBrd, fSeqeunceId, ch, rec.all_falling_stat); // add all falling edges
             rec.all_falling_stat = 0;
-            for (unsigned n=0;n<fNumFineBins;n++) {
+            for (unsigned n = 0; n < fNumFineBins; n++) {
                rec.rising_stat[n] += rec.falling_stat[n];
                rec.falling_stat[n] = 0;
             }
@@ -3653,6 +3653,8 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
             rec.calibr_stat_falling = rec.all_falling_stat;
             if (rec.calibr_quality_falling <= 0.5) res = false;
          }
+
+         printf("%s:%u Calibr quality rising: %5.3f falling: %5.3f res = %d\n", GetName(), ch, rec.calibr_quality_rising, rec.calibr_quality_falling, (int) res);
 
          printf("%s:%u Check Tot dofalling: %d tot0d_cnt:%ld prelim:%d tot0d_hist:%d \n", GetName(), ch, DoFallingEdge(), rec.tot0d_cnt, preliminary, (int) rec.tot0d_hist.size());
 
