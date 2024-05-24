@@ -33,6 +33,9 @@ class TUserSource : public TGo4EventSource {
       /** current HLD file */
       hadaq::HldFile fxFile;
 
+      /** indicates if DOGMA file will be read */
+      Bool_t fIsDOGMA = kFALSE;
+
       /** current DOGMA file */
       dogma::DogmaFile fxDogmaFile;
 
@@ -50,6 +53,10 @@ class TUserSource : public TGo4EventSource {
 
       /** Open the file or connection. */
       Int_t Open();
+
+      Bool_t BuildDatEvent(TGo4MbsEvent *dest);
+      Bool_t BuildHldEvent(TGo4MbsEvent *dest);
+      Bool_t BuildDogmaEvent(TGo4MbsEvent *dest);
 
    public:
 
@@ -73,8 +80,6 @@ class TUserSource : public TGo4EventSource {
        * to fill several TTrbEvent classes. To get a new
        * event call NextEvent() before this method.*/
       virtual Bool_t BuildEvent(TGo4EventElement* dest);
-
-      virtual Bool_t BuildDatEvent(TGo4MbsEvent* dest);
 
       /** get args */
       const char* GetArgs() const { return fxArgs.Data(); }

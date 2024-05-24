@@ -148,26 +148,25 @@ Bool_t TUserSource::BuildDatEvent(TGo4MbsEvent* evnt)
    return kTRUE; // event is ready
 }
 
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-/// build event
+/// build HADAQ event
 
-Bool_t TUserSource::BuildEvent(TGo4EventElement* dest)
+Bool_t TUserSource::BuildHldEvent(TGo4MbsEvent *evnt)
 {
-   TGo4MbsEvent* evnt = dynamic_cast<TGo4MbsEvent*> (dest);
-   if (!evnt || !fxBuffer) return kFALSE;
-
-   if (!fIsHLD) return BuildDatEvent(evnt);
-
    uint32_t bufsize = Trb_BUFSIZE;
 
-   Bool_t trynext(kFALSE);
-   if (!fxFile.isOpened() || fxFile.eof()) trynext = kTRUE; else
-   if (!fxFile.ReadBuffer(fxBuffer, &bufsize, true)) trynext = kTRUE;
+   Bool_t trynext = kFALSE;
+   if (!fxFile.isOpened() || fxFile.eof())
+      trynext = kTRUE;
+   else if (!fxFile.ReadBuffer(fxBuffer, &bufsize, true))
+      trynext = kTRUE;
 
    if (trynext) {
       bufsize = Trb_BUFSIZE;
       Bool_t isok = OpenNextFile();
-      if (isok) isok = fxFile.ReadBuffer(fxBuffer, &bufsize, true);
+      if (isok)
+         isok = fxFile.ReadBuffer(fxBuffer, &bufsize, true);
       if (!isok) {
          SetCreateStatus(1);
          SetErrMess("End of HLD input");
@@ -189,6 +188,65 @@ Bool_t TUserSource::BuildEvent(TGo4EventElement* dest)
    evnt->SetDlen(bufsize/sizeof(Short_t) + 2 + 6);
 
    return kTRUE; // event is ready
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// build DOGMA event
+
+Bool_t TUserSource::BuildDogmaEvent(TGo4MbsEvent *evnt)
+{
+   uint32_t bufsize = Trb_BUFSIZE;
+
+   Bool_t trynext = kFALSE;
+   if (!fxFile.isOpened() || fxFile.eof())
+      trynext = kTRUE;
+   else if (!fxFile.ReadBuffer(fxBuffer, &bufsize, true))
+      trynext = kTRUE;
+
+   if (trynext) {
+      bufsize = Trb_BUFSIZE;
+      Bool_t isok = OpenNextFile();
+      if (isok)
+         isok = fxFile.ReadBuffer(fxBuffer, &bufsize, true);
+      if (!isok) {
+         SetCreateStatus(1);
+         SetErrMess("End of HLD input");
+         SetEventStatus(1);
+         throw TGo4EventEndException(this);
+         return kFALSE;
+      }
+   }
+
+   TGo4SubEventHeader10 fxSubevHead;
+   memset((void *) &fxSubevHead, 0, sizeof(fxSubevHead));
+   fxSubevHead.fsProcid = base::proc_TRBEvent; // mark to be processed by TTrbProc
+
+   evnt->AddSubEvent(fxSubevHead.fiFullid, (Short_t*) fxBuffer, bufsize/sizeof(Short_t) + 2, kTRUE);
+
+   evnt->SetCount(((hadaqs::RawEvent*) fxBuffer)->GetSeqNr());
+
+   // set total MBS event length, which must include MBS header itself
+   evnt->SetDlen(bufsize/sizeof(Short_t) + 2 + 6);
+
+   return kTRUE; // event is ready
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/// build event
+
+Bool_t TUserSource::BuildEvent(TGo4EventElement* dest)
+{
+   TGo4MbsEvent* evnt = dynamic_cast<TGo4MbsEvent*> (dest);
+   if (!evnt || !fxBuffer) return kFALSE;
+
+   if (fIsHLD)
+      return BuildHldEvent(evnt);
+
+   if (fIsDOGMA)
+      return BuildDogmaEvent(evnt);
+
+   return BuildDatEvent(evnt);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
