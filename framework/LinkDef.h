@@ -90,6 +90,11 @@
 #pragma link C++ struct hadaq::MdcMessage+;
 #pragma link C++ class std::vector<hadaq::MdcMessage>;
 
+// DOGMA file
+#pragma link C++ namespace dogma;
+#pragma link C++ class dogma::DogmaFile+;
+
+
 // MBS data processing
 #pragma link C++ namespace mbs;
 #pragma link C++ class mbs::SubEvent+;

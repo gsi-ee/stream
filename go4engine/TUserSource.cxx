@@ -30,15 +30,7 @@
 /// constructor
 
 TUserSource::TUserSource() :
-   TGo4EventSource("default Trb source"),
-   fxArgs(""),
-   fiPort(0),
-   fNames(0),
-   fIsHLD(kTRUE),
-   fxFile(),
-   fxBuffer(0),
-   fxDatFile(0),
-   fEventCounter(0)
+   TGo4EventSource("default Trb source")
 {
 }
 
@@ -48,13 +40,7 @@ TUserSource::TUserSource() :
 TUserSource::TUserSource(const char* name, const char* args, Int_t port) :
    TGo4EventSource(name),
    fxArgs(args),
-   fiPort(port),
-   fNames(0),
-   fIsHLD(kTRUE),
-   fxFile(),
-   fxBuffer(0),
-   fxDatFile(0),
-   fEventCounter(0)
+   fiPort(port)
 {
    Open();
 }
@@ -63,15 +49,7 @@ TUserSource::TUserSource(const char* name, const char* args, Int_t port) :
 /// constructor
 
 TUserSource::TUserSource(TGo4UserSourceParameter* par) :
-   TGo4EventSource(" "),
-   fxArgs(""),
-   fiPort(0),
-   fNames(0),
-   fIsHLD(kTRUE),
-   fxFile(),
-   fxBuffer(0),
-   fxDatFile(0),
-   fEventCounter(0)
+   TGo4EventSource(" ")
 {
    if(par) {
       SetName(par->GetName());
@@ -90,6 +68,7 @@ TUserSource::~TUserSource()
 {
    TGo4Log::Info("Close of TUserSource");
    fxFile.Close();
+   fxDogmaFile.Close();
 
    if (fxBuffer) {
       delete [] fxBuffer;
@@ -220,7 +199,8 @@ Int_t TUserSource::Open()
    TString fname = GetName();
 
    fIsHLD = kTRUE;
-   if (fname.EndsWith(".dat")) fIsHLD = kFALSE;
+   if (fname.EndsWith(".dat"))
+      fIsHLD = kFALSE;
 
    if(fname.Contains("*") || fname.Contains("?")) {
       // name indicates wildcard expression

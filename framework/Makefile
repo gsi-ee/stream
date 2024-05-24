@@ -50,6 +50,7 @@ NEWLIB_HEADERS = $(filter-out $(NOLIBF_HDR), \
                  $(wildcard $(STREAMSYS)/include/nx/*.h) \
                  $(wildcard $(STREAMSYS)/include/get4/*.h) \
                  $(wildcard $(STREAMSYS)/include/hadaq/*.h) \
+                 $(wildcard $(STREAMSYS)/include/dogma/*.h) \
                  $(wildcard $(STREAMSYS)/include/mbs/*.h) \
                  $(STREAMSYS)/include/dabc/BinaryFile.h)
 
@@ -58,6 +59,7 @@ NEWLIB_SRCS =    $(filter-out $(NOLIBF_SRC), \
                  $(wildcard nx/*.cxx) \
                  $(wildcard get4/*.cxx) \
                  $(wildcard hadaq/*.cxx) \
+                 $(wildcard dogma/*.cxx) \
                  $(wildcard mbs/*.cxx))
 
 NEWLIB_OBJS = $(patsubst %.cxx, %.o, $(NEWLIB_SRCS))

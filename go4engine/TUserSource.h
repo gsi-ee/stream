@@ -5,6 +5,8 @@
 
 #include "hadaq/HldFile.h"
 
+#include "dogma/DogmaFile.h"
+
 #include <cstdio>
 
 class TGo4UserSourceParameter;
@@ -20,25 +22,28 @@ class TUserSource : public TGo4EventSource {
       TString fxArgs;
 
       /** Optional port number  */
-      Int_t fiPort;
+      Int_t fiPort = 0;
 
       /** list of all files names */
-      TList* fNames;
+      TList* fNames = nullptr;
 
       /** indicates if HLD file will be read */
-      Bool_t fIsHLD;
+      Bool_t fIsHLD = kTRUE;
 
       /** current HLD file */
       hadaq::HldFile fxFile;
 
+      /** current DOGMA file */
+      dogma::DogmaFile fxDogmaFile;
+
       /** working buffer */
-      Char_t* fxBuffer;
+      Char_t* fxBuffer = nullptr;
 
       /** current DAT file */
-      FILE* fxDatFile;
+      FILE* fxDatFile = nullptr;
 
       /** event counter */
-      Int_t fEventCounter;
+      Int_t fEventCounter = 0;
 
 
       Bool_t OpenNextFile();

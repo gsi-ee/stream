@@ -59,6 +59,13 @@ set(hadaq_hdrs
 
 STREAM_INSTALL_HEADERS(hadaq ${hadaq_hdrs})
 
+set(dogma_hdrs
+   dogma/DogmaFile.h
+   dogma/defines.h
+)
+
+STREAM_INSTALL_HEADERS(dogma ${dogma_hdrs})
+
 set(mbs_hdrs
    mbs/Processor.h
    mbs/SubEvent.h
@@ -108,6 +115,7 @@ STREAM_LINK_LIBRARY(Stream
    hadaq/TrbIterator.cxx
    hadaq/TrbProcessor.cxx
    hadaq/MonitorProcessor.cxx
+   dogma/DogmaFile.cxx
    mbs/Processor.cxx
    nx/Iterator.cxx
    nx/Message.cxx
@@ -134,7 +142,7 @@ if(ROOT_FOUND)
       NOWARN
    )
 
-   ROOT_GENERATE_DICTIONARY(G__StreamDict ${base_hdrs} ${dabc_hdrs} ${get4_hdrs} ${hadaq_hdrs} ${mbs_hdrs} ${nx_hdrs} ${root_hdrs}
+   ROOT_GENERATE_DICTIONARY(G__StreamDict ${base_hdrs} ${dabc_hdrs} ${get4_hdrs} ${hadaq_hdrs} ${dogma_hdrs} ${mbs_hdrs} ${nx_hdrs} ${root_hdrs}
                             LINKDEF LinkDef.h
                             MODULE StreamDict
                             DEPENDENCIES Stream
