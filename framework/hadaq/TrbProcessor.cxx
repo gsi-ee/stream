@@ -59,17 +59,18 @@ unsigned hadaq::TrbProcessor::GetNumCh() const
 //////////////////////////////////////////////////////////////////////////////
 /// Constructor, one could specify histogram fill level
 
-hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc, int hfill) :
+hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc, int hfill, bool with_dogma) :
    base::StreamProc("TRB_%04X", brdid, false),
    fHldProc(hldproc),
    fMap(),
    fHadaqHUBId()
 {
    if (!hldproc) {
-      mgr()->RegisterProc(this, base::proc_TRBEvent, brdid & 0xFF);
+      mgr()->RegisterProc(this, with_dogma ? base::proc_DOGMAEvent : base::proc_TRBEvent, brdid & 0xFF);
    } else {
       hldproc->AddTrb(this, brdid);
-      if (!mgr() && hldproc->mgr()) hldproc->mgr()->AddProcessor(this);
+      if (!mgr() && hldproc->mgr())
+         hldproc->mgr()->AddProcessor(this);
    }
 
    if (hfill >= 0) SetHistFilling(hfill);
@@ -504,8 +505,11 @@ bool hadaq::TrbProcessor::DogmaBufferScan(const base::Buffer &buf)
 
       BeforeEventScan();
 
+      // printf("Scan DOGMA event %u size %u\n", evnt->GetSeqId(), evlen);
+
       auto tu = evnt->FirstSubevent();
       while (tu) {
+
          auto trigtype = tu->GetTrigTypeNumber() & 0xf;
          auto dataid = tu->GetAddr();
          auto datalen = tu->GetPayloadLen();
@@ -518,6 +522,8 @@ bool hadaq::TrbProcessor::DogmaBufferScan(const base::Buffer &buf)
             entry.second->SetNewDataFlag(false);
 
          auto tdcproc = GetTDC(dataid, true);
+
+         // printf("  Tu 0x%x proc %p payloadlen %u\n", dataid, tdcproc, datalen);
 
          if (tdcproc) {
             base::Buffer buf;
@@ -541,7 +547,8 @@ bool hadaq::TrbProcessor::DogmaBufferScan(const base::Buffer &buf)
 
             tdcproc->AddNextBuffer(buf);
             tdcproc->SetNewDataFlag(true);
-         } else if (fAutoCreate && (dataid >= gTDCMin) && (dataid <= gTDCMax) &&
+         } /*
+         else if (fAutoCreate && (dataid >= gTDCMin) && (dataid <= gTDCMax) &&
             (datalen > 0) && TdcMessage(tu->GetPayload(0)).isHeaderMsg()) {
                // here should be channel/edge/min/max selection based on TDC design ID
                bool ver4 = TdcMessage(tu->GetPayload(0)).IsVer4Header();
@@ -559,7 +566,7 @@ bool hadaq::TrbProcessor::DogmaBufferScan(const base::Buffer &buf)
                mgr()->PrintLog(msg);
 
                // no need provide data in autocreate mode
-            }
+         } */
 
          tu = evnt->NextSubevent(tu);
       }

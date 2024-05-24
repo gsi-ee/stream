@@ -1,4 +1,7 @@
 {
    "deepscan.ignoreConfirmWarning": true,
-   "cmake.configureOnOpen": false
+   "cmake.configureOnOpen": false,
+   "files.associations": {
+      "first.C": "cpp"
+   }
 }

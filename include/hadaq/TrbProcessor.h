@@ -150,7 +150,7 @@ namespace hadaq {
 
       public:
 
-         TrbProcessor(unsigned brdid = 0, HldProcessor *hld = nullptr, int hfill = -1);
+         TrbProcessor(unsigned brdid = 0, HldProcessor *hld = nullptr, int hfill = -1, bool with_dogma = false);
          virtual ~TrbProcessor();
 
          /** Returns instance of \ref hadaq::HldProcessor to which it belongs */
