@@ -23,7 +23,7 @@ namespace base {
       proc_CERN_Oct12   = 14,   ///< id for CERN beamtime in October 12
       proc_FASP         = 15,   ///< id for the FASP data
       proc_TRBEvent     = 31,   ///< container for TRB frontend data
-      proc_DOGMAEvent   = 32,   ///< container for DOGMA event
+      proc_DOGMAEvent   = 37    ///< container for DOGMA event
    };
 
    enum AnalysisKind {

@@ -10,6 +10,8 @@
 #include "hadaq/TdcProcessor.h"
 #include "hadaq/HldProcessor.h"
 
+#include "dogma/defines.h"
+
 #define RAWPRINT( args ...) if(IsPrintRawData()) printf( args )
 
 unsigned hadaq::TrbProcessor::gNumChannels = 65;
@@ -429,7 +431,11 @@ void hadaq::TrbProcessor::AccountTriggerId(unsigned subid)
 
 bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
 {
-   if (buf.null()) return false;
+   if (buf.null())
+      return false;
+
+   if (buf().kind == base::proc_DOGMAEvent)
+      return DogmaBufferScan(buf);
 
 //   RAWPRINT("TRB3 - first scan of buffer %u\n", buf().datalen);
 
@@ -470,6 +476,42 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
          ScanSubEvent(sub, ev->GetRunNr(), ev->GetSeqNr());
 
          subcnt++;
+      }
+
+      AfterEventScan();
+
+      AfterEventFill();
+   }
+
+   return true;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+/// First scan of DOGMA buffer - main entry point for data
+
+bool hadaq::TrbProcessor::DogmaBufferScan(const base::Buffer &buf)
+{
+   char *curr = (char *) buf().buf;
+   unsigned len = buf().datalen;
+
+   while (curr && (len > sizeof(dogma::DogmaEvent))) {
+      auto evnt = (dogma::DogmaEvent *) curr;
+
+      unsigned evlen = evnt->GetEventLen();
+      if (evlen > len) {
+         printf("Failure with dogmal event length got %u maximum %u\n", evlen, len);
+         return false;
+      }
+      curr += evlen;
+      len -= evlen;
+
+      DefFillH1(fEvSize, evlen, 1.);
+
+      BeforeEventScan();
+
+      auto tu = evnt->FirstSubevent();
+      while (tu) {
+         tu = evnt->NextSubevent(tu);
       }
 
       AfterEventScan();

@@ -146,6 +146,8 @@ namespace hadaq {
 
          void SetCrossProcessAll();
 
+         bool DogmaBufferScan(const base::Buffer &buf);
+
       public:
 
          TrbProcessor(unsigned brdid = 0, HldProcessor *hld = nullptr, int hfill = -1);
