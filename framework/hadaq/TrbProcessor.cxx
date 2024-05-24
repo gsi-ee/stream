@@ -506,6 +506,61 @@ bool hadaq::TrbProcessor::DogmaBufferScan(const base::Buffer &buf)
 
       auto tu = evnt->FirstSubevent();
       while (tu) {
+         auto trigtype = tu->GetTrigTypeNumber() & 0xf;
+         auto dataid = tu->GetAddr();
+         auto datalen = tu->GetPayloadLen();
+
+         DefFillH1(fTrigType, trigtype, 1.);
+
+         DefFillH1(fSubevSize, tu->GetSize(), 1.);
+
+         for (auto &entry : fMap)
+            entry.second->SetNewDataFlag(false);
+
+         auto tdcproc = GetTDC(dataid, true);
+
+         if (tdcproc) {
+            base::Buffer buf;
+
+            if (gIgnoreSync) {
+               // special case - could use data directly without copying
+               buf.makereferenceof((char *)tu->RawData(), datalen * 4);
+               buf().kind = trigtype;
+               buf().boardid = dataid;
+               buf().format = tu->IsSwapped() ? 2 : 1; // special format without sync
+            } else {
+               buf.makenew((datalen + 1) * 4);
+               uint32_t *ptr = (uint32_t *)buf.ptr();
+               *ptr++ = 0xffffffff; // fill dummy sync id in the begin
+               for (unsigned n = 0; n < datalen; ++n)
+                  *ptr++ = tu->GetPayload(n);
+               buf().kind = trigtype;
+               buf().boardid = dataid;
+               buf().format = 0;
+            }
+
+            tdcproc->AddNextBuffer(buf);
+            tdcproc->SetNewDataFlag(true);
+         } else if (fAutoCreate && (dataid >= gTDCMin) && (dataid <= gTDCMax) &&
+            (datalen > 0) && TdcMessage(tu->GetPayload(0)).isHeaderMsg()) {
+               // here should be channel/edge/min/max selection based on TDC design ID
+               bool ver4 = TdcMessage(tu->GetPayload(0)).IsVer4Header();
+               unsigned numch = GetNumCh(), edges = gEdgesMask;
+
+               tdcproc = new TdcProcessor(this, dataid, numch, edges, ver4);
+
+               tdcproc->SetCalibrTriggerMask(fCalibrTriggerMask);
+               tdcproc->SetStoreKind(GetStoreKind());
+
+               mgr()->UserPreLoop(tdcproc); // while loop already running, call it once again for new processor
+
+               char msg[1000];
+               snprintf(msg, sizeof(msg), "%s: Create %s 0x%04x nch:%u edges:%u", GetName(), ver4 ? "TDC4" : "TDC", dataid, numch, edges);
+               mgr()->PrintLog(msg);
+
+               // no need provide data in autocreate mode
+            }
+
          tu = evnt->NextSubevent(tu);
       }
 
