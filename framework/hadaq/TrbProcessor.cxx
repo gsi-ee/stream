@@ -458,12 +458,9 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
 
       BeforeEventScan();
 
-      hadaqs::RawSubevent* sub = nullptr;
-      unsigned subcnt = 0;
+      while (auto sub = iter.nextSubevent()) {
 
-      while ((sub = iter.nextSubevent()) != nullptr) {
-
-         if (sub->GetSize() > buf().datalen+4) {
+         if (sub->GetSize() > buf().datalen + 4) {
             printf("Corrupted subevent size %u!\n", sub->GetSize());
             return true;
          }
@@ -474,8 +471,6 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
          AccountTriggerId((sub->GetTrigNr() >> 8) & 0xffff);
 
          ScanSubEvent(sub, ev->GetRunNr(), ev->GetSeqNr());
-
-         subcnt++;
       }
 
       AfterEventScan();
@@ -500,7 +495,7 @@ bool hadaq::TrbProcessor::DogmaBufferScan(const base::Buffer &buf)
       unsigned evlen = evnt->GetEventLen();
       if (evlen > len) {
          printf("Failure with dogmal event length got %u maximum %u\n", evlen, len);
-         return false;
+         return true;
       }
       curr += evlen;
       len -= evlen;
