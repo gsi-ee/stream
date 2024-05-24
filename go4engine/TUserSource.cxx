@@ -198,19 +198,19 @@ Bool_t TUserSource::BuildDogmaEvent(TGo4MbsEvent *evnt)
    uint32_t bufsize = Trb_BUFSIZE;
 
    Bool_t trynext = kFALSE;
-   if (!fxFile.isOpened() || fxFile.eof())
+   if (!fxDogmaFile.isOpened() || fxDogmaFile.eof())
       trynext = kTRUE;
-   else if (!fxFile.ReadBuffer(fxBuffer, &bufsize, true))
+   else if (!fxDogmaFile.ReadBuffer(fxBuffer, &bufsize, true))
       trynext = kTRUE;
 
    if (trynext) {
       bufsize = Trb_BUFSIZE;
       Bool_t isok = OpenNextFile();
       if (isok)
-         isok = fxFile.ReadBuffer(fxBuffer, &bufsize, true);
+         isok = fxDogmaFile.ReadBuffer(fxBuffer, &bufsize, true);
       if (!isok) {
          SetCreateStatus(1);
-         SetErrMess("End of HLD input");
+         SetErrMess("End of DOGMA input");
          SetEventStatus(1);
          throw TGo4EventEndException(this);
          return kFALSE;
@@ -219,11 +219,11 @@ Bool_t TUserSource::BuildDogmaEvent(TGo4MbsEvent *evnt)
 
    TGo4SubEventHeader10 fxSubevHead;
    memset((void *) &fxSubevHead, 0, sizeof(fxSubevHead));
-   fxSubevHead.fsProcid = base::proc_TRBEvent; // mark to be processed by TTrbProc
+   fxSubevHead.fsProcid = base::proc_DOGMAEvent; // mark to be processed by TDogmaProc
 
    evnt->AddSubEvent(fxSubevHead.fiFullid, (Short_t*) fxBuffer, bufsize/sizeof(Short_t) + 2, kTRUE);
 
-   evnt->SetCount(((hadaqs::RawEvent*) fxBuffer)->GetSeqNr());
+   evnt->SetCount(((dogma::DogmaEvent *) fxBuffer)->GetSeqId());
 
    // set total MBS event length, which must include MBS header itself
    evnt->SetDlen(bufsize/sizeof(Short_t) + 2 + 6);
@@ -257,8 +257,13 @@ Int_t TUserSource::Open()
    TString fname = GetName();
 
    fIsHLD = kTRUE;
+   fIsDOGMA = kFALSE;
    if (fname.EndsWith(".dat"))
       fIsHLD = kFALSE;
+   else if (fname.EndsWith(".dld")) {
+      fIsHLD = kFALSE;
+      fIsDOGMA = kTRUE;
+   }
 
    if(fname.Contains("*") || fname.Contains("?")) {
       // name indicates wildcard expression
@@ -301,7 +306,6 @@ Bool_t TUserSource::OpenNextFile()
 
    printf("Open next file %s\n", fNames->At(0)->GetName());
 
-
    TObject* obj = fNames->First();
    TString nextname = obj->GetName();
    fNames->Remove(fNames->FirstLink());
@@ -312,9 +316,10 @@ Bool_t TUserSource::OpenNextFile()
    ana->SetInputFileName(nextname.Data());
 
    if (fIsHLD) {
-      if(fxFile.isOpened()) fxFile.Close();
+      if(fxFile.isOpened())
+         fxFile.Close();
 
-      ///<! Open connection/file
+      ///<! Open HLD file
       if(!fxFile.OpenRead(nextname.Data())) {
          SetCreateStatus(1);
          SetErrMess(Form("Error opening HLD file: %s", nextname.Data()));
@@ -322,9 +327,23 @@ Bool_t TUserSource::OpenNextFile()
       }
 
       TGo4Log::Info("Open HLD file %s", nextname.Data());
-   } else {
+   } else if (fIsDOGMA) {
+      if(fxDogmaFile.isOpened())
+         fxDogmaFile.Close();
 
-      if (fxDatFile) { fclose(fxDatFile); fxDatFile = nullptr; }
+      ///<! Open DOGMA file
+      if(!fxDogmaFile.OpenRead(nextname.Data())) {
+         SetCreateStatus(1);
+         SetErrMess(Form("Error opening DOGMA file: %s", nextname.Data()));
+         throw TGo4EventErrorException(this);
+      }
+
+      TGo4Log::Info("Open DOGMA file %s", nextname.Data());
+   } else {
+      if (fxDatFile) {
+         fclose(fxDatFile);
+         fxDatFile = nullptr;
+      }
 
       fxDatFile = fopen(nextname.Data(), "r");
       if (!fxDatFile) {
