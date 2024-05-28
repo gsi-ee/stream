@@ -78,7 +78,7 @@ namespace hadaq {
          base::H2handle fCalHitsPerBrd{nullptr}; ///<! calibration hits per board, used only in HADES
          base::H2handle fToTPerBrd{nullptr};  ///<! ToT values for each TDC channel
 
-
+         bool fDogma = false;        ///< if dogma processing is actiavted
          bool fPrintRawData;         ///< true when raw data should be printed
          bool fCrossProcess;         ///< if true, cross-processing will be enabled
          int  fPrintErrCnt;          ///< number of error messages, which could be printed
@@ -249,7 +249,7 @@ namespace hadaq {
             if ((iter == fMap.end()) && !fullid) iter = fMap.find(tdcid & 0xff);
 
             // ignore integrated TDCs, they have upper 16bits set
-            return ((iter != fMap.end()) && ((iter->first >> 16) == 0) && iter->second->IsTDC()) ? (TdcProcessor*) iter->second : nullptr;
+            return ((iter != fMap.end()) && (fDogma || ((iter->first >> 16) == 0)) && iter->second->IsTDC()) ? (TdcProcessor*) iter->second : nullptr;
          }
 
          /** Returns number of TDC processors */

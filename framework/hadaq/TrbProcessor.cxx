@@ -60,12 +60,13 @@ unsigned hadaq::TrbProcessor::GetNumCh() const
 /// Constructor, one could specify histogram fill level
 
 hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc, int hfill, bool with_dogma) :
-   base::StreamProc("TRB_%04X", brdid, false),
+   base::StreamProc(with_dogma && !hldproc ? "DOGMA" : "TRB_%04X", brdid, false),
    fHldProc(hldproc),
    fMap(),
    fHadaqHUBId()
 {
    if (!hldproc) {
+      fDogma = with_dogma;
       mgr()->RegisterProc(this, with_dogma ? base::proc_DOGMAEvent : base::proc_TRBEvent, brdid & 0xFF);
    } else {
       hldproc->AddTrb(this, brdid);
@@ -235,7 +236,7 @@ int hadaq::TrbProcessor::CreateTDC(unsigned id1, unsigned id2, unsigned id3, uns
 
    int num = 0;
 
-   for (unsigned cnt=0;cnt<4;cnt++) {
+   for (unsigned cnt = 0; cnt < 4; cnt++) {
       unsigned tdcid = id1;
       switch (cnt) {
          case 1: tdcid = id2; break;
@@ -250,7 +251,7 @@ int hadaq::TrbProcessor::CreateTDC(unsigned id1, unsigned id2, unsigned id3, uns
          continue;
       }
 
-      if (tdcid==fHadaqCTSId) {
+      if (tdcid == fHadaqCTSId) {
          printf("TDC id 0x%04x already used as CTS id\n", tdcid);
          continue;
       }
@@ -260,7 +261,7 @@ int hadaq::TrbProcessor::CreateTDC(unsigned id1, unsigned id2, unsigned id3, uns
          continue;
       }
 
-      hadaq::TdcProcessor *tdc = new hadaq::TdcProcessor(this, tdcid, GetNumCh(), gEdgesMask);
+      auto tdc = new hadaq::TdcProcessor(this, tdcid, GetNumCh(), gEdgesMask, false, fDogma);
 
       tdc->SetCalibrTriggerMask(fCalibrTriggerMask);
 

@@ -218,7 +218,8 @@ namespace hadaq {
             }
          };
 
-         bool fVersion4{false};         ///< if version4 TDC is analyzed
+         bool fVersion4 = false;         ///< if version4 TDC is analyzed
+         bool fDogma = false;           ///< used with dogma readout
 
          TdcIterator fIter1;         ///<! iterator for the first scan
          TdcIterator fIter2;         ///<! iterator for the second scan
@@ -465,7 +466,7 @@ namespace hadaq {
             edge_CommonStatistic = 4  ///< accumulate common statistic for both
          };
 
-         TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels = MaxNumTdcChannels, unsigned edge_mask = 1, bool ver4 = false);
+         TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels = MaxNumTdcChannels, unsigned edge_mask = 1, bool ver4 = false, bool dogma = false);
          virtual ~TdcProcessor();
 
          static void SetMaxBoardId(unsigned);

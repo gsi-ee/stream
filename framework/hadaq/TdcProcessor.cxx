@@ -192,9 +192,10 @@ void hadaq::TdcProcessor::SetPreventFineCalibration(bool on)
 /// \param edge_mask - edges mask, see \ref hadaq::TdcProcessor::EEdgesMasks
 /// \param ver4 - is TDC V4 should be expected
 
-hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels, unsigned edge_mask, bool ver4) :
-   SubProcessor(trb, "TDC_%04X", tdcid),
+hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels, unsigned edge_mask, bool ver4, bool dogma) :
+   SubProcessor(trb, dogma ? "TDC_%06X" : "TDC_%04X", tdcid),
    fVersion4(ver4),
+   fDogma(dogma),
    fIter1(),
    fIter2(),
    fNumChannels(numchannels),
