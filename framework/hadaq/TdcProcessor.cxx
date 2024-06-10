@@ -2561,7 +2561,7 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
 
          ChannelRec& rec = fCh[chid];
 
-         localtm = (((uint64_t) iter.getCurEpoch()) << 12 | coarse) * hadaq::TdcMessage::CoarseUnit300(); // 300 MHz
+         localtm = ((((uint64_t) iter.getCurEpoch()) << 12) | coarse) * hadaq::TdcMessage::CoarseUnit300(); // 300 MHz
 
          unsigned mask = 0x100, cnt = 8;
          while (((pattern & mask) == 0) && (cnt > 0)) {
