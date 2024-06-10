@@ -283,8 +283,8 @@ namespace hadaq {
          /** default coarse unit for 200 MHz */
          static double CoarseUnit() { return 5e-9; }
 
-         /** default coarse unit for 280 MHz */
-         static double CoarseUnit280() { return 1/2.8e8; }
+         /** default coarse unit for 300 MHz */
+         static double CoarseUnit300() { return 1./3.e8; }
 
          /** get simple linear calibration for fine counter */
          static double SimpleFineCalibr(unsigned fine)

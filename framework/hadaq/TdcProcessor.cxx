@@ -364,7 +364,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
       fCh.emplace_back();
 
    for (unsigned ch = 0; ch < numchannels; ch++)
-      fCh[ch].CreateCalibr(fNumFineBins, fVersion4 ? hadaq::TdcMessage::CoarseUnit280() : hadaq::TdcMessage::CoarseUnit());
+      fCh[ch].CreateCalibr(fNumFineBins, fVersion4 ? hadaq::TdcMessage::CoarseUnit300() : hadaq::TdcMessage::CoarseUnit());
 
    // always create histograms for channel 0
    CreateChannelHistograms(0);
@@ -1031,7 +1031,7 @@ void hadaq::TdcProcessor::CompleteCalibration(bool dummy, const std::string &fil
 
 void hadaq::TdcProcessor::FindFMinMax(const std::vector<float> &func, int nbin, int &fmin, int &fmax)
 {
-   double coarse_unit = fVersion4 ? hadaq::TdcMessage::CoarseUnit280() : hadaq::TdcMessage::CoarseUnit();
+   double coarse_unit = fVersion4 ? hadaq::TdcMessage::CoarseUnit300() : hadaq::TdcMessage::CoarseUnit();
 
    if (func.size() != 5) {
       fmin = 0;
@@ -1059,7 +1059,7 @@ float hadaq::TdcProcessor::ExtractCalibr(const std::vector<float> &func, unsigne
 
    float val = func[bin] * (1+fCalibrTempCoef*(temp-fCalibrTemp));
 
-   double coarse_unit = fVersion4 ? hadaq::TdcMessage::CoarseUnit280() : hadaq::TdcMessage::CoarseUnit();
+   double coarse_unit = fVersion4 ? hadaq::TdcMessage::CoarseUnit300() : hadaq::TdcMessage::CoarseUnit();
 
    if ((temp < fCalibrTemp) && (func[bin] >= coarse_unit*0.9999)) {
       // special case - lower temperature and bin which was not observed during calibration
@@ -2561,14 +2561,14 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
 
          ChannelRec& rec = fCh[chid];
 
-         localtm = (((uint64_t) iter.getCurEpoch()) << 12 | coarse) * hadaq::TdcMessage::CoarseUnit280(); // 280 MHz
+         localtm = (((uint64_t) iter.getCurEpoch()) << 12 | coarse) * hadaq::TdcMessage::CoarseUnit300(); // 300 MHz
 
          unsigned mask = 0x100, cnt = 8;
          while (((pattern & mask) == 0) && (cnt > 0)) {
             mask = mask >> 1;
             cnt--;
          }
-         localtm -= hadaq::TdcMessage::CoarseUnit280()/8*cnt;
+         localtm -= hadaq::TdcMessage::CoarseUnit300()/8*cnt;
 
          if (IsTriggeredAnalysis()) {
             if (ch0time==0)
@@ -2617,7 +2617,7 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
 
          // localtm = iter.getMsgTimeCoarse();
 
-         localtm = ((((uint64_t) iter.getCurEpoch()) << 12) | coarse) * hadaq::TdcMessage::CoarseUnit280(); // 280 MHz
+         localtm = ((((uint64_t) iter.getCurEpoch()) << 12) | coarse) * hadaq::TdcMessage::CoarseUnit300(); // 300 MHz
 
          if (chid >= NumChannels()) {
             ADDERROR(errChId, "Channel number %u bigger than configured %u", chid, NumChannels());
@@ -2724,6 +2724,8 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
 
 
             if (isrising) {
+               // printf("ch:%2u rising edge %d %d %d localtm %7.5f\n", chid, raw_hit, use_fine_for_stat, use_for_calibr, localtm*1e9);
+
                // processing of rising edge
                if (raw_hit && use_fine_for_stat) {
                   switch (use_for_calibr) {
@@ -2781,6 +2783,9 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
 
             } else {
                // processing of falling edge
+
+               // printf("ch:%2u falling edge %d %d %d localtm %7.5f\n", chid, raw_hit, use_fine_for_stat, use_for_calibr, localtm*1e9);
+
                if (raw_hit && use_fine_for_stat) {
                   switch (use_for_calibr) {
                      case 1:
@@ -3296,7 +3301,7 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, bool rising, const st
 
    double coarse_unit = 0;
    if (fVersion4) {
-      coarse_unit = hadaq::TdcMessage::CoarseUnit280();
+      coarse_unit = hadaq::TdcMessage::CoarseUnit300();
    } else {
       coarse_unit = hadaq::TdcMessage::CoarseUnit();
       if (f400Mhz) coarse_unit *= 200. / fCustomMhz;
@@ -3639,7 +3644,7 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
             }
          }
 
-         // printf("%s Ch:%d do: %d %d stat: %ld %ld mask %d\n", GetName(), ch, DoRisingEdge(), DoFallingEdge(), rec.all_rising_stat, rec.all_falling_stat, fEdgeMask);
+         printf("%s Ch:%d do: %d %d stat: %ld %ld mask %d\n", GetName(), ch, DoRisingEdge(), DoFallingEdge(), rec.all_rising_stat, rec.all_falling_stat, fEdgeMask);
 
          bool res = false;
 
@@ -3944,7 +3949,7 @@ void hadaq::TdcProcessor::CreateV4CalibrTable(unsigned ch, uint32_t *table)
 
    // user data 0x00 .. 0x1F empty for the moment
 
-   double corse_unit = hadaq::TdcMessage::CoarseUnit280();
+   double corse_unit = hadaq::TdcMessage::CoarseUnit300();
 
    // calibration curve
    for (unsigned fine = 0x20; fine <= 0x1DF; ++fine) {
