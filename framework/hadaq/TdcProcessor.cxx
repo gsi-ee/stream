@@ -395,8 +395,9 @@ void hadaq::TdcProcessor::Set400Mhz(bool on)
    fIsCustomMhz = on;
    fCustomMhz = on ? 400. : 200.;
 
-   for (unsigned ch=0;ch<fNumChannels;ch++)
-      fCh[ch].FillCalibr(fNumFineBins, GetTdcCoarseUnit());
+   for (unsigned ch = 0; ch < fNumChannels; ch++)
+      if (!fCh[ch].hascalibr)
+         fCh[ch].FillCalibr(fNumFineBins, GetTdcCoarseUnit());
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -408,7 +409,8 @@ void hadaq::TdcProcessor::SetCustomMhz(float freq)
    fCustomMhz = freq;
 
    for (unsigned ch = 0; ch < fNumChannels; ch++)
-      fCh[ch].FillCalibr(fNumFineBins, GetTdcCoarseUnit());
+      if (!fCh[ch].hascalibr)
+         fCh[ch].FillCalibr(fNumFineBins, GetTdcCoarseUnit());
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////

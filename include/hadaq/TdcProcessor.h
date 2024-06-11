@@ -44,7 +44,7 @@ namespace hadaq {
             unsigned doublereftdc;         ///<! tdc of double reference channel
             unsigned refch_tmds;           ///<! reference channel for TMDS messages
             bool docalibr;                 ///<! if false, simple calibration will be used
-            bool hascalibr;                ///<! indicate if channel has valid calibration (not simple linear)
+            bool hascalibr = false;        ///<! indicate if channel has valid calibration (not simple linear)
             bool check_calibr;             ///<! flag used to indicate that calibration was checked
             base::H1handle fRisingFine;    ///<! histogram of all fine counters
             base::H1handle fRisingMult;    ///<! number of hits per event
@@ -534,6 +534,8 @@ namespace hadaq {
          inline bool DoFallingEdge() const { return fEdgeMask > 1; }
          /** Returns value of edge mask */
          inline unsigned GetEdgeMask() const { return fEdgeMask; }
+
+         inline bool IsVersion4() const { return fVersion4; }
 
          /** Returns calibration progress */
          double GetCalibrProgress() const { return fCalibrProgress; }
