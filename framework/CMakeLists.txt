@@ -51,6 +51,8 @@ set(hadaq_hdrs
    hadaq/TdcSubEvent.h
    hadaq/MdcProcessor.h
    hadaq/MdcSubEvent.h
+   hadaq/ScalerProcessor.h
+   hadaq/ScalerSubEvent.h
    hadaq/TrbIterator.h
    hadaq/TrbProcessor.h
    hadaq/MonitorSubEvent.h
@@ -112,6 +114,7 @@ STREAM_LINK_LIBRARY(Stream
    hadaq/TdcMessage.cxx
    hadaq/TdcProcessor.cxx
    hadaq/MdcProcessor.cxx
+   hadaq/ScalerProcessor.cxx
    hadaq/TrbIterator.cxx
    hadaq/TrbProcessor.cxx
    hadaq/MonitorProcessor.cxx

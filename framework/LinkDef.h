@@ -69,10 +69,12 @@
 #pragma link C++ class hadaq::AdcMessage+;
 #pragma link C++ class std::vector<hadaq::AdcMessage>+;
 #pragma link C++ class hadaq::AdcSubEvent+;
+#pragma link C++ class hadaq::ScalerSubEvent+;
 #pragma link C++ class hadaq::SubProcessor+;
 #pragma link C++ class hadaq::AdcProcessor+;
 #pragma link C++ class hadaq::TdcProcessor+;
 #pragma link C++ class hadaq::MdcProcessor+;
+#pragma link C++ class hadaq::ScalerProcessor+;
 #pragma link C++ class hadaq::TrbMessage+;
 #pragma link C++ class hadaq::TrbProcessor+;
 #pragma link C++ class hadaq::HldMessage+;
