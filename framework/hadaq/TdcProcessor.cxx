@@ -364,12 +364,12 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
       fCh.emplace_back();
 
    for (unsigned ch = 0; ch < numchannels; ch++)
-      fCh[ch].CreateCalibr(fNumFineBins, fVersion4 ? hadaq::TdcMessage::CoarseUnit300() : hadaq::TdcMessage::CoarseUnit());
+      fCh[ch].CreateCalibr(fNumFineBins, GetTdcCoarseUnit());
 
    // always create histograms for channel 0
    CreateChannelHistograms(0);
    if (gAllHistos)
-      for (unsigned ch=1;ch<numchannels;ch++)
+      for (unsigned ch = 1; ch < numchannels; ch++)
          CreateChannelHistograms(ch);
 
    fWriteCalibr.clear();
@@ -1031,15 +1031,17 @@ void hadaq::TdcProcessor::CompleteCalibration(bool dummy, const std::string &fil
 
 void hadaq::TdcProcessor::FindFMinMax(const std::vector<float> &func, int nbin, int &fmin, int &fmax)
 {
-   double coarse_unit = fVersion4 ? hadaq::TdcMessage::CoarseUnit300() : hadaq::TdcMessage::CoarseUnit();
+   double coarse_unit = GetTdcCoarseUnit();
 
    if (func.size() != 5) {
       fmin = 0;
       fmax = nbin-1;
       float min = coarse_unit*1e-6;
       float max = coarse_unit*0.999999;
-      while ((fmin<nbin) && (func[fmin]<min)) fmin++;
-      while ((fmax>fmin) && (func[fmax]>max)) fmax--;
+      while ((fmin < nbin) && (func[fmin] < min))
+         fmin++;
+      while ((fmax > fmin) && (func[fmax] > max))
+         fmax--;
    } else {
       fmin = (int) func[1];
       fmax = (int) func[3];
@@ -1059,7 +1061,7 @@ float hadaq::TdcProcessor::ExtractCalibr(const std::vector<float> &func, unsigne
 
    float val = func[bin] * (1+fCalibrTempCoef*(temp-fCalibrTemp));
 
-   double coarse_unit = fVersion4 ? hadaq::TdcMessage::CoarseUnit300() : hadaq::TdcMessage::CoarseUnit();
+   double coarse_unit = GetTdcCoarseUnit();
 
    if ((temp < fCalibrTemp) && (func[bin] >= coarse_unit*0.9999)) {
       // special case - lower temperature and bin which was not observed during calibration
@@ -2406,7 +2408,7 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
       return false;
    }
 
-   uint32_t syncid(0xffffffff);
+   uint32_t syncid = 0xffffffff;
    // copy first 4 bytes - it is syncid
    if (buf().format==0)
       memcpy(&syncid, buf.ptr(), 4);
@@ -2436,6 +2438,8 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
    unsigned cnt = 0, hitcnt = 0;
 
    bool iserr = false, isfirstepoch = false, rawprint = false, missinghit = false, dostore = false;
+
+   double coarse_unit = GetTdcCoarseUnit();
 
    if (first_scan && IsTriggeredAnalysis() && IsStoreEnabled() && mgr()->HasTrigEvent()) {
       dostore = true;
@@ -2561,14 +2565,14 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
 
          ChannelRec& rec = fCh[chid];
 
-         localtm = ((((uint64_t) iter.getCurEpoch()) << 12) | coarse) * hadaq::TdcMessage::CoarseUnit300(); // 300 MHz
+         localtm = ((((uint64_t) iter.getCurEpoch()) << 12) | coarse) * coarse_unit;
 
          unsigned mask = 0x100, cnt = 8;
          while (((pattern & mask) == 0) && (cnt > 0)) {
             mask = mask >> 1;
             cnt--;
          }
-         localtm -= hadaq::TdcMessage::CoarseUnit300()/8*cnt;
+         localtm -= coarse_unit/8*cnt;
 
          if (IsTriggeredAnalysis()) {
             if (ch0time==0)
@@ -2617,7 +2621,7 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
 
          // localtm = iter.getMsgTimeCoarse();
 
-         localtm = ((((uint64_t) iter.getCurEpoch()) << 12) | coarse) * hadaq::TdcMessage::CoarseUnit300(); // 300 MHz
+         localtm = ((((uint64_t) iter.getCurEpoch()) << 12) | coarse) * coarse_unit; // 300 MHz
 
          if (chid >= NumChannels()) {
             ADDERROR(errChId, "Channel number %u bigger than configured %u", chid, NumChannels());
@@ -3962,7 +3966,7 @@ void hadaq::TdcProcessor::CreateV4CalibrTable(unsigned ch, uint32_t *table)
 
    // user data 0x00 .. 0x1F empty for the moment
 
-   double corse_unit = hadaq::TdcMessage::CoarseUnit300();
+   double corse_unit = GetTdcCoarseUnit();
 
    // calibration curve
    for (unsigned fine = 0x20; fine <= 0x1DF; ++fine) {
