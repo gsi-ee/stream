@@ -47,14 +47,20 @@ bool hadaq::ScalerProcessor::FirstBufferScan(const base::Buffer &buf)
    unsigned len = buf.datalen() / 4;
 
    if (len != 4) {
-      printf("%s has wrong data length %u, expected 5\n", GetName(), len);
+      fprintf(stderr, "%s has wrong data length %u, expected 5\n", GetName(), len);
+      return false;
+   }
+
+   if ((arr[0] >> 16 != 0xaaa) || (arr[2] >> 16 != 0x1bbb)) {
+      fprintf(stderr, "%s has wrong scaler headers 0x%x 0x%x\n", GetName(), arr[0] >> 16, arr[2] >> 16);
       return false;
    }
 
    uint64_t scaler1 = ((uint64_t) arr[0] & 0xFFFF) << 32 | arr[1];
    uint64_t scaler2 = ((uint64_t) arr[2] & 0xFFFF) << 32 | arr[3];
 
-   printf("%s scalers %lu %lu\n", GetName(), (long unsigned) scaler1, (long unsigned) scaler2);
+   if (IsPrintRawData())
+      printf("%s scalers %lu %lu\n", GetName(), (long unsigned) scaler1, (long unsigned) scaler2);
 
    if (IsTriggeredAnalysis() && IsStoreEnabled() && (GetStoreKind() > 0)) {
       auto subevnt = new hadaq::ScalerSubEvent(scaler1, scaler2);
