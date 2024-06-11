@@ -239,7 +239,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fLastTdcHeader(),
    fLastTdcTrailer(),
    fSkipTdcMessages(0),
-   f400Mhz(false),
+   fIsCustomMhz(false),
    fCustomMhz(200.),
    fPairedChannels(false),
    fModifiedFallingEdges(false)
@@ -392,7 +392,7 @@ hadaq::TdcProcessor::~TdcProcessor()
 
 void hadaq::TdcProcessor::Set400Mhz(bool on)
 {
-   f400Mhz = on;
+   fIsCustomMhz = on;
    fCustomMhz = on ? 400. : 200.;
 
    for (unsigned ch=0;ch<fNumChannels;ch++)
@@ -404,10 +404,10 @@ void hadaq::TdcProcessor::Set400Mhz(bool on)
 
 void hadaq::TdcProcessor::SetCustomMhz(float freq)
 {
-   f400Mhz = true;
+   fIsCustomMhz = true;
    fCustomMhz = freq;
 
-   for (unsigned ch=0;ch<fNumChannels;ch++)
+   for (unsigned ch = 0; ch < fNumChannels; ch++)
       fCh[ch].FillCalibr(fNumFineBins, 200. / fCustomMhz * hadaq::TdcMessage::CoarseUnit());
 }
 
@@ -1875,7 +1875,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             }
          }
 
-         if (f400Mhz) {
+         if (fIsCustomMhz) {
             unsigned coarse25 = (coarse << 1) | ((fine & 0x200) ? 1 : 0);
             fine = fine & 0x1FF;
             bad_fine = 0x1ff;
@@ -2002,7 +2002,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                CreateChannelHistograms(chid);
 
             bool use_fine_for_stat = true;
-            if (!f400Mhz && !msg.isHit0Msg())
+            if (!fIsCustomMhz && !msg.isHit0Msg())
                use_fine_for_stat = false;
             else if (use_for_calibr == 3)
                use_fine_for_stat = (gTrigDWindowLow <= localtm*1e9) && (localtm*1e9 <= gTrigDWindowHigh);
@@ -3287,7 +3287,7 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, bool rising, const st
       }
    }
 
-   unsigned finemaxlimit = fVersion4 ? 300 : (f400Mhz ? 200 : 400);
+   unsigned finemaxlimit = fVersion4 ? 300 : (fIsCustomMhz ? 200 : 400);
 
    if (!preliminary && (finemax < finemaxlimit)) {
       std::string log_finemax = std::string("_BadFineMax_") + std::to_string(finemax);
@@ -3304,7 +3304,7 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, bool rising, const st
       coarse_unit = hadaq::TdcMessage::CoarseUnit300();
    } else {
       coarse_unit = hadaq::TdcMessage::CoarseUnit();
-      if (f400Mhz) coarse_unit *= 200. / fCustomMhz;
+      if (fIsCustomMhz) coarse_unit *= 200. / fCustomMhz;
    }
 
    if (sum <= limits) {

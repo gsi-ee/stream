@@ -348,7 +348,7 @@ namespace hadaq {
          double    fLastRateTm;          ///<! last ch0 time when rate was calculated
 
          unsigned  fSkipTdcMessages;     ///<! number of first messages, skipped from analysis
-         bool      f400Mhz;              ///<! is 400Mhz mode (debug)
+         bool      fIsCustomMhz{false};  ///<! is custom Mhz mode
          double    fCustomMhz;           ///<! new design Mhz
          bool      fPairedChannels;      ///<! special mode when rising/falling edges splitted on different channels
          bool      fModifiedFallingEdges; ///<! true when file taken with HADES and falling edges may be modified,
