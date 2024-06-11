@@ -165,7 +165,7 @@ namespace hadaq {
             /** Initialize claibration with default values */
             void FillCalibr(unsigned numfine, double coarse_unit = -1.)
             {
-               for (unsigned n=0;n<numfine;n++)
+               for (unsigned n = 0; n < numfine; n++)
                   falling_stat[n] = rising_stat[n] = 0;
 
                SetLinearCalibr(hadaq::TdcMessage::GetFineMinValue(), hadaq::TdcMessage::GetFineMaxValue(), coarse_unit);
@@ -178,6 +178,7 @@ namespace hadaq {
                falling_calibr.resize(5,0);
 
                // to support old API where factor for default coarse unit was possible to specify
+               // normally exact value of coarse unit is specified, therefore values <0 and >0.01 are very special
                if (coarse_unit < 0)
                   coarse_unit = hadaq::TdcMessage::CoarseUnit();
                else if (coarse_unit > 0.01)
@@ -189,7 +190,7 @@ namespace hadaq {
                rising_calibr[3] = finemax;
                rising_calibr[4] = coarse_unit;
 
-               for (int n=0;n<5;++n)
+               for (int n = 0; n < 5; ++n)
                   falling_calibr[n] = rising_calibr[n];
             }
 
