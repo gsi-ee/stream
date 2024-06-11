@@ -3247,6 +3247,25 @@ void hadaq::TdcProcessor::SetLinearCalibration(unsigned nch, unsigned finemin, u
       fCh[nch].SetLinearCalibr(finemin, finemax);
 }
 
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// Return duration time in second for single TDC coarse unit
+/// Depends from ver4 and custom frequency - if any
+
+double hadaq::TdcProcessor::GetTdcCoarseUnit() const
+{
+   double coarse_unit = 0.;
+   if (fVersion4) {
+      coarse_unit = hadaq::TdcMessage::CoarseUnit300();
+      if (fIsCustomMhz) coarse_unit *= 300. / fCustomMhz;
+   } else {
+      coarse_unit = hadaq::TdcMessage::CoarseUnit();
+      if (fIsCustomMhz) coarse_unit *= 200. / fCustomMhz;
+   }
+   return coarse_unit;
+}
+
+
 //////////////////////////////////////////////////////////////////////////////////////////////
 /// Calibrate channel
 
@@ -3299,13 +3318,7 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, bool rising, const st
       }
    }
 
-   double coarse_unit = 0;
-   if (fVersion4) {
-      coarse_unit = hadaq::TdcMessage::CoarseUnit300();
-   } else {
-      coarse_unit = hadaq::TdcMessage::CoarseUnit();
-      if (fIsCustomMhz) coarse_unit *= 200. / fCustomMhz;
-   }
+   double coarse_unit = GetTdcCoarseUnit();
 
    if (sum <= limits) {
 

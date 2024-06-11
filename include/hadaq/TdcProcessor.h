@@ -687,6 +687,8 @@ namespace hadaq {
 
          void CreateRateHisto(int np = 1000, double xmin = 0., double xmax = 1e5);
 
+         double GetTdcCoarseUnit() const;
+
          /** Configure upper limit for ToT */
          void SetTotUpperLimit(double lmt = 20) { fTotUpperLimit = lmt; }
 
