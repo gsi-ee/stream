@@ -186,7 +186,8 @@ bool base::StreamProc::AddNextBuffer(const Buffer& buf)
 {
    // printf("%4s Add buffer queue size %u\n", GetName(), fQueue.size());
 
-   if (fQueue.full()) printf("%s queue if full size %u\n", GetName(), fQueue.size());
+   if (fQueue.full())
+      printf("%s queue if full size %u\n", GetName(), fQueue.size());
 
    fQueue.push(buf);
 
@@ -212,7 +213,8 @@ bool base::StreamProc::ScanNewBuffers()
    }
 
    // for raw scanning any other steps are not interesting
-   if (!IsStreamAnalysis()) SkipAllData();
+   if (!IsStreamAnalysis())
+      SkipAllData();
 
    return isany;
 }
