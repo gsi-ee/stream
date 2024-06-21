@@ -2568,11 +2568,11 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
       }
 
       if (msg.isTMDS()) {
-         unsigned chid = msg.getTMDSChannel() + 1;
+         unsigned chid = msg.getTMDSChannel();
          unsigned coarse = msg.getTMDSCoarse();
          unsigned pattern = msg.getTMDSPattern();
 
-         if (chid >= NumChannels()) {
+         if (chid >= NumChannels() - 1) {
             ADDERROR(errChId, "Channel number %u bigger than configured %u", chid, NumChannels());
             iserr = true;
             continue;
@@ -2610,7 +2610,7 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
             if (first_scan && fMsgsKind)
                FastFillH1(fMsgsKind, 2);
 
-            chid = 0;
+            chid = NumChannels() - 1;
             isrising = (msg.getTMDRMode() == 0) || (msg.getTMDRMode() == 2);
             isfalling = (msg.getTMDRMode() == 1) || (msg.getTMDRMode() == 3);
             coarse = msg.getTMDRCoarse();
@@ -2619,7 +2619,7 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
             if (first_scan && fMsgsKind)
                FastFillH1(fMsgsKind, 3);
 
-            chid = msg.getTMDTChannel() + 1;
+            chid = msg.getTMDTChannel();
             isrising = (msg.getTMDTMode() == 0) || (msg.getTMDTMode() == 2);
             isfalling = (msg.getTMDTMode() == 1) || (msg.getTMDTMode() == 3);
             coarse = msg.getTMDTCoarse();
@@ -2699,7 +2699,10 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
          // apply correction
          localtm -= corr;
 
-         if ((chid == 0) && (ch0time == 0) && isrising) ch0time = localtm;
+         bool is_ref_channel = chid == NumChannels() - 1;
+
+         if (is_ref_channel && (ch0time == 0) && isrising)
+            ch0time = localtm;
 
          if (IsTriggeredAnalysis()) {
             if (ch0time==0)
@@ -2715,7 +2718,7 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
 
             // if (chid>0) printf("%s HIT ch %u tm %12.9f diff %12.9f\n", GetName(), chid, localtm, localtm - ch0time);
 
-            if (chid==0) {
+            if (is_ref_channel) {
                if (fLastRateTm < 0) fLastRateTm = ch0time;
                if (ch0time - fLastRateTm > 1) {
                   FillH1(fHitsRate, fRateCnt / (ch0time - fLastRateTm));
@@ -2734,8 +2737,8 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
             bool use_fine_for_stat = true;
             if (use_for_calibr == 3) {
                use_fine_for_stat = (gTrigDWindowLow <= localtm*1e9) && (localtm*1e9 <= gTrigDWindowHigh);
-               if (!use_fine_for_stat && (chid == 1) && isrising)
-                  printf("Raw hit miss D window %5.3f fine %u corr %6.4f\n", localtm*1e9, fine, corr*1e9);
+               // if (!use_fine_for_stat && (chid == 0) && isrising)
+               //   printf("Raw hit miss D window %5.3f fine %u corr %6.4f\n", localtm*1e9, fine, corr*1e9);
             }
 
             FastFillH1(fChannels, chid);
@@ -2773,7 +2776,7 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
                rec.rising_new_value = true;
 
                if (use_for_ref && (fUseLastHit || (rec.rising_hit_tm == 0.))) {
-                  rec.rising_hit_tm = (chid > 0) ? localtm : ch0time;
+                  rec.rising_hit_tm = !is_ref_channel ? localtm : ch0time;
                   rec.rising_coarse = coarse;
                   rec.rising_fine = fine;
 
@@ -2790,7 +2793,7 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
                if (print_cond) rawprint = true;
 
                // special case - when ref channel defined as 0, fill all hits
-               if ((chid!=0) && (rec.refch==0) && (rec.reftdc == GetID()) && use_for_ref) {
+               if (!is_ref_channel && (rec.refch == NumChannels() - 1) && (rec.reftdc == GetID()) && use_for_ref) {
                   rec.rising_ref_tm = localtm;
 
                   DefFillH1(rec.fRisingRef, (localtm*1e9), 1.);
@@ -2850,10 +2853,10 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
                if (dostore)
                   switch(GetStoreKind()) {
                      case 1:
-                        pStoreVect->emplace_back(msg, (chid>0) ? localtm : ch0time);
+                        pStoreVect->emplace_back(msg, !is_ref_channel ? localtm : ch0time);
                         break;
                      case 2:
-                        if (chid>0)
+                        if (!is_ref_channel)
                            pStoreFloat->emplace_back(chid, isrising, localtm*1e9);
                         break;
                      case 3:
@@ -2865,7 +2868,7 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
          } else
 
          // for second scan we check if hit can be assigned to the events
-         if (((chid > 0) || fCh0Enabled) && !iserr) {
+         if ((!is_ref_channel || fCh0Enabled) && !iserr) {
 
             base::GlobalTime_t globaltm = LocalToGlobalTime(localtm, &help_index);
 
@@ -2877,10 +2880,10 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
             if (indx < fGlobalMarks.size()) {
                switch(GetStoreKind()) {
                   case 1:
-                     AddMessage(indx, (hadaq::TdcSubEvent*) fGlobalMarks.item(indx).subev, hadaq::TdcMessageExt(msg, chid>0 ? globaltm : ch0time));
+                     AddMessage(indx, (hadaq::TdcSubEvent*) fGlobalMarks.item(indx).subev, hadaq::TdcMessageExt(msg, !is_ref_channel ? globaltm : ch0time));
                      break;
                   case 2:
-                     if (chid > 0)
+                     if (!is_ref_channel)
                         AddMessage(indx, (hadaq::TdcSubEventFloat*) fGlobalMarks.item(indx).subev, hadaq::MessageFloat(chid, isrising, (globaltm - ch0time)*1e9));
                      break;
                   case 3:
@@ -2910,8 +2913,8 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
 
       // special case for 0xD trigger - use only last hit messages for accumulating statistic
       if (use_for_calibr == 2)
-         for (unsigned ch=0;ch<NumChannels();ch++) {
-            ChannelRec& rec = fCh[ch];
+         for (unsigned ch = 0; ch < NumChannels(); ch++) {
+            ChannelRec &rec = fCh[ch];
             if (rec.last_rising_fine > 0) {
                rec.rising_stat[rec.last_rising_fine]++;
                rec.all_rising_stat++;
@@ -2927,7 +2930,7 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
 
       // when doing TOT calibration, use only last TOT value - before one could find other signals
       if (do_tot)
-         for (unsigned ch = 1; ch < NumChannels(); ch++) {
+         for (unsigned ch = 0; ch < NumChannels()-1; ch++) {
             if (fCh[ch].hascalibr && (fCh[ch].last_tot >= fToThmin) && (fCh[ch].last_tot < fToThmax)) {
                if (fCh[ch].tot0d_hist.empty()) fCh[ch].CreateToTHist();
                int bin = (int) ((fCh[ch].last_tot - fToThmin) / (fToThmax - fToThmin) * (TotBins + 0));
@@ -2969,14 +2972,14 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
       */
 
       // if we use trigger as time marker
-      if (fUseNativeTrigger && (ch0time!=0)) {
+      if (fUseNativeTrigger && (ch0time != 0)) {
          base::LocalTimeMarker marker;
          marker.localid = 1;
          marker.localtm = ch0time;
          AddTriggerMarker(marker);
       }
 
-      if ((syncid != 0xffffffff) && (ch0time!=0)) {
+      if ((syncid != 0xffffffff) && (ch0time != 0)) {
          base::SyncMarker marker;
          marker.uniqueid = syncid;
          marker.localid = 0;
@@ -3004,7 +3007,7 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
    } else {
 
       // use first channel only for flushing
-      if (ch0time!=0)
+      if (ch0time != 0)
          TestHitTime(LocalToGlobalTime(ch0time, &help_index), false, true);
    }
 
@@ -3014,10 +3017,10 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
    if (rawprint && first_scan) {
       printf("%s RAW data event 0x%x\n", GetName(), (unsigned) (GetHLD() ? GetHLD()->GetEventId() : 0));
       TdcIterator iter;
-      if (buf().format==0)
+      if (buf().format == 0)
          iter.assign((uint32_t*) buf.ptr(4), buf.datalen()/4-1, false);
       else
-         iter.assign((uint32_t*) buf.ptr(0), buf.datalen()/4, buf().format==2);
+         iter.assign((uint32_t*) buf.ptr(0), buf.datalen()/4, buf().format == 2);
 
       iter.printall4();
    }
