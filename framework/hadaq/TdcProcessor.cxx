@@ -2590,8 +2590,8 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
          localtm -= coarse_unit/8*cnt;
 
          if (IsTriggeredAnalysis()) {
-            if (ch0time==0)
-               ADDERROR(errCh0, "channel 0 time not found when first HIT in channel %u appears", chid);
+            if (ch0time == 0)
+               ADDERROR(errCh0, "ref channel time not found when first HIT in channel %u appears", chid);
             localtm -= ch0time;
          }
 
