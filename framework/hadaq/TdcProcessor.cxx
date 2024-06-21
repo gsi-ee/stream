@@ -452,14 +452,27 @@ void hadaq::TdcProcessor::AddError(unsigned code, const char *fmt, ...)
    if (fTrb) fTrb->EventError(sbuf.c_str());
 }
 
+bool hadaq::TdcProcessor::SetChannelPrefix(unsigned ch, unsigned level)
+{
+   if ((ch >= NumChannels()) || (HistFillLevel() < 3))
+      return false;
+
+   if ((ch == NumChannels() - 1) && fVersion4)
+      SetSubPrefix2("Ch_DR");
+   else
+      SetSubPrefix2("Ch", ch);
+
+   return true;
+}
+
+
 //////////////////////////////////////////////////////////////////////////////////////////////
 /// create all histograms for the channel
 
 bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
 {
-   if ((HistFillLevel() < 3) || (ch >= NumChannels())) return false;
-
-   SetSubPrefix2("Ch", ch);
+   if (!SetChannelPrefix(ch))
+      return false;
 
    if (DoRisingEdge() && !fCh[ch].fRisingFine) {
       fCh[ch].fRisingFine = MakeH1("RisingFine", "Rising fine counter", fNumFineBins, 0, fNumFineBins, "fine");
@@ -589,7 +602,7 @@ void hadaq::TdcProcessor::CreateHistograms(int *arr)
 void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned reftdc,
                                         int npoints, double left, double right, bool twodim)
 {
-   if ((ch>=NumChannels()) || (HistFillLevel()<4)) return;
+   if ((ch>=NumChannels()) || (HistFillLevel() < 4)) return;
 
    if (((reftdc == 0xffff) || (reftdc>0xfffff)) && ((reftdc & 0xf0000) != 0x70000)) reftdc = GetID();
 
@@ -618,8 +631,7 @@ void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned re
       snprintf(refname, sizeof(refname), "TDC 0x%04x Ch%u", fCh[ch].reftdc, fCh[ch].refch);
    }
 
-   if ((left < right) && (npoints>1)) {
-      SetSubPrefix2("Ch", ch);
+   if ((left < right) && (npoints > 1) && SetChannelPrefix(ch)) {
       if (DoRisingEdge()) {
 
          if (!fCh[ch].fRisingRef) {
@@ -665,8 +677,7 @@ void hadaq::TdcProcessor::SetRefTmds(unsigned ch, unsigned refch, int npoints, d
    char sbuf[1024], saxis[1024], refname[512];
    snprintf(refname, sizeof(refname), "Ch%u", refch);
 
-   if ((left < right) && (npoints > 1) && DoRisingEdge()) {
-      SetSubPrefix2("Ch", ch);
+   if ((left < right) && (npoints > 1) && DoRisingEdge() && SetChannelPrefix(ch)) {
 
       if (!fCh[ch].fRisingTmdsRef) {
          snprintf(sbuf, sizeof(sbuf), "TMDS difference to %s", refname);
@@ -723,9 +734,10 @@ bool hadaq::TdcProcessor::SetDoubleRefChannel(unsigned ch1, unsigned ch2,
             snprintf(saxis, sizeof(saxis), "(ch%u-ch%u)  - (tdc 0x%04x refch%u) ns", ch, fCh[ch].refch, reftdc, refch);
          }
 
-         SetSubPrefix2("Ch", ch);
-         fCh[ch].fRisingRefRef = MakeH1("RisingRefRef", sbuf, npx, xmin, xmax, saxis);
-         SetSubPrefix2();
+         if (SetChannelPrefix(ch)) {
+            fCh[ch].fRisingRefRef = MakeH1("RisingRefRef", sbuf, npx, xmin, xmax, saxis);
+            SetSubPrefix2();
+         }
       }
 
 
@@ -738,9 +750,10 @@ bool hadaq::TdcProcessor::SetDoubleRefChannel(unsigned ch1, unsigned ch2,
             snprintf(saxis, sizeof(saxis), "ch%u-ch%u ns;tdc 0x%04x refch%u ns", ch, fCh[ch].refch, reftdc, refch);
          }
 
-         SetSubPrefix2("Ch", ch);
-         fCh[ch].fRisingDoubleRef = MakeH2("RisingDoubleRef", sbuf, npx, xmin, xmax, npy, ymin, ymax, saxis);
-         SetSubPrefix2();
+         if (SetChannelPrefix(ch)) {
+            fCh[ch].fRisingDoubleRef = MakeH2("RisingDoubleRef", sbuf, npx, xmin, xmax, npy, ymin, ymax, saxis);
+            SetSubPrefix2();
+         }
       }
    }
 
@@ -764,7 +777,8 @@ void hadaq::TdcProcessor::CreateRateHisto(int np, double xmin, double xmax)
 
 bool hadaq::TdcProcessor::EnableRefCondPrint(unsigned ch, double left, double right, int numprint)
 {
-   if (ch>=NumChannels()) return false;
+   if (ch >= NumChannels())
+      return false;
    if (fCh[ch].refch >= NumChannels()) {
       fprintf(stderr,"Reference channel not specified, conditional print cannot work\n");
       return false;
@@ -777,12 +791,11 @@ bool hadaq::TdcProcessor::EnableRefCondPrint(unsigned ch, double left, double ri
       fprintf(stderr,"Reference channel %u bigger than channel id %u, conditional print may not work\n", fCh[ch].refch, ch);
    }
 
-   SetSubPrefix2("Ch", ch);
-
-   fCh[ch].fRisingRefCond = MakeC1("RisingRefPrint", left, right, fCh[ch].fRisingRef);
-   fCh[ch].rising_cond_prnt = numprint > 0 ? numprint : 100000000;
-
-   SetSubPrefix2();
+   if (SetChannelPrefix(ch, 0)) {
+      fCh[ch].fRisingRefCond = MakeC1("RisingRefPrint", left, right, fCh[ch].fRisingRef);
+      fCh[ch].rising_cond_prnt = numprint > 0 ? numprint : 100000000;
+      SetSubPrefix2();
+   }
 
    return true;
 }
@@ -2719,8 +2732,11 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
 
             bool raw_hit = true;
             bool use_fine_for_stat = true;
-            if (use_for_calibr == 3)
+            if (use_for_calibr == 3) {
                use_fine_for_stat = (gTrigDWindowLow <= localtm*1e9) && (localtm*1e9 <= gTrigDWindowHigh);
+               if (!use_fine_for_stat && (chid == 1) && isrising)
+                  printf("Raw hit miss D window %5.3f fine %u corr %6.4f\n", localtm*1e9, fine, corr*1e9);
+            }
 
             FastFillH1(fChannels, chid);
             DefFillH1(fHits, (chid + (isrising ? 0.25 : 0.75)), 1.);
@@ -3668,6 +3684,10 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
          bool res = false;
 
          if (DoRisingEdge() && (rec.all_rising_stat > 0)) {
+            if (ch == 1)
+               for(unsigned n = 0; n < rec.rising_stat.size(); ++n)
+                  printf("Stat[%3u] = %4u\n", n, rec.rising_stat[n]);
+
             rec.calibr_quality_rising = CalibrateChannel(ch, true, rec.rising_stat, *rising_calibr, use_linear, preliminary);
             rec.calibr_stat_rising = rec.all_rising_stat;
             res = (rec.calibr_quality_rising > 0.5);
@@ -3691,8 +3711,7 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
 
                CalibrateTot(ch, rec.tot0d_hist, rec.tot_shift, rec.tot_dev, 0.05);
 
-               if (!rec.fTot0D && (HistFillLevel() > 2)) {
-                  SetSubPrefix2("Ch", ch);
+               if (!rec.fTot0D && SetChannelPrefix(ch)) {
                   rec.fTot0D = MakeH1("Tot0D", "Time over threshold with 0xD trigger", TotBins, fToThmin, fToThmax, "ns");
                   SetSubPrefix2();
                }

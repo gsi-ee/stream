@@ -96,7 +96,7 @@ void base::Processor::SetSubPrefix(const char* name, int indx, const char* subna
 
 void base::Processor::SetSubPrefix2(const char* name, int indx, const char* subname2, int indx2)
 {
-   if (!name || (*name==0)) {
+   if (!name || !*name) {
       fSubPrefixD.clear();
       fSubPrefixN.clear();
       return;
@@ -104,7 +104,7 @@ void base::Processor::SetSubPrefix2(const char* name, int indx, const char* subn
 
    fSubPrefixN = name;
    fSubPrefixD = name;
-   if (indx>=0) {
+   if (indx >= 0) {
       char sbuf[100];
       snprintf(sbuf, sizeof(sbuf), "%02d", indx);
       fSubPrefixD.append(sbuf);

@@ -405,6 +405,8 @@ namespace hadaq {
 
          bool CheckPrintError();
 
+         bool SetChannelPrefix(unsigned ch, unsigned level = 3);
+
          bool CreateChannelHistograms(unsigned ch);
 
          double TestCanCalibrate(bool fillhist = false, std::string *status = nullptr);
