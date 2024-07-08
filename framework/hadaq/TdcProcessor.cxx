@@ -602,34 +602,59 @@ void hadaq::TdcProcessor::CreateHistograms(int *arr)
 void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned reftdc,
                                         int npoints, double left, double right, bool twodim)
 {
-   if ((ch>=NumChannels()) || (HistFillLevel() < 4)) return;
-
-   if (((reftdc == 0xffff) || (reftdc>0xfffff)) && ((reftdc & 0xf0000) != 0x70000)) reftdc = GetID();
-
-   // ignore invalid settings
-   if ((ch==refch) && ((reftdc & 0xffff) == GetID())) return;
-
-   if ((refch == 0) && (ch != 0) && ((reftdc & 0xffff) != GetID())) {
-      printf("%s cannot set reference to zero channel from other TDC\n", GetName());
+   if ((ch >= NumChannels()) || (HistFillLevel() < 4))
       return;
+
+   if (fDogma) {
+      if (((reftdc == 0xffffff) || (reftdc > 0xfffffff)) && ((reftdc & 0xf000000) != 0x7000000))
+         reftdc = GetID();
+
+      // ignore invalid settings
+      if ((ch==refch) && ((reftdc & 0xffffff) == GetID()))
+         return;
+
+      if ((refch == 0) && (ch != 0) && ((reftdc & 0xffffff) != GetID())) {
+         printf("%s cannot set reference to zero channel from other TDC\n", GetName());
+         return;
+      }
+
+      fCh[ch].refch = refch;
+      fCh[ch].reftdc = reftdc & 0xffffff;
+      fCh[ch].refabs = (reftdc & 0xf000000) == 0x7000000;
+
+   } else {
+
+      if (((reftdc == 0xffff) || (reftdc > 0xfffff)) && ((reftdc & 0xf0000) != 0x70000))
+         reftdc = GetID();
+
+      // ignore invalid settings
+      if ((ch==refch) && ((reftdc & 0xffff) == GetID())) return;
+
+      if ((refch == 0) && (ch != 0) && ((reftdc & 0xffff) != GetID())) {
+         printf("%s cannot set reference to zero channel from other TDC\n", GetName());
+         return;
+      }
+
+      fCh[ch].refch = refch;
+      fCh[ch].reftdc = reftdc & 0xffff;
+      fCh[ch].refabs = (reftdc & 0xf0000) == 0x70000;
    }
 
-   fCh[ch].refch = refch;
-   fCh[ch].reftdc = reftdc & 0xffff;
-   fCh[ch].refabs = (reftdc & 0xf0000) == 0x70000;
 
    // if other TDC configured as ref channel, enable cross processing
    if (fTrb) fTrb->SetCrossProcessAll();
 
    CreateChannelHistograms(ch);
-   if (fCh[ch].reftdc == GetID()) CreateChannelHistograms(refch);
+   if (fCh[ch].reftdc == GetID())
+      CreateChannelHistograms(refch);
 
    char sbuf[1024], saxis[1024], refname[512];
-   if (fCh[ch].reftdc == GetID()) {
+   if (fCh[ch].reftdc == GetID())
       snprintf(refname, sizeof(refname), "Ch%u", fCh[ch].refch);
-   } else {
+   else if (fDogma)
+      snprintf(refname, sizeof(refname), "TDC 0x%06x Ch%u", fCh[ch].reftdc, fCh[ch].refch);
+   else
       snprintf(refname, sizeof(refname), "TDC 0x%04x Ch%u", fCh[ch].reftdc, fCh[ch].refch);
-   }
 
    if ((left < right) && (npoints > 1) && SetChannelPrefix(ch)) {
       if (DoRisingEdge()) {
@@ -661,10 +686,11 @@ void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned re
 
 void hadaq::TdcProcessor::SetRefTmds(unsigned ch, unsigned refch, int npoints, double left, double right)
 {
-   if ((ch>=NumChannels()) || (refch>=NumChannels()) || (HistFillLevel()<4)) return;
+   if ((ch >= NumChannels()) || (refch >= NumChannels()) || (HistFillLevel() < 4))
+      return;
 
    // ignore invalid settings
-   if ((refch==0) || (ch == 0) || (ch == refch)) {
+   if ((refch == 0) || (ch == 0) || (ch == refch)) {
       printf("%s cannot set reference between TMDS channel %u %u\n", GetName(), ch, refch);
       return;
    }
