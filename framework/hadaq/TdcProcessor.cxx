@@ -867,7 +867,9 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
       if (ref > 0xffff) continue; // no any settings for ref channel, can ignore
 
       unsigned reftdc = rec.reftdc;
-      if (reftdc >= 0xffff) reftdc = GetID();
+
+      if (reftdc >= (fDogma ? 0xffffff : 0xffff))
+         reftdc = GetID();
 
       TdcProcessor* refproc = nullptr;
       if (reftdc == GetID())
@@ -899,6 +901,8 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
             rec.rising_ref_tm = tm - tm_ref;
 
             double diff = rec.rising_ref_tm*1e9;
+
+            // printf("%s diff %f abs %d  tm %f tm_ref %f\n", GetName(), diff, (int)rec.refabs, tm, tm_ref);
 
             // when refch is 0 on same board, histogram already filled
             if ((ref != 0) || (refproc != this))
