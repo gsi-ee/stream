@@ -41,6 +41,7 @@ int hadaq::TdcProcessor::gDefaultLinearNumPoints = 2;
 bool hadaq::TdcProcessor::gIgnoreCalibrMsgs = false;
 bool hadaq::TdcProcessor::gStoreCalibrTables = false;
 bool hadaq::TdcProcessor::gPreventFineCalibration = false;
+int hadaq::TdcProcessor::gTimeRefKind = -1;
 
 unsigned BUBBLE_SIZE = 19;
 
@@ -182,6 +183,18 @@ void hadaq::TdcProcessor::SetStoreCalibrTables(bool on)
 void hadaq::TdcProcessor::SetPreventFineCalibration(bool on)
 {
    gPreventFineCalibration = on;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// Set kind of time reference for the channels
+/// 0 - off, always use absolute time stamp as is
+/// 1 - epoch0, use epoch of channel0 as time reference
+/// 2 - channel0, use channel 0 time as time reference
+/// -1 - default, depends from SetTriggeredAnalysis(true) channel0, otherwise off
+
+void hadaq::TdcProcessor::SetTimeRefKind(int kind)
+{
+   gTimeRefKind = kind;
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -1839,7 +1852,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
    unsigned help_index = 0;
 
-   double localtm = 0., minimtm = 0., ch0time = 0.;
+   double localtm = 0., minimtm = 0., ch0time = 0., epoch0time = 0.;
 
    hadaq::TdcMessage& msg = iter.msg();
    hadaq::TdcMessage calibr;
@@ -1894,6 +1907,10 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          if (cnt == 2) {
             isfirstepoch = true;
             first_epoch = ep;
+            if (fIsCustomMhz)
+               epoch0time = (((uint64_t) first_epoch) << 11) * 1000./fCustomMhz * 1e-9;
+            else
+               epoch0time = (((uint64_t) first_epoch) << 11) * hadaq::TdcMessage::CoarseUnit();
          }
          continue;
       }
@@ -2017,13 +2034,22 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          // apply correction
          localtm -= corr;
 
-         if ((chid == 0) && (ch0time == 0)) ch0time = localtm;
+         if ((chid == 0) && (ch0time == 0))
+            ch0time = localtm;
 
-         if (IsTriggeredAnalysis()) {
+         if (gTimeRefKind < 0)
+            gTimeRefKind = IsTriggeredAnalysis() ? 2 : 0;
+
+         if (gTimeRefKind == 2) {
             if (ch0time == 0)
                ADDERROR(errCh0, "channel 0 time not found when first HIT in channel %u appears", chid);
-
             localtm -= ch0time;
+         } else if (gTimeRefKind == 1) {
+            if (isfirstepoch) {
+               // printf("%s Channel %u localtm %f epoch0tm %f diff %7.5f\n", GetName(), chid, localtm, epoch0time, (localtm - epoch0time) *1e9);
+               localtm -= epoch0time;
+            } else
+               ADDERROR(errEpoch, "Epoch 0 time not found when first HIT in channel %u appears", chid);
          }
 
          // printf("%s first %d ch %3u tm %12.9f\n", GetName(), first_scan, chid, localtm);

@@ -377,6 +377,7 @@ namespace hadaq {
          static bool gIgnoreCalibrMsgs;    ///<! ignore calibration messages
          static bool gStoreCalibrTables;   ///<! when enabled, store calibration tables for v4 TDC
          static bool gPreventFineCalibration;  ///<! when enabled, not produce calibration but just fill extra histograms
+         static int gTimeRefKind;          ///<! which time used as reference for time stamps
 
          void AppendTrbSync(uint32_t syncid) override;
 
@@ -501,6 +502,8 @@ namespace hadaq {
          static void SetStoreCalibrTables(bool on = true);
 
          static void SetPreventFineCalibration(bool on = true);
+
+         static void SetTimeRefKind(int kind = -1);
 
          /** Set number of TDC messages, which should be skipped from subevent before analyzing it */
          void SetSkipTdcMessages(unsigned cnt = 0) { fSkipTdcMessages = cnt; }
