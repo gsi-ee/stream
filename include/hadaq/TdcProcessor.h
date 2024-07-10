@@ -346,7 +346,8 @@ namespace hadaq {
          TdcMessage fLastTdcTrailer;      ///<! copy of last TDC trailer
 
          long      fRateCnt;             ///<! counter used for rate calculation
-         double    fLastRateTm;          ///<! last ch0 time when rate was calculated
+         double    fLastRateTm = -1.;    ///<! last ch0 time when rate was calculated
+         double    fRef0Time = 0.;       ///<! absolute ref time, set once when first channel0 time will be seen
 
          unsigned  fSkipTdcMessages;     ///<! number of first messages, skipped from analysis
          bool      fIsCustomMhz{false};  ///<! is custom Mhz mode

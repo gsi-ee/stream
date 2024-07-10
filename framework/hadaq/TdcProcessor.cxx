@@ -188,9 +188,9 @@ void hadaq::TdcProcessor::SetPreventFineCalibration(bool on)
 //////////////////////////////////////////////////////////////////////////////////////////////
 /// Set kind of time reference for the channels
 /// 0 - off, always use absolute time stamp as is
-/// 1 - epoch0, use epoch of channel0 as time reference
+/// 1 - use first channel0 seen in data
 /// 2 - channel0, use channel 0 time as time reference
-/// -1 - default, depends from SetTriggeredAnalysis(true) channel0, otherwise off
+/// -1 - default, depends from SetTriggeredAnalysis(true) 2, otherwise 0
 
 void hadaq::TdcProcessor::SetTimeRefKind(int kind)
 {
@@ -290,6 +290,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fHitsRate = nullptr;
    fRateCnt = 0;
    fLastRateTm = -1;
+   fRef0Time = 0.;
 
    fHldId = 0;                   ///<! sequence number of processor in HLD
    fHitsPerHld = nullptr;
@@ -1852,7 +1853,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
    unsigned help_index = 0;
 
-   double localtm = 0., minimtm = 0., ch0time = 0., epoch0time = 0.;
+   double localtm = 0., minimtm = 0., ch0time = 0.;
 
    hadaq::TdcMessage& msg = iter.msg();
    hadaq::TdcMessage calibr;
@@ -1907,10 +1908,9 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          if (cnt == 2) {
             isfirstepoch = true;
             first_epoch = ep;
-            if (fIsCustomMhz)
-               epoch0time = (((uint64_t) first_epoch) << 11) * 1000./fCustomMhz * 1e-9;
-            else
-               epoch0time = (((uint64_t) first_epoch) << 11) * hadaq::TdcMessage::CoarseUnit();
+
+            if (!iter.hasRefEpoch())
+               iter.setRefEpoch(first_epoch);
          }
          continue;
       }
@@ -2034,6 +2034,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          // apply correction
          localtm -= corr;
 
+         // printf("%s chid %2u localtm %f corr %f epoch %f msgstamp %f coarse %f\n", GetName(), chid, localtm, corr, ((uint64_t) iter.getCurEpoch() << 11) * hadaq::TdcMessage::CoarseUnit(), iter.getMsgStamp() * hadaq::TdcMessage::CoarseUnit(), iter.getMsgTimeCoarse());
+
          if ((chid == 0) && (ch0time == 0))
             ch0time = localtm;
 
@@ -2045,11 +2047,12 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                ADDERROR(errCh0, "channel 0 time not found when first HIT in channel %u appears", chid);
             localtm -= ch0time;
          } else if (gTimeRefKind == 1) {
-            if (isfirstepoch) {
-               // printf("%s Channel %u localtm %f epoch0tm %f diff %7.5f\n", GetName(), chid, localtm, epoch0time, (localtm - epoch0time) *1e9);
-               localtm -= epoch0time;
-            } else
-               ADDERROR(errEpoch, "Epoch 0 time not found when first HIT in channel %u appears", chid);
+            if (!fRef0Time && ch0time) {
+               fRef0Time = ch0time;
+               // printf("%s REF0TIME %f ch0time %f\n", GetName(), fRef0Time, ch0time);
+            }
+
+            localtm -= fRef0Time;
          }
 
          // printf("%s first %d ch %3u tm %12.9f\n", GetName(), first_scan, chid, localtm);
