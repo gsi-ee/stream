@@ -1778,6 +1778,9 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       return false;
    }
 
+   if (gTimeRefKind < 0)
+      gTimeRefKind = IsTriggeredAnalysis() ? 2 : 0;
+
    uint32_t syncid = 0xffffffff;
    // copy first 4 bytes - it is syncid
    if (buf().format == 0)
@@ -2038,9 +2041,6 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
          if ((chid == 0) && (ch0time == 0))
             ch0time = localtm;
-
-         if (gTimeRefKind < 0)
-            gTimeRefKind = IsTriggeredAnalysis() ? 2 : 0;
 
          if (gTimeRefKind == 2) {
             if (ch0time == 0)
@@ -2482,6 +2482,9 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
       return false;
    }
 
+   if (gTimeRefKind < 0)
+      gTimeRefKind = IsTriggeredAnalysis() ? 2 : 0;
+
    uint32_t syncid = 0xffffffff;
    // copy first 4 bytes - it is syncid
    if (buf().format==0)
@@ -2648,10 +2651,14 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
          }
          localtm -= coarse_unit/8*cnt;
 
-         if (IsTriggeredAnalysis()) {
+         if (gTimeRefKind == 2) {
             if (ch0time == 0)
-               ADDERROR(errCh0, "ref channel time not found when first HIT in channel %u appears", chid);
+               ADDERROR(errCh0, "channel 0 time not found when first HIT in channel %u appears", chid);
             localtm -= ch0time;
+         } else if (gTimeRefKind == 1) {
+            if (!fRef0Time && ch0time)
+               fRef0Time = ch0time;
+            localtm -= fRef0Time;
          }
 
          if (rec.rising_tmds == 0)
@@ -2763,11 +2770,14 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
          if (is_ref_channel && (ch0time == 0) && isrising)
             ch0time = localtm;
 
-         if (IsTriggeredAnalysis()) {
-            if (ch0time==0)
+         if (gTimeRefKind == 2) {
+            if (ch0time == 0)
                ADDERROR(errCh0, "channel 0 time not found when first HIT in channel %u appears", chid);
-
             localtm -= ch0time;
+         } else if (gTimeRefKind == 1) {
+            if (!fRef0Time && ch0time)
+               fRef0Time = ch0time;
+            localtm -= fRef0Time;
          }
 
          // printf("%s first %d ch %3u tm %12.9f\n", GetName(), first_scan, chid, localtm);
