@@ -511,7 +511,8 @@ bool hadaq::TrbProcessor::DogmaBufferScan(const base::Buffer &buf)
       auto tu = evnt->FirstSubevent();
       while (tu) {
 
-         auto trigtype = tu->GetTrigTypeNumber() & 0xf;
+         auto trigtype = tu->GetTrigType() & 0xf;
+
          auto dataid = tu->GetAddr() & 0xffffff; // enforce 24 bit for tdc
          auto datalen = tu->GetPayloadLen();
 
