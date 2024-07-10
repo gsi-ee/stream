@@ -65,6 +65,12 @@ namespace hadaq {
             fConv.MoveRef(((uint64_t) epoch) << 11);
          }
 
+         /** Returns true if ref epoch was set */
+         bool hasRefEpoch() const
+         {
+            return fConv.HasRef();
+         }
+
          /** next TDC message */
          bool next()
          {

@@ -78,6 +78,7 @@ namespace base {
 
             // TODO: should it be done here???
             MoveRef(0);
+            fHasRef = false;
          }
 
          /** Method calculates distance between two stamps
