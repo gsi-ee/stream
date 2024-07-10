@@ -2040,19 +2040,25 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          // printf("%s chid %2u localtm %f corr %f epoch %f msgstamp %f coarse %f\n", GetName(), chid, localtm, corr, ((uint64_t) iter.getCurEpoch() << 11) * hadaq::TdcMessage::CoarseUnit(), iter.getMsgStamp() * hadaq::TdcMessage::CoarseUnit(), iter.getMsgTimeCoarse());
 
          if ((chid == 0) && (ch0time == 0))
-            ch0time = localtm;
+            ch0time = (gTimeRefKind == 3) ? localtm + corr : localtm;
 
-         if (gTimeRefKind == 2) {
-            if (ch0time == 0)
-               ADDERROR(errCh0, "channel 0 time not found when first HIT in channel %u appears", chid);
-            localtm -= ch0time;
-         } else if (gTimeRefKind == 1) {
-            if (!fRef0Time && ch0time) {
-               fRef0Time = ch0time;
-               // printf("%s REF0TIME %f ch0time %f\n", GetName(), fRef0Time, ch0time);
-            }
-
-            localtm -= fRef0Time;
+         switch(gTimeRefKind) {
+            case 0:
+               // use absolute time, not changes
+               break;
+            case 1:
+               // use absolute ref time, set once
+               if (!fRef0Time && ch0time)
+                  fRef0Time = ch0time;
+               localtm -= fRef0Time;
+               break;
+            case 2:
+            case 3:
+               // use time relative to channel 0
+               if (ch0time == 0)
+                  ADDERROR(errCh0, "channel 0 time not found when first HIT in channel %u appears", chid);
+               localtm -= ch0time;
+               break;
          }
 
          // printf("%s first %d ch %3u tm %12.9f\n", GetName(), first_scan, chid, localtm);
