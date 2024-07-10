@@ -34,16 +34,17 @@ namespace base {
 
    class LocalStampConverter {
       protected:
-         int64_t  fT0;          ///<! time stamp, used as t0 for time production
-         uint64_t fWrapSize;    ///<! value of time stamp which wraps - MUST be power of 2
-         uint64_t fHalfWrapSize; ///<! fWrapSize/2 - used very often in calculations
-         uint64_t fValueMask;   ///<! mask to extract bits related to stamp
+         int64_t  fT0 = 0;          ///<! time stamp, used as t0 for time production
+         uint64_t fWrapSize = 2;    ///<! value of time stamp which wraps - MUST be power of 2
+         uint64_t fHalfWrapSize = 1; ///<! fWrapSize/2 - used very often in calculations
+         uint64_t fValueMask = 1;   ///<! mask to extract bits related to stamp
 
-         uint64_t fCurrentWrap; ///<! summed wraps since begin
-         LocalStamp_t fRef;     ///<! reference time, used to detect wraps of timestamp
-         int64_t  fConvRef;     ///<! value used for time conversion
+         uint64_t fCurrentWrap = 0; ///<! summed wraps since begin
+         LocalStamp_t fRef = 0;     ///<! reference time, used to detect wraps of timestamp
+         int64_t  fConvRef = 0;     ///<! value used for time conversion
+         bool fHasRef = false;      ///<! if reference was set
 
-         double fCoef;          ///<! time coefficient to convert to seconds
+         double fCoef = 1.;          ///<! time coefficient to convert to seconds
 
       public:
 
@@ -56,6 +57,7 @@ namespace base {
             fCurrentWrap(0),
             fRef(0),
             fConvRef(0),
+            fHasRef(false),
             fCoef(1.)
          {
          }
@@ -116,15 +118,19 @@ namespace base {
             // one should check if distance small that we could believe it is normal
             if (newref < fRef) {
                int64_t shift = distance(fRef, newref);
-               if ((shift>0) && (shift < (int64_t) fWrapSize/2))
-                  fCurrentWrap+=fWrapSize;
+               if ((shift > 0) && (shift < (int64_t) fWrapSize/2))
+                  fCurrentWrap += fWrapSize;
             }
 
             fRef = newref;
 
+            fHasRef = true;
+
             // precalculate value, which will be used for conversion
             fConvRef = int64_t(fCurrentWrap + fRef) - fT0;
          }
+
+         bool HasRef() const { return fHasRef; }
    };
 
 }
