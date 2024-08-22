@@ -2,6 +2,9 @@
    "deepscan.ignoreConfirmWarning": true,
    "cmake.configureOnOpen": false,
    "files.associations": {
-      "first.C": "cpp"
+      "first.C": "cpp",
+      "read.C": "cpp",
+      "read1.C": "cpp",
+      "second.C": "cpp"
    }
 }
