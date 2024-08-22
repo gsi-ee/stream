@@ -128,6 +128,11 @@ namespace hadaq {
          inline double getMsgTimeCoarse() const
          { return fConv.ToSeconds(getMsgStamp()); }
 
+         /** get coarse time for the current message */
+         inline double convertTime(uint32_t epoch, uint32_t coarse) const
+         { return fConv.ToSeconds((((uint64_t) epoch) << 11) | coarse); }
+
+
          /** return fine time value for current message */
          inline double getMsgTimeFine() const
          {

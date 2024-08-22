@@ -525,27 +525,23 @@ bool hadaq::TrbProcessor::DogmaBufferScan(const base::Buffer &buf)
 
          auto tdcproc = GetTDC(dataid, true);
 
-         // printf("  Tu 0x%x proc %p payloadlen %u\n", dataid, tdcproc, datalen);
-
          if (tdcproc) {
-            base::Buffer buf;
 
-            if (gIgnoreSync) {
-               // special case - could use data directly without copying
-               buf.makereferenceof((char *)tu->RawData(), datalen * 4);
-               buf().kind = trigtype;
-               buf().boardid = dataid;
-               buf().format = tu->IsSwapped() ? 2 : 1; // special format without sync
-            } else {
-               buf.makenew((datalen + 1) * 4);
-               uint32_t *ptr = (uint32_t *)buf.ptr();
-               *ptr++ = 0xffffffff; // fill dummy sync id in the begin
-               for (unsigned n = 0; n < datalen; ++n)
-                  *ptr++ = tu->GetPayload(n);
-               buf().kind = trigtype;
-               buf().boardid = dataid;
-               buf().format = 0;
-            }
+            uint32_t epoch0 = tu->GetTrigTime() & 0xfffffff;
+            uint32_t coarse0 = tu->GetLocalTrigTime() & 0x7ff;
+
+            // printf("  Tu 0x%x proc %p payloadlen %u epoch0 %07x coarse0 %03x\n", dataid, tdcproc, datalen, (unsigned) epoch0, (unsigned) coarse0);
+
+            base::Buffer buf;
+            buf.makenew((datalen + 2) * 4);
+            uint32_t *ptr = (uint32_t *)buf.ptr();
+            *ptr++ = epoch0;
+            *ptr++ = coarse0;
+            for (unsigned n = 0; n < datalen; ++n)
+               *ptr++ = tu->GetPayload(n);
+            buf().kind = trigtype;
+            buf().boardid = dataid;
+            buf().format = 3; // format with epoch0/corse0 and without ref channel
 
             tdcproc->AddNextBuffer(buf);
             tdcproc->SetNewDataFlag(true);

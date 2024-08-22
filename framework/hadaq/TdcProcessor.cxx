@@ -1847,16 +1847,32 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       epoch_shift = buf().user_tag;
    }
 
+   double localtm = 0., minimtm = 0., ch0time = 0.;
+   bool ch0_is_ref = true; // is channel0 contain reference (trigger) time
+
+
    TdcIterator& iter = first_scan ? fIter1 : fIter2;
 
    if (buf().format == 0)
       iter.assign((uint32_t*) buf.ptr(4), buf.datalen()/4-1, false);
-   else
+   else if (buf().format == 3) {
+      ch0_is_ref = false;
+      uint32_t epoch0 = 0, coarse0 = 0;
+      memcpy(&epoch0, buf.ptr(0), 4);
+      memcpy(&coarse0, buf.ptr(4), 4);
+      iter.assign((uint32_t*) buf.ptr(8), buf.datalen()/4 - 2, false);
+
+      iter.setCurEpoch(epoch0);
+
+      if (fIsCustomMhz) {
+         ch0time = ((((uint64_t) epoch0) << 12) | (coarse0 << 1)) * 1000. / fCustomMhz * 1e-9;
+      } else {
+         ch0time = iter.convertTime(epoch0, coarse0);
+      }
+   } else
       iter.assign((uint32_t*) buf.ptr(0), buf.datalen()/4, buf().format == 2);
 
    unsigned help_index = 0;
-
-   double localtm = 0., minimtm = 0., ch0time = 0.;
 
    hadaq::TdcMessage& msg = iter.msg();
    hadaq::TdcMessage calibr;
@@ -2039,7 +2055,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
          // printf("%s chid %2u localtm %f corr %f epoch %f msgstamp %f coarse %f\n", GetName(), chid, localtm, corr, ((uint64_t) iter.getCurEpoch() << 11) * hadaq::TdcMessage::CoarseUnit(), iter.getMsgStamp() * hadaq::TdcMessage::CoarseUnit(), iter.getMsgTimeCoarse());
 
-         if ((chid == 0) && (ch0time == 0))
+         if ((chid == 0) && (ch0time == 0) && ch0_is_ref)
             ch0time = (gTimeRefKind == 3) ? localtm + corr : localtm;
 
          switch(gTimeRefKind) {
@@ -2066,9 +2082,9 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          // fill histograms only for normal channels
          if (first_scan) {
 
-            // if (chid>0) printf("%s HIT ch %u tm %12.9f diff %12.9f\n", GetName(), chid, localtm, localtm - ch0time);
+            // if (chid > 0) printf("%s HIT ch %u tm %12.9f diff %12.9f\n", GetName(), chid, localtm, localtm - ch0time);
 
-            if (chid == 0) {
+            if ((chid == 0) || (!ch0_is_ref && (cnt < 3)))  {
                if (fLastRateTm < 0) fLastRateTm = ch0time;
                if (ch0time - fLastRateTm > 1) {
                   FillH1(fHitsRate, fRateCnt / (ch0time - fLastRateTm));
@@ -2122,11 +2138,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
                bool print_cond = false;
 
-               //JAM 11-2021: prevdiff histogram against rising edges of previous channel:
-//                if(chid>0 && fCh[chid].rising_last_tm){
-//                     double prevdiff=(fCh[chid-1].rising_last_tm - localtm) * 1e9;
                // JAM 7-12-21: better plot dt against ref channel?
-               if(chid > 0 && ch0time && fhRisingPrevDiffVsChannel) {
+               if(((chid > 0) || !ch0_is_ref) && ch0time && fhRisingPrevDiffVsChannel) {
                   double refdiff = (localtm - ch0time) * 1e9;
                   if(refdiff > -1000 && refdiff < 1000) {
                      DefFillH2(fhRisingPrevDiffVsChannel, chid, refdiff, 1.);
@@ -2141,7 +2154,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                }
 
                if (use_for_ref && ((rec.rising_hit_tm == 0.) || fUseLastHit)) {
-                  rec.rising_hit_tm = (chid > 0) ? localtm : ch0time;
+                  rec.rising_hit_tm = (chid > 0) || !ch0_is_ref ? localtm : ch0time;
                   rec.rising_coarse = coarse;
                   rec.rising_fine = fine;
 
@@ -2158,7 +2171,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                if (print_cond) rawprint = true;
 
                // special case - when ref channel defined as 0, fill all hits
-               if ((chid != 0) && (rec.refch == 0) && (rec.reftdc == GetID()) && use_for_ref) {
+               if ((chid != 0) && (rec.refch == 0) && (rec.reftdc == GetID()) && use_for_ref && ch0_is_ref) {
                   rec.rising_ref_tm = localtm;
 
                   DefFillH1(rec.fRisingRef, (localtm*1e9), 1.);
@@ -2255,10 +2268,10 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                if (dostore)
                   switch(GetStoreKind()) {
                      case 1:
-                        pStoreVect->emplace_back(msg, (chid>0) ? localtm : ch0time);
+                        pStoreVect->emplace_back(msg, (chid > 0) || !ch0_is_ref ? localtm : ch0time);
                         break;
                      case 2:
-                        if (chid>0)
+                        if ((chid > 0) || !ch0_is_ref)
                            pStoreFloat->emplace_back(chid, isrising, localtm*1e9);
                         break;
                      case 3:
@@ -2270,7 +2283,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          } else
 
          // for second scan we check if hit can be assigned to the events
-         if (((chid > 0) || fCh0Enabled) && !iserr) {
+         if (((chid > 0) || fCh0Enabled || !ch0_is_ref) && !iserr) {
 
             base::GlobalTime_t globaltm = LocalToGlobalTime(localtm, &help_index);
 
