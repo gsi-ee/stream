@@ -403,6 +403,14 @@ hadaq::TdcProcessor::~TdcProcessor()
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// returns true if channel 0 should be handled as all other
+
+bool hadaq::TdcProcessor::IsRegularChannel0() const
+{
+   return fVersion4 || (gTimeRefKind == 3);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////
 /// Configure 400 MHz mode
 
 void hadaq::TdcProcessor::Set400Mhz(bool on)
@@ -500,7 +508,7 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
          fCh[ch].fRisingPCalibr = MakeH1("RisingPCalibr", "Prevented rising calibration", fNumFineBins, 0, fNumFineBins, "fine;kind:F");
    }
 
-   if (DoFallingEdge() && !fCh[ch].fFallingFine && ((ch > 0) || fVersion4 || (gTimeRefKind == 3))) {
+   if (DoFallingEdge() && !fCh[ch].fFallingFine && ((ch > 0) || IsRegularChannel0())) {
       fCh[ch].fFallingFine = MakeH1("FallingFine", "Falling fine counter", fNumFineBins, 0, fNumFineBins, "fine");
       fCh[ch].fFallingCalibr = MakeH1("FallingCalibr", "Falling calibration function", fNumFineBins, 0, fNumFineBins, "fine;kind:F");
       fCh[ch].fFallingMult = MakeH1("FallingMult", "Falling event multiplicity", 128, 0, 128, "nhits");
@@ -1457,14 +1465,14 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
       if (!is_0d_trig && ((trig_type == 0) || (trig_type == 1)) && (nrising > limit*NumChannels()) && (nfalling > limit*NumChannels())) is_0d_trig = true;
 
       if (is_0d_trig) fAllDTrigCnt++;
-      if ((fAllDTrigCnt>10) && (fAllTotMode<0)) fAllTotMode = 0;
+      if ((fAllDTrigCnt > 10) && (fAllTotMode < 0)) fAllTotMode = 0;
    }
 
    // do ToT calculations only when preliminary calibration was produced
-   bool do_tot = use_in_calibr && is_0d_trig && DoFallingEdge() && (fAllTotMode==1);
+   bool do_tot = use_in_calibr && is_0d_trig && DoFallingEdge() && (fAllTotMode == 1);
 
    if (do_tot)
-      for (unsigned ch=1;ch<NumChannels();ch++) {
+      for (unsigned ch = IsRegularChannel0() ? 0 : 1; ch < NumChannels(); ch++) {
          ChannelRec& rec = fCh[ch];
 
          if (rec.hascalibr) {
@@ -2249,7 +2257,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                       DefFastFillH2(*fToTCountPerTDCChannel, fHldId, chid);
                   }
 
-                  if(fDevPerTDCChannel && (tot>0) && (tot < 1000)) { // JAM 7-12-21 suppress noise fakes
+                  if(fDevPerTDCChannel && (tot > 0) && (tot < 1000)) { // JAM 7-12-21 suppress noise fakes
                      rec.tot_dev += totvar; // JAM misuse  this data field to get overall sigma of file
                      rec.tot0d_cnt++; // JAM misuse calibration counter here to evaluate sigma
                      double currentsigma= sqrt(rec.tot_dev/rec.tot0d_cnt);
@@ -2379,7 +2387,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
       // when doing TOT calibration, use only last TOT value - before one could find other signals
       if (do_tot)
-         for (unsigned ch = 1; ch < NumChannels(); ch++) {
+         for (unsigned ch = IsRegularChannel0() ? 0 : 1; ch < NumChannels(); ch++) {
             // printf("%s Channel %d last_tot %5.3f has_calibr %d min %5.2f max %5.2f \n", GetName(), ch, fCh[ch].last_tot, fCh[ch].hascalibr, fToThmin, fToThmax);
 
             auto &rec = fCh[ch];
@@ -3800,9 +3808,9 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
          bool res = false;
 
          if (DoRisingEdge() && (rec.all_rising_stat > 0)) {
-            if (ch == 1)
-               for(unsigned n = 0; n < rec.rising_stat.size(); ++n)
-                  printf("Stat[%3u] = %4u\n", n, rec.rising_stat[n]);
+            // if (ch == 1)
+            //   for(unsigned n = 0; n < rec.rising_stat.size(); ++n)
+            //      printf("Stat[%3u] = %4u\n", n, rec.rising_stat[n]);
 
             rec.calibr_quality_rising = CalibrateChannel(ch, true, rec.rising_stat, *rising_calibr, use_linear, preliminary);
             rec.calibr_stat_rising = rec.all_rising_stat;
@@ -3819,7 +3827,7 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
 
          printf("%s:%u Check Tot dofalling: %d tot0d_cnt:%ld prelim:%d tot0d_hist:%d \n", GetName(), ch, DoFallingEdge(), rec.tot0d_cnt, preliminary, (int) rec.tot0d_hist.size());
 
-         if (((ch > 0) || fVersion4 || (gTimeRefKind == 3)) && DoFallingEdge() && !preliminary) {
+         if (((ch > 0) || IsRegularChannel0()) && DoFallingEdge() && !preliminary) {
 
             std::string name_prefix = std::string(GetName()) + "_ch" + std::to_string(ch) + "_ToT";
 

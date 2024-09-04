@@ -711,6 +711,8 @@ namespace hadaq {
          /** Return true if each hit must be supplied with epoch message */
          bool IsEveryEpoch() const { return fEveryEpoch; }
 
+         bool IsRegularChannel0() const;
+
          void SetLinearCalibration(unsigned nch, unsigned finemin=30, unsigned finemax=500);
 
          /** configure auto calibration */
