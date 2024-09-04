@@ -333,7 +333,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
       fCorrHits = MakeH1("CorrectedHits", "Corrected hits in TDC channels", numchannels, 0, numchannels, "ch");
 
       if (!fVersion4)
-         fMsgsKind = MakeH1("MsgKind", "kind of messages", 8, 0, 8, "xbin:Trailer,Header,Debug,Epoch,Hit,-,-,Calibr;kind");
+         fMsgsKind = MakeH1("MsgKind", "kind of messages", 8, 0, 8, "xbin:Trailer,Header,Debug,Epoch,Hit,-,MissEpoch,Calibr;kind");
       else
          fMsgsKind = MakeH1("MsgKind", "kind of messages", 8, 0, 8, "xbin:HDR,EPOC,TMDR,TMDT,-,-,-,-;kind");
 
@@ -1857,7 +1857,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    }
 
    double localtm = 0., minimtm = 0., ch0time = 0.;
-   bool ch0_is_ref = true; // is channel0 contain reference (trigger) time
+   bool ch0_is_ref = !IsRegularChannel0(); // is channel0 contain reference (trigger) time
 
 
    TdcIterator& iter = first_scan ? fIter1 : fIter2;
@@ -1871,7 +1871,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       memcpy(&coarse0, buf.ptr(4), 4);
       iter.assign((uint32_t*) buf.ptr(8), buf.datalen()/4 - 2, false);
 
-      iter.setCurEpoch(epoch0);
+      // do not set current epoch - must be presented in the data
+      // iter.setCurEpoch(epoch0);
 
       if (fIsCustomMhz) {
          ch0time = ((((uint64_t) epoch0) << 12) | (coarse0 << 1)) * 1000. / fCustomMhz * 1e-9;
@@ -1987,6 +1988,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          if (!iter.isCurEpoch()) {
             // one expects epoch before each hit message, if not data are corrupted and we can ignore it
             ADDERROR(errEpoch, "Missing epoch for hit from channel %u", chid);
+            FastFillH1(fMsgsKind, 6); // artificial message kind
             iserr = true;
             if (fChErrPerHld) DefFillH2(*fChErrPerHld, fHldId, chid, 1);
             continue;
