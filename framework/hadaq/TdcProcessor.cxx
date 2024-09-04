@@ -190,6 +190,7 @@ void hadaq::TdcProcessor::SetPreventFineCalibration(bool on)
 /// 0 - off, always use absolute time stamp as is
 /// 1 - use first channel0 seen in data
 /// 2 - channel0, use channel 0 time as time reference
+/// 3 - use timestamp from sub-event header
 /// -1 - default, depends from SetTriggeredAnalysis(true) 2, otherwise 0
 
 void hadaq::TdcProcessor::SetTimeRefKind(int kind)
@@ -499,7 +500,7 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
          fCh[ch].fRisingPCalibr = MakeH1("RisingPCalibr", "Prevented rising calibration", fNumFineBins, 0, fNumFineBins, "fine;kind:F");
    }
 
-   if (DoFallingEdge() && !fCh[ch].fFallingFine && ((ch > 0) || fVersion4)) {
+   if (DoFallingEdge() && !fCh[ch].fFallingFine && ((ch > 0) || fVersion4 || (gTimeRefKind == 3))) {
       fCh[ch].fFallingFine = MakeH1("FallingFine", "Falling fine counter", fNumFineBins, 0, fNumFineBins, "fine");
       fCh[ch].fFallingCalibr = MakeH1("FallingCalibr", "Falling calibration function", fNumFineBins, 0, fNumFineBins, "fine;kind:F");
       fCh[ch].fFallingMult = MakeH1("FallingMult", "Falling event multiplicity", 128, 0, 128, "nhits");
