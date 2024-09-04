@@ -3819,7 +3819,7 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
 
          printf("%s:%u Check Tot dofalling: %d tot0d_cnt:%ld prelim:%d tot0d_hist:%d \n", GetName(), ch, DoFallingEdge(), rec.tot0d_cnt, preliminary, (int) rec.tot0d_hist.size());
 
-         if ((ch > 0) && DoFallingEdge() && !preliminary) {
+         if (((ch > 0) || fVersion4 || (gTimeRefKind == 3)) && DoFallingEdge() && !preliminary) {
 
             std::string name_prefix = std::string(GetName()) + "_ch" + std::to_string(ch) + "_ToT";
 
