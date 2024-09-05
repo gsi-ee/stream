@@ -910,7 +910,7 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
 
       // printf("TDC %s %d %d same %d %p %p  %f %f \n", GetName(), ch, ref, (this==refproc), this, refproc, rec.rising_hit_tm, refproc->fCh[ref].rising_hit_tm);
 
-      if (refproc && ((ref > 0) || (refproc != this)) && (ref < refproc->NumChannels()) && ((ref != ch) || (refproc != this))) {
+      if (refproc && ((ref > 0) || IsRegularChannel0() || (refproc != this)) && (ref < refproc->NumChannels()) && ((ref != ch) || (refproc != this))) {
          if (DoRisingEdge() && (rec.rising_hit_tm != 0) && (refproc->fCh[ref].rising_hit_tm != 0)) {
 
             double tm = rec.rising_hit_tm; // relative time to ch0 on same TDC
@@ -2182,7 +2182,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                if (print_cond) rawprint = true;
 
                // special case - when ref channel defined as 0, fill all hits
-               if ((chid != 0) && (rec.refch == 0) && (rec.reftdc == GetID()) && use_for_ref && ch0_is_ref) {
+               if ((chid != 0) && (rec.refch == 0) && (rec.reftdc == GetID()) && use_for_ref && ch0_is_ref && !IsRegularChannel0()) {
                   rec.rising_ref_tm = localtm;
 
                   DefFillH1(rec.fRisingRef, (localtm*1e9), 1.);
