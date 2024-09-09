@@ -8,6 +8,7 @@
 
 #include "hadaq/TrbIterator.h"
 #include "hadaq/TdcProcessor.h"
+#include "hadaq/MdcProcessor.h"
 #include "hadaq/HldProcessor.h"
 
 #include "dogma/defines.h"
@@ -21,6 +22,8 @@ unsigned hadaq::TrbProcessor::gTDCMin = 0x0000;
 unsigned hadaq::TrbProcessor::gTDCMax = 0x0FFF;
 unsigned hadaq::TrbProcessor::gHUBMin = 0x8100;
 unsigned hadaq::TrbProcessor::gHUBMax = 0x81FF;
+unsigned hadaq::TrbProcessor::gMDCMin = 0x0000;
+unsigned hadaq::TrbProcessor::gMDCMax = 0x0000;
 
 //////////////////////////////////////////////////////////////////////////////
 /// Set defaults for the next creation of TDC processors.
@@ -1050,11 +1053,25 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
 
                // in auto-create mode buffers are not processed - normally it is only first event
                // AddBufferToTDC(sub, tdcproc, ix, datalen);
-               ix+=datalen;
+               ix += datalen;
                continue; // go to next block
             } else {
                if (CheckPrintError()) printf("sub-sub-event data with id 0x%04x does not belong to TDC\n", dataid);
             }
+         } else if ((dataid >= gMDCMin) && (dataid < gMDCMax)) {
+            auto mdcproc = new MdcProcessor(this, dataid);
+
+            mdcproc->SetStoreKind(GetStoreKind());
+
+            mgr()->UserPreLoop(mdcproc); // while loop already running, call it once again for new processor
+
+            char msg[1000];
+            snprintf(msg, sizeof(msg), "%s: Create MDC 0x%04x", GetName(), dataid);
+            mgr()->PrintLog(msg);
+
+            // in auto-create mode buffers are not processed - normally it is only first event
+            ix += datalen;
+            continue; // go to next block
          } else {
             printf("%s: Saw ID 0x%04x in autocreate mode\n", GetName(), dataid);
          }

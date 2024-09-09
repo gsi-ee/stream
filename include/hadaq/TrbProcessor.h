@@ -117,6 +117,9 @@ namespace hadaq {
          static unsigned gTDCMin;          ///< min TDC id when doing autoscan
          static unsigned gTDCMax;          ///< max TDC id when doing autoscan
 
+         static unsigned gMDCMin;          ///< min MDC id when doing autoscan
+         static unsigned gMDCMax;          ///< max MDC id when doing autoscan
+
          static unsigned gHUBMin;          ///< min HUB id when doing autoscan
          static unsigned gHUBMax;          ///< max HUB id when doing autoscan
 
@@ -290,6 +293,13 @@ namespace hadaq {
          {
             gTDCMin = min;
             gTDCMax = max;
+         }
+
+         /** Define range for TDCs, used when auto mode is enabled */
+         static void SetMDCRange(unsigned min, unsigned max)
+         {
+            gMDCMin = min;
+            gMDCMax = max;
          }
 
          /** Define range for HUBs, used when auto mode is enabled */
