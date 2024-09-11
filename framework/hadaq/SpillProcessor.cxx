@@ -222,11 +222,7 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
 
    hadaq::TrbIterator iter(buf().buf, buf().datalen);
 
-   unsigned evcnt = 0;
-
    while (auto ev = iter.nextEvent()) {
-
-      evcnt++;
 
       DefFillH1(fEvType, (ev->GetId() & 0xf), 1.);
       DefFillH1(fEvSize, ev->GetPaddedSize(), 1.);
@@ -241,7 +237,7 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
 
       unsigned hubid = 0x7654;
 
-      int numhits = 0;
+      // int numhits = 0;
 
       while (auto sub = iter.nextSubevent()) {
          DefFillH1(fSubevSize, sub->GetSize(), 1.);
@@ -285,7 +281,7 @@ bool hadaq::SpillProcessor::FirstBufferScan(const base::Buffer& buf)
                      //unsigned coarse = msg.getHitTmCoarse();
                      //bool isrising = msg.isHitRisingEdge();
 
-                     numhits++;
+                     // numhits++;
 
                      if (chid>0) {
                         // fill these histograms only for StartX and StartY // Sergey

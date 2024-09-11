@@ -43,7 +43,7 @@ bool hadaq::TdcProcessor::gStoreCalibrTables = false;
 bool hadaq::TdcProcessor::gPreventFineCalibration = false;
 int hadaq::TdcProcessor::gTimeRefKind = -1;
 
-unsigned BUBBLE_SIZE = 19;
+const unsigned BUBBLE_SIZE = 19;
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 /// obsolete, noop
@@ -3303,7 +3303,7 @@ double hadaq::TdcProcessor::DoTestFineTimeH2(int iCh, base::H2handle h)
     const int binSizeRebin = 32;
     const int nBinsRebin = nBins2 / binSizeRebin + 1;
 
-    double hRebin[nBinsRebin];
+    std::vector<double> hRebin(nBinsRebin);
     int nEntries = 0;
     for (int i = 0; i < nBinsRebin; i++){
         hRebin[i] = 0;
@@ -3313,7 +3313,7 @@ double hadaq::TdcProcessor::DoTestFineTimeH2(int iCh, base::H2handle h)
         }
         nEntries += hRebin[i];
     }
-    return DoTestFineTime(hRebin, nBinsRebin, nEntries);
+    return DoTestFineTime(hRebin.data(), nBinsRebin, nEntries);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
