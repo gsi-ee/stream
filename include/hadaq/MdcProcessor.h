@@ -30,6 +30,7 @@ protected:
    base::H1handle alldeltaT;
    base::H1handle allToT;
    base::H2handle deltaT_ToT;
+   base::H2handle T0_T1;
    base::H1handle  tot_h[TDCCHANNELS+1];
    base::H1handle  t1_h[TDCCHANNELS+1];
    base::H1handle  potato_h[TDCCHANNELS+1];

@@ -10,16 +10,19 @@ hadaq::MdcProcessor::MdcProcessor(TrbProcessor* trb, unsigned subid) :
    deltaT = MakeH2("deltaT", "", 32, 0, 32, 6000, -1199.8, 1200.2);
    alldeltaT = MakeH1("alldeltaT", "", 6000, -1199.8, 1200.2);
    allToT = MakeH1("allToT", "", 1500, 0.2, 600.2);
-   deltaT_ToT = MakeH2("deltaT_ToT", "", 6000, -1199.8, 1200.2, 1500, 0.2, 600.2);
+   deltaT_ToT = MakeH2("deltaT_ToT", "", 6000, -2099.8, 300.2, 1500, 0.2, 600.2);
+   T0_T1 = MakeH2("T0_T1", "", 6000, -2099.8, 300.2, 6000, -2099.8, 300.2);
    Errors = MakeH1("Errors", "", 33, -1, 32);
-   for (unsigned i = 0; i < TDCCHANNELS + 1; i++) {
-      char chno[16];
-      sprintf(chno, "Ch%02d_t1", i);
-      t1_h[i] = MakeH1(chno, chno, 6000, -1199.8, 1200.2, "ns");
-      sprintf(chno, "Ch%02d_tot", i);
-      tot_h[i] = MakeH1(chno, chno, 1500, 0.2, 600.2, "ns");
-      sprintf(chno, "Ch%02d_potato", i);
-      potato_h[i] = MakeH2(chno, chno, 600, -1199.8, 1200.2, 500, 0.2, 600.2, "t1 (ns);tot (ns)");
+   if (HistFillLevel() > 2) {
+      for (unsigned i = 0; i < TDCCHANNELS + 1; i++) {
+         char chno[16];
+         sprintf(chno, "Ch%02d_t1", i);
+         t1_h[i] = MakeH1(chno, chno, 6000, -1199.8, 1200.2, "ns");
+         sprintf(chno, "Ch%02d_tot", i);
+         tot_h[i] = MakeH1(chno, chno, 1500, 0.2, 600.2, "ns");
+         sprintf(chno, "Ch%02d_potato", i);
+         potato_h[i] = MakeH2(chno, chno, 600, -1199.8, 1200.2, 500, 0.2, 600.2, "t1 (ns);tot (ns)");
+      }
    }
 }
 
@@ -87,10 +90,16 @@ bool hadaq::MdcProcessor::FirstBufferScan(const base::Buffer &buf)
          signed fallingHit = (data >> 0) & 0x1fff;
 
          float timeDiff = ((risingHit - reference)) * 0.4;
-         if (timeDiff < -1250)
+         if (timeDiff < -2100)
             timeDiff += 8192 * 0.4;
-         if (timeDiff > 1250)
+         if (timeDiff > 300)
             timeDiff -= 8192 * 0.4;
+
+         float timeDiff1 = ((fallingHit - reference)) * 0.4;
+         if (timeDiff1 < -2100)
+            timeDiff1 += 8192 * 0.4;
+         if (timeDiff1 > 300)
+            timeDiff1 -= 8192 * 0.4;
 
          float timeToT = (fallingHit - risingHit) * 0.4;
          if (timeToT < 0)
@@ -111,10 +120,13 @@ bool hadaq::MdcProcessor::FirstBufferScan(const base::Buffer &buf)
          FillH2(ToT, channel, timeToT);
          FillH1(allToT, timeToT);
          FillH2(deltaT_ToT, timeDiff, timeToT);
+         FillH2(T0_T1, timeDiff, timeDiff1);
 
-         FillH1(tot_h[channel], timeToT);
-         FillH2(potato_h[channel], timeDiff, timeToT);
-         FillH1(t1_h[channel], timeDiff);
+         if (HistFillLevel() > 2) {
+            FillH1(tot_h[channel], timeToT);
+            FillH2(potato_h[channel], timeDiff, timeToT);
+            FillH1(t1_h[channel], timeDiff);
+         }
       }
    }
    return true;
