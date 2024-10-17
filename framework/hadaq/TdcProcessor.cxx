@@ -3454,7 +3454,7 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, bool rising, const st
       }
    }
 
-   unsigned finemaxlimit = fVersion4 ? 300 : (fIsCustomMhz ? 200 : 400);
+   unsigned finemaxlimit = fVersion4 ? 300 : (fIsCustomMhz ? 200 : (fDogma ? 350 : 400));
 
    if (!preliminary && (finemax < finemaxlimit)) {
       std::string log_finemax = std::string("_BadFineMax_") + std::to_string(finemax);
