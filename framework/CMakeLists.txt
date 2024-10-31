@@ -126,7 +126,7 @@ STREAM_LINK_LIBRARY(Stream
 )
 
 if(APPLE)
-  target_compile_definitions(Stream PRIVATE STREAM_AARCH64)
+  target_compile_definitions(Stream PUBLIC STREAM_AARCH64)
 endif()
 
 
