@@ -16,11 +16,11 @@ hadaq::MdcProcessor::MdcProcessor(TrbProcessor* trb, unsigned subid) :
    if (HistFillLevel() > 2) {
       for (unsigned i = 0; i < TDCCHANNELS + 1; i++) {
          char chno[16];
-         sprintf(chno, "Ch%02d_t1", i);
+         snprintf(chno, sizeof(chno), "Ch%02d_t1", i);
          t1_h[i] = MakeH1(chno, chno, 6000, -1199.8, 1200.2, "ns");
-         sprintf(chno, "Ch%02d_tot", i);
+         snprintf(chno, sizeof(chno), "Ch%02d_tot", i);
          tot_h[i] = MakeH1(chno, chno, 1500, 0.2, 600.2, "ns");
-         sprintf(chno, "Ch%02d_potato", i);
+         snprintf(chno, sizeof(chno), "Ch%02d_potato", i);
          potato_h[i] = MakeH2(chno, chno, 600, -1199.8, 1200.2, 500, 0.2, 600.2, "t1 (ns);tot (ns)");
       }
    }
