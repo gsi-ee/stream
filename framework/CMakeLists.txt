@@ -125,6 +125,11 @@ STREAM_LINK_LIBRARY(Stream
    nx/Processor.cxx
 )
 
+if(APPLE)
+  target_compile_definitions(Stream PRIVATE STREAM_AARCH64)
+endif()
+
+
 if(ROOT_FOUND)
 
    set(root_hdrs
