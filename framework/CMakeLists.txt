@@ -146,6 +146,7 @@ if(ROOT_FOUND)
          root/THookProc.cxx
          root/TRootProcMgr.cxx
       LIBRARIES
+         ROOT::Tree
          Stream
       NOWARN
    )

@@ -27,7 +27,7 @@ TRootProcMgr::~TRootProcMgr()
 
 bool TRootProcMgr::StoreEvent()
 {
-   if (fTree==0) return false;
+   if (!fTree) return false;
 
    fTree->Fill();
 
