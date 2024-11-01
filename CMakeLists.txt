@@ -32,6 +32,12 @@ if(NOT CMAKE_CXX_STANDARD)
 endif()
 
 
+if(APPLE)
+  set(_ldvname_ DYLD_LIBRARY_PATH)
+else()
+  set(_ldvname_ LD_LIBRARY_PATH)
+endif()
+
 configure_file(${CMAKE_SOURCE_DIR}/cmake/scripts/StreamConfig.cmake.in
                ${CMAKE_BINARY_DIR}/StreamConfig.cmake COPYONLY)
 
