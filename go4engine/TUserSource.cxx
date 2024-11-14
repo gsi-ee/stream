@@ -274,8 +274,14 @@ Int_t TUserSource::Open()
       std::ifstream filein(fname.Data());
       std::string line;
       while(std::getline(filein, line)) {
-         if (!line.empty())
-            fNames->Add(new TObjString(line.c_str()));
+         if (!line.empty() && (line[0] != '#')) {
+            TString name1 = line.c_str();
+            fNames->Add(new TObjString(name1));
+            if (name1.EndsWith(".dld")) {
+               fIsHLD = kFALSE;
+               fIsDOGMA = kTRUE;
+            }
+         }
       }
    } else {
       fNames = new TList;
