@@ -56,6 +56,10 @@ jobs:
         shell: bash
         run: cmake --build build --config ${{ matrix.build_type }}
 
+      - name: Install
+        shell: bash
+        run: cmake --build build --target install
+
   build-macos:
     runs-on: macos-latest
     strategy:
@@ -94,3 +98,6 @@ jobs:
         shell: bash
         run: cmake --build build --config ${{ matrix.build_type }}
 
+      - name: Install
+        shell: bash
+        run: cmake --build build --target install
