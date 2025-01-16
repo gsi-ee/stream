@@ -385,9 +385,9 @@ bool get4::MbsProcessor::LoadCalibration(const std::string& fname)
       return false;
    }
 
-   uint64_t num(0);
+   uint64_t num = 0;
 
-   fread(&num, sizeof(num), 1, f);
+   (void) fread(&num, sizeof(num), 1, f);
 
    if (num != GET4.size()) {
       printf("%s mismatch of GET4 number in calibration file %u and in processor %u\n", GetName(), (unsigned) num, (unsigned) GET4.size());
@@ -396,8 +396,8 @@ bool get4::MbsProcessor::LoadCalibration(const std::string& fname)
          for (unsigned ch=0;ch<NumGet4Channels;ch++) {
 
             Get4MbsChRec& rec = GET4[get4id].CH[ch];
-            fread(rec.rising_calibr, sizeof(rec.rising_calibr), 1, f);
-            fread(rec.falling_calibr, sizeof(rec.falling_calibr), 1, f);
+            (void) fread(rec.rising_calibr, sizeof(rec.rising_calibr), 1, f);
+            (void) fread(rec.falling_calibr, sizeof(rec.falling_calibr), 1, f);
 
             CopyCalibration(rec.rising_calibr, rec.fRisCal);
             CopyCalibration(rec.falling_calibr, rec.fFalCal);

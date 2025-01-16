@@ -4186,7 +4186,10 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
 
    uint64_t num = 0;
 
-   fread(&num, sizeof(num), 1, f);
+   if (fread(&num, sizeof(num), 1, f) != 1) {
+      printf("%s Fail to read number of channels from %s\n", GetName(), fname);
+      return false;
+   }
 
    ClearH2(fRisingCalibr);
    ClearH2(fFallingCalibr);
@@ -4197,65 +4200,66 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
    }
 
    for (unsigned ch=0;ch<num;ch++) {
-     fCh[ch].hascalibr = false;
+      fCh[ch].hascalibr = false;
 
-     if (ch>=NumChannels()) {
-        fseek(f, 2*sizeof(float)*fNumFineBins, SEEK_CUR);
-        continue;
-     }
+      if (ch >= NumChannels()) {
+         fseek(f, 2*sizeof(float)*fNumFineBins, SEEK_CUR);
+         continue;
+      }
 
-     fCh[ch].rising_calibr.clear();
-     fCh[ch].falling_calibr.clear();
+      fCh[ch].rising_calibr.clear();
+      fCh[ch].falling_calibr.clear();
 
-     float val0 = 0.;
-     if (fread(&val0, sizeof(float), 1, f) == 1) {
-        if (val0) {
-           fCh[ch].rising_calibr.resize(1 + ((int)val0)*2);
-        } else{
-           fCh[ch].rising_calibr.resize(fNumFineBins);
-        }
-        fCh[ch].rising_calibr[0] = val0;
-        fread(fCh[ch].rising_calibr.data()+1, sizeof(float)*(fCh[ch].rising_calibr.size()-1), 1, f);
-     }
+      float val0 = 0.;
+      if (fread(&val0, sizeof(float), 1, f) == 1) {
+         if (val0) {
+            fCh[ch].rising_calibr.resize(1 + ((int)val0)*2);
+         } else{
+            fCh[ch].rising_calibr.resize(fNumFineBins);
+         }
+         fCh[ch].rising_calibr[0] = val0;
+         if (fread(fCh[ch].rising_calibr.data()+1, sizeof(float)*(fCh[ch].rising_calibr.size()-1), 1, f) != 1)
+            printf("%s Ch %u fail to read rising calibr\n", GetName(), ch);
+      }
 
-     if (fread(&val0, sizeof(float), 1, f) == 1) {
-        if (val0) {
-           fCh[ch].falling_calibr.resize(1 + ((int)val0)*2);
-        } else{
-           fCh[ch].falling_calibr.resize(fNumFineBins);
-        }
-        fCh[ch].falling_calibr[0] = val0;
-        fread(fCh[ch].falling_calibr.data()+1, sizeof(float)*(fCh[ch].falling_calibr.size()-1), 1, f);
-     }
+      if (fread(&val0, sizeof(float), 1, f) == 1) {
+         if (val0) {
+            fCh[ch].falling_calibr.resize(1 + ((int)val0)*2);
+         } else{
+            fCh[ch].falling_calibr.resize(fNumFineBins);
+         }
+         fCh[ch].falling_calibr[0] = val0;
+         if (fread(fCh[ch].falling_calibr.data()+1, sizeof(float)*(fCh[ch].falling_calibr.size()-1), 1, f) != 1)
+            printf("%s Ch %u fail to read falling calibr\n", GetName(), ch);
+      }
 
-     fCh[ch].hascalibr = (fCh[ch].rising_calibr.size() > 4) && (fCh[ch].falling_calibr.size() > 4);
+      fCh[ch].hascalibr = (fCh[ch].rising_calibr.size() > 4) && (fCh[ch].falling_calibr.size() > 4);
 
-     CopyCalibration(fCh[ch].rising_calibr, fCh[ch].fRisingCalibr, ch, fRisingCalibr);
+      CopyCalibration(fCh[ch].rising_calibr, fCh[ch].fRisingCalibr, ch, fRisingCalibr);
 
-     CopyCalibration(fCh[ch].falling_calibr, fCh[ch].fFallingCalibr, ch, fFallingCalibr);
+      CopyCalibration(fCh[ch].falling_calibr, fCh[ch].fFallingCalibr, ch, fFallingCalibr);
    }
 
    if (!feof(f)) {
       for (unsigned ch=0;ch<num;ch++) {
-         if (ch>=NumChannels())
+         if (ch >= NumChannels())
             fseek(f, sizeof(fCh[0].tot_shift), SEEK_CUR);
-         else
-            fread(&(fCh[ch].tot_shift), sizeof(fCh[ch].tot_shift), 1, f);
+         else if (fread(&(fCh[ch].tot_shift), sizeof(fCh[ch].tot_shift), 1, f) != 1)
+            printf("%s Ch %u fail to read ToT shift\n", GetName(), ch);
 
          DefFillH1(fTotShifts, ch, fCh[ch].tot_shift);
-
       }
 
       if (!feof(f)) {
-         fread(&fCalibrTemp, sizeof(fCalibrTemp), 1, f);
-         fread(&fCalibrTempCoef, sizeof(fCalibrTempCoef), 1, f);
+         (void) fread(&fCalibrTemp, sizeof(fCalibrTemp), 1, f);
+         (void) fread(&fCalibrTempCoef, sizeof(fCalibrTempCoef), 1, f);
 
-         for (unsigned ch=0;ch<NumChannels();ch++)
+         for (unsigned ch = 0; ch < NumChannels(); ch++)
             if (!feof(f)) {
-               fread(&(fCh[ch].time_shift_per_grad), sizeof(fCh[ch].time_shift_per_grad), 1, f);
-               fread(&(fCh[ch].trig0d_coef), sizeof(fCh[ch].trig0d_coef), 1, f);
-               fread(&(fCh[ch].calibr_quality_rising), sizeof(fCh[ch].calibr_quality_rising), 1, f);
-               fread(&(fCh[ch].calibr_quality_falling), sizeof(fCh[ch].calibr_quality_falling), 1, f);
+               (void) fread(&(fCh[ch].time_shift_per_grad), sizeof(fCh[ch].time_shift_per_grad), 1, f);
+               (void) fread(&(fCh[ch].trig0d_coef), sizeof(fCh[ch].trig0d_coef), 1, f);
+               (void) fread(&(fCh[ch].calibr_quality_rising), sizeof(fCh[ch].calibr_quality_rising), 1, f);
+               (void) fread(&(fCh[ch].calibr_quality_falling), sizeof(fCh[ch].calibr_quality_falling), 1, f);
 
                // old files with bubble coefficients
                if ((fabs(fCh[ch].calibr_quality_rising-20.)<0.01) && (fabs(fCh[ch].calibr_quality_falling-1.06)<0.01)) {
@@ -4374,7 +4378,10 @@ hadaq::TdcProcessor *hadaq::TdcProcessor::CreateFromCalibr(hadaq::TrbProcessor *
       return nullptr;
    }
    uint64_t num = 0;
-   fread(&num, sizeof(num), 1, f);
+   if (fread(&num, sizeof(num), 1, f) != 1) {
+      fprintf(stderr, "Cannot read number of channels from file %s\n", fname.c_str());
+      return nullptr;
+   }
 
    fseek(f, 0, SEEK_END);
 
@@ -4399,7 +4406,8 @@ hadaq::TdcProcessor *hadaq::TdcProcessor::CreateFromCalibr(hadaq::TrbProcessor *
    auto tdc = new TdcProcessor(trb, id, num, edge_BothIndepend);
 
    if (!tdc->LoadCalibration(prefix)) {
-      delete tdc; tdc = nullptr;
+      delete tdc;
+      tdc = nullptr;
    }
 
    return tdc;
