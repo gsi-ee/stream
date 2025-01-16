@@ -872,7 +872,7 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
 
    // complete logic only when hist level is specified
    if (HistFillLevel() >= 4)
-   for (unsigned ch=0;ch<NumChannels();ch++) {
+   for (unsigned ch = 0; ch < NumChannels(); ch++) {
 
       ChannelRec &rec = fCh[ch];
 
@@ -923,9 +923,10 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
 
             rec.rising_ref_tm = tm - tm_ref;
 
-            double diff = rec.rising_ref_tm*1e9;
+            double diff = rec.rising_ref_tm * 1e9;
 
-            // printf("%s diff %f abs %d  tm %f tm_ref %f\n", GetName(), diff, (int)rec.refabs, tm, tm_ref);
+            // if (diff > 150 && diff < 160)
+            //    printf("%s ch %u diff %f tm %12.3f tm_ref %12.3f\n", GetName(), ch, diff, tm*1e9, tm_ref*1e9);
 
             // when refch is 0 on same board, histogram already filled
             if ((ref != 0) || (refproc != this))
