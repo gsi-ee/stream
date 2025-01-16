@@ -11,6 +11,10 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 #--- where to search for cmake modules ----
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
 
+#--- Set install dirs ---
+include(GNUInstallDirs)
+set(CMAKE_INSTALL_CMAKEDIR ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
+
 #--- Load some basic macros ---
 include(StreamMacros)
 
@@ -43,6 +47,10 @@ configure_file(${CMAKE_SOURCE_DIR}/cmake/scripts/StreamConfig.cmake.in
 
 configure_file(${CMAKE_SOURCE_DIR}/cmake/scripts/streamlogin.in
                ${CMAKE_BINARY_DIR}/streamlogin  @ONLY NEWLINE_STYLE UNIX)
+
+
+install(FILES ${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
+        DESTINATION ${CMAKE_INSTALL_CMAKEDIR})
 
 
 add_subdirectory(framework)
