@@ -17,3 +17,12 @@ GO4_USER_ANALYSIS(
 )
 
 STREAM_INSTALL_HEADERS(go4engine TStreamEvent.h TUserSource.h TFirstStepProcessor.h)
+
+install(
+   TARGETS Go4UserAnalysis
+   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+   PUBLIC_HEADER DESTINATION ${STREAM_INSTALL_INCLUDEDIR})
+
+
+install(FILES ${CMAKE_BINARY_DIR}/lib/libGo4UserAnalysis.rootmap ${CMAKE_BINARY_DIR}/lib/libGo4UserAnalysis_rdict.pcm
+        DESTINATION ${CMAKE_INSTALL_LIBDIR})

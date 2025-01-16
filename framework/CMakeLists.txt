@@ -129,6 +129,10 @@ if(APPLE)
   target_compile_definitions(Stream PUBLIC STREAM_AARCH64)
 endif()
 
+foreach(dir base dogma get4 hadaq mbs nx)
+   install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/${dir}
+          DESTINATION ${STREAM_INSTALL_INCLUDEDIR})
+endforeach()
 
 if(ROOT_FOUND)
 
@@ -157,9 +161,10 @@ if(ROOT_FOUND)
                             DEPENDENCIES Stream
                             NOINSTALL)
 
-endif()
+   install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/root
+           DESTINATION ${STREAM_INSTALL_INCLUDEDIR})
 
-foreach(dir base dogma get4 hadaq mbs nx root)
-   install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/${dir}
-          DESTINATION ${STREAM_INSTALL_INCLUDEDIR})
-endforeach()
+   install(FILES ${CMAKE_BINARY_DIR}/lib/libStreamDict.rootmap ${CMAKE_BINARY_DIR}/lib/libStreamDict_rdict.pcm
+           DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+endif()
