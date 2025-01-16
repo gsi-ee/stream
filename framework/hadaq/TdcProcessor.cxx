@@ -4251,15 +4251,21 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
       }
 
       if (!feof(f)) {
-         (void) fread(&fCalibrTemp, sizeof(fCalibrTemp), 1, f);
-         (void) fread(&fCalibrTempCoef, sizeof(fCalibrTempCoef), 1, f);
+         auto res1 = fread(&fCalibrTemp, sizeof(fCalibrTemp), 1, f);
+         auto res2 = fread(&fCalibrTempCoef, sizeof(fCalibrTempCoef), 1, f);
+         (void) res1;
+         (void) res2;
 
          for (unsigned ch = 0; ch < NumChannels(); ch++)
             if (!feof(f)) {
-               (void) fread(&(fCh[ch].time_shift_per_grad), sizeof(fCh[ch].time_shift_per_grad), 1, f);
-               (void) fread(&(fCh[ch].trig0d_coef), sizeof(fCh[ch].trig0d_coef), 1, f);
-               (void) fread(&(fCh[ch].calibr_quality_rising), sizeof(fCh[ch].calibr_quality_rising), 1, f);
-               (void) fread(&(fCh[ch].calibr_quality_falling), sizeof(fCh[ch].calibr_quality_falling), 1, f);
+               auto res3 = fread(&(fCh[ch].time_shift_per_grad), sizeof(fCh[ch].time_shift_per_grad), 1, f);
+               auto res4 = fread(&(fCh[ch].trig0d_coef), sizeof(fCh[ch].trig0d_coef), 1, f);
+               auto res5 = fread(&(fCh[ch].calibr_quality_rising), sizeof(fCh[ch].calibr_quality_rising), 1, f);
+               auto res6 = fread(&(fCh[ch].calibr_quality_falling), sizeof(fCh[ch].calibr_quality_falling), 1, f);
+               (void) res3;
+               (void) res4;
+               (void) res5;
+               (void) res6;
 
                // old files with bubble coefficients
                if ((fabs(fCh[ch].calibr_quality_rising-20.)<0.01) && (fabs(fCh[ch].calibr_quality_falling-1.06)<0.01)) {
