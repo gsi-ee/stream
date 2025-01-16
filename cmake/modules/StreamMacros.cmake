@@ -51,6 +51,7 @@ function(STREAM_LINK_LIBRARY libname)
    cmake_parse_arguments(ARG "NOEXPORT;NOWARN" "" "SOURCES;LIBRARIES;DEFINITIONS;DEPENDENCIES" ${ARGN})
 
    add_library(${libname} SHARED ${ARG_SOURCES})
+   add_library(stream::${libname} ALIAS ${libname})
 
    set_target_properties(${libname} PROPERTIES ${STREAM_LIBRARY_PROPERTIES})
 
@@ -65,4 +66,12 @@ function(STREAM_LINK_LIBRARY libname)
    # add_dependencies(${libname} move_headers ${ARG_DEPENDENCIES})
 
    target_include_directories(${libname} PRIVATE ${CMAKE_SOURCE_DIR}/include)
+
+   install(
+    TARGETS ${libname}
+    EXPORT ${PROJECT_NAME}Targets
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    PUBLIC_HEADER DESTINATION ${STREAM_INSTALL_INCLUDEDIR})
+
+
 endfunction()

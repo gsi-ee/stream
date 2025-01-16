@@ -158,3 +158,8 @@ if(ROOT_FOUND)
                             NOINSTALL)
 
 endif()
+
+foreach(dir base dogma get4 hadaq mbs nx root)
+   install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/${dir}
+          DESTINATION ${STREAM_INSTALL_INCLUDEDIR})
+endforeach()

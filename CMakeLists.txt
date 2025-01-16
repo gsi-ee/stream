@@ -14,6 +14,17 @@ set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
 #--- Set install dirs ---
 include(GNUInstallDirs)
 set(CMAKE_INSTALL_CMAKEDIR ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
+set(STREAM_INSTALL_INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR}/stream)
+
+export(
+  TARGETS ${PROJECT_TARGETS}
+  NAMESPACE stream::
+  FILE ${PROJECT_NAME}Targets.cmake)
+
+install(
+  EXPORT ${PROJECT_NAME}Targets
+  NAMESPACE stream::
+  DESTINATION ${CMAKE_INSTALL_CMAKEDIR})
 
 #--- Load some basic macros ---
 include(StreamMacros)
@@ -45,13 +56,22 @@ endif()
 configure_file(${CMAKE_SOURCE_DIR}/cmake/scripts/StreamConfig.cmake.in
                ${CMAKE_BINARY_DIR}/StreamConfig.cmake COPYONLY)
 
+set(_streamsys_ ${CMAKE_BINARY_DIR})
+set(_streaminc_ ${CMAKE_BINARY_DIR}/include)
+set(_streamlib_ ${CMAKE_BINARY_DIR}/lib)
 configure_file(${CMAKE_SOURCE_DIR}/cmake/scripts/streamlogin.in
                ${CMAKE_BINARY_DIR}/streamlogin  @ONLY NEWLINE_STYLE UNIX)
 
+# --- for install use case ----
+set(_streamsys_ ${CMAKE_INSTALL_PREFIX})
+set(_streaminc_ ${CMAKE_INSTALL_PREFIX}/${STREAM_INSTALL_INCLUDEDIR})
+set(_streamlib_ ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR})
+configure_file(${CMAKE_SOURCE_DIR}/cmake/scripts/streamlogin.in
+                ${CMAKE_BINARY_DIR}/macros/streamlogin @ONLY NEWLINE_STYLE UNIX)
+# -----------------------------
 
-install(FILES ${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
-        DESTINATION ${CMAKE_INSTALL_CMAKEDIR})
-
+install(PROGRAMS ${PROJECT_BINARY_DIR}/macros/streamlogin
+        DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 add_subdirectory(framework)
 
