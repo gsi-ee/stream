@@ -135,6 +135,12 @@ bool hadaq::MdcProcessor::FirstBufferScan(const base::Buffer &buf)
          FillH2(deltaT_ToT, timeDiff, timeToT);
          FillH2(T0_T1, timeDiff, timeDiff1);
 
+         if (hChToTHld)
+            DefFillH2(*hChToTHld, fHldId, channel, timeToT);
+
+         if (hChDeltaTHld)
+            DefFillH2(*hChDeltaTHld, fHldId, channel, timeDiff);
+
          if (HistFillLevel() > 2) {
             FillH1(tot_h[channel], timeToT);
             FillH2(potato_h[channel], timeDiff, timeToT);
