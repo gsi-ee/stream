@@ -614,8 +614,7 @@ namespace hadaq {
                                               base::H2handle *hQaFine, base::H2handle *hQaToT,
                                               base::H2handle *hQaEdges, base::H2handle *hQaErrors,
                                               base::H2handle *hTot, base::H2handle *hShift,
-                                 base::H1handle *hExpTot, base::H2handle *hDev, base::H2handle *hTPrev, base::H2handle *hTotCount
-                                 )
+                                              base::H1handle *hExpTot, base::H2handle *hDev, base::H2handle *hTPrev, base::H2handle *hTotCount)
          {
             fHldId = id;
             fHitsPerHld = hHits;

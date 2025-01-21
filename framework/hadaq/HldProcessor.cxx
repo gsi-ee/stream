@@ -649,7 +649,8 @@ void hadaq::HldProcessor::UserPreLoop()
 
 void hadaq::HldProcessor::CreatePerTDCHisto()
 {
-   if (fErrPerTDC) return;
+   if (fErrPerTDC)
+      return;
 
    std::vector<TdcProcessor *> tdcs;
 
@@ -659,7 +660,8 @@ void hadaq::HldProcessor::CreatePerTDCHisto()
          tdcs.emplace_back(item.second->GetTDCWithIndex(indx));
    }
 
-   if (tdcs.empty()) return;
+   if (tdcs.empty())
+      return;
 
    std::string lbl = "xbin:";
    unsigned cnt = 0;
@@ -698,77 +700,75 @@ void hadaq::HldProcessor::CreatePerTDCHisto()
             TrbProcessor::GetDefaultNumCh(), 0, TrbProcessor::GetDefaultNumCh(),
             opt2.c_str());
 
-      // JAM 2021
+   // JAM 2021
 
-       if (!fToTPerTDCChannel)
-          fToTPerTDCChannel = MakeH2("ToTPerChannel", "ToT per TDC channel",
+   if (!fToTPerTDCChannel)
+      fToTPerTDCChannel = MakeH2("ToTPerChannel", "ToT per TDC channel",
                               tdcs.size(), 0, tdcs.size(),
-                                   TrbProcessor::GetDefaultNumCh(), 0, TrbProcessor::GetDefaultNumCh(),
-                                   opt2.c_str());
-       if (!fToTCountPerTDCChannel)
-          fToTCountPerTDCChannel = MakeH2("ToTCountPerChannel", "Number of evaluated ToTs per TDC channel",
+                              TrbProcessor::GetDefaultNumCh(), 0, TrbProcessor::GetDefaultNumCh(),
+                              opt2.c_str());
+   if (!fToTCountPerTDCChannel)
+      fToTCountPerTDCChannel = MakeH2("ToTCountPerChannel", "Number of evaluated ToTs per TDC channel",
                               tdcs.size(), 0, tdcs.size(),
-                                   TrbProcessor::GetDefaultNumCh(), 0, TrbProcessor::GetDefaultNumCh(),
-                                   opt2.c_str());
-       
+                              TrbProcessor::GetDefaultNumCh(), 0, TrbProcessor::GetDefaultNumCh(),
+                              opt2.c_str());
 
-        if (!fShiftPerTDCChannel)
-          fShiftPerTDCChannel = MakeH2("ShiftPerChannel", "Calibrated time shift of falling edge per TDC channel",
+   if (!fShiftPerTDCChannel)
+      fShiftPerTDCChannel = MakeH2("ShiftPerChannel", "Calibrated time shift of falling edge per TDC channel",
                               tdcs.size(), 0, tdcs.size(),
-                                   TrbProcessor::GetDefaultNumCh(), 0, TrbProcessor::GetDefaultNumCh(),
-                                   opt2.c_str());
+                              TrbProcessor::GetDefaultNumCh(), 0, TrbProcessor::GetDefaultNumCh(),
+                              opt2.c_str());
 
-        if (!fExpectedToTPerTDC)
-          fExpectedToTPerTDC = MakeH1("ExpectedToT", "Expected ToT used for calibration per TDC", tdcs.size(), 0, tdcs.size(), opt1.c_str());
+   if (!fExpectedToTPerTDC)
+      fExpectedToTPerTDC = MakeH1("ExpectedToT", "Expected ToT used for calibration per TDC", tdcs.size(), 0, tdcs.size(), opt1.c_str());
 
-        if (!fDevPerTDCChannel)
-          fDevPerTDCChannel = MakeH2("DevPerChannel", "Sigma against expected ToT per TDC channel",
+   if (!fDevPerTDCChannel)
+      fDevPerTDCChannel = MakeH2("DevPerChannel", "Sigma against expected ToT per TDC channel",
                               tdcs.size(), 0, tdcs.size(),
-                                   TrbProcessor::GetDefaultNumCh(), 0, TrbProcessor::GetDefaultNumCh(),
-                                   opt2.c_str());
+                              TrbProcessor::GetDefaultNumCh(), 0, TrbProcessor::GetDefaultNumCh(),
+                              opt2.c_str());
 
     if (!fPrevDiffPerTDCChannel)
-    fPrevDiffPerTDCChannel = MakeH2("RisingDtPerChannel", "Rising edge delta t to reference channel, per TDC     channel", tdcs.size(), 0, tdcs.size(),
+       fPrevDiffPerTDCChannel = MakeH2("RisingDtPerChannel", "Rising edge delta t to reference channel, per TDC     channel", tdcs.size(), 0, tdcs.size(),
                                     TrbProcessor::GetDefaultNumCh(), 0, TrbProcessor::GetDefaultNumCh(),
                                     opt2.c_str());
 
-   if ( !hadaq::TdcProcessor::IsHadesReducedMonitoring() && (hadaq::TdcProcessor::GetHadesMonitorInterval() > 0)) {
-       if (!fQaFinePerTDCChannel)
-          fQaFinePerTDCChannel = MakeH2("QaFinePerChannel", "QA fine time per TDC channel",
-                              tdcs.size(), 0, tdcs.size(),
+   if (!hadaq::TdcProcessor::IsHadesReducedMonitoring() && (hadaq::TdcProcessor::GetHadesMonitorInterval() > 0)) {
+      if (!fQaFinePerTDCChannel)
+         fQaFinePerTDCChannel = MakeH2("QaFinePerChannel", "QA fine time per TDC channel",
+                                   tdcs.size(), 0, tdcs.size(),
                                    TrbProcessor::GetDefaultNumCh(), 0, TrbProcessor::GetDefaultNumCh(),
                                    opt2.c_str());
 
-       if (!fQaToTPerTDCChannel)
-          fQaToTPerTDCChannel = MakeH2("QAToTPerChannel", "QA ToT per TDC channel",
-                              tdcs.size(), 0, tdcs.size(),
+      if (!fQaToTPerTDCChannel)
+         fQaToTPerTDCChannel = MakeH2("QAToTPerChannel", "QA ToT per TDC channel",
+                                   tdcs.size(), 0, tdcs.size(),
                                    TrbProcessor::GetDefaultNumCh(), 0, TrbProcessor::GetDefaultNumCh(),
                                    opt2.c_str());
-       if (!fQaEdgesPerTDCChannel)
+      if (!fQaEdgesPerTDCChannel)
           fQaEdgesPerTDCChannel = MakeH2("QaEdgesPerChannel", "QA edges per TDC channel",
-                              tdcs.size(), 0, tdcs.size(),
+                                   tdcs.size(), 0, tdcs.size(),
                                    TrbProcessor::GetDefaultNumCh(), 0, TrbProcessor::GetDefaultNumCh(),
                                    opt2.c_str());
 
-       if (!fQaErrorsPerTDCChannel)
+      if (!fQaErrorsPerTDCChannel)
           fQaErrorsPerTDCChannel = MakeH2("QaErrorsPerChannel", "QA errors per TDC channel",
-                              tdcs.size(), 0, tdcs.size(),
+                                   tdcs.size(), 0, tdcs.size(),
                                    TrbProcessor::GetDefaultNumCh(), 0, TrbProcessor::GetDefaultNumCh(),
                                    opt2.c_str());
 
-       if (!fQaSummary)
-          fQaSummary = MakeH1("QaSummary", "QA summary", 4, -0.5, 3.5, "QA histogram;# bad channels");
-
-
+      if (!fQaSummary)
+         fQaSummary = MakeH1("QaSummary", "QA summary", 4, -0.5, 3.5, "QA histogram;# bad channels");
    }
+
    cnt = 0;
    for (auto &tdc : tdcs)
       tdc->AssignPerHldHistos(cnt++, &fHitsPerTDC, &fErrPerTDC, &fHitsPerTDCChannel, &fErrPerTDCChannel, &fCorrPerTDCChannel,
-          &fQaFinePerTDCChannel, &fQaToTPerTDCChannel, &fQaEdgesPerTDCChannel, &fQaErrorsPerTDCChannel,
-           &fToTPerTDCChannel, &fShiftPerTDCChannel, &fExpectedToTPerTDC,  &fDevPerTDCChannel,
-                              &fPrevDiffPerTDCChannel, &fToTCountPerTDCChannel);
+                                     &fQaFinePerTDCChannel, &fQaToTPerTDCChannel, &fQaEdgesPerTDCChannel, &fQaErrorsPerTDCChannel,
+                                     &fToTPerTDCChannel, &fShiftPerTDCChannel, &fExpectedToTPerTDC,  &fDevPerTDCChannel,
+                                     &fPrevDiffPerTDCChannel, &fToTCountPerTDCChannel);
 }
- 
+
 
 ////////////////////////////////////////////////////////////////////////////////////////
 /// Enable cross-processing of data
