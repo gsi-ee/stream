@@ -130,6 +130,12 @@ namespace hadaq {
          base::H1handle fExpectedToTPerTDC;  ///< HADAQ expected ToT per TDC sed for calibration
          base::H2handle fDevPerTDCChannel;  ///< HADAQ ToT deviation per TDC channel
          base::H2handle fPrevDiffPerTDCChannel;  ///< HADAQ rising edge time difference to previous channel
+         // SL2025: overview histogram for MDC
+         base::H1handle fHitsPerMDC = nullptr;   ///< HADAQ hits per MDC
+         base::H1handle fErrPerMDC = nullptr;    ///< HADAQ errors per MDC
+         base::H2handle fToTPerMDCChannel = nullptr;  ///< HADES ToT per MDC channel, real values
+         base::H2handle fDeltaTPerMDCChannel = nullptr;  ///< HADES DeltaT per MDC channel
+
          HldMessage     fMsg;        ///< used for TTree store
          HldMessage    *pMsg;        ///< used for TTree store
 
@@ -152,6 +158,7 @@ namespace hadaq {
          void ResetStore() override;
 
          void CreatePerTDCHisto();
+         void CreatePerMDCHisto();
 
          void DoHadesHistSummary();
 

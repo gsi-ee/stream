@@ -4,17 +4,26 @@
 hadaq::MdcProcessor::MdcProcessor(TrbProcessor* trb, unsigned subid) :
    hadaq::SubProcessor(trb, "MDC_%04x", subid)
 {
-   HitsPerBinRising = MakeH2("HitsPerBinRising", "", 33, -1, 32, 8, 0, 8);
-   HitsPerBinFalling = MakeH2("HitsPerBinFalling", "", 33, -1, 32, 8, 0, 8);
-   ToT = MakeH2("ToT", "", 32, 0, 32, 1500, 0.2, 600.2);
-   deltaT = MakeH2("deltaT", "", 32, 0, 32, 6000, -1199.8, 1200.2);
-   alldeltaT = MakeH1("alldeltaT", "", 6000, -1199.8, 1200.2);
-   allToT = MakeH1("allToT", "", 1500, 0.2, 600.2);
-   deltaT_ToT = MakeH2("deltaT_ToT", "", 6000, -2099.8, 300.2, 1500, 0.2, 600.2);
-   T0_T1 = MakeH2("T0_T1", "", 6000, -2099.8, 300.2, 6000, -2099.8, 300.2);
-   Errors = MakeH1("Errors", "", 33, -1, 32);
+   if (HistFillLevel() > 1) {
+      alldeltaT = MakeH1("alldeltaT", "", 6000, -1199.8, 1200.2);
+      allToT = MakeH1("allToT", "", 1500, 0.2, 600.2);
+      Errors = MakeH1("Errors", "", 33, -1, 32);
+   }
+
    if (HistFillLevel() > 2) {
-      for (unsigned i = 0; i < TDCCHANNELS + 1; i++) {
+      HitsPerBinRising = MakeH2("HitsPerBinRising", "", 33, -1, 32, 8, 0, 8);
+      HitsPerBinFalling = MakeH2("HitsPerBinFalling", "", 33, -1, 32, 8, 0, 8);
+      ToT = MakeH2("ToT", "", 32, 0, 32, 1500, 0.2, 600.2);
+      deltaT = MakeH2("deltaT", "", 32, 0, 32, 6000, -1199.8, 1200.2);
+      deltaT_ToT = MakeH2("deltaT_ToT", "", 6000, -2099.8, 300.2, 1500, 0.2, 600.2);
+      T0_T1 = MakeH2("T0_T1", "", 6000, -2099.8, 300.2, 6000, -2099.8, 300.2);
+   }
+   for (unsigned i = 0; i < TDCCHANNELS + 1; i++) {
+      t1_h[i] = nullptr;
+      tot_h[i] = nullptr;
+      potato_h[i] = nullptr;
+
+      if (HistFillLevel() > 3) {
          char chno[16];
          snprintf(chno, sizeof(chno), "Ch%02d_t1", i);
          t1_h[i] = MakeH1(chno, chno, 6000, -1199.8, 1200.2, "ns");
@@ -79,13 +88,17 @@ bool hadaq::MdcProcessor::FirstBufferScan(const base::Buffer &buf)
    FillH2(HitsPerBinRising, -1, data & 0x7);
    signed reference = data & 0x1FFF;
 
+   int numhits = 0, numerrs = 0;
+
    for (unsigned n = 1; n < len; n++) {
       uint32_t data = arr[n];
       unsigned channel = data >> 27;
 
       if ((data >> 26) & 1) {
+         numerrs++;
          FillH1(Errors, channel);
       } else {
+         numhits++;
          signed risingHit = (data >> 13) & 0x1fff;
          signed fallingHit = (data >> 0) & 0x1fff;
 
@@ -129,5 +142,12 @@ bool hadaq::MdcProcessor::FirstBufferScan(const base::Buffer &buf)
          }
       }
    }
+
+   if (hHitsHld)
+      DefFillH1(*hHitsHld, fHldId, numhits);
+
+   if (hErrsHld)
+      DefFillH1(*hErrsHld, fHldId, numerrs);
+
    return true;
 }

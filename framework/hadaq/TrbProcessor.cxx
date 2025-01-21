@@ -1056,7 +1056,8 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
                ix += datalen;
                continue; // go to next block
             } else {
-               if (CheckPrintError()) printf("sub-sub-event data with id 0x%04x does not belong to TDC\n", dataid);
+               if (CheckPrintError())
+                  printf("sub-sub-event data with id 0x%04x does not belong to TDC\n", dataid);
             }
          } else if ((dataid >= gMDCMin) && (dataid < gMDCMax)) {
             auto mdcproc = new MdcProcessor(this, dataid);
