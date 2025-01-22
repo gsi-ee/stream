@@ -7,16 +7,16 @@ hadaq::MdcProcessor::MdcProcessor(TrbProcessor* trb, unsigned subid) :
    if (HistFillLevel() > 1) {
       alldeltaT = MakeH1("alldeltaT", "", 6000, -1199.8, 1200.2);
       allToT = MakeH1("allToT", "", 1500, 0.2, 600.2);
-      Errors = MakeH1("Errors", "", 33, -1, 32);
+      Errors = MakeH1("Errors", "", TDCCHANNELS+1, -1, TDCCHANNELS);
+      ToT = MakeH2("ToT", "", TDCCHANNELS, 0, TDCCHANNELS, 500, 0.2, 600.2);
+      deltaT = MakeH2("deltaT", "", TDCCHANNELS, 0, TDCCHANNELS, 600, -1199.8, 1200.2);
+      deltaT_ToT = MakeH2("deltaT_ToT", "", 600, -2099.8, 300.2, 500, 0.2, 600.2);
    }
 
    if (HistFillLevel() > 2) {
       HitsPerBinRising = MakeH2("HitsPerBinRising", "", 33, -1, 32, 8, 0, 8);
       HitsPerBinFalling = MakeH2("HitsPerBinFalling", "", 33, -1, 32, 8, 0, 8);
-      ToT = MakeH2("ToT", "", 32, 0, 32, 1500, 0.2, 600.2);
-      deltaT = MakeH2("deltaT", "", 32, 0, 32, 6000, -1199.8, 1200.2);
-      deltaT_ToT = MakeH2("deltaT_ToT", "", 6000, -2099.8, 300.2, 1500, 0.2, 600.2);
-      T0_T1 = MakeH2("T0_T1", "", 6000, -2099.8, 300.2, 6000, -2099.8, 300.2);
+      T0_T1 = MakeH2("T0_T1", "", 600, -2099.8, 300.2, 600, -2099.8, 300.2);
    }
    for (unsigned i = 0; i < TDCCHANNELS + 1; i++) {
       t1_h[i] = nullptr;
@@ -136,10 +136,10 @@ bool hadaq::MdcProcessor::FirstBufferScan(const base::Buffer &buf)
          FillH2(T0_T1, timeDiff, timeDiff1);
 
          if (hChToTHld)
-            DefFillH2(*hChToTHld, fHldId, channel, timeToT);
+            SetH2Content(*hChToTHld, fHldId, channel, timeToT);
 
          if (hChDeltaTHld)
-            DefFillH2(*hChDeltaTHld, fHldId, channel, timeDiff);
+            SetH2Content(*hChDeltaTHld, fHldId, channel, timeDiff);
 
          if (HistFillLevel() > 2) {
             FillH1(tot_h[channel], timeToT);
