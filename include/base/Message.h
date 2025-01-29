@@ -225,21 +225,21 @@ namespace base {
 
          // ---------- Common functions -----------------------
 
-         /// Returns \a true is message type is #MSG_NOP (filler message)
+         /// Returns \a true is message type is MSG_NOP (filler message)
          inline bool isNopMsg() const { return getMessageType() == MSG_NOP; }
-         /// Returns \a true is message type is #MSG_EPOCH (epoch marker)
+         /// Returns \a true is message type is MSG_EPOCH (epoch marker)
          inline bool isEpochMsg() const { return getMessageType() == MSG_EPOCH;}
-         /// Returns \a true is message type is #MSG_SYNC
+         /// Returns \a true is message type is MSG_SYNC
          inline bool isSyncMsg() const { return getMessageType() == MSG_SYNC; }
-         /// Returns \a true is message type is #MSG_AUX
+         /// Returns \a true is message type is MSG_AUX
          inline bool isAuxMsg() const { return getMessageType() == MSG_AUX; }
-         /// Returns \a true is message type is #MSG_SYS (system message)
+         /// Returns \a true is message type is MSG_SYS (system message)
          inline bool isSysMsg() const { return getMessageType() == MSG_SYS; }
 
-         /// Returns \a true if system message and subtype #ROC_SYSMSG_DAQ_START
+         /// Returns \a true if system message and subtype ROC_SYSMSG_DAQ_START
          inline bool isStartDaqMsg() const
            { return isSysMsg() && (getSysMesType() == SYSMSG_DAQ_START); }
-         /// Returns \a true if system message and subtype #ROC_SYSMSG_DAQ_FINISH
+         /// Returns \a true if system message and subtype ROC_SYSMSG_DAQ_FINISH
          inline bool isStopDaqMsg() const
            { return isSysMsg() && (getSysMesType() == SYSMSG_DAQ_FINISH); }
 

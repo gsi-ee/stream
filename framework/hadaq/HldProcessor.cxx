@@ -259,7 +259,8 @@ void hadaq::HldProcessor::SetUseThreads(bool on)
    fThrdEventsProcessed = 0;
 }
 
-void hadaq::HldProcessor::WorkingThread(hadaq::ThreadData *data) {
+void hadaq::HldProcessor::WorkingThread(hadaq::ThreadData *data)
+{
 
    // notify main thread - we are started
    data->cv.notify_one();

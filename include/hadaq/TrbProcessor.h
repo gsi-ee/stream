@@ -178,7 +178,9 @@ namespace hadaq {
             if (id4!=0) AddHadaqHUBId(id4);
          }
 
+         /** Set number of channels */
          void SetNumCh(unsigned num) { fCustomNumChannels = num; }
+         /** Get number of channels */
          unsigned GetNumCh() const;
 
          /** deprecated, keep for backward compatibility, can be ignored */
