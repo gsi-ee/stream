@@ -25,8 +25,6 @@ namespace dabc {
 
    /** \brief Defines and implements basic POSIX file interface
     *
-    * \ingroup dabc_all_classes
-    *
     * Used to virtualize access to file system and be able to replace such access by other file engines
     */
 
@@ -74,8 +72,6 @@ namespace dabc {
    // ==============================================================================
 
    /** \brief Base class for file writing/reading in DABC
-    *
-    * \ingroup dabc_all_classes
     *
     * Mainly used to handle \ref FileInterface instance and
     * \ref FileInterface::Handle pointer
@@ -173,10 +169,7 @@ namespace dabc {
    enum { BinaryFileMagicValue  = 1237 };
 
 
-   /** \brief Generic file storage for DABC buffers
-    *
-    * \ingroup dabc_all_classes
-    */
+   /** \brief Generic file storage for DABC buffers  */
 
    class BinaryFile : public BasicFile {
       protected:
