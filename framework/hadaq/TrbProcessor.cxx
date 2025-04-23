@@ -1032,10 +1032,12 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
             continue;
          } else if ((dataid >= gTDCMin) && (dataid <= gTDCMax)) {
 
+            bool is_hades = TdcProcessor::GetHadesMonitorInterval() > 0;
+
             // suppose this is TDC data, first word should be TDC header
-            if ((datalen > 0) && TdcMessage(sub->Data(ix)).isHeaderMsg()) {
+            if (((datalen > 0) && TdcMessage(sub->Data(ix)).isHeaderMsg()) || ((datalen == 0) && is_hades)) {
                // here should be channel/edge/min/max selection based on TDC design ID
-               bool ver4 = TdcMessage(sub->Data(ix)).IsVer4Header();
+               bool ver4 = (datalen > 0) && TdcMessage(sub->Data(ix)).IsVer4Header();
                unsigned numch = GetNumCh(), edges = gEdgesMask;
 
                TdcProcessor* tdcproc = new TdcProcessor(this, dataid, numch, edges, ver4);
