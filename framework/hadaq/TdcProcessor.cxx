@@ -325,6 +325,8 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
 
    fLinearNumPoints = gDefaultLinearNumPoints;
 
+   bool is_hades = TdcProcessor::GetHadesMonitorInterval() > 0;
+
    if (HistFillLevel() > 1) {
       fChannels = MakeH1("Channels", "Messages per TDC channels", numchannels, 0, numchannels, "ch");
       if (DoFallingEdge() && DoRisingEdge())
@@ -346,7 +348,9 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
                    (fNumFineBins == 1000 ? 100 : fNumFineBins), 0, fNumFineBins, "ch;calibrated fine");
       }
 
-      fAllCoarse = MakeH2("CoarseTm", "coarse counter value", numchannels, 0, numchannels, 2048, 0, 2048, "ch;coarse");
+
+      if (!hadaq::TdcProcessor::IsHadesReducedMonitoring() && !is_hades)
+         fAllCoarse = MakeH2("CoarseTm", "coarse counter value", numchannels, 0, numchannels, 2048, 0, 2048, "ch;coarse");
 
       fhTotVsChannel = MakeH2("TotVsChannel", "ToT", numchannels, 0, numchannels, gTotRange*100/(gHist2dReduce > 0 ? gHist2dReduce : 1), 0., gTotRange, "ch;ToT [ns]");
 
