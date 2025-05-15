@@ -25,43 +25,43 @@ class TFirstStepProcessor : public TGo4EventProcessor,
       TFirstStepProcessor(const char* name);
       virtual ~TFirstStepProcessor();
 
-      virtual Bool_t BuildEvent(TGo4EventElement*);
+      Bool_t BuildEvent(TGo4EventElement*) override;
 
-      virtual bool InternalHistFormat() const { return false; }
+      bool InternalHistFormat() const override { return false; }
 
-      virtual void SetSortedOrder(bool = true);
-      virtual bool IsSortedOrder();
+      void SetSortedOrder(bool = true) override;
+      bool IsSortedOrder() override;
 
-      virtual base::H1handle MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle = 0);
-      virtual bool GetH1NBins(base::H1handle h1, int &nbins);
-      virtual void FillH1(base::H1handle h1, double x, double weight = 1.);
-      virtual double GetH1Content(base::H1handle h1, int nbin);
-      virtual void SetH1Content(base::H1handle h1, int bin, double v = 0.);
-      virtual void ClearH1(base::H1handle h1);
-      virtual void CopyH1(base::H1handle tgt, base::H1handle src);
-      virtual void SetH1Title(base::H1handle h1, const char* title);
+      base::H1handle MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle = nullptr) override;
+      bool GetH1NBins(base::H1handle h1, int &nbins) override;
+      void FillH1(base::H1handle h1, double x, double weight = 1.) override;
+      double GetH1Content(base::H1handle h1, int nbin) override;
+      void SetH1Content(base::H1handle h1, int bin, double v = 0.) override;
+      void ClearH1(base::H1handle h1) override;
+      void CopyH1(base::H1handle tgt, base::H1handle src) override;
+      void SetH1Title(base::H1handle h1, const char* title) override;
 
-      virtual base::H2handle MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options = 0);
-      virtual bool GetH2NBins(base::H2handle h2, int &nbins1, int &nbins2);
-      virtual void FillH2(base::H2handle h2, double x, double y, double weight = 1.);
-      virtual double GetH2Content(base::H2handle h2, int bin1, int bin2);
-      virtual void SetH2Content(base::H2handle h2, int bin1, int bin2, double v = 0.);
-      virtual void ClearH2(base::H2handle h2);
-      virtual void SetH2Title(base::H2handle h2, const char* title);
+      base::H2handle MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options = nullptr) override;
+      bool GetH2NBins(base::H2handle h2, int &nbins1, int &nbins2) override;
+      void FillH2(base::H2handle h2, double x, double y, double weight = 1.) override;
+      double GetH2Content(base::H2handle h2, int bin1, int bin2) override;
+      void SetH2Content(base::H2handle h2, int bin1, int bin2, double v = 0.) override;
+      void ClearH2(base::H2handle h2) override;
+      void SetH2Title(base::H2handle h2, const char* title) override;
 
-      virtual void ClearAllHistograms();
+      void ClearAllHistograms() override;
 
-      virtual base::C1handle MakeC1(const char* name, double left, double right, base::H1handle h1 = 0);
-      virtual void ChangeC1(base::C1handle c1, double left, double right);
-      virtual int TestC1(base::C1handle c1, double value, double* dist = 0);
-      virtual double GetC1Limit(base::C1handle c1, bool isleft = true);
+      base::C1handle MakeC1(const char* name, double left, double right, base::H1handle h1 = nullptr) override;
+      void ChangeC1(base::C1handle c1, double left, double right) override;
+      int TestC1(base::C1handle c1, double value, double* dist = nullptr) override;
+      double GetC1Limit(base::C1handle c1, bool isleft = true) override;
 
-      virtual bool RegisterObject(TObject* tobj, const char* subfolder = 0);
+      bool RegisterObject(TObject* tobj, const char* subfolder = nullptr) override;
 
-      virtual void UserPreLoop();
-      virtual void UserPostLoop();
+      void UserPreLoop() override;
+      void UserPostLoop() override;
 
-   ClassDef(TFirstStepProcessor,1)
+   ClassDefOverride(TFirstStepProcessor,1)
 };
 
 #endif
