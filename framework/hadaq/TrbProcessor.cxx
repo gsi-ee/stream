@@ -452,6 +452,11 @@ bool hadaq::TrbProcessor::FirstBufferScan(const base::Buffer& buf)
 
    while ((ev = iter.nextEvent()) != nullptr) {
 
+      if (!ev->IsSwapped()) {
+         printf("Not swapped HADAQ events\n");
+         return true;
+      }
+
       if (ev->GetSize() > buf().datalen+4) {
          printf("Corrupted event size %u!\n", ev->GetSize());
          return true;

@@ -386,6 +386,11 @@ bool hadaq::HldProcessor::FirstBufferScan(const base::Buffer& buf)
 
    while ((ev = iter.nextEvent()) != nullptr) {
 
+      if (!ev->IsSwapped()) {
+         printf("Not swapped HADAQ events\n");
+         return false;
+      }
+
       evcnt++;
 
       DefFillH1(fEvType, (ev->GetId() & 0xf), 1.);

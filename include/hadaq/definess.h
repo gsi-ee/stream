@@ -114,8 +114,6 @@ namespace hadaqs {
 
 #define HADAQ_SWAP4(value) (((value & 0xFF) << 24) | ((value & 0xFF00) << 8) | ((value & 0xFF0000) >> 8) | ((value & 0xFF000000) >> 24))
 
-// #define HADAQ_SWAP4(value)  __builtin_bswap32(value)
-
    /**
     * HADES transport unit header
     * used as base for event and subevent
@@ -140,35 +138,17 @@ namespace hadaqs {
          /** access value */
          inline uint32_t Value(const uint32_t *member) const
          {
-//            return IsSwapped() ? __builtin_bswap32 (*member) : *member;
-
             return IsSwapped() ? HADAQ_SWAP4(*member) : *member;
-
-//            return IsSwapped() ? ((((uint8_t *) member)[0] << 24) |
-//                                  (((uint8_t *) member)[1] << 16) |
-//                                  (((uint8_t *) member)[2] << 8) |
-//                                  (((uint8_t *) member)[3])) : *member;
          }
 
          /** swap-save method to set value stolen from hadtu.h */
          inline void SetValue(uint32_t *member, uint32_t val)
          {
             *member = IsSwapped() ? HADAQ_SWAP4(val) : val;
-
-//            *member = IsSwapped() ? __builtin_bswap32 (val) : val;
-//            *member = IsSwapped() ?
-//                    ((((uint8_t *) &val)[0] << 24) |
-//                    (((uint8_t *) &val)[1] << 16) |
-//                    (((uint8_t *) &val)[2] << 8) |
-//                    (((uint8_t *) &val)[3])) : val;
          }
 
-
-         /** get decoding */
-         uint32_t GetDecoding() const { return Value(&tuDecoding); }
-
-         /** get size */
-         inline uint32_t GetSize() const { return Value(&tuSize); }
+         uint32_t GetDecoding() const { return HADAQ_SWAP4(tuDecoding); }
+         inline uint32_t GetSize() const { return HADAQ_SWAP4(tuSize); }
 
          /** get padded size */
          inline uint32_t GetPaddedSize() const
@@ -178,11 +158,8 @@ namespace hadaqs {
             return (rest==0) ? hedsize : (hedsize + 8 - rest);
          }
 
-         /** set size */
-         void SetSize(uint32_t bytes) { SetValue(&tuSize, bytes); }
-
-         /** set decoding */
-         void SetDecoding(uint32_t decod) { SetValue(&tuDecoding, decod); }
+         void SetSize(uint32_t bytes) { tuSize = HADAQ_SWAP4(bytes); }
+         void SetDecoding(uint32_t decod) { tuDecoding = HADAQ_SWAP4(decod); }
    };
 
    // ======================================================================
@@ -201,11 +178,8 @@ namespace hadaqs {
          /** destructor */
          ~HadTuId() {}
 
-         /** get id */
-         inline uint32_t GetId() const { return Value(&tuId); }
-
-         /** set id */
-         void SetId(uint32_t id) { SetValue(&tuId, id); }
+         inline uint32_t GetId() const { return HADAQ_SWAP4(tuId); }
+         void SetId(uint32_t id) { tuId = HADAQ_SWAP4(id); }
 
          /** get data error */
          inline bool GetDataError() const { return (GetId() & 0x80000000) != 0; }
@@ -332,25 +306,17 @@ namespace hadaqs {
          /** destructor */
          ~RawEvent() {}
 
-         /** get seq nr */
-         uint32_t GetSeqNr() const { return Value(&evtSeqNr); }
-         /** set seq nr */
-         void SetSeqNr(uint32_t n) { SetValue(&evtSeqNr, n); }
+         uint32_t GetSeqNr() const { return HADAQ_SWAP4(evtSeqNr); }
+         void SetSeqNr(uint32_t n) { evtSeqNr = HADAQ_SWAP4(n); }
 
-         /** get run nr */
-         int32_t GetRunNr() const { return Value(&evtRunNr); }
-         /** set run nr */
-         void SetRunNr(uint32_t n) { SetValue(&evtRunNr, n); }
+         int32_t GetRunNr() const { return HADAQ_SWAP4(evtRunNr); }
+         void SetRunNr(uint32_t n) { evtRunNr = HADAQ_SWAP4(n); }
 
-         /** get date */
-         int32_t GetDate() const { return Value(&evtDate); }
-         /** set date */
-         void SetDate(uint32_t d) { SetValue(&evtDate, d); }
+         int32_t GetDate() const { return HADAQ_SWAP4(evtDate); }
+         void SetDate(uint32_t d) { evtDate = HADAQ_SWAP4(d); }
 
-         /** get time */
-         int32_t GetTime() const { return Value(&evtTime); }
-         /** set time */
-         void SetTime(uint32_t t) { SetValue(&evtTime, t); }
+         int32_t GetTime() const { return HADAQ_SWAP4(evtTime); }
+         void SetTime(uint32_t t) { evtTime = HADAQ_SWAP4(t); }
 
          /** initialize subevent */
          void Init(uint32_t evnt, uint32_t run=0, uint32_t id=EvtId_DABC)
@@ -419,10 +385,8 @@ namespace hadaqs {
          /** get alignment */
          unsigned Alignment() const { return 1 << ( GetDecoding() >> 16 & 0xff); }
 
-         /** get trigger number */
-         uint32_t GetTrigNr() const { return Value(&subEvtTrigNr); }
-         /** set trigger number */
-         void SetTrigNr(uint32_t trigger) { SetValue(&subEvtTrigNr, trigger); }
+         uint32_t GetTrigNr() const { return HADAQ_SWAP4(subEvtTrigNr); }
+         void SetTrigNr(uint32_t trigger) { subEvtTrigNr = HADAQ_SWAP4(trigger); }
 
          /** for trb3: each subevent contains trigger type in decoding word*/
          uint8_t GetTrigTypeTrb3() const { return (GetDecoding() & 0xF0) >> 4; }
@@ -453,22 +417,20 @@ namespace hadaqs {
          /** swap-save access to any data. stolen from hadtu.h */
          uint32_t Data(unsigned idx) const
          {
-            const void* my = (char*) (this) + sizeof(hadaqs::RawSubevent);
+            const void* my = (char *) this + sizeof(hadaqs::RawSubevent);
 
             switch (Alignment()) {
-               case 4:
-                  return Value((uint32_t *) my + idx);
-
+               case 4: {
+                  uint32_t tmp = *((uint32_t *) my + idx);
+                  return HADAQ_SWAP4(tmp);
+               }
                case 2: {
                   uint16_t tmp = ((uint16_t *) my)[idx];
-
-                  if (IsSwapped()) tmp = ((tmp >> 8) & 0xff) | ((tmp << 8) & 0xff00);
-
-                  return tmp;
+                  return ((tmp >> 8) & 0xff) | ((tmp << 8) & 0xff00);
                }
             }
 
-            return ((uint8_t*) my)[idx];
+            return ((uint8_t *) my)[idx];
          }
 
          /** set data */
@@ -478,12 +440,13 @@ namespace hadaqs {
 
             switch (Alignment()) {
                case 4:
-                  return SetValue((uint32_t *) my + idx, value);
+                  *((uint32_t *) my + idx) = HADAQ_SWAP4(value);
+                  return;
 
                case 2: {
-                  if (IsSwapped()) value = ((value & 0xff00) >> 8) | ((value & 0xff) << 8);
-
-                  ((uint16_t *) my)[idx]  = value & 0xffff;
+                  value = ((value & 0xff00) >> 8) | ((value & 0xff) << 8);
+                  ((uint16_t *) my)[idx] = value & 0xffff;
+                  return;
                }
             }
          }
