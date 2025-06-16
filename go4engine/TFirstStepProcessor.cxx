@@ -195,7 +195,7 @@ Bool_t TFirstStepProcessor::BuildEvent(TGo4EventElement *outevnt)
       return kTRUE;
    }
 
-   gSystem->ProcessEvents();
+   // gSystem->ProcessEvents();
 
    Bool_t filled_event = kFALSE;
 
