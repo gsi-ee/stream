@@ -195,42 +195,35 @@ Bool_t TUserSource::BuildHldEvent(TGo4MbsEvent *evnt)
 
 Bool_t TUserSource::BuildDogmaEvent(TGo4MbsEvent *evnt)
 {
-   Bool_t is_empty_event = kTRUE;
-   Int_t back_counter = 1000;
-   uint32_t bufsize;
-   dogma::DogmaEvent *devnt = (dogma::DogmaEvent *) fxBuffer;
+   uint32_t  bufsize = Trb_BUFSIZE;
 
-   while (is_empty_event && (back_counter-- > 0)) {
+   Bool_t trynext = kFALSE;
+   if (!fxDogmaFile.isOpened() || fxDogmaFile.eof())
+      trynext = kTRUE;
+   else if (!fxDogmaFile.ReadBuffer(fxBuffer, &bufsize, true))
+      trynext = kTRUE;
+
+   if (trynext) {
       bufsize = Trb_BUFSIZE;
-
-      Bool_t trynext = kFALSE;
-      if (!fxDogmaFile.isOpened() || fxDogmaFile.eof())
-         trynext = kTRUE;
-      else if (!fxDogmaFile.ReadBuffer(fxBuffer, &bufsize, true))
-         trynext = kTRUE;
-
-      if (trynext) {
-         bufsize = Trb_BUFSIZE;
-         Bool_t isok = OpenNextFile();
-         if (isok)
-            isok = fxDogmaFile.ReadBuffer(fxBuffer, &bufsize, true);
-         if (!isok) {
-            SetCreateStatus(1);
-            SetErrMess("End of DOGMA input");
-            SetEventStatus(1);
-            throw TGo4EventEndException(this);
-            return kFALSE;
-         }
+      Bool_t isok = OpenNextFile();
+      if (isok)
+         isok = fxDogmaFile.ReadBuffer(fxBuffer, &bufsize, true);
+      if (!isok) {
+         SetCreateStatus(1);
+         SetErrMess("End of DOGMA input");
+         SetEventStatus(1);
+         throw TGo4EventEndException(this);
+         return kFALSE;
       }
-
-      is_empty_event = devnt->GetSeqId() == 0 && devnt->GetEventLen() == 16;
    }
 
    TGo4SubEventHeader10 fxSubevHead;
    memset((void *) &fxSubevHead, 0, sizeof(fxSubevHead));
    fxSubevHead.fsProcid = base::proc_DOGMAEvent; // mark to be processed by TDogmaProc
 
-   if (is_empty_event) {
+   auto devnt = (dogma::DogmaEvent *) fxBuffer;
+
+   if (devnt->GetSeqId() == 0 && devnt->GetEventLen() == 16) {
       evnt->SetCount(0);
       evnt->SetDlen(2 + 6); // empty event, not need to be processed
    } else {

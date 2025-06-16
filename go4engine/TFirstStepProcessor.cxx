@@ -180,10 +180,8 @@ void TFirstStepProcessor::UserPostLoop()
 //////////////////////////////////////////////////////////////////////////////////////////////
 /// build event - main entry point
 
-Bool_t TFirstStepProcessor::BuildEvent(TGo4EventElement* outevnt)
+Bool_t TFirstStepProcessor::BuildEvent(TGo4EventElement *outevnt)
 {
-//   TGo4Log::Info("Start processing!!!");
-
    TGo4MbsEvent *mbsev = (TGo4MbsEvent *) GetInputEvent();
    base::Event *event = (TStreamEvent *) outevnt;
 
@@ -192,7 +190,6 @@ Bool_t TFirstStepProcessor::BuildEvent(TGo4EventElement* outevnt)
 
    if ((mbsev->GetCount() == 0) && (mbsev->GetDlen() == 8)) {
       // empty event - do nothing
-      printf("Skip empty event\n");
       SetKeepInputEvent(kFALSE);
       outevnt->SetValid(kFALSE);
       return kTRUE;
