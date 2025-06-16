@@ -184,13 +184,21 @@ Bool_t TFirstStepProcessor::BuildEvent(TGo4EventElement* outevnt)
 {
 //   TGo4Log::Info("Start processing!!!");
 
-   gSystem->ProcessEvents();
+   TGo4MbsEvent *mbsev = (TGo4MbsEvent *) GetInputEvent();
+   base::Event *event = (TStreamEvent *) outevnt;
 
-   TGo4MbsEvent* mbsev = (TGo4MbsEvent*) GetInputEvent();
-   base::Event* event = (TStreamEvent*) outevnt;
-
-   if ((mbsev==0) || (event==0))
+   if (!mbsev || !event)
       throw TGo4EventErrorException(this);
+
+   if ((mbsev->GetCount() == 0) && (mbsev->GetDlen() == 8)) {
+      // empty event - do nothing
+      printf("Skip empty event\n");
+      SetKeepInputEvent(kFALSE);
+      outevnt->SetValid(kFALSE);
+      return kTRUE;
+   }
+
+   gSystem->ProcessEvents();
 
    Bool_t filled_event = kFALSE;
 
@@ -203,9 +211,8 @@ Bool_t TFirstStepProcessor::BuildEvent(TGo4EventElement* outevnt)
       fTotalDataSize += mbsev->GetIntLen()*4;
       fNumInpBufs++;
 
-      TGo4MbsSubEvent* psubevt = 0;
       mbsev->ResetIterator();
-      while((psubevt = mbsev->NextSubEvent()) != 0) {
+      while(auto psubevt = mbsev->NextSubEvent()) {
          // loop over subevents
 
          base::Buffer buf;
@@ -216,12 +223,8 @@ Bool_t TFirstStepProcessor::BuildEvent(TGo4EventElement* outevnt)
          buf().boardid = psubevt->GetSubcrate();
          buf().format = psubevt->GetControl();
 
-//         TGo4Log::Info("  find subevent kind %2u brd %2u fmt %u len %d", buf().kind, buf().boardid, buf().format, buf().datalen);
-
          TRootProcMgr::ProvideRawData(buf);
       }
-
-      //TGo4Log::Info("Start scanning");
 
       filled_event = TRootProcMgr::AnalyzeNewData(event);
    } else {

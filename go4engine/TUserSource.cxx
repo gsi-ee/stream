@@ -195,38 +195,50 @@ Bool_t TUserSource::BuildHldEvent(TGo4MbsEvent *evnt)
 
 Bool_t TUserSource::BuildDogmaEvent(TGo4MbsEvent *evnt)
 {
-   uint32_t bufsize = Trb_BUFSIZE;
+   Bool_t is_empty_event = kTRUE;
+   Int_t back_counter = 1000;
+   uint32_t bufsize;
+   dogma::DogmaEvent *devnt = (dogma::DogmaEvent *) fxBuffer;
 
-   Bool_t trynext = kFALSE;
-   if (!fxDogmaFile.isOpened() || fxDogmaFile.eof())
-      trynext = kTRUE;
-   else if (!fxDogmaFile.ReadBuffer(fxBuffer, &bufsize, true))
-      trynext = kTRUE;
-
-   if (trynext) {
+   while (is_empty_event && (back_counter-- > 0)) {
       bufsize = Trb_BUFSIZE;
-      Bool_t isok = OpenNextFile();
-      if (isok)
-         isok = fxDogmaFile.ReadBuffer(fxBuffer, &bufsize, true);
-      if (!isok) {
-         SetCreateStatus(1);
-         SetErrMess("End of DOGMA input");
-         SetEventStatus(1);
-         throw TGo4EventEndException(this);
-         return kFALSE;
+
+      Bool_t trynext = kFALSE;
+      if (!fxDogmaFile.isOpened() || fxDogmaFile.eof())
+         trynext = kTRUE;
+      else if (!fxDogmaFile.ReadBuffer(fxBuffer, &bufsize, true))
+         trynext = kTRUE;
+
+      if (trynext) {
+         bufsize = Trb_BUFSIZE;
+         Bool_t isok = OpenNextFile();
+         if (isok)
+            isok = fxDogmaFile.ReadBuffer(fxBuffer, &bufsize, true);
+         if (!isok) {
+            SetCreateStatus(1);
+            SetErrMess("End of DOGMA input");
+            SetEventStatus(1);
+            throw TGo4EventEndException(this);
+            return kFALSE;
+         }
       }
+
+      is_empty_event = devnt->GetSeqId() == 0 && devnt->GetEventLen() == 16;
    }
 
    TGo4SubEventHeader10 fxSubevHead;
    memset((void *) &fxSubevHead, 0, sizeof(fxSubevHead));
    fxSubevHead.fsProcid = base::proc_DOGMAEvent; // mark to be processed by TDogmaProc
 
-   evnt->AddSubEvent(fxSubevHead.fiFullid, (Short_t*) fxBuffer, bufsize/sizeof(Short_t) + 2, kTRUE);
-
-   evnt->SetCount(((dogma::DogmaEvent *) fxBuffer)->GetSeqId());
-
-   // set total MBS event length, which must include MBS header itself
-   evnt->SetDlen(bufsize/sizeof(Short_t) + 2 + 6);
+   if (is_empty_event) {
+      evnt->SetCount(0);
+      evnt->SetDlen(2 + 6); // empty event, not need to be processed
+   } else {
+      evnt->SetCount(devnt->GetSeqId());
+      evnt->AddSubEvent(fxSubevHead.fiFullid, (Short_t*) fxBuffer, bufsize/sizeof(Short_t) + 2, kTRUE);
+      // set total MBS event length, which must include MBS header itself
+      evnt->SetDlen(bufsize/sizeof(Short_t) + 2 + 6);
+   }
 
    return kTRUE; // event is ready
 }
@@ -238,7 +250,8 @@ Bool_t TUserSource::BuildDogmaEvent(TGo4MbsEvent *evnt)
 Bool_t TUserSource::BuildEvent(TGo4EventElement* dest)
 {
    TGo4MbsEvent* evnt = dynamic_cast<TGo4MbsEvent*> (dest);
-   if (!evnt || !fxBuffer) return kFALSE;
+   if (!evnt || !fxBuffer)
+      return kFALSE;
 
    if (fIsHLD)
       return BuildHldEvent(evnt);
