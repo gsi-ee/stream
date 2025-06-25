@@ -499,10 +499,16 @@ bool hadaq::TdcProcessor::SetChannelPrefix(unsigned ch, unsigned level)
 
 bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
 {
+   bool need_rising = DoRisingEdge() && !fCh[ch].fRisingFine,
+        need_falling = DoFallingEdge() && !fCh[ch].fFallingFine && ((ch > 0) || IsRegularChannel0());
+
+   if (!need_rising && !need_falling)
+      return true;
+
    if (!SetChannelPrefix(ch))
       return false;
 
-   if (DoRisingEdge() && !fCh[ch].fRisingFine) {
+   if (need_rising) {
       fCh[ch].fRisingFine = MakeH1("RisingFine", "Rising fine counter", fNumFineBins, 0, fNumFineBins, "fine");
       fCh[ch].fRisingMult = MakeH1("RisingMult", "Rising event multiplicity", 128, 0, 128, "nhits");
       fCh[ch].fRisingCalibr = MakeH1("RisingCalibr", "Rising calibration function", fNumFineBins, 0, fNumFineBins, "fine;kind:F");
@@ -513,7 +519,7 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
          fCh[ch].fRisingPCalibr = MakeH1("RisingPCalibr", "Prevented rising calibration", fNumFineBins, 0, fNumFineBins, "fine;kind:F");
    }
 
-   if (DoFallingEdge() && !fCh[ch].fFallingFine && ((ch > 0) || IsRegularChannel0())) {
+   if (need_falling) {
       fCh[ch].fFallingFine = MakeH1("FallingFine", "Falling fine counter", fNumFineBins, 0, fNumFineBins, "fine");
       fCh[ch].fFallingCalibr = MakeH1("FallingCalibr", "Falling calibration function", fNumFineBins, 0, fNumFineBins, "fine;kind:F");
       fCh[ch].fFallingMult = MakeH1("FallingMult", "Falling event multiplicity", 128, 0, 128, "nhits");
@@ -524,7 +530,6 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
 
       if (gPreventFineCalibration)
          fCh[ch].fFallingPCalibr = MakeH1("FallingPCalibr", "Prevented falling calibration", fNumFineBins, 0, fNumFineBins, "fine;kind:F");
-
    }
 
    SetSubPrefix2();
