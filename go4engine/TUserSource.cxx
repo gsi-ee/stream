@@ -296,7 +296,7 @@ Int_t TUserSource::Open()
 
    fxBuffer = new Char_t[Trb_BUFSIZE];
 
-   TGo4Log::Info("%s user source contains %d files", (fIsHLD ? "HLD" : "GET4"), fNames ? fNames->GetSize() : 0);
+   TGo4Log::Info("%s user source contains %d files", (fIsHLD ? "HLD" : (fIsDOGMA ? "DOGMA" : "GET4")), fNames ? fNames->GetSize() : 0);
 
    TGo4Analysis::Instance()->SetInputFileName(fname.Data());
 
