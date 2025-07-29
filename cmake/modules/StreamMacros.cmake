@@ -61,7 +61,7 @@ function(STREAM_LINK_LIBRARY libname)
       target_compile_options(${libname} PRIVATE -Wall $<$<CXX_COMPILER_ID:GNU>:-Wsuggest-override>)
    endif()
 
-   target_link_libraries(${libname} ${ARG_LIBRARIES})
+   target_link_libraries(${libname} PUBLIC ${ARG_LIBRARIES})
 
    # add_dependencies(${libname} move_headers ${ARG_DEPENDENCIES})
 
