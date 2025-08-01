@@ -1892,6 +1892,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       } else {
          ch0time = iter.convertTime(epoch0, coarse0);
       }
+      if (pEventFloat)
+         pEventFloat->SetTriggerTime(ch0time);
    } else
       iter.assign((uint32_t*) buf.ptr(0), buf.datalen()/4, buf().format == 2);
 
@@ -2079,8 +2081,11 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
          // printf("%s chid %2u localtm %f corr %f epoch %f msgstamp %f coarse %f\n", GetName(), chid, localtm, corr, ((uint64_t) iter.getCurEpoch() << 11) * hadaq::TdcMessage::CoarseUnit(), iter.getMsgStamp() * hadaq::TdcMessage::CoarseUnit(), iter.getMsgTimeCoarse());
 
-         if ((chid == 0) && (ch0time == 0) && ch0_is_ref)
+         if ((chid == 0) && (ch0time == 0) && ch0_is_ref) {
             ch0time = (gTimeRefKind == 3) ? localtm + corr : localtm;
+            if (pEventFloat)
+               pEventFloat->SetTriggerTime(ch0time);
+         }
 
          switch(gTimeRefKind) {
             case 0:
@@ -2322,7 +2327,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             if (indx < fGlobalMarks.size()) {
                switch(GetStoreKind()) {
                   case 1:
-                     AddMessage(indx, (hadaq::TdcSubEvent *) fGlobalMarks.item(indx).subev, hadaq::TdcMessageExt(msg, chid>0 ? globaltm : ch0time));
+                     AddMessage(indx, (hadaq::TdcSubEvent *) fGlobalMarks.item(indx).subev, hadaq::TdcMessageExt(msg, chid > 0 ? globaltm : ch0time));
                      break;
                   case 2: {
                      auto subev = (hadaq::TdcSubEventFloat *) fGlobalMarks.item(indx).subev;
@@ -2705,8 +2710,11 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
 
          localtm -= corr;
 
-         if ((chid == 0) && (ch0time == 0))
+         if ((chid == 0) && (ch0time == 0)) {
             ch0time = (gTimeRefKind == 3) ? localtm + corr : localtm;
+            if (pEventFloat)
+               pEventFloat->SetTriggerTime(ch0time);
+         }
 
          switch(gTimeRefKind) {
             case 0:
