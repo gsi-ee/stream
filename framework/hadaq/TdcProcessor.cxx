@@ -234,6 +234,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    pStoreVect(nullptr),
    fDummyFloat(),
    pStoreFloat(nullptr),
+   pEventFloat(nullptr),
    fDummyDouble(),
    pStoreDouble(nullptr),
    fEdgeMask(edge_mask),
@@ -1843,6 +1844,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
          case 2: {
             auto subevnt = new hadaq::TdcSubEventFloat(buf.datalen()/6);
             mgr()->AddToTrigEvent(GetName(), subevnt);
+            pEventFloat = subevnt;
             pStoreFloat = subevnt->vect_ptr();
             break;
          }
@@ -2296,6 +2298,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                      case 2:
                         if ((chid > 0) || !ch0_is_ref)
                            pStoreFloat->emplace_back(chid, isrising, localtm*1e9);
+                        if (pEventFloat)
+                           pEventFloat->SetTriggerTime(ch0time);
                         break;
                      case 3:
                         pStoreDouble->emplace_back(chid, isrising, ch0time + localtm);
@@ -2318,14 +2322,18 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             if (indx < fGlobalMarks.size()) {
                switch(GetStoreKind()) {
                   case 1:
-                     AddMessage(indx, (hadaq::TdcSubEvent*) fGlobalMarks.item(indx).subev, hadaq::TdcMessageExt(msg, chid>0 ? globaltm : ch0time));
+                     AddMessage(indx, (hadaq::TdcSubEvent *) fGlobalMarks.item(indx).subev, hadaq::TdcMessageExt(msg, chid>0 ? globaltm : ch0time));
                      break;
-                  case 2:
+                  case 2: {
+                     auto subev = (hadaq::TdcSubEventFloat *) fGlobalMarks.item(indx).subev;
                      if ((chid > 0) || !ch0_is_ref)
-                        AddMessage(indx, (hadaq::TdcSubEventFloat*) fGlobalMarks.item(indx).subev, hadaq::MessageFloat(chid, isrising, (globaltm - ch0time)*1e9));
+                        AddMessage(indx, subev, hadaq::MessageFloat(chid, isrising, (globaltm - ch0time)*1e9));
+                     if (subev)
+                        subev->SetTriggerTime(ch0time);
                      break;
+                  }
                   case 3:
-                     AddMessage(indx, (hadaq::TdcSubEventDouble*) fGlobalMarks.item(indx).subev, hadaq::MessageDouble(chid, isrising, globaltm));
+                     AddMessage(indx, (hadaq::TdcSubEventDouble *) fGlobalMarks.item(indx).subev, hadaq::MessageDouble(chid, isrising, globaltm));
                      break;
                }
             }
@@ -2564,19 +2572,20 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
       dostore = true;
       switch (GetStoreKind()) {
          case 1: {
-            auto subevnt = new hadaq::TdcSubEvent(buf.datalen()/6);
+            auto subevnt = new hadaq::TdcSubEvent(buf.datalen() / 6);
             mgr()->AddToTrigEvent(GetName(), subevnt);
             pStoreVect = subevnt->vect_ptr();
             break;
          }
          case 2: {
-            auto subevnt = new hadaq::TdcSubEventFloat(buf.datalen()/6);
+            auto subevnt = new hadaq::TdcSubEventFloat(buf.datalen() / 6);
             mgr()->AddToTrigEvent(GetName(), subevnt);
+            pEventFloat = subevnt;
             pStoreFloat = subevnt->vect_ptr();
             break;
          }
          case 3: {
-            auto subevnt = new hadaq::TdcSubEventDouble(buf.datalen()/6);
+            auto subevnt = new hadaq::TdcSubEventDouble(buf.datalen() / 6);
             mgr()->AddToTrigEvent(GetName(), subevnt);
             pStoreDouble = subevnt->vect_ptr();
             break;
@@ -2993,6 +3002,8 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
                      case 2:
                         if (!is_ref_channel)
                            pStoreFloat->emplace_back(chid, isrising, localtm*1e9);
+                        if (pEventFloat)
+                           pEventFloat->SetTriggerTime(ch0time);
                         break;
                      case 3:
                         pStoreDouble->emplace_back(chid, isrising, ch0time + localtm);
@@ -3015,14 +3026,18 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
             if (indx < fGlobalMarks.size()) {
                switch(GetStoreKind()) {
                   case 1:
-                     AddMessage(indx, (hadaq::TdcSubEvent*) fGlobalMarks.item(indx).subev, hadaq::TdcMessageExt(msg, !is_ref_channel ? globaltm : ch0time));
+                     AddMessage(indx, (hadaq::TdcSubEvent *) fGlobalMarks.item(indx).subev, hadaq::TdcMessageExt(msg, !is_ref_channel ? globaltm : ch0time));
                      break;
-                  case 2:
+                  case 2: {
+                     auto subev = (hadaq::TdcSubEventFloat *) fGlobalMarks.item(indx).subev;
                      if (!is_ref_channel)
-                        AddMessage(indx, (hadaq::TdcSubEventFloat*) fGlobalMarks.item(indx).subev, hadaq::MessageFloat(chid, isrising, (globaltm - ch0time)*1e9));
+                        AddMessage(indx, subev, hadaq::MessageFloat(chid, isrising, (globaltm - ch0time)*1e9));
+                     if (subev)
+                        subev->SetTriggerTime(ch0time);
                      break;
+                  }
                   case 3:
-                     AddMessage(indx, (hadaq::TdcSubEventDouble*) fGlobalMarks.item(indx).subev, hadaq::MessageDouble(chid, isrising, globaltm));
+                     AddMessage(indx, (hadaq::TdcSubEventDouble *) fGlobalMarks.item(indx).subev, hadaq::MessageDouble(chid, isrising, globaltm));
                      break;
                }
             }
@@ -4328,6 +4343,7 @@ void hadaq::TdcProcessor::CreateBranch(TTree*)
          mgr()->CreateBranch(GetName(), "std::vector<hadaq::TdcMessageExt>", (void**) &pStoreVect);
          break;
       case 2:
+         pEventFloat = nullptr;
          pStoreFloat = &fDummyFloat;
          mgr()->CreateBranch(GetName(), "std::vector<hadaq::MessageFloat>", (void**) &pStoreFloat);
          break;
@@ -4361,6 +4377,7 @@ void hadaq::TdcProcessor::Store(base::Event* ev)
       case 2: {
          auto sub = dynamic_cast<hadaq::TdcSubEventFloat*> (sub0);
          // when subevent exists, use directly pointer on messages vector
+         pEventFloat = sub;
          pStoreFloat = sub ? sub->vect_ptr() : &fDummyFloat;
          break;
       }
@@ -4380,6 +4397,7 @@ void hadaq::TdcProcessor::ResetStore()
 {
    pStoreVect = &fDummyVect;
    pStoreFloat = &fDummyFloat;
+   pEventFloat = nullptr;
    pStoreDouble = &fDummyDouble;
 }
 

@@ -53,7 +53,15 @@ namespace hadaq {
    };
 
    /** subevent with \ref hadaq::MessageFloat */
-   typedef base::SubEventEx<hadaq::MessageFloat> TdcSubEventFloat;
+   class TdcSubEventFloat : public base::SubEventEx<hadaq::MessageFloat> {
+      double fTriggerTime = 0.;
+
+   public:
+      TdcSubEventFloat(unsigned capacity = 0) : base::SubEventEx<hadaq::MessageFloat>(capacity) {}
+
+      void SetTriggerTime(double tm) { fTriggerTime = tm; }
+      double GetTriggerTime() const { return fTriggerTime; }
+   };
 
    /** \brief Output double message
      *
