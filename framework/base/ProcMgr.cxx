@@ -883,10 +883,11 @@ bool base::ProcMgr::ProduceNextEvent(base::Event* &evt)
 
 bool base::ProcMgr::ProcessEvent(base::Event* evt)
 {
-   if (!evt) return false;
+   if (!evt)
+      return false;
 
    // call event processors one after another until event is discarded
-   for (unsigned n=0;n<fEvProc.size();n++)
+   for (unsigned n = 0; n < fEvProc.size(); n++)
       if (!fEvProc[n]->Process(evt))
          return false;
 

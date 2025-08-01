@@ -1835,19 +1835,19 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       dostore = true;
       switch (GetStoreKind()) {
          case 1: {
-            hadaq::TdcSubEvent* subevnt = new hadaq::TdcSubEvent(buf.datalen()/6);
+            auto subevnt = new hadaq::TdcSubEvent(buf.datalen()/6);
             mgr()->AddToTrigEvent(GetName(), subevnt);
             pStoreVect = subevnt->vect_ptr();
             break;
          }
          case 2: {
-            hadaq::TdcSubEventFloat* subevnt = new hadaq::TdcSubEventFloat(buf.datalen()/6);
+            auto subevnt = new hadaq::TdcSubEventFloat(buf.datalen()/6);
             mgr()->AddToTrigEvent(GetName(), subevnt);
             pStoreFloat = subevnt->vect_ptr();
             break;
          }
          case 3: {
-            hadaq::TdcSubEventDouble* subevnt = new hadaq::TdcSubEventDouble(buf.datalen()/6);
+            auto subevnt = new hadaq::TdcSubEventDouble(buf.datalen()/6);
             mgr()->AddToTrigEvent(GetName(), subevnt);
             pStoreDouble = subevnt->vect_ptr();
             break;
@@ -2273,7 +2273,7 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                   if(fDevPerTDCChannel && (tot > 0) && (tot < 1000)) { // JAM 7-12-21 suppress noise fakes
                      rec.tot_dev += totvar; // JAM misuse  this data field to get overall sigma of file
                      rec.tot0d_cnt++; // JAM misuse calibration counter here to evaluate sigma
-                     double currentsigma= sqrt(rec.tot_dev/rec.tot0d_cnt);
+                     double currentsigma = sqrt(rec.tot_dev/rec.tot0d_cnt);
                      if(currentsigma<10)
                         SetH2Content(*fDevPerTDCChannel, fHldId, chid,  currentsigma);
                   }
@@ -2285,7 +2285,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
             if (!iserr) {
                hitcnt++;
-               if ((minimtm == 0.) || (localtm < minimtm)) minimtm = localtm;
+               if ((minimtm == 0.) || (localtm < minimtm))
+                  minimtm = localtm;
 
                if (dostore)
                   switch(GetStoreKind()) {
@@ -2563,19 +2564,19 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
       dostore = true;
       switch (GetStoreKind()) {
          case 1: {
-            hadaq::TdcSubEvent* subevnt = new hadaq::TdcSubEvent(buf.datalen()/6);
+            auto subevnt = new hadaq::TdcSubEvent(buf.datalen()/6);
             mgr()->AddToTrigEvent(GetName(), subevnt);
             pStoreVect = subevnt->vect_ptr();
             break;
          }
          case 2: {
-            hadaq::TdcSubEventFloat* subevnt = new hadaq::TdcSubEventFloat(buf.datalen()/6);
+            auto subevnt = new hadaq::TdcSubEventFloat(buf.datalen()/6);
             mgr()->AddToTrigEvent(GetName(), subevnt);
             pStoreFloat = subevnt->vect_ptr();
             break;
          }
          case 3: {
-            hadaq::TdcSubEventDouble* subevnt = new hadaq::TdcSubEventDouble(buf.datalen()/6);
+            auto subevnt = new hadaq::TdcSubEventDouble(buf.datalen()/6);
             mgr()->AddToTrigEvent(GetName(), subevnt);
             pStoreDouble = subevnt->vect_ptr();
             break;
@@ -4352,19 +4353,19 @@ void hadaq::TdcProcessor::Store(base::Event* ev)
 
    switch (GetStoreKind()) {
       case 1: {
-         hadaq::TdcSubEvent* sub = dynamic_cast<hadaq::TdcSubEvent*> (sub0);
+         auto sub = dynamic_cast<hadaq::TdcSubEvent*> (sub0);
          // when subevent exists, use directly pointer on messages vector
          pStoreVect = sub ? sub->vect_ptr() : &fDummyVect;
          break;
       }
       case 2: {
-         hadaq::TdcSubEventFloat* sub = dynamic_cast<hadaq::TdcSubEventFloat*> (sub0);
+         auto sub = dynamic_cast<hadaq::TdcSubEventFloat*> (sub0);
          // when subevent exists, use directly pointer on messages vector
          pStoreFloat = sub ? sub->vect_ptr() : &fDummyFloat;
          break;
       }
       case 3: {
-         hadaq::TdcSubEventDouble* sub = dynamic_cast<hadaq::TdcSubEventDouble*> (sub0);
+         auto sub = dynamic_cast<hadaq::TdcSubEventDouble*> (sub0);
          // when subevent exists, use directly pointer on messages vector
          pStoreDouble = sub ? sub->vect_ptr() : &fDummyDouble;
          break;
