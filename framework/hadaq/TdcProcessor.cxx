@@ -335,16 +335,16 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
       fChannels = MakeH1("Channels", "Messages per TDC channels", numchannels, 0, numchannels, "ch");
       if (DoFallingEdge() && DoRisingEdge())
          fHits = MakeH1("Edges", "Edges counts TDC channels (rising/falling)", numchannels*2, 0, numchannels, "ch");
-      fErrors = MakeH1("Errors", "Errors in TDC channels", numchannels, 0, numchannels, "ch");
-      fUndHits = MakeH1("UndetectedHits", "Undetected hits in TDC channels", numchannels, 0, numchannels, "ch");
-      fCorrHits = MakeH1("CorrectedHits", "Corrected hits in TDC channels", numchannels, 0, numchannels, "ch");
+      if (!IsVersion5()) {   
+         fErrors = MakeH1("Errors", "Errors in TDC channels", numchannels, 0, numchannels, "ch");
+         fUndHits = MakeH1("UndetectedHits", "Undetected hits in TDC channels", numchannels, 0, numchannels, "ch");
+         fCorrHits = MakeH1("CorrectedHits", "Corrected hits in TDC channels", numchannels, 0, numchannels, "ch");
 
-      if (IsVersion4())
-         fMsgsKind = MakeH1("MsgKind", "kind of messages", 8, 0, 8, "xbin:HDR,EPOC,TMDR,TMDT,-,-,-,-;kind");
-      else if (IsVersion5())   
-         fMsgsKind = MakeH1("MsgKind", "kind of messages", 8, 0, 8, "xbin:Falling,Rising,-,-,-,-,-,-;kind");
-      else
-         fMsgsKind = MakeH1("MsgKind", "kind of messages", 8, 0, 8, "xbin:Trailer,Header,Debug,Epoch,Hit,-,MissEpoch,Calibr;kind");
+         if (IsVersion4())
+            fMsgsKind = MakeH1("MsgKind", "kind of messages", 8, 0, 8, "xbin:HDR,EPOC,TMDR,TMDT,-,-,-,-;kind");
+         else
+            fMsgsKind = MakeH1("MsgKind", "kind of messages", 8, 0, 8, "xbin:Trailer,Header,Debug,Epoch,Hit,-,MissEpoch,Calibr;kind");
+      }
 
       fAllFine = MakeH2("FineTm", "fine counter value", numchannels, 0, numchannels, (fNumFineBins==1000 ? 100 : fNumFineBins), 0, fNumFineBins, "ch;fine");
 
@@ -353,7 +353,6 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
             MakeH2("RaisingFineTmCalibr", "raising calibrated fine counter value", numchannels, 0, numchannels,
                    (fNumFineBins == 1000 ? 100 : fNumFineBins), 0, fNumFineBins, "ch;calibrated fine");
       }
-
 
       if (!hadaq::TdcProcessor::IsHadesReducedMonitoring() && !is_hades)
          fAllCoarse = MakeH2("CoarseTm", "coarse counter value", numchannels, 0, numchannels, 2048, 0, 2048, "ch;coarse");
@@ -2619,9 +2618,6 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
    while (tdc5_parse_next(&tdc5_tm, &tdc5_it, tdc5_buf, tdc5_pktlen) == 1) {
 
       cnt++;
-
-      if (first_scan)
-         FastFillH1(fMsgsKind, tdc5_tm.is_falling ? 0 : 1);
 
       unsigned chid = tdc5_tm.channel;
       unsigned fine = tdc5_tm.fine;
