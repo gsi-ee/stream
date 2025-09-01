@@ -209,7 +209,7 @@ void hadaq::TdcProcessor::SetTimeRefKind(int kind)
 
 hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels, unsigned edge_mask, bool ver4, bool dogma) :
    SubProcessor(trb, dogma ? "TDC_%06X" : "TDC_%04X", tdcid),
-   fVersion4(ver4),
+   fVersion(ver4 ? 4 : 2),
    fDogma(dogma),
    fIter1(),
    fIter2(),
@@ -336,10 +336,12 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
       fUndHits = MakeH1("UndetectedHits", "Undetected hits in TDC channels", numchannels, 0, numchannels, "ch");
       fCorrHits = MakeH1("CorrectedHits", "Corrected hits in TDC channels", numchannels, 0, numchannels, "ch");
 
-      if (!fVersion4)
-         fMsgsKind = MakeH1("MsgKind", "kind of messages", 8, 0, 8, "xbin:Trailer,Header,Debug,Epoch,Hit,-,MissEpoch,Calibr;kind");
-      else
+      if (IsVersion4())
          fMsgsKind = MakeH1("MsgKind", "kind of messages", 8, 0, 8, "xbin:HDR,EPOC,TMDR,TMDT,-,-,-,-;kind");
+      else if (IsVersion5())   
+         fMsgsKind = MakeH1("MsgKind", "kind of messages", 8, 0, 8, "xbin:Falling,Rising,-,-,-,-,-,-;kind");
+      else
+         fMsgsKind = MakeH1("MsgKind", "kind of messages", 8, 0, 8, "xbin:Trailer,Header,Debug,Epoch,Hit,-,MissEpoch,Calibr;kind");
 
       fAllFine = MakeH2("FineTm", "fine counter value", numchannels, 0, numchannels, (fNumFineBins==1000 ? 100 : fNumFineBins), 0, fNumFineBins, "ch;fine");
 
@@ -413,7 +415,7 @@ hadaq::TdcProcessor::~TdcProcessor()
 
 bool hadaq::TdcProcessor::IsRegularChannel0() const
 {
-   return fVersion4 || (gTimeRefKind == 3);
+   return IsVersion4() || IsVersion5() || (gTimeRefKind == 3);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -486,7 +488,7 @@ bool hadaq::TdcProcessor::SetChannelPrefix(unsigned ch, unsigned level)
    if ((ch >= NumChannels()) || (HistFillLevel() < 3))
       return false;
 
-   if ((ch == NumChannels() - 1) && fVersion4)
+   if ((ch == NumChannels() - 1) && IsVersion4())
       SetSubPrefix2("Ch_DR");
    else
       SetSubPrefix2("Ch", ch);
@@ -2526,6 +2528,21 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    return !iserr;
 }
 
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Scan all messages, find reference signals
+/// Major data analysis method
+
+bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan)
+{
+   if (buf.null()) {
+      if (first_scan) printf("%s Something wrong - empty buffer should not appear in the first scan\n", GetName());
+      return false;
+   }
+
+   return false;
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Scan all messages, find reference signals
 /// Major data analysis method
@@ -3438,8 +3455,11 @@ void hadaq::TdcProcessor::SetLinearCalibration(unsigned nch, unsigned finemin, u
 double hadaq::TdcProcessor::GetTdcCoarseUnit() const
 {
    double coarse_unit = 0.;
-   if (fVersion4) {
+   if (IsVersion4()) {
       coarse_unit = hadaq::TdcMessage::CoarseUnit300();
+      if (fIsCustomMhz) coarse_unit *= 300. / fCustomMhz;
+   } else if (IsVersion4()) {
+      coarse_unit = 1000. / 300.; // basic is 300 Mhz
       if (fIsCustomMhz) coarse_unit *= 300. / fCustomMhz;
    } else {
       coarse_unit = hadaq::TdcMessage::CoarseUnit();
@@ -3489,7 +3509,12 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, bool rising, const st
       }
    }
 
-   unsigned finemaxlimit = fVersion4 ? 300 : (fIsCustomMhz ? 200 : (fDogma ? 350 : 400));
+   unsigned finemaxlimit = fIsCustomMhz ? 200 : (fDogma ? 350 : 400);
+   if (IsVersion4()) {
+      finemaxlimit = 300;
+   } else if (IsVersion5()) {
+      finemaxlimit = 400;
+   }
 
    if (!preliminary && (finemax < finemaxlimit)) {
       std::string log_finemax = std::string("_BadFineMax_") + std::to_string(finemax);
@@ -4037,7 +4062,7 @@ void hadaq::TdcProcessor::StoreCalibration(const std::string& fprefix, unsigned 
 
    printf("%s storing calibration info %s\n", GetName(), fname);
 
-   if (gStoreCalibrTables && fVersion4) {
+   if (gStoreCalibrTables && IsVersion4()) {
       snprintf(fname, sizeof(fname), "%s%04x.cal.table", fprefix.c_str(), fileid);
       f = fopen(fname,"w");
 

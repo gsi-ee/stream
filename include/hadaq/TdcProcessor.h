@@ -219,8 +219,8 @@ namespace hadaq {
             }
          };
 
-         bool fVersion4 = false;         ///< if version4 TDC is analyzed
-         bool fDogma = false;           ///< used with dogma readout
+         int fVersion = 2;            ///< TDC version id - 2, 4, 5
+         bool fDogma = false;         ///< used with dogma readout
 
          TdcIterator fIter1;         ///<! iterator for the first scan
          TdcIterator fIter2;         ///<! iterator for the second scan
@@ -389,6 +389,7 @@ namespace hadaq {
 
          bool DoBufferScan(const base::Buffer &buf, bool isfirst);
          bool DoBuffer4Scan(const base::Buffer &buf, bool isfirst);
+         bool DoBuffer5Scan(const base::Buffer &buf, bool isfirst);
 
          double DoTestToT(int iCh);
          double DoTestErrors(int iCh);
@@ -542,7 +543,8 @@ namespace hadaq {
          /** Returns value of edge mask */
          inline unsigned GetEdgeMask() const { return fEdgeMask; }
 
-         inline bool IsVersion4() const { return fVersion4; }
+         inline bool IsVersion4() const { return fVersion == 4; }
+         inline bool IsVersion5() const { return fVersion == 5; }
 
          /** Returns calibration progress */
          double GetCalibrProgress() const { return fCalibrProgress; }
@@ -785,13 +787,21 @@ namespace hadaq {
           * if returned false, buffer has error and must be discarded */
          bool FirstBufferScan(const base::Buffer& buf) override
          {
-            return fVersion4 ? DoBuffer4Scan(buf, true) : DoBufferScan(buf, true);
+            switch(fVersion) {
+               case 4: return DoBuffer4Scan(buf, true);
+               case 5: return DoBuffer5Scan(buf, true);
+            }
+            return DoBufferScan(buf, true);
          }
 
          /** Scan buffer for selecting messages inside trigger window */
          bool SecondBufferScan(const base::Buffer& buf) override
          {
-            return fVersion4 ? DoBuffer4Scan(buf, false) : DoBufferScan(buf, false);
+            switch(fVersion) {
+               case 4: return DoBuffer4Scan(buf, false);
+               case 5: return DoBuffer5Scan(buf, false);
+            }
+            return DoBufferScan(buf, false);
          }
 
          void IncCalibration(unsigned ch, bool rising, unsigned fine, unsigned value);
