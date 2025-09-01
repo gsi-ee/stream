@@ -247,7 +247,8 @@ int hadaq::TrbProcessor::CreateTDC(unsigned id1, unsigned id2, unsigned id3, uns
          case 3: tdcid = id4; break;
          default: tdcid = id1; break;
       }
-      if (tdcid==0) continue;
+      if (tdcid == 0) 
+         continue;
 
       if (GetTDC(tdcid, true)) {
          printf("TDC id 0x%04x already exists\n", tdcid);
@@ -265,6 +266,46 @@ int hadaq::TrbProcessor::CreateTDC(unsigned id1, unsigned id2, unsigned id3, uns
       }
 
       auto tdc = new hadaq::TdcProcessor(this, tdcid, GetNumCh(), gEdgesMask, false, fDogma);
+
+      tdc->SetCalibrTriggerMask(fCalibrTriggerMask);
+
+      num++;
+   }
+
+   return num;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+/// Create up to 4 TDC v5 with pre-configured default parameters
+
+int hadaq::TrbProcessor::CreateTDC5(unsigned id1, unsigned id2, unsigned id3, unsigned id4)
+{
+   // overwrite default value in the beginning
+
+   int num = 0;
+
+   for (unsigned cnt = 0; cnt < 4; cnt++) {
+      unsigned tdcid = id1;
+      switch (cnt) {
+         case 1: tdcid = id2; break;
+         case 2: tdcid = id3; break;
+         case 3: tdcid = id4; break;
+         default: tdcid = id1; break;
+      }
+      if (tdcid == 0) 
+         continue;
+
+      if (GetTDC(tdcid, true)) {
+         printf("TDC id 0x%06x already exists\n", tdcid);
+         continue;
+      }
+
+      if (tdcid == fHadaqCTSId) {
+         printf("TDC id 0x%06x already used as CTS id\n", tdcid);
+         continue;
+      }
+
+      auto tdc = new hadaq::TdcProcessor(this, tdcid, GetNumCh(), gEdgesMask, 5, true);
 
       tdc->SetCalibrTriggerMask(fCalibrTriggerMask);
 

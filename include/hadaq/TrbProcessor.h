@@ -313,6 +313,8 @@ namespace hadaq {
 
          int CreateTDC(unsigned id1, unsigned id2 = 0, unsigned id3 = 0, unsigned id4 = 0);
 
+         int CreateTDC5(unsigned id1, unsigned id2 = 0, unsigned id3 = 0, unsigned id4 = 0);
+
          /** Create TDC processor, which extracts TDC information from CTS header */
          void CreateCTS_TDC() { new hadaq::TdcProcessor(this, fHadaqCTSId, gNumChannels, gEdgesMask); }
 

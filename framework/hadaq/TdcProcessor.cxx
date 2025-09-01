@@ -207,9 +207,9 @@ void hadaq::TdcProcessor::SetTimeRefKind(int kind)
 /// \param ver4 - is TDC V4 should be expected
 /// \param dogma - if used in DOGMA readout, IDs are 6 digits
 
-hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels, unsigned edge_mask, bool ver4, bool dogma) :
+hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels, unsigned edge_mask, unsigned ver, bool dogma) :
    SubProcessor(trb, dogma ? "TDC_%06X" : "TDC_%04X", tdcid),
-   fVersion(ver4 ? 4 : 2),
+   fVersion((ver == (unsigned) true) || (ver == 4) ? 4 : (ver > 4 ? 5 : 2)),
    fDogma(dogma),
    fIter1(),
    fIter2(),

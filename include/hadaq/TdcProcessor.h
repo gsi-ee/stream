@@ -473,7 +473,7 @@ namespace hadaq {
             edge_CommonStatistic = 4  ///< accumulate common statistic for both
          };
 
-         TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels = MaxNumTdcChannels, unsigned edge_mask = 1, bool ver4 = false, bool dogma = false);
+         TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels = MaxNumTdcChannels, unsigned edge_mask = 1, unsigned ver = 0, bool dogma = false);
          virtual ~TdcProcessor();
 
          static void SetMaxBoardId(unsigned);
