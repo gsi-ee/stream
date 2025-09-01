@@ -10,6 +10,8 @@ GO4_USER_ANALYSIS(
    SOURCES
       TUserSource.cxx
       TFirstStepProcessor.cxx
+   LIBRARIES
+      Stream StreamDict
    INCLUDE_DIRS
       ${CMAKE_SOURCE_DIR}/include
    TARGET_DIR
