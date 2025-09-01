@@ -571,24 +571,49 @@ bool hadaq::TrbProcessor::DogmaBufferScan(const base::Buffer &buf)
 
          if (tdcproc) {
 
-            uint32_t epoch0 = tu->GetTrigTime() & 0xfffffff;
-            uint32_t coarse0 = tu->GetLocalTrigTime() & 0x7ff;
+            if (tu->IsMagicTdc5()) {
+               if (!tdcproc->IsVersion5()) {
+                  fprintf(stderr, "Cannot use TDC5 data for non TDC5 processor\n");
+                  exit(1);
+               }
 
-            // printf("  Tu 0x%x proc %p payloadlen %u epoch0 %07x coarse0 %03x\n", dataid, tdcproc, datalen, (unsigned) epoch0, (unsigned) coarse0);
+               base::Buffer buf;
+                  
+               // copy tu with header, decode inside
+               buf.makereferenceof(tu, tu->GetSize());
 
-            base::Buffer buf;
-            buf.makenew((datalen + 2) * 4);
-            uint32_t *ptr = (uint32_t *)buf.ptr();
-            *ptr++ = epoch0;
-            *ptr++ = coarse0;
-            for (unsigned n = 0; n < datalen; ++n)
+               buf().kind = trigtype;
+               buf().boardid = dataid;
+               buf().format = 5; // use 5 for TDC5 
+                   
+               tdcproc->AddNextBuffer(buf);
+               tdcproc->SetNewDataFlag(true);
+
+            } else {
+               if (tdcproc->IsVersion5()) {
+                  fprintf(stderr, "Cannot use non-TDC5 data for TDC5 processor\n");
+                  exit(2);
+               }
+
+               uint32_t epoch0 = tu->GetTrigTime() & 0xfffffff;
+               uint32_t coarse0 = tu->GetLocalTrigTime() & 0x7ff;
+
+               // printf("  Tu 0x%x proc %p payloadlen %u epoch0 %07x coarse0 %03x\n", dataid, tdcproc, datalen, (unsigned) epoch0, (unsigned) coarse0);
+            
+               base::Buffer buf;
+               buf.makenew((datalen + 2) * 4);
+               uint32_t *ptr = (uint32_t *)buf.ptr();
+               *ptr++ = epoch0;
+               *ptr++ = coarse0;
+               for (unsigned n = 0; n < datalen; ++n)
                *ptr++ = tu->GetPayload(n);
-            buf().kind = trigtype;
-            buf().boardid = dataid;
-            buf().format = 3; // format with epoch0/corse0 and without ref channel
+               buf().kind = trigtype;
+               buf().boardid = dataid;
+               buf().format = 3; // format with epoch0/corse0 and without ref channel
 
-            tdcproc->AddNextBuffer(buf);
-            tdcproc->SetNewDataFlag(true);
+               tdcproc->AddNextBuffer(buf);
+               tdcproc->SetNewDataFlag(true);
+            }
          } /*
          else if (fAutoCreate && (dataid >= gTDCMin) && (dataid <= gTDCMax) &&
             (datalen > 0) && TdcMessage(tu->GetPayload(0)).isHeaderMsg()) {

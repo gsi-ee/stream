@@ -11,6 +11,9 @@
 #include "base/defines.h"
 #include "base/ProcMgr.h"
 
+#include "dogma/defines.h"
+#include "dogma/tdc5.h"
+
 #include "hadaq/TrbProcessor.h"
 #include "hadaq/HldProcessor.h"
 #include "hadaq/TdcSubEvent.h"
@@ -2540,7 +2543,414 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
       return false;
    }
 
-   return false;
+   uint32_t syncid = 0xffffffff;
+
+   int buf_kind = buf().kind;
+
+   // if data could be used for calibration
+   int use_for_calibr = first_scan && (((1 << buf_kind) & fCalibrTriggerMask) != 0) ? 1 : 0;
+
+   // use in ref calculations only physical trigger, exclude 0xD or 0xE
+   bool use_for_ref = buf_kind < (gUseDTrigForRef ? 0xE : 0xD);
+
+   // disable taking last hit for trigger DD
+   if ((use_for_calibr > 0) && ((buf_kind == 0xD) || gUseAsDTrig)) {
+      if (IsTriggeredAnalysis() &&  (gTrigDWindowLow < gTrigDWindowHigh)) use_for_calibr = 3; // accept time stamps only for inside window
+      // use_for_calibr = 2; // always use only last hit
+   }
+
+   // if data could be used for TOT calibration
+   bool do_tot = (use_for_calibr > 0) && ((buf_kind == 0xD) || gUseAsDTrig) && DoFallingEdge();
+
+   unsigned cnt = 0, hitcnt = 0;
+
+   bool iserr = false, missinghit = false, dostore = false;
+
+   if (first_scan && IsTriggeredAnalysis() && IsStoreEnabled() && mgr()->HasTrigEvent()) {
+      dostore = true;
+      switch (GetStoreKind()) {
+         case 1: {
+            printf("Store kind 1 not supported for TDC5");
+            break;
+         }
+         case 2: {
+            auto subevnt = new hadaq::TdcSubEventFloat(buf.datalen()/3);
+            mgr()->AddToTrigEvent(GetName(), subevnt);
+            pEventFloat = subevnt;
+            pStoreFloat = subevnt->vect_ptr();
+            break;
+         }
+         case 3: {
+            auto subevnt = new hadaq::TdcSubEventDouble(buf.datalen()/3);
+            mgr()->AddToTrigEvent(GetName(), subevnt);
+            pStoreDouble = subevnt->vect_ptr();
+            break;
+         }
+
+         default: break; // not supported
+      }
+   }
+
+   double localtm = 0., minimtm = 0., ch0time = 0.;
+
+   auto tu = (dogma::DogmaTu *) buf.ptr();
+
+   tdc5_header tdc5_h;
+   tdc5_parse_it tdc5_it;
+   tdc5_time tdc5_tm;
+   const char *tdc5_buf = (const char *) tu;
+   int tdc5_pktlen = (int) tu->GetTdc5PaketLength();
+   tdc5_parse_header(&tdc5_h, &tdc5_it, tdc5_buf, tdc5_pktlen);
+
+   double coarse_unit = GetTdcCoarseUnit();
+
+   ch0time = tdc5_h.trig_time * coarse_unit; // absolute reference time
+
+   if (pEventFloat)
+      pEventFloat->SetTriggerTime(ch0time);
+
+   unsigned help_index = 0;
+
+   unsigned ncalibr = 20; // clear indicate that no calibration data present
+
+   // TODO: configure ToT based on TDC5 information
+   // ConfigureToTByHwType(msg.getHeaderHwType());
+
+   while (tdc5_parse_next(&tdc5_tm, &tdc5_it, tdc5_buf, tdc5_pktlen) == 1) {
+
+      cnt++;
+
+      if (first_scan)
+         FastFillH1(fMsgsKind, tdc5_tm.is_falling ? 0 : 1);
+
+      unsigned chid = tdc5_tm.channel;
+      unsigned fine = tdc5_tm.fine;
+      unsigned coarse = tdc5_tm.coarse;
+      bool isrising = !tdc5_tm.is_falling;
+      unsigned bad_fine = 0x3FF;
+
+      localtm = -coarse_unit * coarse;
+
+      if (chid >= NumChannels()) {
+         ADDERROR(errChId, "Channel number %u bigger than configured %u", chid, NumChannels());
+         iserr = true;
+         continue;
+      }
+
+      if (fine == bad_fine) {
+         if (first_scan) {
+            ADDERROR(err3ff, "Missing hit in channel %u fine counter is %x", chid, fine);
+
+            missinghit = true;
+            FastFillH1(fChannels, chid);
+            FastFillH1(fUndHits, chid);
+
+            if (fChErrPerHld) DefFillH2(*fChErrPerHld, fHldId, chid, 1);
+         }
+         continue;
+      }
+
+      ChannelRec& rec = fCh[chid];
+
+      double corr = 0.;
+      bool raw_hit = true;
+
+      if (fine >= fNumFineBins) {
+         FastFillH1(fErrors, chid);
+         if (fChErrPerHld) DefFillH2(*fChErrPerHld, fHldId, chid, 1);
+         ADDERROR(errFine, "Fine counter %u out of allowed range 0..%u in channel %u", fine, fNumFineBins, chid);
+         iserr = true;
+         continue;
+      }
+
+      if (ncalibr < 2) {
+         // TODO: implement calibration messages 
+         // use correction from special message
+         corr = 0.;
+      } else {
+         corr = ExtractCalibr(isrising ? rec.rising_calibr : rec.falling_calibr, fine);
+
+         // apply TOT shift for falling edge (should it be also temp dependent)?
+         if (!isrising) corr += rec.tot_shift * 1e-9;
+      }
+
+      // apply correction
+      localtm -= corr;
+
+      // fill histograms only for normal channels
+      if (first_scan) {
+
+         // if (chid > 0) printf("%s HIT ch %u tm %12.9f diff %12.9f\n", GetName(), chid, localtm, localtm - ch0time);
+
+
+         // calculate hits rate 
+         if (cnt == 1) {
+            if (fLastRateTm < 0) 
+               fLastRateTm = ch0time;
+            if (ch0time - fLastRateTm > 1) {
+               FillH1(fHitsRate, fRateCnt / (ch0time - fLastRateTm));
+               fLastRateTm = ch0time;
+               fRateCnt = 0;
+            }
+         } else {
+            fRateCnt++;
+         }
+
+         // ensure that histograms are created
+         if ((HistFillLevel() > 2) && !rec.fRisingFine)
+            CreateChannelHistograms(chid);
+
+         bool use_fine_for_stat = true;
+         if (use_for_calibr == 3)
+            use_fine_for_stat = (gTrigDWindowLow <= localtm*1e9) && (localtm*1e9 <= gTrigDWindowHigh);
+
+         FastFillH1(fChannels, chid);
+         DefFillH1(fHits, (chid + (isrising ? 0.25 : 0.75)), 1.);
+         if (raw_hit) DefFillH2(fAllFine, chid, fine, 1.);
+         DefFillH2(fAllCoarse, chid, coarse, 1.);
+         if (fChHitsPerHld) DefFillH2(*fChHitsPerHld, fHldId, chid, 1);
+
+         if (isrising) {
+            // processing of rising edge
+            if (raw_hit && use_fine_for_stat) {
+               switch (use_for_calibr) {
+                  case 1:
+                  case 3:
+                     rec.rising_stat[fine]++;
+                     rec.all_rising_stat++;
+                     if (fCalHitsPerBrd) DefFillH2(*fCalHitsPerBrd, fSeqeunceId, chid, 1.); // accumulate only rising edges
+                     break;
+                  case 2:
+                     rec.last_rising_fine = fine;
+                     break;
+               }
+            }
+
+            if (raw_hit) FastFillH1(rec.fRisingFine, fine);
+
+            rec.rising_cnt++;
+
+            if (use_fine_for_stat) {
+               rec.rising_last_tm = localtm;
+               rec.rising_new_value = true;
+            }
+
+            if (use_for_ref && ((rec.rising_hit_tm == 0.) || fUseLastHit)) {
+               rec.rising_hit_tm = localtm;
+               rec.rising_coarse = coarse;
+               rec.rising_fine = fine;
+            }
+
+         } else {
+            // processing of falling edge
+            if (raw_hit && use_fine_for_stat) {
+               switch (use_for_calibr) {
+                  case 1:
+                  case 3:
+                     rec.falling_stat[fine]++;
+                     rec.all_falling_stat++;
+                     break;
+                  case 2:
+                     rec.last_falling_fine = fine;
+                     break;
+               }
+            }
+
+            if (raw_hit) FastFillH1(rec.fFallingFine, fine);
+
+            rec.falling_cnt++;
+
+            if (rec.rising_new_value && (rec.rising_last_tm != 0) && use_fine_for_stat) {
+
+               double tot = (localtm - rec.rising_last_tm)*1e9;
+               // TODO chid
+               DefFillH2(fhTotVsChannel, chid, tot, 1.);
+
+               if (fhTotMinusCounter && (tot < 0. )) {
+                  DefFillH1(fhTotMinusCounter, chid, 1.);
+               }
+               if (fhTotMoreCounter && (tot > fTotUpperLimit)) {
+                  DefFillH1(fhTotMoreCounter, chid, 1.);
+               }
+               DefFillH1(rec.fTot, tot, 1.);
+               rec.rising_new_value = false;
+
+               // JAM 11-2021: add ToT sigma histogram here:
+               double totvar = (tot - fToTvalue) * (tot - fToTvalue);
+               double totsigma = sqrt(totvar);
+               DefFillH2(fhSigmaTotVsChannel, chid, totsigma, 1.);
+
+               // here put something new for global histograms JAM2021:
+               if (fToTPerTDCChannel) {
+
+                  // we first always show most recent value, no averaging here;
+                  if((tot > 0) && (tot < 1000)) // JAM 7-12-21 suppress noise fakes
+                     SetH2Content(*fToTPerTDCChannel, fHldId, chid, tot);
+                  }
+
+                  // JAM 11-12-2023: just a scaler how many ToTs we've got for each channel:
+                  if (fToTCountPerTDCChannel) {
+                      DefFastFillH2(*fToTCountPerTDCChannel, fHldId, chid);
+                  }
+
+                  if(fDevPerTDCChannel && (tot > 0) && (tot < 1000)) { // JAM 7-12-21 suppress noise fakes
+                     rec.tot_dev += totvar; // JAM misuse  this data field to get overall sigma of file
+                     rec.tot0d_cnt++; // JAM misuse calibration counter here to evaluate sigma
+                     double currentsigma = sqrt(rec.tot_dev/rec.tot0d_cnt);
+                     if(currentsigma<10)
+                        SetH2Content(*fDevPerTDCChannel, fHldId, chid,  currentsigma);
+                  }
+
+               // use only raw hit
+               if (raw_hit && do_tot) rec.last_tot = tot + rec.tot_shift;
+            }
+         }
+
+         if (!iserr) {
+            hitcnt++;
+            if ((minimtm == 0.) || (localtm < minimtm))
+               minimtm = localtm;
+
+            if (dostore)
+               switch(GetStoreKind()) {
+                  case 1:
+                     // not supported for TDC5
+                     break;
+                  case 2:
+                     pStoreFloat->emplace_back(chid, isrising, localtm * 1e9);
+                     if (pEventFloat)
+                        pEventFloat->SetTriggerTime(ch0time);
+                     break;
+                  case 3:
+                     pStoreDouble->emplace_back(chid, isrising, ch0time + localtm);
+                     break;
+                  default: break;
+               }
+         }
+        // end of first scan 
+      } else {
+
+         // for second scan we check if hit can be assigned to the events
+         if (!iserr) {
+
+            base::GlobalTime_t globaltm = LocalToGlobalTime(localtm, &help_index);
+
+            // printf("TDC%u Test TDC message local:%11.9f global:%11.9f\n", GetID(), localtm, globaltm);
+
+            // we test hits, but do not allow to close events
+            unsigned indx = TestHitTime(globaltm, true, false);
+
+            if (indx < fGlobalMarks.size()) {
+               switch(GetStoreKind()) {
+                  case 1:
+                     // not supported for TDC5
+                     break;
+                  case 2: {
+                     auto subev = (hadaq::TdcSubEventFloat *) fGlobalMarks.item(indx).subev;
+                     AddMessage(indx, subev, hadaq::MessageFloat(chid, isrising, (globaltm - ch0time) * 1e9));
+                     if (subev)
+                        subev->SetTriggerTime(ch0time);
+                     break;
+                  }
+                  case 3:
+                     AddMessage(indx, (hadaq::TdcSubEventDouble *) fGlobalMarks.item(indx).subev, hadaq::MessageDouble(chid, isrising, globaltm));
+                     break;
+               }
+            }
+         }
+      }
+   }
+
+   if (first_scan) {
+
+      // special case for 0xD trigger - use only last hit messages for accumulating statistic
+      if (use_for_calibr == 2)
+         for (unsigned ch = 0; ch < NumChannels(); ch++) {
+            ChannelRec& rec = fCh[ch];
+            if ((rec.last_rising_fine > 0) && (rec.last_rising_fine < rec.rising_stat.size())) {
+               rec.rising_stat[rec.last_rising_fine]++;
+               rec.all_rising_stat++;
+               rec.last_rising_fine = 0;
+               if (fCalHitsPerBrd) DefFillH2(*fCalHitsPerBrd, fSeqeunceId, ch, 1.); // accumulate only rising edges
+            }
+            if ((rec.last_falling_fine > 0) && (rec.last_falling_fine < rec.falling_stat.size())) {
+               rec.falling_stat[rec.last_falling_fine]++;
+               rec.all_falling_stat++;
+               rec.last_falling_fine = 0;
+            }
+         }
+
+      // when doing TOT calibration, use only last TOT value - before one could find other signals
+      if (do_tot)
+         for (unsigned ch = 0; ch < NumChannels(); ch++) {
+            // printf("%s Channel %d last_tot %5.3f has_calibr %d min %5.2f max %5.2f \n", GetName(), ch, fCh[ch].last_tot, fCh[ch].hascalibr, fToThmin, fToThmax);
+
+            auto &rec = fCh[ch];
+
+            if (rec.hascalibr) {
+               if ((rec.last_tot >= fToThmin) && (rec.last_tot < fToThmax)) {
+                  if (rec.tot0d_hist.empty())
+                     rec.CreateToTHist();
+                  int bin = (int) ((rec.last_tot - fToThmin) / (fToThmax - fToThmin) * (TotBins + 0));
+                  if ((bin >= 0) && (bin < (int) rec.tot0d_hist.size())) {
+                     rec.tot0d_hist[bin]++;
+                     rec.tot0d_cnt++;
+                  } else {
+                     fprintf(stderr, "%s ch %u Wrong bin number %d tot %5.2f min %5.2f max %5.2f\n", GetName(), ch, bin, rec.last_tot, fToThmin, fToThmax);
+                  }
+               } else {
+                  rec.tot0d_misscnt++;
+               }
+            }
+            rec.last_tot = 0.;
+         }
+
+      // if we use trigger as time marker
+      if (fUseNativeTrigger && (ch0time != 0)) {
+         base::LocalTimeMarker marker;
+         marker.localid = 1;
+         marker.localtm = ch0time;
+         AddTriggerMarker(marker);
+      }
+
+      if ((syncid != 0xffffffff) && (ch0time != 0)) {
+         // printf("%s Create SYNC %u tm %12.9f\n", GetName(), syncid, ch0time);
+         base::SyncMarker marker;
+         marker.uniqueid = syncid;
+         marker.localid = 0;
+         marker.local_stamp = ch0time;
+         marker.localtm = ch0time;
+         AddSyncMarker(marker);
+      }
+
+      buf().local_tm = minimtm;
+
+//      printf("Proc:%p first scan iserr:%d  minm: %12.9f\n", this, iserr, minimtm*1e-9);
+
+      if (fMsgPerBrd) DefFillH1(*fMsgPerBrd, fSeqeunceId, cnt);
+
+      // fill number of "good" hits
+      if (fHitsPerBrd) DefFillH1(*fHitsPerBrd, fSeqeunceId, hitcnt);
+
+      // number of hits per TDC in HLD
+      if (fHitsPerHld) DefFillH1(*fHitsPerHld, fHldId, hitcnt);
+
+      if (iserr || missinghit) {
+         if (fErrPerBrd) DefFillH1(*fErrPerBrd, fSeqeunceId, 1.);
+         if (fErrPerHld) DefFillH1(*fErrPerHld, fHldId, 1.);
+      }
+   } else {
+
+      // use first channel only for flushing
+      if (ch0time != 0)
+         TestHitTime(LocalToGlobalTime(ch0time, &help_index), false, true);
+   }
+
+   // if no cross-processing required, can fill extra histograms directly
+   if (first_scan && !IsCrossProcess()) 
+      AfterFill();
+
+   return !iserr;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3457,13 +3867,19 @@ double hadaq::TdcProcessor::GetTdcCoarseUnit() const
    double coarse_unit = 0.;
    if (IsVersion4()) {
       coarse_unit = hadaq::TdcMessage::CoarseUnit300();
-      if (fIsCustomMhz) coarse_unit *= 300. / fCustomMhz;
-   } else if (IsVersion4()) {
-      coarse_unit = 1000. / 300.; // basic is 300 Mhz
-      if (fIsCustomMhz) coarse_unit *= 300. / fCustomMhz;
+      if (fIsCustomMhz) {
+         coarse_unit *= 300. / fCustomMhz;
+      }
+   } else if (IsVersion5()) {
+      coarse_unit = 1e9 * 1000. / 300.; // basic is 300 Mhz, 3.33-9 seconds
+      if (fIsCustomMhz) {
+         coarse_unit *= 300. / fCustomMhz;
+      }
    } else {
       coarse_unit = hadaq::TdcMessage::CoarseUnit();
-      if (fIsCustomMhz) coarse_unit *= 200. / fCustomMhz;
+      if (fIsCustomMhz) {
+         coarse_unit *= 200. / fCustomMhz;
+      }
    }
    return coarse_unit;
 }
