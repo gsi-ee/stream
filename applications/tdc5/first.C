@@ -16,6 +16,9 @@ void first()
    // this limits used for liner calibrations when nothing else is available
    hadaq::TdcMessage::SetFineLimits(19, 391);
 
+   // default number of fine bins
+   hadaq::TdcProcessor::SetDefaults(410);
+
    // default channel numbers and edges mask
    // 1 - use only rising edge, falling edge is ignore
    // 2   - falling edge enabled and fully independent from rising edge
