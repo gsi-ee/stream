@@ -3,8 +3,10 @@
 .\#*
 *~
 
-# ignore eclipse
-.project
+# analysis code
+*.cal
+*.cal.info
+
 
 # compiled stuff
 *.d
