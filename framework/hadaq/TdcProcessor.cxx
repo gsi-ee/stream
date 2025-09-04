@@ -648,7 +648,7 @@ void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned re
          reftdc = GetID();
 
       // ignore invalid settings
-      if ((ch==refch) && ((reftdc & 0xffffff) == GetID()))
+      if ((ch == refch) && ((reftdc & 0xffffff) == GetID()))
          return;
 
       if ((refch == 0) && (ch != 0) && ((reftdc & 0xffffff) != GetID())) {
@@ -666,7 +666,7 @@ void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned re
          reftdc = GetID();
 
       // ignore invalid settings
-      if ((ch==refch) && ((reftdc & 0xffff) == GetID())) return;
+      if ((ch == refch) && ((reftdc & 0xffff) == GetID())) return;
 
       if ((refch == 0) && (ch != 0) && ((reftdc & 0xffff) != GetID())) {
          printf("%s cannot set reference to zero channel from other TDC\n", GetName());
@@ -885,6 +885,8 @@ void hadaq::TdcProcessor::BeforeFill()
 void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
 {
 
+   bool regular_ch0 = IsRegularChannel0();
+
    // complete logic only when hist level is specified
    if (HistFillLevel() >= 4)
    for (unsigned ch = 0; ch < NumChannels(); ch++) {
@@ -918,20 +920,20 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
       if (!refproc && subprocmap) {
          auto iter = subprocmap->find(reftdc);
          if ((iter != subprocmap->end()) && iter->second->IsTDC())
-            refproc = (TdcProcessor*) iter->second;
+            refproc = (TdcProcessor *) iter->second;
       }
 
       // RAWPRINT("TDC%u Ch:%u Try to use as ref TDC%u %u proc:%p\n", GetID(), ch, reftdc, ref, refproc);
 
-      // printf("TDC %s %d %d same %d %p %p  %f %f \n", GetName(), ch, ref, (this==refproc), this, refproc, rec.rising_hit_tm, refproc->fCh[ref].rising_hit_tm);
+      // printf("TDC %s %d %d same %d %p %p  %g %g \n", GetName(), ch, ref, (this==refproc), this, refproc, rec.rising_hit_tm, refproc->fCh[ref].rising_hit_tm);
 
-      if (refproc && ((ref > 0) || IsRegularChannel0() || (refproc != this)) && (ref < refproc->NumChannels()) && ((ref != ch) || (refproc != this))) {
+      if (refproc && ((ref > 0) || regular_ch0 || (refproc != this)) && (ref < refproc->NumChannels()) && ((ref != ch) || (refproc != this))) {
          if (DoRisingEdge() && (rec.rising_hit_tm != 0) && (refproc->fCh[ref].rising_hit_tm != 0)) {
 
             double tm = rec.rising_hit_tm; // relative time to ch0 on same TDC
             double tm_ref = refproc->fCh[ref].rising_hit_tm; // relative time to ch0 on referenced TDC
 
-            if ((refproc != this) && (ch > 0) && (ref > 0) && rec.refabs) {
+            if ((refproc != this) && (ch > 0) && (ref > 0) && rec.refabs && !regular_ch0) {
                tm += fCh[0].rising_hit_tm; // produce again absolute time for channel
                tm_ref += refproc->fCh[0].rising_hit_tm; // produce again absolute time for reference channel
             }
@@ -941,10 +943,10 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
             double diff = rec.rising_ref_tm * 1e9;
 
             // if (diff > 150 && diff < 160)
-            //    printf("%s ch %u diff %f tm %12.3f tm_ref %12.3f\n", GetName(), ch, diff, tm*1e9, tm_ref*1e9);
+            // printf("%s ch %u diff %f tm %12.3f tm_ref %12.3f\n", GetName(), ch, diff, tm*1e9, tm_ref*1e9);
 
             // when refch is 0 on same board, histogram already filled
-            if ((ref != 0) || (refproc != this))
+            if ((ref > 0) || regular_ch0 || (refproc != this))
                DefFillH1(rec.fRisingRef, diff, 1.);
 
             DefFillH2(rec.fRisingRef2D, diff, rec.rising_fine, 1.);
