@@ -335,7 +335,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
       fChannels = MakeH1("Channels", "Messages per TDC channels", numchannels, 0, numchannels, "ch");
       if (DoFallingEdge() && DoRisingEdge())
          fHits = MakeH1("Edges", "Edges counts TDC channels (rising/falling)", numchannels*2, 0, numchannels, "ch");
-      if (!IsVersion5()) {   
+      if (!IsVersion5()) {
          fErrors = MakeH1("Errors", "Errors in TDC channels", numchannels, 0, numchannels, "ch");
          fUndHits = MakeH1("UndetectedHits", "Undetected hits in TDC channels", numchannels, 0, numchannels, "ch");
          fCorrHits = MakeH1("CorrectedHits", "Corrected hits in TDC channels", numchannels, 0, numchannels, "ch");
@@ -2660,7 +2660,7 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
       }
 
       if (ncalibr < 2) {
-         // TODO: implement calibration messages 
+         // TODO: implement calibration messages
          // use correction from special message
          corr = 0.;
       } else {
@@ -2678,10 +2678,9 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
 
          // if (chid > 0) printf("%s HIT ch %u tm %12.9f diff %12.9f\n", GetName(), chid, localtm, localtm - ch0time);
 
-
-         // calculate hits rate 
+         // calculate hits rate
          if (cnt == 1) {
-            if (fLastRateTm < 0) 
+            if (fLastRateTm < 0)
                fLastRateTm = ch0time;
             if (ch0time - fLastRateTm > 1) {
                FillH1(fHitsRate, fRateCnt / (ch0time - fLastRateTm));
@@ -2759,6 +2758,7 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
             if (rec.rising_new_value && (rec.rising_last_tm != 0) && use_fine_for_stat) {
 
                double tot = (localtm - rec.rising_last_tm)*1e9;
+
                // TODO chid
                DefFillH2(fhTotVsChannel, chid, tot, 1.);
 
@@ -2823,7 +2823,7 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
                   default: break;
                }
          }
-        // end of first scan 
+        // end of first scan
       } else {
 
          // for second scan we check if hit can be assigned to the events
@@ -2943,7 +2943,7 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
    }
 
    // if no cross-processing required, can fill extra histograms directly
-   if (first_scan && !IsCrossProcess()) 
+   if (first_scan && !IsCrossProcess())
       AfterFill();
 
    return !iserr;
@@ -3867,7 +3867,7 @@ double hadaq::TdcProcessor::GetTdcCoarseUnit() const
          coarse_unit *= 300. / fCustomMhz;
       }
    } else if (IsVersion5()) {
-      coarse_unit = 1e9 * 1000. / 300.; // basic is 300 Mhz, 3.33-9 seconds
+      coarse_unit = 1. / 3.e8; // basic is 300 Mhz, 3.33-9 seconds
       if (fIsCustomMhz) {
          coarse_unit *= 300. / fCustomMhz;
       }
