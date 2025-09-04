@@ -31,6 +31,11 @@ void first()
 
    proc->CreateTDC5(0x8dc45e);
 
+   auto tdc = proc->GetTDC(0x8dc45e);
+
+   for (int nch = 1; nch < 8; nch++)
+      tdc->SetRefChannel(nch, nch - 1, 0xffffff, 2000,  -10., 10.);
+
    // first parameter if filename  prefix for calibration files
    //     and calibration mode (empty string - no file I/O)
    // second parameter is hits count for autocalibration
