@@ -46,9 +46,10 @@ endfunction()
 #                       SOURCES src1 src2          :
 #                       LIBRARIES lib1 lib2        : direct linked libraries
 #                       DEFINITIONS def1 def2      : library definitions
+#                       OPTIONS opt1 opt2          : custom compile options
 #)
 function(STREAM_LINK_LIBRARY libname)
-   cmake_parse_arguments(ARG "NOEXPORT;NOWARN" "" "SOURCES;LIBRARIES;DEFINITIONS;DEPENDENCIES" ${ARGN})
+   cmake_parse_arguments(ARG "NOEXPORT;NOWARN" "" "SOURCES;LIBRARIES;OPTIONS;DEFINITIONS;DEPENDENCIES" ${ARGN})
 
    add_library(${libname} SHARED ${ARG_SOURCES})
    add_library(stream::${libname} ALIAS ${libname})
@@ -59,6 +60,10 @@ function(STREAM_LINK_LIBRARY libname)
 
    if(NOT ARG_NOWARN)
       target_compile_options(${libname} PRIVATE -Wall $<$<CXX_COMPILER_ID:GNU>:-Wsuggest-override>)
+   endif()
+
+   if(ARG_OPTIONS)
+      target_compile_options(${libname} PRIVATE ${ARG_OPTIONS})
    endif()
 
    target_link_libraries(${libname} PUBLIC ${ARG_LIBRARIES})
