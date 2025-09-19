@@ -8,6 +8,18 @@
 #define be16toh(x) OSSwapBigToHostInt16(x)
 #define be32toh(x) OSSwapBigToHostInt32(x)
 #define be64toh(x) OSSwapBigToHostInt64(x)
+#elif defined(__WINDOWS__) /* Windows section */
+#include <winsock2.h>
+#include <sys/param.h>
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define be16toh(x) ntohs(x)
+#define be32toh(x) ntohl(x)
+#define be64toh(x) ntohll(x)
+#else
+#define be16toh(x) (x)
+#define be32toh(x) (x)
+#define be64toh(x) (x)
+#endif
 #else
 #include <endian.h>
 #endif

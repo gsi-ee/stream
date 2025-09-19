@@ -13,7 +13,7 @@
 
 #include "dogma/defines.h"
 
-#ifdef STREAM_WINDOWS
+#ifdef __WINDOWS__
 #define RAWPRINT()
 #else
 #define RAWPRINT( args ... ) if(IsPrintRawData()) printf( args )
