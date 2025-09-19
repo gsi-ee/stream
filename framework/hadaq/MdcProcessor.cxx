@@ -85,9 +85,9 @@ bool hadaq::MdcProcessor::FirstBufferScan(const base::Buffer &buf)
       pStoreFloat = subevnt->vect_ptr();
    }
 
-   uint32_t data = arr[0];
-   FillH2(HitsPerBinRising, -1, data & 0x7);
-   signed reference = data & 0x1FFF;
+   uint32_t data0 = arr[0];
+   FillH2(HitsPerBinRising, -1, data0 & 0x7);
+   signed reference = data0 & 0x1FFF;
 
    int numhits = 0, numerrs = 0;
 
