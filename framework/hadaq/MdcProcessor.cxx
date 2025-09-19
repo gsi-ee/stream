@@ -1,5 +1,6 @@
 #include "hadaq/MdcProcessor.h"
 
+#include <cstdio>
 
 hadaq::MdcProcessor::MdcProcessor(TrbProcessor* trb, unsigned subid) :
    hadaq::SubProcessor(trb, "MDC_%04x", subid)

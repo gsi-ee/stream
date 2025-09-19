@@ -4,6 +4,8 @@
 #include "hadaq/TrbIterator.h"
 #include "hadaq/TdcIterator.h"
 
+#include <cstdio>
+
 
 const unsigned NUMHISTBINS = 0x1000;
 const double EPOCHLEN = 5e-9*0x800;
