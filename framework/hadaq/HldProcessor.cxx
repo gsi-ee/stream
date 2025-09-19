@@ -13,7 +13,11 @@
 #include "hadaq/TrbProcessor.h"
 #include "hadaq/MdcProcessor.h"
 
+#ifdef STREAM_WINDOWS
+#define RAWPRINT()
+#else
 #define RAWPRINT( args ...) if(IsPrintRawData()) printf( args )
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////////
 /// constructor

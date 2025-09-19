@@ -4616,6 +4616,7 @@ void hadaq::TdcProcessor::CreateV4CalibrTable(unsigned ch, uint32_t *table)
    SetTable(table, 0x1E6, (serial_number >> 18) & 0x1FF);
    SetTable(table, 0x1E7, (serial_number >> 27) & 0x1FF);
 
+#ifndef STREAM_WINDOWS
    timespec tm0;
    clock_gettime(CLOCK_REALTIME, &tm0);
    time_t src = tm0.tv_sec;
@@ -4628,6 +4629,7 @@ void hadaq::TdcProcessor::CreateV4CalibrTable(unsigned ch, uint32_t *table)
    SetTable(table, 0x1EB, res.tm_mday);   /* Day of the month (1-31) */
    SetTable(table, 0x1EC, res.tm_mon);    /* Month (0-11) */
    SetTable(table, 0x1ED, res.tm_year-100);  /* Year - 1900 */
+#endif
 
    uint16_t crc16 = gen_crc16(table, 0xF8, 2);
 

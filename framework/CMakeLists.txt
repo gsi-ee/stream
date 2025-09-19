@@ -85,7 +85,7 @@ set(nx_hdrs
 STREAM_INSTALL_HEADERS(nx ${nx_hdrs})
 
 if(MSVC)
-  set(stream_defs /wd4514 -DSTREAM_WINDOWS)
+  set(stream_defs /wd4514 /wd4002 -DSTREAM_WINDOWS)
 elseif(APPLE)
   set(stream_defs -DSTREAM_APPLE)
 endif()
