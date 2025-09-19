@@ -16,7 +16,7 @@ namespace hadaq {
    class TdcIterator {
       protected:
 
-         enum { DummyEpoch = 0xffffffff };
+         enum _Epoch: uint32_t { DummyEpoch = 0xffffffff };
 
          uint32_t*  fBuf{nullptr};     ///<! pointer on raw data
          uint32_t*  fLastBuf{nullptr}; ///<! pointer on last extracted message
@@ -24,7 +24,7 @@ namespace hadaq {
          bool       fSwapped{false};   ///<! true if raw data are swapped
 
          hadaq::TdcMessage fMsg;          ///<! current message
-         uint32_t  fCurEpoch{DummyEpoch};  ///<! current epoch
+         uint32_t  fCurEpoch = DummyEpoch; ///<! current epoch
 
          base::LocalStampConverter  fConv;   ///<! use to covert time stamps in seconds
 
