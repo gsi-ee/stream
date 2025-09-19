@@ -4,8 +4,7 @@
 #include <cstring>
 #include <cstdio>
 #include <cmath>
-#include <stdarg.h>
-#include <unistd.h>
+#include <cstdarg>
 #include <ctime>
 
 #include "base/defines.h"
