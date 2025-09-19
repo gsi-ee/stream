@@ -85,9 +85,10 @@ set(nx_hdrs
 STREAM_INSTALL_HEADERS(nx ${nx_hdrs})
 
 if(MSVC)
-  set(stream_defs /wd4514 -D__WINDOWS__)
+  set(stream_defs /wd4514 -DSTREAM_WINDOWS)
+elseif(APPLE)
+  set(stream_defs /wd4514 -DSTREAM_APPLE)
 endif()
-
 
 STREAM_LINK_LIBRARY(Stream
    SOURCES

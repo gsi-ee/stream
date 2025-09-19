@@ -2,24 +2,17 @@
 
 #include <cstdint>
 
-#if defined(__MACH__) /* Apple OSX section */
+#if defined(STREAM_APPLE) /* Apple OSX section */
 // #include <machine/endian.h>
 #include <libkern/OSByteOrder.h>
 #define be16toh(x) OSSwapBigToHostInt16(x)
 #define be32toh(x) OSSwapBigToHostInt32(x)
 #define be64toh(x) OSSwapBigToHostInt64(x)
-#elif defined(__WINDOWS__) /* Windows section */
+#elif defined(STREAM_WINDOWS) /* Windows section */
 #include <winsock2.h>
-#include <sys/param.h>
-#if BYTE_ORDER == LITTLE_ENDIAN
 #define be16toh(x) ntohs(x)
 #define be32toh(x) ntohl(x)
 #define be64toh(x) ntohll(x)
-#else
-#define be16toh(x) (x)
-#define be32toh(x) (x)
-#define be64toh(x) (x)
-#endif
 #else
 #include <endian.h>
 #endif

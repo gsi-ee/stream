@@ -18,12 +18,13 @@
 #include "hadaq/TdcSubEvent.h"
 #include <iostream>
 
-
+#ifdef STREAM_WINDOWS
+#define RAWPRINT()
+#define ADDERROR()
+#else
 #define RAWPRINT( args ...) if(IsPrintRawData()) printf( args )
-
-
 #define ADDERROR(code, args ...) if(((1 << code) & gErrorMask) || mgr()->DoLog()) AddError( code, args )
-
+#endif
 
 unsigned hadaq::TdcProcessor::gNumFineBins = FineCounterBins;
 unsigned hadaq::TdcProcessor::gTotRange = 100;
