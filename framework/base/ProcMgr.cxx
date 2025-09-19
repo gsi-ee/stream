@@ -2,7 +2,6 @@
 
 #include <cstdio>
 #include <cstdlib>
-#include <dlfcn.h>
 
 #include "base/StreamProc.h"
 #include "base/EventProc.h"
