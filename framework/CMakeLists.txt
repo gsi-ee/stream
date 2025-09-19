@@ -84,7 +84,10 @@ set(nx_hdrs
 
 STREAM_INSTALL_HEADERS(nx ${nx_hdrs})
 
-# ================== Produce Stream headers ==========
+if(MSVC)
+  set(stream_defs /wd4514 -D__WINDOWS__)
+endif()
+
 
 STREAM_LINK_LIBRARY(Stream
    SOURCES
@@ -123,11 +126,10 @@ STREAM_LINK_LIBRARY(Stream
    nx/Iterator.cxx
    nx/Message.cxx
    nx/Processor.cxx
+   DEFINITIONS ${stream_defs}
 )
 
-if(MSVC)
-  target_compile_definitions(Stream PUBLIC /wd4514)
-endif()
+# ================== Install Stream headers ==========
 
 foreach(dir base dogma get4 hadaq mbs nx)
    install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/${dir}
