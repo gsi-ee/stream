@@ -125,6 +125,10 @@ STREAM_LINK_LIBRARY(Stream
    nx/Processor.cxx
 )
 
+if(MSVC)
+  target_compile_definitions(Stream PUBLIC /wd4514)
+endif()
+
 foreach(dir base dogma get4 hadaq mbs nx)
    install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/${dir}
           DESTINATION ${STREAM_INSTALL_INCLUDEDIR})
