@@ -87,6 +87,7 @@ STREAM_INSTALL_HEADERS(nx ${nx_hdrs})
 if(MSVC)
   set(stream_defs -DSTREAM_WINDOWS)
   set(stream_opts /wd4514 /wd4002 /wd4711 /wd4710 /wd4820 /wd5219)
+  set(stream_libs ws2_32.lib)
 elseif(APPLE)
   set(stream_defs -DSTREAM_APPLE)
 endif()
@@ -130,6 +131,7 @@ STREAM_LINK_LIBRARY(Stream
    nx/Processor.cxx
    DEFINITIONS ${stream_defs}
    OPTIONS ${stream_opts}
+   LIBRARIES ${stream_libs}
 )
 
 # ================== Install Stream headers ==========
