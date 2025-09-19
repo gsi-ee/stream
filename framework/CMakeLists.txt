@@ -127,6 +127,8 @@ STREAM_LINK_LIBRARY(Stream
 
 if(APPLE)
   target_compile_definitions(Stream PUBLIC STREAM_AARCH64)
+elseif(MSVC)
+  target_compile_definitions(Stream PUBLIC STREAM_WINDOWS)
 endif()
 
 foreach(dir base dogma get4 hadaq mbs nx)

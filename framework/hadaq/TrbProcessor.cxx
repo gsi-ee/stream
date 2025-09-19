@@ -13,7 +13,11 @@
 
 #include "dogma/defines.h"
 
-#define RAWPRINT( args ...) if(IsPrintRawData()) printf( args )
+#ifdef STREAM_WINDOWS
+#define RAWPRINT()
+#else
+#define RAWPRINT( args ... ) if(IsPrintRawData()) printf( args )
+#endif
 
 unsigned hadaq::TrbProcessor::gNumChannels = 65;
 unsigned hadaq::TrbProcessor::gEdgesMask = 0x1;
@@ -247,7 +251,7 @@ int hadaq::TrbProcessor::CreateTDC(unsigned id1, unsigned id2, unsigned id3, uns
          case 3: tdcid = id4; break;
          default: tdcid = id1; break;
       }
-      if (tdcid == 0) 
+      if (tdcid == 0)
          continue;
 
       if (GetTDC(tdcid, true)) {
@@ -292,7 +296,7 @@ int hadaq::TrbProcessor::CreateTDC5(unsigned id1, unsigned id2, unsigned id3, un
          case 3: tdcid = id4; break;
          default: tdcid = id1; break;
       }
-      if (tdcid == 0) 
+      if (tdcid == 0)
          continue;
 
       if (GetTDC(tdcid, true)) {
@@ -578,14 +582,14 @@ bool hadaq::TrbProcessor::DogmaBufferScan(const base::Buffer &buf)
                }
 
                base::Buffer buf;
-                  
+
                // copy tu with header, decode inside
                buf.makereferenceof(tu, tu->GetSize());
 
                buf().kind = trigtype;
                buf().boardid = dataid;
-               buf().format = 5; // use 5 for TDC5 
-                   
+               buf().format = 5; // use 5 for TDC5
+
                tdcproc->AddNextBuffer(buf);
                tdcproc->SetNewDataFlag(true);
 
@@ -599,7 +603,7 @@ bool hadaq::TrbProcessor::DogmaBufferScan(const base::Buffer &buf)
                uint32_t coarse0 = tu->GetLocalTrigTime() & 0x7ff;
 
                // printf("  Tu 0x%x proc %p payloadlen %u epoch0 %07x coarse0 %03x\n", dataid, tdcproc, datalen, (unsigned) epoch0, (unsigned) coarse0);
-            
+
                base::Buffer buf;
                buf.makenew((datalen + 2) * 4);
                uint32_t *ptr = (uint32_t *)buf.ptr();
