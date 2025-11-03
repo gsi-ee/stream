@@ -24,6 +24,8 @@
 
 #define DOGMA_MAGIC 0xecc1701d
 
+#define TDC5_MAGIC 0x55520000
+
 #define SWAP_VALUE(v) (((v & 0xFF) << 24) | ((v & 0xFF00) << 8) | ((v & 0xFF0000) >> 8) | ((v & 0xFF000000) >> 24))
 
 namespace dogma {
@@ -47,11 +49,11 @@ namespace dogma {
 
          inline bool IsMagic() const { return (SWAP_VALUE(tuMagic) & 0xffffff00) == (DOGMA_MAGIC & 0xffffff00); }
 
+         inline bool IsMagicTdc5() const { return (SWAP_VALUE(tuMagic) & 0xffff0000) == (TDC5_MAGIC & 0xffff0000); }
+
          inline uint32_t GetMagicType() const { return SWAP_VALUE(tuMagic) & 0xff; }
 
          inline bool IsMagicDefault() const { return GetMagicType() == (DOGMA_MAGIC & 0xff); }
-
-         inline bool IsMagicTdc5() const { return GetMagicType() == 0x1e; }
 
          inline uint32_t GetAddr() const { return SWAP_VALUE(tuAddr); }
 
@@ -83,12 +85,12 @@ namespace dogma {
             tuLenPayload = SWAP_VALUE(new_payload);
          }
 
-         inline uint32_t SetTdc5PaketLength(uint32_t sz) 
+         inline uint32_t SetTdc5PaketLength(uint32_t sz)
          {
             if (sz < sizeof(DogmaTu))
                sz = sizeof(DogmaTu);
             uint32_t sz4 = sz / 4, odd_len = sz - sz4 * 4;
-            if (odd_len > 0) 
+            if (odd_len > 0)
                sz4++;
             SetPayloadLen(sz4 - sizeof(DogmaTu) / 4);
             SetFrameBits(odd_len); // store in frame bits extra bytes not match to 4 bytes borders
