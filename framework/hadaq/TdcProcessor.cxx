@@ -3916,7 +3916,8 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, bool rising, const st
    if (!preliminary && (finemin > 50)) {
       std::string log_finemin = std::string("_BadFineMin_") + std::to_string(finemin);
       err_log.append(log_finemin);
-      if (quality > 0.4) quality = 0.4;
+      if (quality > 0.4)
+         quality = 0.4;
       if (fCalibrQuality > 0.4) {
          fCalibrStatus = name_prefix + log_finemin;
          fCalibrQuality = 0.4;
@@ -3930,10 +3931,15 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, bool rising, const st
       finemaxlimit = 400;
    }
 
+   // if range for fine bins very small - require that at least 0.7 of range covered
+   if (finemaxlimit > fNumFineBins)
+      finemaxlimit = (int) (0.7 * fNumFineBins);
+
    if (!preliminary && (finemax < finemaxlimit)) {
       std::string log_finemax = std::string("_BadFineMax_") + std::to_string(finemax);
       err_log.append(log_finemax);
-      if (quality > 0.4) quality = 0.4;
+      if (quality > 0.4)
+         quality = 0.4;
       if (fCalibrQuality > 0.4) {
          fCalibrStatus = name_prefix + log_finemax;
          fCalibrQuality = 0.4;
@@ -4055,7 +4061,8 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, bool rising, const st
          printf("%s ch %u cnts %5.0f deviation %5.4f\n", GetName(), nch, sum, dev);
          if (dev > 0.05) {
             err_log.append("_NonLinear");
-            if (quality > 0.6) quality = 0.6;
+            if (quality > 0.6)
+               quality = 0.6;
             if (fCalibrQuality > 0.6) {
                fCalibrStatus = name_prefix + "_NonLinear";
                fCalibrQuality = 0.6;
@@ -4065,7 +4072,8 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, bool rising, const st
    }
 
    // add problematic channels to the full list
-   if (!err_log.empty()) fCalibrLog.push_back(name_prefix + err_log);
+   if (!err_log.empty())
+      fCalibrLog.push_back(name_prefix + err_log);
 
    return quality;
 }
