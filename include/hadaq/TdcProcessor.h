@@ -424,7 +424,8 @@ namespace hadaq {
          /** extract calibration value */
          inline float ExtractCalibrDirect(const std::vector<float> &func, unsigned bin)
          {
-            if (func.size() > 100) return func[bin];
+            if ((func.size() > 100) || (func.size() == fNumFineBins))
+               return func[bin];
 
             // here only two-point linear approximation is supported
             // later one can extend approximation for N-points linear function
