@@ -387,6 +387,8 @@ namespace hadaq {
           * TODO: derive this value from sub-items */
          double MaximumDisorderTm() const override { return 2e-6; }
 
+         int GetBinsPerNS() const;
+
          bool DoBufferScan(const base::Buffer &buf, bool isfirst);
          bool DoBuffer4Scan(const base::Buffer &buf, bool isfirst);
          bool DoBuffer5Scan(const base::Buffer &buf, bool isfirst);

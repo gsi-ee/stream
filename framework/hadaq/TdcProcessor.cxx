@@ -357,7 +357,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
       if (!hadaq::TdcProcessor::IsHadesReducedMonitoring() && !is_hades)
          fAllCoarse = MakeH2("CoarseTm", "coarse counter value", numchannels, 0, numchannels, 2048, 0, 2048, "ch;coarse");
 
-      fhTotVsChannel = MakeH2("TotVsChannel", "ToT", numchannels, 0, numchannels, gTotRange*100/(gHist2dReduce > 0 ? gHist2dReduce : 1), 0., gTotRange, "ch;ToT [ns]");
+      fhTotVsChannel = MakeH2("TotVsChannel", "ToT", numchannels, 0, numchannels, gTotRange*GetBinsPerNS()/(gHist2dReduce > 0 ? gHist2dReduce : 1), 0., gTotRange, "ch;ToT [ns]");
 
       if (!hadaq::TdcProcessor::IsHadesReducedMonitoring()) {
          fhTotMoreCounter =
@@ -411,6 +411,21 @@ hadaq::TdcProcessor::~TdcProcessor()
       fCh[ch].ReleaseToTHist();
    }
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+/// returns number of histogram bins per NS
+/// depends from numfine bins and coarse unit
+/// default for many histograms is 100
+
+int hadaq::TdcProcessor::GetBinsPerNS() const
+{
+   if (NumFineBins() < 100) {
+      double v = NumFineBins() / (GetTdcCoarseUnit() * 1e9);
+      return (v > 100) ? 100 : (v > 1 ? int(v) : 1);
+   }
+   return 100;
+}
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 /// returns true if channel 0 should be handled as all other
@@ -529,7 +544,7 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
    if (need_falling) {
       fCh[ch].fFallingFine = MakeH1("FallingFine", "Falling fine counter", fNumFineBins, 0, fNumFineBins, "fine");
       fCh[ch].fFallingCalibr = MakeH1("FallingCalibr", "Falling calibration function", fNumFineBins, 0, fNumFineBins, "fine;kind:F");
-      fCh[ch].fTot = MakeH1("Tot", "Time over threshold", gTotRange*100, 0, gTotRange, "ns");
+      fCh[ch].fTot = MakeH1("Tot", "Time over threshold", gTotRange*GetBinsPerNS(), 0, gTotRange, "ns");
       // fCh[ch].fTot0D = MakeH1("Tot0D", "Time over threshold with 0xD trigger", TotBins, fToThmin, fToThmax, "ns");
       // copy calibration only when histogram created
       CopyCalibration(fCh[ch].falling_calibr, fCh[ch].fFallingCalibr, ch, fFallingCalibr);
