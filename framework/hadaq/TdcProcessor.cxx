@@ -4154,25 +4154,46 @@ bool hadaq::TdcProcessor::CalibrateTot(unsigned nch, std::vector<uint32_t> &hist
    } else if ((cut > 0) && (cut < 0.3)) {
       double suml = 0., sumr = 0.;
 
-      while ((left < right-3) && (suml < sum0*cut))
+      while ((left < right - 3) && (suml + hist[left] < sum0 * cut))
          suml += hist[left++];
 
-      while ((right > left+3) && (sumr < sum0*cut))
+      while ((right > left + 3) && (sumr + hist[right - 1] < sum0 * cut))
          sumr += hist[--right];
    }
 
    sum0 = 0;
 
+   uint32_t maxvalue = 0, nonzerocnt = 0;
+   double maxpos = 0;
+
    for (int n = left; n < right; n++) {
       double x = fToThmin + (n + 0.5) / (fToTbins + 0) * (fToThmax - fToThmin); // x coordinate of center bin
+
+      if (hist[n] > maxvalue) {
+         maxvalue = hist[n];
+         maxpos = x;
+      }
+
+      if (hist[n] > 0)
+         nonzerocnt++;
 
       sum0 += hist[n];
       sum1 += hist[n]*x;
       sum2 += hist[n]*x*x;
    }
 
-   double mean = sum1/sum0;
-   double rms = sum2/sum0 - mean*mean;
+   double mean = 0, rms = 0;
+
+   if (!nonzerocnt || (sum0 <= 0)) {
+      rms = -1;
+   } else if (nonzerocnt == 1) {
+      mean = maxpos;
+      rms = 0;
+   } else {
+      mean = sum1/sum0;
+      rms = sum2/sum0 - mean*mean;
+   }
+
    if (rms < 0) {
       printf("%s Ch:%u TOT failed - error in RMS calculation  mean: %5.3f rms2: %5.3f \n", GetName(), nch, mean, rms);
 
