@@ -4695,7 +4695,10 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
 
       float val0 = 0.;
       if (fread(&val0, sizeof(float), 1, f) == 1) {
-         if (val0) {
+         // calibration curve can have lookup table or set of segments
+         // first array element is number of segments in last case
+         // but it should be at least 1
+         if (val0 > 0.99) {
             fCh[ch].rising_calibr.resize(1 + ((int)val0)*2);
          } else{
             fCh[ch].rising_calibr.resize(fNumFineBins);
@@ -4706,7 +4709,7 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
       }
 
       if (fread(&val0, sizeof(float), 1, f) == 1) {
-         if (val0) {
+         if (val0 > 0.99) {
             fCh[ch].falling_calibr.resize(1 + ((int)val0)*2);
          } else{
             fCh[ch].falling_calibr.resize(fNumFineBins);
