@@ -418,13 +418,17 @@ hadaq::TdcProcessor::~TdcProcessor()
 /// depends from numfine bins and coarse unit
 /// default for many histograms is 100
 
-int hadaq::TdcProcessor::GetBinsPerNS() const
+int hadaq::TdcProcessor::GetBinsPerNS(double range) const
 {
+   double v = 100.;
    if (NumFineBins() < 100) {
-      double v = NumFineBins() / (GetTdcCoarseUnit() * 1e9);
-      return (v > 100) ? 100 : (v > 1 ? int(v) : 1);
+      v = NumFineBins() / (GetTdcCoarseUnit() * 1e9);
+      if (v > 100)
+         v = 100;
+      else if (v < 1)
+         v = 1;
    }
-   return 100;
+   return (int) v * range;
 }
 
 
@@ -582,8 +586,12 @@ void hadaq::TdcProcessor::SetToTRange(double tot, double hmin, double hmax)
 {
    fToTdflt = false;
    fToTvalue = tot;
+   fToTbins = TotBins;
    fToThmin = hmin;
    fToThmax = hmax;
+
+   if (NumFineBins() < 100)
+      fToTbins = GetBinsPerNS(hmax - hmin);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
