@@ -4519,13 +4519,13 @@ void hadaq::TdcProcessor::StoreCalibration(const std::string& fprefix, unsigned 
       printf("%s Cannot open file %s for writing calibration info\n", GetName(), fname);
       return;
    }
-   fprintf(f,"ch qrising    stat  fmin  fmax   qfalling  stat  fmin  fmax   ToT  Dev\n");
+   fprintf(f,"ch qrising    stat  fmin  fmax   qfalling  stat  fmin  fmax   ToTshift   Dev\n");
    for (unsigned ch=0;ch<NumChannels();ch++) {
       ChannelRec &rec = fCh[ch];
       int fmin1 = 10, fmax1 = 400, fmin2 = 10, fmax2 = 400;
       FindFMinMax(rec.rising_calibr, fNumFineBins, fmin1, fmax1);
       FindFMinMax(rec.falling_calibr, fNumFineBins, fmin2, fmax2);
-      fprintf(f,"%2u   %5.2f  %6ld   %3d   %3d    %5.2f  %6ld   %3d   %3d  %7.3f %5.3f\n", ch,
+      fprintf(f,"%2u   %5.2f  %6ld   %3d   %3d    %5.2f  %6ld   %3d   %3d   %7.3f   %5.3f\n", ch,
                  rec.calibr_quality_rising, rec.calibr_stat_rising, fmin1, fmax1,
                  rec.calibr_quality_falling, rec.calibr_stat_falling, fmin2, fmax2,
                  rec.tot_shift, rec.tot_dev );
