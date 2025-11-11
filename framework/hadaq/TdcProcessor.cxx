@@ -515,19 +515,20 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
 
    if (need_rising) {
       fCh[ch].fRisingFine = MakeH1("RisingFine", "Rising fine counter", fNumFineBins, 0, fNumFineBins, "fine");
-      fCh[ch].fRisingMult = MakeH1("RisingMult", "Rising event multiplicity", 128, 0, 128, "nhits");
       fCh[ch].fRisingCalibr = MakeH1("RisingCalibr", "Rising calibration function", fNumFineBins, 0, fNumFineBins, "fine;kind:F");
       // copy calibration only when histogram created
       CopyCalibration(fCh[ch].rising_calibr, fCh[ch].fRisingCalibr, ch, fRisingCalibr);
 
       if (gPreventFineCalibration)
          fCh[ch].fRisingPCalibr = MakeH1("RisingPCalibr", "Prevented rising calibration", fNumFineBins, 0, fNumFineBins, "fine;kind:F");
+
+      if (HistFillLevel() > 4)
+         fCh[ch].fRisingMult = MakeH1("RisingMult", "Rising event multiplicity", 128, 0, 128, "nhits");
    }
 
    if (need_falling) {
       fCh[ch].fFallingFine = MakeH1("FallingFine", "Falling fine counter", fNumFineBins, 0, fNumFineBins, "fine");
       fCh[ch].fFallingCalibr = MakeH1("FallingCalibr", "Falling calibration function", fNumFineBins, 0, fNumFineBins, "fine;kind:F");
-      fCh[ch].fFallingMult = MakeH1("FallingMult", "Falling event multiplicity", 128, 0, 128, "nhits");
       fCh[ch].fTot = MakeH1("Tot", "Time over threshold", gTotRange*100, 0, gTotRange, "ns");
       // fCh[ch].fTot0D = MakeH1("Tot0D", "Time over threshold with 0xD trigger", TotBins, fToThmin, fToThmax, "ns");
       // copy calibration only when histogram created
@@ -535,6 +536,9 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
 
       if (gPreventFineCalibration)
          fCh[ch].fFallingPCalibr = MakeH1("FallingPCalibr", "Prevented falling calibration", fNumFineBins, 0, fNumFineBins, "fine;kind:F");
+
+      if (HistFillLevel() > 4)
+         fCh[ch].fFallingMult = MakeH1("FallingMult", "Falling event multiplicity", 128, 0, 128, "nhits");
    }
 
    SetSubPrefix2();
