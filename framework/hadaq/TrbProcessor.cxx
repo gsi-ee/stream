@@ -282,20 +282,27 @@ int hadaq::TrbProcessor::CreateTDC(unsigned id1, unsigned id2, unsigned id3, uns
 //////////////////////////////////////////////////////////////////////////////
 /// Create up to 4 TDC v5 with pre-configured default parameters
 
-int hadaq::TrbProcessor::CreateTDC5(unsigned id1, unsigned id2, unsigned id3, unsigned id4)
+std::vector<hadaq::TdcProcessor*> hadaq::TrbProcessor::CreateTDC5(unsigned id1, unsigned id2, unsigned id3, unsigned id4)
+{
+   std::vector<unsigned> ids = { id1 };
+   if (id2)
+      ids.push_back(id2);
+   if (id3)
+      ids.push_back(id3);
+   if (id4)
+      ids.push_back(id4);
+
+   return CreateTDC5(ids);
+}
+
+
+std::vector<hadaq::TdcProcessor*> hadaq::TrbProcessor::CreateTDC5(const std::vector<unsigned> &ids)
 {
    // overwrite default value in the beginning
 
-   int num = 0;
+   std::vector<hadaq::TdcProcessor*> res;
 
-   for (unsigned cnt = 0; cnt < 4; cnt++) {
-      unsigned tdcid = id1;
-      switch (cnt) {
-         case 1: tdcid = id2; break;
-         case 2: tdcid = id3; break;
-         case 3: tdcid = id4; break;
-         default: tdcid = id1; break;
-      }
+   for (auto tdcid : ids) {
       if (tdcid == 0)
          continue;
 
@@ -313,10 +320,10 @@ int hadaq::TrbProcessor::CreateTDC5(unsigned id1, unsigned id2, unsigned id3, un
 
       tdc->SetCalibrTriggerMask(fCalibrTriggerMask);
 
-      num++;
+      res.push_back(tdc);
    }
 
-   return num;
+   return res;
 }
 
 //////////////////////////////////////////////////////////////////////////////
