@@ -162,7 +162,7 @@ namespace hadaq {
                FillCalibr(numfine, coarse_unit);
             }
 
-            /** Initialize claibration with default values */
+            /** Initialize calibration with default values */
             void FillCalibr(unsigned numfine, double coarse_unit = -1.)
             {
                for (unsigned n = 0; n < numfine; n++)
@@ -204,10 +204,10 @@ namespace hadaq {
             }
 
             /** Create ToT histogram  */
-            void CreateToTHist()
+            void CreateToTHist(unsigned nbins)
             {
-               tot0d_hist.resize(TotBins);
-               for (unsigned n=0;n<TotBins;n++)
+               tot0d_hist.resize(nbins);
+               for (unsigned n = 0; n < nbins; n++)
                   tot0d_hist[n] = 0;
             }
 
@@ -279,6 +279,7 @@ namespace hadaq {
 
          bool                     fToTdflt;        ///<! indicate if default setting used, which can be adjusted after seeing first event
          double                   fToTvalue;       ///<! ToT of 0xd trigger
+         unsigned                 fToTbins;        ///<! number of bins in ToT histogram
          double                   fToThmin;        ///<! histogram min
          double                   fToThmax;        ///<! histogram max
          double                   fTotUpperLimit;  ///<! upper limit for ToT range check

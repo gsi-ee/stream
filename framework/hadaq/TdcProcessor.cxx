@@ -321,6 +321,7 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
 
    fToTdflt = true;
    fToTvalue = ToTvalue;
+   fToTbins = TotBins;
    fToThmin = ToThmin;
    fToThmax = ToThmax;
    fTotUpperLimit = 1000;
@@ -545,7 +546,7 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
       fCh[ch].fFallingFine = MakeH1("FallingFine", "Falling fine counter", fNumFineBins, 0, fNumFineBins, "fine");
       fCh[ch].fFallingCalibr = MakeH1("FallingCalibr", "Falling calibration function", fNumFineBins, 0, fNumFineBins, "fine;kind:F");
       fCh[ch].fTot = MakeH1("Tot", "Time over threshold", gTotRange*GetBinsPerNS(), 0, gTotRange, "ns");
-      // fCh[ch].fTot0D = MakeH1("Tot0D", "Time over threshold with 0xD trigger", TotBins, fToThmin, fToThmax, "ns");
+      // fCh[ch].fTot0D = MakeH1("Tot0D", "Time over threshold with 0xD trigger", fToTbins, fToThmin, fToThmax, "ns");
       // copy calibration only when histogram created
       CopyCalibration(fCh[ch].falling_calibr, fCh[ch].fFallingCalibr, ch, fFallingCalibr);
 
@@ -1514,8 +1515,9 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
 
          if (rec.hascalibr) {
             if ((rec.last_tot >= fToThmin) && (rec.last_tot < fToThmax)) {
-               int bin = (int) ((rec.last_tot - fToThmin) / (fToThmax - fToThmin) * (TotBins + 0) );
-               if (rec.tot0d_hist.empty()) rec.CreateToTHist();
+               int bin = (int) ((rec.last_tot - fToThmin) / (fToThmax - fToThmin) * (fToTbins + 0) );
+               if (rec.tot0d_hist.empty())
+                  rec.CreateToTHist(fToTbins);
                rec.tot0d_hist[bin]++;
                rec.tot0d_cnt++;
             } else {
@@ -2447,8 +2449,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
             if (rec.hascalibr) {
                if ((rec.last_tot >= fToThmin) && (rec.last_tot < fToThmax)) {
                   if (rec.tot0d_hist.empty())
-                     rec.CreateToTHist();
-                  int bin = (int) ((rec.last_tot - fToThmin) / (fToThmax - fToThmin) * (TotBins + 0));
+                     rec.CreateToTHist(fToTbins);
+                  int bin = (int) ((rec.last_tot - fToThmin) / (fToThmax - fToThmin) * (fToTbins + 0));
                   if ((bin >= 0) && (bin < (int) rec.tot0d_hist.size())) {
                      rec.tot0d_hist[bin]++;
                      rec.tot0d_cnt++;
@@ -2907,8 +2909,8 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
             if (rec.hascalibr) {
                if ((rec.last_tot >= fToThmin) && (rec.last_tot < fToThmax)) {
                   if (rec.tot0d_hist.empty())
-                     rec.CreateToTHist();
-                  int bin = (int) ((rec.last_tot - fToThmin) / (fToThmax - fToThmin) * (TotBins + 0));
+                     rec.CreateToTHist(fToTbins);
+                  int bin = (int) ((rec.last_tot - fToThmin) / (fToThmax - fToThmin) * (fToTbins + 0));
                   if ((bin >= 0) && (bin < (int) rec.tot0d_hist.size())) {
                      rec.tot0d_hist[bin]++;
                      rec.tot0d_cnt++;
@@ -3534,7 +3536,8 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
       if (do_tot)
          for (unsigned ch = 0; ch < NumChannels()-1; ch++) {
             if (fCh[ch].hascalibr && (fCh[ch].last_tot >= fToThmin) && (fCh[ch].last_tot < fToThmax)) {
-               if (fCh[ch].tot0d_hist.empty()) fCh[ch].CreateToTHist();
+               if (fCh[ch].tot0d_hist.empty())
+                  fCh[ch].CreateToTHist(fToTbins);
                int bin = (int) ((fCh[ch].last_tot - fToThmin) / (fToThmax - fToThmin) * (TotBins + 0));
                fCh[ch].tot0d_hist[bin]++;
                fCh[ch].tot0d_cnt++;
@@ -4102,7 +4105,7 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, bool rising, const st
 
 bool hadaq::TdcProcessor::CalibrateTot(unsigned nch, std::vector<uint32_t> &hist, float &tot_shift, float &tot_dev, float cut)
 {
-   int left = 0, right = TotBins;
+   int left = 0, right = fToTbins;
    double sum0 = 0., sum1 = 0., sum2 = 0.;
    tot_dev = 0.;
 
@@ -4134,7 +4137,7 @@ bool hadaq::TdcProcessor::CalibrateTot(unsigned nch, std::vector<uint32_t> &hist
             pmax = n;
 
       // take range +-4ns around maximum, all double peaks should be at distance of 5 ns
-      int dn = (int) (4.0 / (fToThmax - fToThmin) * (double) TotBins);
+      int dn = (int) (4.0 / (fToThmax - fToThmin) * (double) fToTbins);
       if (pmax - dn > left)
          left = pmax - dn;
       if (pmax + dn < right)
@@ -4153,7 +4156,7 @@ bool hadaq::TdcProcessor::CalibrateTot(unsigned nch, std::vector<uint32_t> &hist
    sum0 = 0;
 
    for (int n = left; n < right; n++) {
-      double x = fToThmin + (n + 0.5) / (TotBins + 0) * (fToThmax - fToThmin); // x coordinate of center bin
+      double x = fToThmin + (n + 0.5) / (fToTbins + 0) * (fToThmax - fToThmin); // x coordinate of center bin
 
       sum0 += hist[n];
       sum1 += hist[n]*x;
@@ -4339,13 +4342,13 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
                CalibrateTot(ch, rec.tot0d_hist, rec.tot_shift, rec.tot_dev, 0.05);
 
                if (!rec.fTot0D && SetChannelPrefix(ch)) {
-                  rec.fTot0D = MakeH1("Tot0D", "Time over threshold with 0xD trigger", TotBins, fToThmin, fToThmax, "ns");
+                  rec.fTot0D = MakeH1("Tot0D", "Time over threshold with 0xD trigger", fToTbins, fToThmin, fToThmax, "ns");
                   SetSubPrefix2();
                }
 
                if (rec.fTot0D)
-                  for (unsigned n = 0; n < TotBins; n++) {
-                     double x = fToThmin + (n + 0.1) / (TotBins + 0) * (fToThmax - fToThmin);
+                  for (unsigned n = 0; n < fToTbins; n++) {
+                     double x = fToThmin + (n + 0.1) / (fToTbins + 0) * (fToThmax - fToThmin);
                      DefFillH1(rec.fTot0D, x, rec.tot0d_hist[n]);
                   }
 
