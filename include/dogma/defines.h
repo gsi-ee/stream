@@ -55,9 +55,15 @@ namespace dogma {
 
          inline bool IsMagicDefault() const { return GetMagicType() == (DOGMA_MAGIC & 0xff); }
 
+         inline uint32_t GetMagic() const { return SWAP_VALUE(tuMagic); }
+
          inline uint32_t GetAddr() const { return SWAP_VALUE(tuAddr); }
 
-         inline uint32_t GetTrigType() const { return SWAP_VALUE(tuTrigTypeNumber) >> 24; }
+         inline uint32_t GetTrigType() const
+         {
+            auto v = SWAP_VALUE(tuTrigTypeNumber);
+            return IsMagicTdc5() ? v >> 28 : v >> 24;
+         }
 
          inline uint32_t GetTrigNumber() const { return SWAP_VALUE(tuTrigTypeNumber) & 0xffffff; }
 
@@ -66,6 +72,8 @@ namespace dogma {
          inline uint32_t GetTrigTime() const { return SWAP_VALUE(tuTrigTime); }
 
          inline uint32_t GetLocalTrigTime() const { return SWAP_VALUE(tuLocalTrigTime); }
+
+         inline uint64_t GetTdc5TrigTime() const { return (((uint64_t) GetTrigTime()) << 32) | GetLocalTrigTime(); }
 
          inline uint32_t GetPayloadLen() const { return SWAP_VALUE(tuLenPayload) & 0xffff; }
 
@@ -133,7 +141,7 @@ namespace dogma {
          uint32_t tuMagic = 0;
          uint32_t tuSeqId = 0;
          uint32_t tuTrigTypeNumber = 0;
-         uint32_t tuLenPayload = 0; // paylod len in 4bytes words
+         uint32_t tuLenPayload = 0; // payload len in 4bytes words
 
       public:
 

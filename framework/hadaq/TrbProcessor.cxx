@@ -568,10 +568,6 @@ bool hadaq::TrbProcessor::DogmaBufferScan(const base::Buffer &buf)
 
          auto trigtype = tu->GetTrigType() & 0xf;
 
-         // FIXME: workaround for recent clock TDC readout
-         if (tu->GetTrigType() == 0xd0)
-            trigtype = 0xd;
-
          auto dataid = tu->GetAddr() & 0xffffff; // enforce 24 bit for tdc
          auto datalen = tu->GetPayloadLen();
 
