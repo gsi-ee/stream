@@ -195,7 +195,7 @@ Bool_t TUserSource::BuildHldEvent(TGo4MbsEvent *evnt)
 
 Bool_t TUserSource::BuildDogmaEvent(TGo4MbsEvent *evnt)
 {
-   uint32_t bufsize = Trb_BUFSIZE;
+   uint32_t  bufsize = Trb_BUFSIZE;
 
    Bool_t trynext = kFALSE;
    if (!fxDogmaFile.isOpened() || fxDogmaFile.eof())
@@ -221,12 +221,17 @@ Bool_t TUserSource::BuildDogmaEvent(TGo4MbsEvent *evnt)
    memset((void *) &fxSubevHead, 0, sizeof(fxSubevHead));
    fxSubevHead.fsProcid = base::proc_DOGMAEvent; // mark to be processed by TDogmaProc
 
-   evnt->AddSubEvent(fxSubevHead.fiFullid, (Short_t*) fxBuffer, bufsize/sizeof(Short_t) + 2, kTRUE);
+   auto devnt = (dogma::DogmaEvent *) fxBuffer;
 
-   evnt->SetCount(((dogma::DogmaEvent *) fxBuffer)->GetSeqId());
-
-   // set total MBS event length, which must include MBS header itself
-   evnt->SetDlen(bufsize/sizeof(Short_t) + 2 + 6);
+   if (devnt->GetSeqId() == 0 && devnt->GetEventLen() == 16) {
+      evnt->SetCount(0);
+      evnt->SetDlen(2 + 6); // empty event, not need to be processed
+   } else {
+      evnt->SetCount(devnt->GetSeqId());
+      evnt->AddSubEvent(fxSubevHead.fiFullid, (Short_t*) fxBuffer, bufsize/sizeof(Short_t) + 2, kTRUE);
+      // set total MBS event length, which must include MBS header itself
+      evnt->SetDlen(bufsize/sizeof(Short_t) + 2 + 6);
+   }
 
    return kTRUE; // event is ready
 }
@@ -238,7 +243,8 @@ Bool_t TUserSource::BuildDogmaEvent(TGo4MbsEvent *evnt)
 Bool_t TUserSource::BuildEvent(TGo4EventElement* dest)
 {
    TGo4MbsEvent* evnt = dynamic_cast<TGo4MbsEvent*> (dest);
-   if (!evnt || !fxBuffer) return kFALSE;
+   if (!evnt || !fxBuffer)
+      return kFALSE;
 
    if (fIsHLD)
       return BuildHldEvent(evnt);
@@ -274,8 +280,14 @@ Int_t TUserSource::Open()
       std::ifstream filein(fname.Data());
       std::string line;
       while(std::getline(filein, line)) {
-         if (!line.empty())
-            fNames->Add(new TObjString(line.c_str()));
+         if (!line.empty() && (line[0] != '#')) {
+            TString name1 = line.c_str();
+            fNames->Add(new TObjString(name1));
+            if (name1.EndsWith(".dld")) {
+               fIsHLD = kFALSE;
+               fIsDOGMA = kTRUE;
+            }
+         }
       }
    } else {
       fNames = new TList;
@@ -284,7 +296,7 @@ Int_t TUserSource::Open()
 
    fxBuffer = new Char_t[Trb_BUFSIZE];
 
-   TGo4Log::Info("%s user source contains %d files", (fIsHLD ? "HLD" : "GET4"), fNames ? fNames->GetSize() : 0);
+   TGo4Log::Info("%s user source contains %d files", (fIsHLD ? "HLD" : (fIsDOGMA ? "DOGMA" : "GET4")), fNames ? fNames->GetSize() : 0);
 
    TGo4Analysis::Instance()->SetInputFileName(fname.Data());
 

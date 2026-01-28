@@ -84,7 +84,13 @@ set(nx_hdrs
 
 STREAM_INSTALL_HEADERS(nx ${nx_hdrs})
 
-# ================== Produce Stream headers ==========
+if(MSVC)
+  set(stream_defs -DSTREAM_WINDOWS)
+  set(stream_opts /wd4514 /wd4002 /wd4711 /wd4710 /wd4820 /wd5219)
+  set(stream_libs ws2_32.lib)
+elseif(APPLE)
+  set(stream_defs -DSTREAM_APPLE)
+endif()
 
 STREAM_LINK_LIBRARY(Stream
    SOURCES
@@ -123,7 +129,17 @@ STREAM_LINK_LIBRARY(Stream
    nx/Iterator.cxx
    nx/Message.cxx
    nx/Processor.cxx
+   DEFINITIONS ${stream_defs}
+   OPTIONS ${stream_opts}
+   LIBRARIES ${stream_libs}
 )
+
+# ================== Install Stream headers ==========
+
+foreach(dir base dogma get4 hadaq mbs nx)
+   install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/${dir}
+          DESTINATION ${STREAM_INSTALL_INCLUDEDIR})
+endforeach()
 
 if(ROOT_FOUND)
 
@@ -141,6 +157,7 @@ if(ROOT_FOUND)
          root/THookProc.cxx
          root/TRootProcMgr.cxx
       LIBRARIES
+         ROOT::Tree
          Stream
       NOWARN
    )
@@ -150,5 +167,11 @@ if(ROOT_FOUND)
                             MODULE StreamDict
                             DEPENDENCIES Stream
                             NOINSTALL)
+
+   install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/root
+           DESTINATION ${STREAM_INSTALL_INCLUDEDIR})
+
+   install(FILES ${CMAKE_BINARY_DIR}/lib/libStreamDict.rootmap ${CMAKE_BINARY_DIR}/lib/libStreamDict_rdict.pcm
+           DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 endif()

@@ -46,11 +46,13 @@ endfunction()
 #                       SOURCES src1 src2          :
 #                       LIBRARIES lib1 lib2        : direct linked libraries
 #                       DEFINITIONS def1 def2      : library definitions
+#                       OPTIONS opt1 opt2          : custom compile options
 #)
 function(STREAM_LINK_LIBRARY libname)
-   cmake_parse_arguments(ARG "NOEXPORT;NOWARN" "" "SOURCES;LIBRARIES;DEFINITIONS;DEPENDENCIES" ${ARGN})
+   cmake_parse_arguments(ARG "NOEXPORT;NOWARN" "" "SOURCES;LIBRARIES;OPTIONS;DEFINITIONS;DEPENDENCIES" ${ARGN})
 
    add_library(${libname} SHARED ${ARG_SOURCES})
+   add_library(stream::${libname} ALIAS ${libname})
 
    set_target_properties(${libname} PROPERTIES ${STREAM_LIBRARY_PROPERTIES})
 
@@ -60,9 +62,21 @@ function(STREAM_LINK_LIBRARY libname)
       target_compile_options(${libname} PRIVATE -Wall $<$<CXX_COMPILER_ID:GNU>:-Wsuggest-override>)
    endif()
 
-   target_link_libraries(${libname} ${ARG_LIBRARIES})
+   if(ARG_OPTIONS)
+      target_compile_options(${libname} PRIVATE ${ARG_OPTIONS})
+   endif()
+
+   target_link_libraries(${libname} PUBLIC ${ARG_LIBRARIES})
 
    # add_dependencies(${libname} move_headers ${ARG_DEPENDENCIES})
 
    target_include_directories(${libname} PRIVATE ${CMAKE_SOURCE_DIR}/include)
+
+   install(
+    TARGETS ${libname}
+    EXPORT ${PROJECT_NAME}Targets
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    PUBLIC_HEADER DESTINATION ${STREAM_INSTALL_INCLUDEDIR})
+
+
 endfunction()

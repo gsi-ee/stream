@@ -377,17 +377,22 @@ void get4::MbsProcessor::StoreCalibration(const std::string& fname)
 
 bool get4::MbsProcessor::LoadCalibration(const std::string& fname)
 {
-   if (fname.empty()) return false;
+   if (fname.empty())
+      return false;
 
-   FILE* f = fopen(fname.c_str(),"r");
+   auto f = fopen(fname.c_str(),"r");
    if (!f) {
       printf("Cannot open file %s for reading calibration\n", fname.c_str());
       return false;
    }
 
-   uint64_t num(0);
+   uint64_t num = 0;
 
-   fread(&num, sizeof(num), 1, f);
+   if (fread(&num, sizeof(num), 1, f) != 1) {
+      fclose(f);
+      printf("Cannot read number of channels from file %s\n", fname.c_str());
+      return false;
+   }
 
    if (num != GET4.size()) {
       printf("%s mismatch of GET4 number in calibration file %u and in processor %u\n", GetName(), (unsigned) num, (unsigned) GET4.size());
@@ -396,8 +401,11 @@ bool get4::MbsProcessor::LoadCalibration(const std::string& fname)
          for (unsigned ch=0;ch<NumGet4Channels;ch++) {
 
             Get4MbsChRec& rec = GET4[get4id].CH[ch];
-            fread(rec.rising_calibr, sizeof(rec.rising_calibr), 1, f);
-            fread(rec.falling_calibr, sizeof(rec.falling_calibr), 1, f);
+            auto res1 = fread(rec.rising_calibr, sizeof(rec.rising_calibr), 1, f);
+            auto res2 = fread(rec.falling_calibr, sizeof(rec.falling_calibr), 1, f);
+
+            (void) res1;
+            (void) res2;
 
             CopyCalibration(rec.rising_calibr, rec.fRisCal);
             CopyCalibration(rec.falling_calibr, rec.fFalCal);

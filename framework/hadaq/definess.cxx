@@ -1,8 +1,7 @@
 #include "hadaq/definess.h"
 
 #include <cstdio>
-#include <sys/time.h>
-#include <time.h>
+#include <ctime>
 
 ////////////////////////////////////////////////////////////////
 /// dump raw event

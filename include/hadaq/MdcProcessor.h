@@ -37,7 +37,6 @@ protected:
    base::H1handle tot_h[TDCCHANNELS+1];
    base::H1handle t1_h[TDCCHANNELS+1];
    base::H1handle potato_h[TDCCHANNELS+1];
-
    base::H2handle Hits[4];
    base::H2handle ToTToT[4];  
    

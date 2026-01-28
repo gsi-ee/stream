@@ -178,7 +178,9 @@ namespace hadaq {
             if (id4!=0) AddHadaqHUBId(id4);
          }
 
+         /** Set number of channels */
          void SetNumCh(unsigned num) { fCustomNumChannels = num; }
+         /** Get number of channels */
          unsigned GetNumCh() const;
 
          /** deprecated, keep for backward compatibility, can be ignored */
@@ -310,6 +312,10 @@ namespace hadaq {
          }
 
          int CreateTDC(unsigned id1, unsigned id2 = 0, unsigned id3 = 0, unsigned id4 = 0);
+
+         std::vector<hadaq::TdcProcessor*> CreateTDC5(const std::vector<unsigned> &ids);
+
+         std::vector<hadaq::TdcProcessor*> CreateTDC5(unsigned id1, unsigned id2 = 0, unsigned id3 = 0, unsigned id4 = 0);
 
          /** Create TDC processor, which extracts TDC information from CTS header */
          void CreateCTS_TDC() { new hadaq::TdcProcessor(this, fHadaqCTSId, gNumChannels, gEdgesMask); }

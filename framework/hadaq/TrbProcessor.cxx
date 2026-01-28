@@ -13,7 +13,11 @@
 
 #include "dogma/defines.h"
 
-#define RAWPRINT( args ...) if(IsPrintRawData()) printf( args )
+#ifdef STREAM_WINDOWS
+#define RAWPRINT()
+#else
+#define RAWPRINT( args ... ) if(IsPrintRawData()) printf( args )
+#endif
 
 unsigned hadaq::TrbProcessor::gNumChannels = 65;
 unsigned hadaq::TrbProcessor::gEdgesMask = 0x1;
@@ -247,7 +251,8 @@ int hadaq::TrbProcessor::CreateTDC(unsigned id1, unsigned id2, unsigned id3, uns
          case 3: tdcid = id4; break;
          default: tdcid = id1; break;
       }
-      if (tdcid==0) continue;
+      if (tdcid == 0)
+         continue;
 
       if (GetTDC(tdcid, true)) {
          printf("TDC id 0x%04x already exists\n", tdcid);
@@ -272,6 +277,53 @@ int hadaq::TrbProcessor::CreateTDC(unsigned id1, unsigned id2, unsigned id3, uns
    }
 
    return num;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+/// Create up to 4 TDC v5 with pre-configured default parameters
+
+std::vector<hadaq::TdcProcessor*> hadaq::TrbProcessor::CreateTDC5(unsigned id1, unsigned id2, unsigned id3, unsigned id4)
+{
+   std::vector<unsigned> ids = { id1 };
+   if (id2)
+      ids.push_back(id2);
+   if (id3)
+      ids.push_back(id3);
+   if (id4)
+      ids.push_back(id4);
+
+   return CreateTDC5(ids);
+}
+
+
+std::vector<hadaq::TdcProcessor*> hadaq::TrbProcessor::CreateTDC5(const std::vector<unsigned> &ids)
+{
+   // overwrite default value in the beginning
+
+   std::vector<hadaq::TdcProcessor*> res;
+
+   for (auto tdcid : ids) {
+      if (tdcid == 0)
+         continue;
+
+      if (GetTDC(tdcid, true)) {
+         printf("TDC id 0x%06x already exists\n", tdcid);
+         continue;
+      }
+
+      if (tdcid == fHadaqCTSId) {
+         printf("TDC id 0x%06x already used as CTS id\n", tdcid);
+         continue;
+      }
+
+      auto tdc = new hadaq::TdcProcessor(this, tdcid, GetNumCh(), gEdgesMask, 5, true);
+
+      tdc->SetCalibrTriggerMask(fCalibrTriggerMask);
+
+      res.push_back(tdc);
+   }
+
+   return res;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -530,24 +582,49 @@ bool hadaq::TrbProcessor::DogmaBufferScan(const base::Buffer &buf)
 
          if (tdcproc) {
 
-            uint32_t epoch0 = tu->GetTrigTime() & 0xfffffff;
-            uint32_t coarse0 = tu->GetLocalTrigTime() & 0x7ff;
+            if (tu->IsMagicTdc5()) {
+               if (!tdcproc->IsVersion5()) {
+                  fprintf(stderr, "Cannot use TDC5 data for non TDC5 processor\n");
+                  exit(1);
+               }
 
-            // printf("  Tu 0x%x proc %p payloadlen %u epoch0 %07x coarse0 %03x\n", dataid, tdcproc, datalen, (unsigned) epoch0, (unsigned) coarse0);
+               base::Buffer buf;
 
-            base::Buffer buf;
-            buf.makenew((datalen + 2) * 4);
-            uint32_t *ptr = (uint32_t *)buf.ptr();
-            *ptr++ = epoch0;
-            *ptr++ = coarse0;
-            for (unsigned n = 0; n < datalen; ++n)
+               // copy tu with header, decode inside
+               buf.makereferenceof(tu, tu->GetSize());
+
+               buf().kind = trigtype;
+               buf().boardid = dataid;
+               buf().format = 5; // use 5 for TDC5
+
+               tdcproc->AddNextBuffer(buf);
+               tdcproc->SetNewDataFlag(true);
+
+            } else {
+               if (tdcproc->IsVersion5()) {
+                  fprintf(stderr, "Cannot use non-TDC5 data for TDC5 processor\n");
+                  exit(2);
+               }
+
+               uint32_t epoch0 = tu->GetTrigTime() & 0xfffffff;
+               uint32_t coarse0 = tu->GetLocalTrigTime() & 0x7ff;
+
+               // printf("  Tu 0x%x proc %p payloadlen %u epoch0 %07x coarse0 %03x\n", dataid, tdcproc, datalen, (unsigned) epoch0, (unsigned) coarse0);
+
+               base::Buffer buf;
+               buf.makenew((datalen + 2) * 4);
+               uint32_t *ptr = (uint32_t *)buf.ptr();
+               *ptr++ = epoch0;
+               *ptr++ = coarse0;
+               for (unsigned n = 0; n < datalen; ++n)
                *ptr++ = tu->GetPayload(n);
-            buf().kind = trigtype;
-            buf().boardid = dataid;
-            buf().format = 3; // format with epoch0/corse0 and without ref channel
+               buf().kind = trigtype;
+               buf().boardid = dataid;
+               buf().format = 3; // format with epoch0/corse0 and without ref channel
 
-            tdcproc->AddNextBuffer(buf);
-            tdcproc->SetNewDataFlag(true);
+               tdcproc->AddNextBuffer(buf);
+               tdcproc->SetNewDataFlag(true);
+            }
          } /*
          else if (fAutoCreate && (dataid >= gTDCMin) && (dataid <= gTDCMax) &&
             (datalen > 0) && TdcMessage(tu->GetPayload(0)).isHeaderMsg()) {
@@ -1032,10 +1109,12 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
             continue;
          } else if ((dataid >= gTDCMin) && (dataid <= gTDCMax)) {
 
+            bool is_hades = TdcProcessor::GetHadesMonitorInterval() > 0;
+
             // suppose this is TDC data, first word should be TDC header
-            if ((datalen > 0) && TdcMessage(sub->Data(ix)).isHeaderMsg()) {
+            if (((datalen > 0) && TdcMessage(sub->Data(ix)).isHeaderMsg()) || ((datalen == 0) && is_hades)) {
                // here should be channel/edge/min/max selection based on TDC design ID
-               bool ver4 = TdcMessage(sub->Data(ix)).IsVer4Header();
+               bool ver4 = (datalen > 0) && TdcMessage(sub->Data(ix)).IsVer4Header();
                unsigned numch = GetNumCh(), edges = gEdgesMask;
 
                TdcProcessor* tdcproc = new TdcProcessor(this, dataid, numch, edges, ver4);
@@ -1056,7 +1135,8 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
                ix += datalen;
                continue; // go to next block
             } else {
-               if (CheckPrintError()) printf("sub-sub-event data with id 0x%04x does not belong to TDC\n", dataid);
+               if (CheckPrintError())
+                  printf("sub-sub-event data with id 0x%04x does not belong to TDC\n", dataid);
             }
          } else if ((dataid >= gMDCMin) && (dataid < gMDCMax)) {
             auto mdcproc = new MdcProcessor(this, dataid);

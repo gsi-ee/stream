@@ -1,5 +1,6 @@
 #include "hadaq/MdcProcessor.h"
 
+#include <cstdio>
 
 hadaq::MdcProcessor::MdcProcessor(TrbProcessor* trb, unsigned subid) :
    hadaq::SubProcessor(trb, "MDC_%04x", subid)
@@ -22,6 +23,7 @@ hadaq::MdcProcessor::MdcProcessor(TrbProcessor* trb, unsigned subid) :
 //      ToTToT[2] = MakeH2("ToTToT2","", 600, -2099.8, 300.2, 600, -2099.8, 300.2);
 //      ToTToT[3] = MakeH2("ToTToT3","", 1100, -2099.8, 1100.2, 1050, -2099.8, -2100.2);
 //      longToT = MakeH1("longTot", "", 32, 0, 32);
+
    }
 
    if (HistFillLevel() > 2) {
@@ -29,7 +31,6 @@ hadaq::MdcProcessor::MdcProcessor(TrbProcessor* trb, unsigned subid) :
       HitsPerBinFalling = MakeH2("HitsPerBinFalling", "", 33, -1, 32, 8, 0, 8);
       T0_T1 = MakeH2("T0_T1", "", 600, -2099.8, 300.2, 600, -2099.8, 300.2);
    }
-/*if(0)
    for (unsigned i = 0; i < TDCCHANNELS + 1; i++) {
       t1_h[i] = nullptr;
       tot_h[i] = nullptr;
@@ -38,13 +39,15 @@ hadaq::MdcProcessor::MdcProcessor(TrbProcessor* trb, unsigned subid) :
       if (HistFillLevel() > 3) {
          char chno[16];
          snprintf(chno, sizeof(chno), "Ch%02d_t1", i);
-         t1_h[i] = MakeH1(chno, chno, 6000, -2099.8, 300.2, "ns");
+         t1_h[i] = MakeH1(chno, chno, 6000, -1199.8, 1200.2, "ns");
          snprintf(chno, sizeof(chno), "Ch%02d_tot", i);
-         tot_h[i] = MakeH1(chno, chno, 1650, 0.2, 1100.2, "ns");
+         tot_h[i] = MakeH1(chno, chno, 1500, 0.2, 600.2, "ns");
          snprintf(chno, sizeof(chno), "Ch%02d_potato", i);
-         potato_h[i] = MakeH2(chno, chno, 600, -1199.8, 1200.2, 550, 0.2, 1100.2, "t1 (ns);tot (ns)");
+         potato_h[i] = MakeH2(chno, chno, 600, -1199.8, 1200.2, 500, 0.2, 600.2, "t1 (ns);tot (ns)");
       }
-   }*/
+
+}
+
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -96,9 +99,9 @@ bool hadaq::MdcProcessor::FirstBufferScan(const base::Buffer &buf)
       pStoreFloat = subevnt->vect_ptr();
    }
 
-   uint32_t data = arr[0];
-   FillH2(HitsPerBinRising, -1, data & 0x7);
-   signed reference = data & 0x1FFF;
+   uint32_t data0 = arr[0];
+   FillH2(HitsPerBinRising, -1, data0 & 0x7);
+   signed reference = data0 & 0x1FFF;
 
    int numhits = 0, numerrs = 0;
    
@@ -129,6 +132,7 @@ bool hadaq::MdcProcessor::FirstBufferScan(const base::Buffer &buf)
          timeDiff += 8192 * 0.4;
       if (timeDiff > 300)
          timeDiff -= 8192 * 0.4;
+
 
 
       float timeDiff1 = ((fallingHit - reference)) * 0.4;
@@ -162,9 +166,24 @@ bool hadaq::MdcProcessor::FirstBufferScan(const base::Buffer &buf)
       if (HistFillLevel() > 2) {
          FillH2(HitsPerBinRising, channel, risingHit & 0x7);
          FillH2(HitsPerBinFalling, channel, fallingHit & 0x7);
-         //FillH1(tot_h[channel], timeToT);
-         //FillH2(potato_h[channel], timeDiff, timeToT);
-         //FillH1(t1_h[channel], timeDiff);
+         // FillH2(deltaT, channel, timeDiff);
+         // FillH1(alldeltaT, timeDiff);
+         // FillH2(ToT, channel, timeToT);
+         // FillH1(allToT, timeToT);
+         // FillH2(deltaT_ToT, timeDiff, timeToT);
+         // FillH2(T0_T1, timeDiff, timeDiff1);
+         // 
+         // if (hChToTHld)
+         //    SetH2Content(*hChToTHld, fHldId, channel, timeToT);
+         // 
+         // if (hChDeltaTHld)
+         //    SetH2Content(*hChDeltaTHld, fHldId, channel, timeDiff);
+         // 
+         // if (HistFillLevel() > 2) {
+         //    FillH1(tot_h[channel], timeToT);
+         //    FillH2(potato_h[channel], timeDiff, timeToT);
+         //    FillH1(t1_h[channel], timeDiff);
+         // }
       }
 //    if(channel==6) {  
 //      if(hitsperchannel[channel] < 5) {

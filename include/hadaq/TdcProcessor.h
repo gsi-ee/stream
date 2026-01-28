@@ -162,7 +162,7 @@ namespace hadaq {
                FillCalibr(numfine, coarse_unit);
             }
 
-            /** Initialize claibration with default values */
+            /** Initialize calibration with default values */
             void FillCalibr(unsigned numfine, double coarse_unit = -1.)
             {
                for (unsigned n = 0; n < numfine; n++)
@@ -204,10 +204,10 @@ namespace hadaq {
             }
 
             /** Create ToT histogram  */
-            void CreateToTHist()
+            void CreateToTHist(unsigned nbins)
             {
-               tot0d_hist.resize(TotBins);
-               for (unsigned n=0;n<TotBins;n++)
+               tot0d_hist.resize(nbins);
+               for (unsigned n = 0; n < nbins; n++)
                   tot0d_hist[n] = 0;
             }
 
@@ -219,8 +219,8 @@ namespace hadaq {
             }
          };
 
-         bool fVersion4 = false;         ///< if version4 TDC is analyzed
-         bool fDogma = false;           ///< used with dogma readout
+         int fVersion = 2;            ///< TDC version id - 2, 4, 5
+         bool fDogma = false;         ///< used with dogma readout
 
          TdcIterator fIter1;         ///<! iterator for the first scan
          TdcIterator fIter2;         ///<! iterator for the second scan
@@ -279,6 +279,7 @@ namespace hadaq {
 
          bool                     fToTdflt;        ///<! indicate if default setting used, which can be adjusted after seeing first event
          double                   fToTvalue;       ///<! ToT of 0xd trigger
+         unsigned                 fToTbins;        ///<! number of bins in ToT histogram
          double                   fToThmin;        ///<! histogram min
          double                   fToThmax;        ///<! histogram max
          double                   fTotUpperLimit;  ///<! upper limit for ToT range check
@@ -307,10 +308,11 @@ namespace hadaq {
          std::vector<hadaq::TdcMessageExt> *pStoreVect{nullptr}; ///<! pointer on store vector
 
          std::vector<hadaq::MessageFloat> fDummyFloat;  ///<! vector with compact messages
-         std::vector<hadaq::MessageFloat> *pStoreFloat{nullptr}; ///<! pointer on store vector
+         std::vector<hadaq::MessageFloat> *pStoreFloat = nullptr; ///<! pointer on store vector
+         hadaq::TdcSubEventFloat          *pEventFloat = nullptr; ///<! pointer on current event
 
          std::vector<hadaq::MessageDouble> fDummyDouble;  ///<! vector with compact messages
-         std::vector<hadaq::MessageDouble> *pStoreDouble{nullptr}; ///<! pointer on store vector
+         std::vector<hadaq::MessageDouble> *pStoreDouble = nullptr; ///<! pointer on store vector
 
          /** EdgeMask defines how TDC calibration for falling edge is performed
           * 0,1 - use only rising edge, falling edge is ignore
@@ -386,8 +388,11 @@ namespace hadaq {
           * TODO: derive this value from sub-items */
          double MaximumDisorderTm() const override { return 2e-6; }
 
+         int GetBinsPerNS(double range = 1.) const;
+
          bool DoBufferScan(const base::Buffer &buf, bool isfirst);
          bool DoBuffer4Scan(const base::Buffer &buf, bool isfirst);
+         bool DoBuffer5Scan(const base::Buffer &buf, bool isfirst);
 
          double DoTestToT(int iCh);
          double DoTestErrors(int iCh);
@@ -422,7 +427,8 @@ namespace hadaq {
          /** extract calibration value */
          inline float ExtractCalibrDirect(const std::vector<float> &func, unsigned bin)
          {
-            if (func.size() > 100) return func[bin];
+            if ((func.size() > 100) || (func.size() == fNumFineBins))
+               return func[bin];
 
             // here only two-point linear approximation is supported
             // later one can extend approximation for N-points linear function
@@ -471,7 +477,7 @@ namespace hadaq {
             edge_CommonStatistic = 4  ///< accumulate common statistic for both
          };
 
-         TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels = MaxNumTdcChannels, unsigned edge_mask = 1, bool ver4 = false, bool dogma = false);
+         TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels = MaxNumTdcChannels, unsigned edge_mask = 1, unsigned ver = 0, bool dogma = false);
          virtual ~TdcProcessor();
 
          static void SetMaxBoardId(unsigned);
@@ -541,7 +547,8 @@ namespace hadaq {
          /** Returns value of edge mask */
          inline unsigned GetEdgeMask() const { return fEdgeMask; }
 
-         inline bool IsVersion4() const { return fVersion4; }
+         inline bool IsVersion4() const { return fVersion == 4; }
+         inline bool IsVersion5() const { return fVersion == 5; }
 
          /** Returns calibration progress */
          double GetCalibrProgress() const { return fCalibrProgress; }
@@ -614,8 +621,7 @@ namespace hadaq {
                                               base::H2handle *hQaFine, base::H2handle *hQaToT,
                                               base::H2handle *hQaEdges, base::H2handle *hQaErrors,
                                               base::H2handle *hTot, base::H2handle *hShift,
-                                 base::H1handle *hExpTot, base::H2handle *hDev, base::H2handle *hTPrev, base::H2handle *hTotCount
-                                 )
+                                              base::H1handle *hExpTot, base::H2handle *hDev, base::H2handle *hTPrev, base::H2handle *hTotCount)
          {
             fHldId = id;
             fHitsPerHld = hHits;
@@ -785,13 +791,21 @@ namespace hadaq {
           * if returned false, buffer has error and must be discarded */
          bool FirstBufferScan(const base::Buffer& buf) override
          {
-            return fVersion4 ? DoBuffer4Scan(buf, true) : DoBufferScan(buf, true);
+            switch(fVersion) {
+               case 4: return DoBuffer4Scan(buf, true);
+               case 5: return DoBuffer5Scan(buf, true);
+            }
+            return DoBufferScan(buf, true);
          }
 
          /** Scan buffer for selecting messages inside trigger window */
          bool SecondBufferScan(const base::Buffer& buf) override
          {
-            return fVersion4 ? DoBuffer4Scan(buf, false) : DoBufferScan(buf, false);
+            switch(fVersion) {
+               case 4: return DoBuffer4Scan(buf, false);
+               case 5: return DoBuffer5Scan(buf, false);
+            }
+            return DoBufferScan(buf, false);
          }
 
          void IncCalibration(unsigned ch, bool rising, unsigned fine, unsigned value);

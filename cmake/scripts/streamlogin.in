@@ -1,9 +1,9 @@
 # this is generated file, use it to configure environment
 # just type '. ./streamlogin' in shell, not forget space in between
 
-echo Configure stream v0.10.0 at @CMAKE_BINARY_DIR@
+echo Configure stream v0.10.0 at @_streamsys_@
 
-export STREAMSYS=@CMAKE_BINARY_DIR@
-export GO4EXTRAINCLUDE=$STREAMSYS/include
-export ROOT_INCLUDE_PATH=$STREAMSYS/include:$ROOT_INCLUDE_PATH
-export LD_LIBRARY_PATH=.:$STREAMSYS/lib:$LD_LIBRARY_PATH
+export STREAMSYS=@_streamsys_@
+export GO4EXTRAINCLUDE=@_streaminc_@
+export ROOT_INCLUDE_PATH=@_streaminc_@:$ROOT_INCLUDE_PATH
+export @_ldvname_@=.:@_streamlib_@:$@_ldvname_@

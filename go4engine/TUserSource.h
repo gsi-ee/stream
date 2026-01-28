@@ -71,7 +71,7 @@ class TUserSource : public TGo4EventSource {
       virtual ~TUserSource();
 
       /** This method checks if event class is suited for the source */
-      virtual Bool_t CheckEventClass(TClass* cl);
+      Bool_t CheckEventClass(TClass* cl) override;
 
       /** This methods actually fills the target event class which is passed as pointer.
        * Uses the latest event which is referenced
@@ -79,7 +79,7 @@ class TUserSource : public TGo4EventSource {
        * from source, therefore one source event may be used
        * to fill several TTrbEvent classes. To get a new
        * event call NextEvent() before this method.*/
-      virtual Bool_t BuildEvent(TGo4EventElement* dest);
+      Bool_t BuildEvent(TGo4EventElement* dest) override;
 
       /** get args */
       const char* GetArgs() const { return fxArgs.Data(); }
@@ -91,7 +91,7 @@ class TUserSource : public TGo4EventSource {
       /** set port */
       void SetPort(Int_t val) { fiPort=val; }
 
-   ClassDef(TUserSource, 1)
+   ClassDefOverride(TUserSource, 1)
 };
 
 #endif

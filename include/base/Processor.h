@@ -5,16 +5,16 @@
 
 #include "base/ProcMgr.h"
 
-#define DefFillH1(h1, x, w) {                                        \
-  if (h1 && fIntHistFormat) {                                        \
-     double* arr = (double*) h1;                                     \
-     int nbin = (int) arr[0];                                        \
-     int bin = (int) (nbin * (x - arr[1]) / (arr[2] - arr[1]));      \
-     if (bin<0) arr[3]+=w; else                                      \
-     if (bin>=nbin) arr[4+nbin]+=w; else arr[4+bin]+=w;              \
-  } else {                                                           \
-     if (h1) mgr()->FillH1(h1, x, w);                                \
-  }                                                                  \
+#define DefFillH1(h1, x, w) {                                            \
+  if (h1 && fIntHistFormat) {                                            \
+     double* __arr = (double*) h1;                                       \
+     int __nbin = (int) __arr[0];                                        \
+     int __bin = (int) (__nbin * (x - __arr[1]) / (__arr[2] - __arr[1]));\
+     if (__bin < 0) __arr[3]+=w; else                                    \
+     if (__bin>=__nbin) __arr[4+__nbin]+=w; else __arr[4+__bin]+=w;      \
+  } else {                                                               \
+     if (h1) mgr()->FillH1(h1, x, w);                                    \
+  }                                                                      \
 }
 
 #define DefFastFillH1(h1,x,weight) {              \
@@ -28,16 +28,16 @@
 
 #define DefFillH2(h2,x,y,weight) {               \
   if (h2 && fIntHistFormat) {                    \
-  double* arr = (double*) h2;                    \
-  int nbin1 = (int) arr[0];                      \
-  int nbin2 = (int) arr[3];                      \
-  int bin1 = (int) (nbin1 * (x - arr[1]) / (arr[2] - arr[1]));  \
-  int bin2 = (int) (nbin2 * (y - arr[4]) / (arr[5] - arr[4]));  \
-  if (bin1<0) bin1 = -1; else if (bin1>nbin1) bin1 = nbin1;     \
-  if (bin2<0) bin2 = -1; else if (bin2>nbin2) bin2 = nbin2;     \
-  arr[6 + (bin1+1) + (bin2+1)*(nbin1+2)]+=weight;               \
-} else {                                                        \
-  if (h2) mgr()->FillH2(h2, x, y, weight);                      \
+  double* __arr = (double*) h2;                  \
+  int __nbin1 = (int) __arr[0];                  \
+  int __nbin2 = (int) __arr[3];                  \
+  int __bin1 = (int) (__nbin1 * (x - __arr[1]) / (__arr[2] - __arr[1]));  \
+  int __bin2 = (int) (__nbin2 * (y - __arr[4]) / (__arr[5] - __arr[4]));  \
+  if (__bin1<0) __bin1 = -1; else if (__bin1>__nbin1) __bin1 = __nbin1;   \
+  if (__bin2<0) __bin2 = -1; else if (__bin2>__nbin2) __bin2 = __nbin2;   \
+  __arr[6 + (__bin1+1) + (__bin2+1)*(__nbin1+2)]+=weight;                 \
+} else {                                                                  \
+  if (h2) mgr()->FillH2(h2, x, y, weight);                                \
 } }
 
 #define DefFastFillH2(h2,x,y) {                                            \

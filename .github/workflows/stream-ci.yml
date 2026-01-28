@@ -1,0 +1,107 @@
+name: Stream CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+
+  build-ubuntu:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [Release]
+        compiler: [ { name: g++-13, cpp: g++-13, c: gcc-13 },
+                    { name: g++-14, cpp: g++-14, c: gcc-14 },
+                    { name: clang-17, cpp: clang++-17, c: clang-17 },
+                    { name: clang-18, cpp: clang++-18, c: clang-18 } ]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v1
+        with:
+          submodules: recursive
+
+      - name: Set up C++ compiler ${{ matrix.compiler.name }} on Ubuntu
+        run: |
+          sudo rm -f /etc/apt/sources.list.d/archive_uri-*
+          sudo apt-get update || true
+          sudo apt-get install -y ${{ matrix.compiler.name }}
+          sudo apt-get install -y doxygen
+
+      - name: Use compiler
+        shell: bash
+        env:
+          CC: ${{ matrix.compiler.c }}
+          CXX: ${{ matrix.compiler.cpp }}
+        run: |
+          $CC --version
+          $CXX --version
+
+      - name: Configure
+        shell: bash
+        run: |
+          cmake --version
+          cmake \
+            -S . \
+            -B build \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DCMAKE_INSTALL_PREFIX:PATH=instdir \
+            -DDABC_DIR=build
+
+      - name: Build
+        shell: bash
+        run: cmake --build build --config ${{ matrix.build_type }}
+
+      - name: Install
+        shell: bash
+        run: cmake --build build --target install
+
+      - name: Doxygen
+        shell: bash
+        run: doxygen doc/doxygen.config
+
+  build-macos:
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [Release]
+        compiler: [ { cpp: clang++, c: clang } ]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v1
+        with:
+          submodules: recursive
+
+      - name: Use compiler
+        shell: bash
+        env:
+          CC: ${{ matrix.compiler.c }}
+          CXX: ${{ matrix.compiler.cpp }}
+        run: |
+          $CC --version
+          $CXX --version
+
+      - name: Configure
+        shell: bash
+        run: |
+          cmake --version
+          cmake \
+            -S . \
+            -B build \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DCMAKE_INSTALL_PREFIX:PATH=instdir \
+            -DDABC_DIR=build
+
+      - name: Build
+        shell: bash
+        run: cmake --build build --config ${{ matrix.build_type }}
+
+      - name: Install
+        shell: bash
+        run: cmake --build build --target install

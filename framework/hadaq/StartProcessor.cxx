@@ -50,14 +50,14 @@ bool hadaq::StartProcessor::FirstBufferScan(const base::Buffer& buf)
 
    hadaq::TrbIterator iter(buf().buf, buf().datalen);
 
-   unsigned evcnt = 0;
+   // unsigned evcnt = 0;
 
    hadaq::TdcMessage calibr;
    unsigned ncalibr = 20; // position in calibr
 
    while (auto ev = iter.nextEvent()) {
 
-      evcnt++;
+      // evcnt++;
 
       DefFillH1(fEvType, (ev->GetId() & 0xf), 1.);
       DefFillH1(fEvSize, ev->GetPaddedSize(), 1.);
@@ -114,6 +114,8 @@ bool hadaq::StartProcessor::FirstBufferScan(const base::Buffer& buf)
 
                      // this is corrected absolute time stamp for hit message
                      localtm -= corr;
+                     (void) localtm;
+                     (void) corr;
 
                   } else if (msg.isEpochMsg()) {
                      unsigned epoch = iter.getCurEpoch();

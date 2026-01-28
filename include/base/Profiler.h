@@ -23,7 +23,9 @@ namespace base {
       clock_t GetClock()
       {
 
-#ifdef STREAM_AARCH64
+#if defined(STREAM_WINDOWS)
+         return 0;
+#elif defined(__MACH__)
          uint64_t virtual_timer_value;
          asm volatile("mrs %0, cntvct_el0" : "=r"(virtual_timer_value));
          return virtual_timer_value;

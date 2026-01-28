@@ -138,7 +138,7 @@ bool nx::Processor::FirstBufferScan(const base::Buffer& buf)
 
    nx::Message& msg = fIter1.msg();
 
-   unsigned cnt = 0, msgcnt = 0;
+   unsigned msgcnt = 0;
 
    bool first = true;
 
@@ -149,8 +149,6 @@ bool nx::Processor::FirstBufferScan(const base::Buffer& buf)
 //   static double mymarker = 4311410447414.;
 
    while (fIter1.next()) {
-
-      cnt++;
 
       // ignore epoch message at the end of the buffer
       if (fIter1.islast() && msg.isEpochMsg()) continue;
@@ -321,13 +319,9 @@ bool nx::Processor::SecondBufferScan(const base::Buffer& buf)
 
    nx::Message& msg = fIter2.msg();
 
-   unsigned cnt = 0;
-
    unsigned help_index = 0; // special index to simplify search of respective syncs
 
    while (fIter2.next()) {
-
-      cnt++;
 
       // ignore epoch message at the end of the buffer
       if (fIter2.islast() && msg.isEpochMsg()) continue;
