@@ -40,8 +40,8 @@ hadaq::HldProcessor::HldProcessor(bool auto_create, const char* after_func) :
    mgr()->RegisterProc(this, base::proc_TRBEvent, 0);
 
    fEvType = MakeH1("EvType", "Event type", 16, 0, 16, "id");
-   fEvSize = MakeH1("EvSize", "Event size", 500, 0, 50000, "bytes");
-   fSubevSize = MakeH1("SubevSize", "Subevent size", 500, 0, 5000, "bytes");
+   fEvSize = MakeH1("EvSize", "Event size", 2000, 0, 50000, "bytes");
+   fSubevSize = MakeH1("SubevSize", "Subevent size", 2000, 0, 60000, "bytes");
 
    fHitsPerTDC = nullptr;   // HADAQ hits per TDC
    fErrPerTDC = nullptr;    // HADAQ errors per TDC

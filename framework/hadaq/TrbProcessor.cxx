@@ -92,7 +92,7 @@ hadaq::TrbProcessor::TrbProcessor(unsigned brdid, HldProcessor* hldproc, int hfi
    fToTPerBrd = nullptr;
 
    fEvSize = MakeH1("EvSize", "Event size", 500, 0, 50000, "bytes");
-   fSubevHLen = 5000;
+   fSubevHLen = 50000;
    fSubevHDiv = 10;
    fSubevSize = MakeH1("SubevSize", "Subevent size", fSubevHLen/fSubevHDiv, 0, fSubevHLen, "bytes");
    fLostRate = MakeH1("LostRate", "Relative number of lost packets", 1000, 0, 1., "data lost");
