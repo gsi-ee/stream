@@ -9,6 +9,7 @@
 #include "hadaq/TrbIterator.h"
 #include "hadaq/TdcProcessor.h"
 #include "hadaq/MdcProcessor.h"
+#include "hadaq/ScalerProcessor.h"
 #include "hadaq/HldProcessor.h"
 
 #include "dogma/defines.h"
@@ -960,12 +961,31 @@ void hadaq::TrbProcessor::ScanSubEvent(hadaqs::RawSubevent* sub, unsigned trb3ru
             datalen--;
          }
 
-         // now ix should point to the first TDC word if datalen>0
-         // if not, there is no TDC present
+         if ((datalen > 4) && ((sub->Data(ix) == 0x4c55504f) || (sub->Data(ix) == 0x6c75706f))) {
+            ScalerProcessor *scaler = nullptr;
 
-         // This is special TDC processor for data from CTS header
+            auto iter = fMap.find(fHadaqCTSId);
+            if (iter != fMap.end())
+               scaler = dynamic_cast<ScalerProcessor *> (iter->second);
+            if (scaler) {
+               scaler->AddCTSData(sub, ix, datalen);
+            } else if (fAutoCreate) {
+               scaler = new ScalerProcessor(this, fHadaqCTSId);
+               scaler->SetStoreKind(GetStoreKind());
 
-         if (datalen > 0) {
+               mgr()->UserPreLoop(scaler); // while loop already running, call it once again for new processor
+
+               did_create_tdc = true;
+
+               printf("%s: Create %s\n", GetName(), scaler->GetName());
+            }
+
+         } else if (datalen > 0) {
+
+            // This is special TDC processor for data from CTS header
+            // now ix should point to the first TDC word if datalen>0
+            // if not, there is no TDC present
+
 
             TdcProcessor* tdcproc = GetTDC(fHadaqCTSId, true);
             if (tdcproc) {
