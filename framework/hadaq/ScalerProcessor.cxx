@@ -2,7 +2,7 @@
 
 
 hadaq::ScalerProcessor::ScalerProcessor(TrbProcessor* trb, unsigned subid) :
-   hadaq::SubProcessor(trb, "SCALER_%04x", subid)
+   hadaq::SubProcessor(trb, "SCALER_%04X", subid)
 {
 }
 
@@ -40,6 +40,25 @@ void hadaq::ScalerProcessor::Store(base::Event* ev)
    }
 }
 
+
+bool hadaq::ScalerProcessor::AddCTSData(hadaqs::RawSubevent* sub, unsigned ix, unsigned datalen)
+{
+   if (datalen < 5)
+      return false;
+   bool valid = sub->Data(ix) == 0x4c55504f;
+   uint64_t scaler1 = ((uint64_t) sub->Data(ix+1) & 0xFFFF) << 32 | sub->Data(ix+2);
+   uint64_t scaler2 = ((uint64_t) sub->Data(ix+3) & 0xFFFF) << 32 | sub->Data(ix+4);
+   if (IsPrintRawData())
+      printf("%s valid %s scalers %lu %lu\n", GetName(), (valid ? "true" : "false"), (long unsigned) scaler1, (long unsigned) scaler2);
+
+   if (IsTriggeredAnalysis() && IsStoreEnabled() && (GetStoreKind() > 0)) {
+      auto subevnt = new hadaq::ScalerSubEvent(scaler1, scaler2, valid);
+      mgr()->AddToTrigEvent(GetName(), subevnt);
+      pStore = subevnt;
+   }
+
+   return true;
+}
 
 bool hadaq::ScalerProcessor::FirstBufferScan(const base::Buffer &buf)
 {

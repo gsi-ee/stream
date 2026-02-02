@@ -1,4 +1,4 @@
-#ifndef HADAQ_SCALERPROCESSOR_H
+ #ifndef HADAQ_SCALERPROCESSOR_H
 #define HADAQ_SCALERPROCESSOR_H
 
 #include "hadaq/SubProcessor.h"
@@ -19,13 +19,13 @@ class ScalerProcessor : public SubProcessor {
 
 protected:
 
-
-
    void CreateBranch(TTree *) override;
    void Store(base::Event* ev) override;
 
    ScalerSubEvent fDummy;              ///<! data
    ScalerSubEvent *pStore = nullptr;  ///<! pointer on store vector
+
+   bool AddCTSData(hadaqs::RawSubevent* sub, unsigned ix, unsigned datalen);
 
 public:
 
