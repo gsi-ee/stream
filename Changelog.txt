@@ -1,3 +1,9 @@
+2.02.2026
+1. Support scaler data in CTS subevent. If at the end of the data "LUPO" (0x4c55504f) or
+   "lupo" (0x6c75706f) word is found, then such data decoded as scaler. Add valid flag
+   to scaler event.
+
+
 31.3.2021
 1. Let configure name of second script with base::ProcMgr::instance()->SetSecondName("any.C")
 
