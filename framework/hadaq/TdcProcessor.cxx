@@ -11,7 +11,7 @@
 #include "base/ProcMgr.h"
 
 #include "dogma/defines.h"
-#include "dogma/tdc5.h"
+#include "dogma/ur-unpacker.h"
 
 #include "hadaq/TrbProcessor.h"
 #include "hadaq/HldProcessor.h"
@@ -2561,6 +2561,15 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    return !iserr;
 }
 
+ur_config tdc5_cfg_2051 = {
+   .coarsetime_len = 18,
+   .finetime_len = 11,
+   .tdc_type = 3,
+   .freq = 150,
+   .has_edge_type = true
+};
+
+std::unordered_map<int, ur_config> tdc5_cfgs = {{2051, tdc5_cfg_2051}};
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Scan all messages, find reference signals
@@ -2625,12 +2634,20 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
 
    auto tu = (dogma::DogmaTu *) buf.ptr();
 
-   tdc5_header tdc5_h;
-   tdc5_parse_it tdc5_it;
-   tdc5_time tdc5_tm;
-   const char *tdc5_buf = (const char *) tu;
-   int tdc5_pktlen = (int) tu->GetTdc5PaketLength();
-   tdc5_parse_header(&tdc5_h, &tdc5_it, tdc5_buf, tdc5_pktlen);
+   ur_context tdc5_it;
+   ur_header tdc5_h;
+   ur_time tdc5_tm;
+
+   unsigned devid = tu->GetDeviceId();
+   auto entry = tdc5_cfgs.find(devid);
+   if (entry != tdc5_cfgs.end())
+      ur_set_config(&tdc5_it, &entry->second);
+   else
+      ur_set_config(&tdc5_it, &tdc5_cfg_2051);
+
+   const char *tu_buf = (const char *) tu->RawHeader();
+   int tu_pktlen = tu->GetRawPacketSize();
+   ur_parse_header(&tdc5_h, &tdc5_it, tu_buf, tu_pktlen);
 
    double coarse_unit = GetTdcCoarseUnit();
 
@@ -2646,7 +2663,7 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
    // TODO: configure ToT based on TDC5 information
    // ConfigureToTByHwType(msg.getHeaderHwType());
 
-   while (tdc5_parse_next(&tdc5_tm, &tdc5_it, tdc5_buf, tdc5_pktlen) == 1) {
+   while (ur_parse_next(&tdc5_tm, &tdc5_it, tu_buf, tu_pktlen) == 1) {
 
       cnt++;
 
