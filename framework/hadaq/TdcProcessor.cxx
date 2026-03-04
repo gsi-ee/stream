@@ -2561,15 +2561,23 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    return !iserr;
 }
 
-ur_config tdc5_cfg_2051 = {
-   .coarsetime_len = 18,
-   .finetime_len = 11,
-   .tdc_type = 3,
-   .freq = 150,
-   .has_edge_type = true
-};
+ur_config tdc5_cfg_2051;
 
-std::unordered_map<int, ur_config> tdc5_cfgs = {{2051, tdc5_cfg_2051}};
+std::unordered_map<int, ur_config> tdc5_cfgs;
+
+void _init_ur_config()
+{
+   if (tdc5_cfgs.size() != 0)
+      return;
+
+   tdc5_cfg_2051.coarsetime_len = 18;
+   tdc5_cfg_2051.finetime_len = 11;
+   tdc5_cfg_2051.tdc_type = 3;
+   tdc5_cfg_2051.freq = 150;
+   tdc5_cfg_2051.has_edge_type = true;
+
+   tdc5_cfgs[2051] = tdc5_cfg_2051;
+}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Scan all messages, find reference signals
@@ -2639,6 +2647,9 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
    ur_time tdc5_tm;
 
    unsigned devid = tu->GetDeviceId();
+
+   _init_ur_config();
+
    auto entry = tdc5_cfgs.find(devid);
    if (entry != tdc5_cfgs.end())
       ur_set_config(&tdc5_it, &entry->second);
