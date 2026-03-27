@@ -14,10 +14,10 @@ void first()
    base::ProcMgr::instance()->SetHistFilling(4);
 
    // this limits used for liner calibrations when nothing else is available
-   hadaq::TdcMessage::SetFineLimits(19, 391);
+   hadaq::TdcMessage::SetFineLimits(80, 1190);
 
    // default number of fine bins
-   hadaq::TdcProcessor::SetDefaults(410);
+   hadaq::TdcProcessor::SetDefaults(1250);
 
    // default channel numbers and edges mask
    // 1 - use only rising edge, falling edge is ignore
@@ -35,9 +35,12 @@ void first()
 
    auto vect = proc->CreateTDC5(0x0a7b00de);
 
+   // enable handling 0xD trigger signals for references
+   hadaq::TdcProcessor::SetUseDTrigForRef(true);
+
    for (auto tdc : vect) {
       for (int nch = 1; nch < 8; nch++)
-         tdc->SetRefChannel(nch, nch - 1, 0xffffff, 2000,  -10., 10.);
+         tdc->SetRefChannel(nch, nch - 1, tdc->GetID(), 2000,  -10., 10.);
    }
 
    // first parameter if filename  prefix for calibration files

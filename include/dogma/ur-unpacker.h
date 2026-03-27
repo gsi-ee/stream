@@ -45,6 +45,7 @@ struct ur_context {
 };
 struct ur_config {
   int coarsetime_len, finetime_len, tdc_type, freq, has_edge_type;
+  float triggerDlen;
 };
 struct ur_header {
   // uint32_t magic;
