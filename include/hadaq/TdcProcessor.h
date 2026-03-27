@@ -45,7 +45,7 @@ namespace hadaq {
             unsigned doublereftdc;         ///<! tdc of double reference channel
             unsigned refch_tmds;           ///<! reference channel for TMDS messages
             bool docalibr;                 ///<! if false, simple calibration will be used
-            bool hasrotation = false;      ///<! if rotation present
+            bool has_iqcal = false;        ///<! if iqcal correct
             iqtdc::calib iqcal;            ///<! calibration for tdc5
             bool hascalibr = false;        ///<! indicate if channel has valid calibration (not simple linear)
             bool check_calibr;             ///<! flag used to indicate that calibration was checked
