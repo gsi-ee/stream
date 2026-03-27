@@ -211,7 +211,7 @@ void hadaq::TdcProcessor::SetTimeRefKind(int kind)
 /// \param dogma - if used in DOGMA readout, IDs are 6 digits
 
 hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels, unsigned edge_mask, unsigned ver, bool dogma) :
-   SubProcessor(trb, dogma ? "TDC_%06X" : "TDC_%04X", tdcid),
+   SubProcessor(trb, dogma ? "TDC_%08X" : "TDC_%04X", tdcid),
    fVersion((ver == (unsigned) true) || (ver == 4) ? 4 : (ver > 4 ? 5 : 2)),
    fDogma(dogma),
    fIter1(),
@@ -534,6 +534,8 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
       return false;
 
    if (need_rising) {
+      if (fDogma)
+         fCh[ch].fRisingRotat = MakeH1("RisingRotat", "Rising rotation histogram", 256, 0, 256, "rotat");
       fCh[ch].fRisingFine = MakeH1("RisingFine", "Rising fine counter", fNumFineBins, 0, fNumFineBins, "fine");
       fCh[ch].fRisingCalibr = MakeH1("RisingCalibr", "Rising calibration function", fNumFineBins, 0, fNumFineBins, "fine;kind:F");
       // copy calibration only when histogram created
@@ -547,6 +549,8 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
    }
 
    if (need_falling) {
+      if (fDogma)
+         fCh[ch].fFallingRotat = MakeH1("FallingRotat", "Falling rotation histogram", 256, 0, 256, "rotat");
       fCh[ch].fFallingFine = MakeH1("FallingFine", "Falling fine counter", fNumFineBins, 0, fNumFineBins, "fine");
       fCh[ch].fFallingCalibr = MakeH1("FallingCalibr", "Falling calibration function", fNumFineBins, 0, fNumFineBins, "fine;kind:F");
       fCh[ch].fTot = MakeH1("Tot", "Time over threshold", gTotRange*GetBinsPerNS(), 0, gTotRange, "ns");
@@ -572,9 +576,11 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
 
 void hadaq::TdcProcessor::DisableCalibrationFor(unsigned firstch, unsigned lastch)
 {
-   if (lastch<=firstch) lastch = firstch+1;
-   if (lastch>=NumChannels()) lastch = NumChannels();
-   for (unsigned n=firstch;n<lastch;n++)
+   if (lastch <= firstch)
+      lastch = firstch+1;
+   if (lastch >= NumChannels())
+      lastch = NumChannels();
+   for (unsigned n = firstch; n < lastch; n++)
       fCh[n].docalibr = false;
 }
 
@@ -624,7 +630,8 @@ void hadaq::TdcProcessor::ConfigureToTByHwType(unsigned hwtype)
 void hadaq::TdcProcessor::UserPostLoop()
 {
    if (!fWriteCalibr.empty() && !fWriteEveryTime) {
-      if (fCalibrCounts==0) ProduceCalibration(true, fUseLinear);
+      if (fCalibrCounts == 0)
+         ProduceCalibration(true, fUseLinear);
       StoreCalibration(fWriteCalibr);
    }
 }
@@ -1021,7 +1028,8 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
    }
 
    fCalibrProgress = TestCanCalibrate(false);
-   if ((fCalibrProgress>=1.) && fAutoCalibr) PerformAutoCalibrate();
+   if ((fCalibrProgress>=1.) && fAutoCalibr)
+      PerformAutoCalibrate();
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -1030,17 +1038,20 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
 long hadaq::TdcProcessor::CheckChannelStat(unsigned ch)
 {
    ChannelRec &rec = fCh[ch];
-   if (!rec.docalibr) return 0;
+   if (!rec.docalibr)
+      return 0;
 
    if (fEdgeMask == edge_CommonStatistic)
       return rec.all_rising_stat + rec.all_falling_stat;
 
    long stat = 0;
 
-   if (DoRisingEdge() && (rec.all_rising_stat>0)) stat = rec.all_rising_stat;
+   if (DoRisingEdge() && (rec.all_rising_stat > 0))
+      stat = rec.all_rising_stat;
 
    if (DoFallingEdge() && (rec.all_falling_stat>0) && (fEdgeMask == edge_BothIndepend))
-      if ((stat == 0) || (rec.all_falling_stat < stat)) stat = rec.all_falling_stat;
+      if ((stat == 0) || (rec.all_falling_stat < stat))
+         stat = rec.all_falling_stat;
 
    return stat;
 }
@@ -1050,7 +1061,8 @@ long hadaq::TdcProcessor::CheckChannelStat(unsigned ch)
 
 double hadaq::TdcProcessor::TestCanCalibrate(bool fillhist, std::string *status)
 {
-   if (fCalibrCounts <= 0) return 0.;
+   if (fCalibrCounts <= 0)
+      return 0.;
 
    bool isany = false;
    long min = 1000000000L, max = 0;
@@ -1068,7 +1080,8 @@ double hadaq::TdcProcessor::TestCanCalibrate(bool fillhist, std::string *status)
          }
 
       }
-      if (fillhist && fCalHitsPerBrd) SetH2Content(*fCalHitsPerBrd, fSeqeunceId, ch, stat);
+      if (fillhist && fCalHitsPerBrd)
+         SetH2Content(*fCalHitsPerBrd, fSeqeunceId, ch, stat);
    }
 
    double min_progress = isany ? 1.*min/fCalibrCounts : 0.,
@@ -1546,7 +1559,8 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
          fAllTotMode = 1; // now can start accumulate ToT values
       }
 
-      if ((fCalibrProgress>=1.) && fAutoCalibr) PerformAutoCalibrate();
+      if ((fCalibrProgress>=1.) && fAutoCalibr)
+         PerformAutoCalibrate();
    }
 
    return tgt ? (tgtindx - tgtindx0) : cnt;
@@ -2682,7 +2696,9 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
       unsigned fine = tdc5_tm.fine;
       unsigned coarse = tdc5_tm.coarse;
       bool isrising = !tdc5_tm.is_falling;
-      unsigned bad_fine = 0x3FF;
+      unsigned bad_fine = 0x3FFFFF;
+
+      // printf("chid %u fine %u\n", chid, fine);
 
       localtm = -coarse_unit * coarse;
 
@@ -2706,6 +2722,26 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
       }
 
       ChannelRec& rec = fCh[chid];
+
+
+      // fill rotation histogram only during first scan
+      if (first_scan) {
+         if ((HistFillLevel() > 2) && !rec.fRisingRotat)
+            CreateChannelHistograms(chid);
+         if (isrising) {
+            FastFillH1(rec.fRisingRotat, fine % 256);
+            if (!rec.hasrotation)
+               rec.all_rising_stat++;
+         } else {
+            FastFillH1(rec.fFallingRotat, fine % 256);
+            if (!rec.hasrotation)
+               rec.all_falling_stat++;
+         }
+      }
+
+      if (!rec.hasrotation) {
+         continue;
+      }
 
       double corr = 0.;
       bool raw_hit = true;
@@ -4328,7 +4364,7 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
    std::vector<float> rising_pcalibr, falling_pcalibr;
 
 
-   for (unsigned ch=0;ch<NumChannels();ch++) {
+   for (unsigned ch = 0; ch < NumChannels(); ch++) {
 
       ChannelRec &rec = fCh[ch];
 
@@ -4351,14 +4387,19 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
          rec.calibr_quality_rising = rec.calibr_quality_falling = -1.;
       }
 
-      if (rec.docalibr) {
+      if (rec.docalibr && fDogma && IsVersion5() && !rec.hasrotation) {
+         rec.check_calibr = false; // reset flag, used in auto calibration
+         // printf("Calibrate roation for chaneel %u\n", ch);
+
+      } else if (rec.docalibr) {
 
          rec.check_calibr = false; // reset flag, used in auto calibration
 
          // special case - use common statistic
          if (fEdgeMask == edge_CommonStatistic) {
             rec.all_rising_stat += rec.all_falling_stat;
-            if (fCalHitsPerBrd) DefFillH2(*fCalHitsPerBrd, fSeqeunceId, ch, rec.all_falling_stat); // add all falling edges
+            if (fCalHitsPerBrd)
+               DefFillH2(*fCalHitsPerBrd, fSeqeunceId, ch, rec.all_falling_stat); // add all falling edges
             rec.all_falling_stat = 0;
             for (unsigned n = 0; n < fNumFineBins; n++) {
                rec.rising_stat[n] += rec.falling_stat[n];
@@ -4457,10 +4498,8 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
          }
 
          DefFillH1(fTotShifts, ch, rec.tot_shift);
-       }
-    }
-
-
+      }
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
