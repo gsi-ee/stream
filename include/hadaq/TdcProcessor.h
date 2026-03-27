@@ -6,6 +6,7 @@
 #include "hadaq/TdcMessage.h"
 #include "hadaq/TdcIterator.h"
 #include "hadaq/TdcSubEvent.h"
+#include "dogma/iq.h"
 
 #include <vector>
 #include <cmath>
@@ -45,6 +46,7 @@ namespace hadaq {
             unsigned refch_tmds;           ///<! reference channel for TMDS messages
             bool docalibr;                 ///<! if false, simple calibration will be used
             bool hasrotation = false;      ///<! if rotation present
+            iqtdc::calib iqcal;            ///<! calibration for tdc5
             bool hascalibr = false;        ///<! indicate if channel has valid calibration (not simple linear)
             bool check_calibr;             ///<! flag used to indicate that calibration was checked
             base::H1handle fRisingRotat;   ///<! histogram of all fine counters
