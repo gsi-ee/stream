@@ -2609,10 +2609,17 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
    _init_ur_config();
 
    auto entry = tdc5_cfgs.find(devid);
-   if (entry != tdc5_cfgs.end())
-      ur_set_config(&tdc5_it, &entry->second);
-   else
-      ur_set_config(&tdc5_it, &tdc5_cfg_2051);
+
+   ur_config *cfg = entry != tdc5_cfgs.end() ? &entry->second : &tdc5_cfg_2051;
+   ur_set_config(&tdc5_it, cfg);
+
+   if (!fIsCustomMhz)
+      SetCustomMhz(cfg->freq);
+
+   if (!fToTdflt) {
+      double hmin = (int) (cfg->triggerDlen - TotBins/100);
+      SetToTRange(cfg->triggerDlen, hmin, hmin + TotBins/50);
+   }
 
    const char *tu_buf = (const char *) tu->RawHeader();
    int tu_pktlen = tu->GetRawPacketSize();
@@ -4309,17 +4316,19 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
          rec.check_calibr = false; // reset flag, used in auto calibration
          // printf("Calibrate roation for chanel %u\n", ch);
 
-         // if necessary statistic provided - made calibration
+         // if necessary statistic provided - approve iqcal calibration
          if ((!DoRisingEdge() || (rec.all_rising_stat > 100)) &&
              (!DoFallingEdge() || (rec.all_falling_stat > 100))) {
                // printout calibration
                printf("%s:%u Create IQCAL ", GetName(), ch);
 
-               for (auto pair : rec.iqcal.gaps)
+               for (auto & pair : rec.iqcal.gaps)
                   printf(" %d:%d", pair.first, pair.second);
                printf("\n");
                rec.has_iqcal = true;
             }
+
+         rec.all_rising_stat = rec.all_falling_stat = 0;
 
       } else if (rec.docalibr) {
 
