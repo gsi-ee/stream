@@ -673,21 +673,16 @@ void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned re
       return;
 
    if (fDogma) {
-      if (((reftdc == 0xffffff) || (reftdc > 0xfffffff)) && ((reftdc & 0xf000000) != 0x7000000))
+      if (((reftdc == 0xffffffff) || (reftdc > 0xffffffff)) && ((reftdc & 0xf0000000) != 0x70000000))
          reftdc = GetID();
 
       // ignore invalid settings
-      if ((ch == refch) && ((reftdc & 0xffffff) == GetID()))
+      if ((ch == refch) && ((reftdc & 0xffffffff) == GetID()))
          return;
-
-      if ((refch == 0) && (ch != 0) && ((reftdc & 0xffffff) != GetID())) {
-         printf("%s cannot set reference to zero channel from other TDC\n", GetName());
-         return;
-      }
 
       fCh[ch].refch = refch;
-      fCh[ch].reftdc = reftdc & 0xffffff;
-      fCh[ch].refabs = (reftdc & 0xf000000) == 0x7000000;
+      fCh[ch].reftdc = reftdc & 0xffffffff;
+      fCh[ch].refabs = (reftdc & 0xf0000000) == 0x70000000;
 
    } else {
 
@@ -2675,18 +2670,28 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
       if (first_scan) {
          if ((HistFillLevel() > 2) && !rec.fRisingRotat)
             CreateChannelHistograms(chid);
+         if (rec.iqcal.empty())
+            rec.iqcal.resize(256, 8, 2); // two channels - rising and falling edge
+
+         unsigned atan = fine & 255;
+         unsigned itime = (fine >> 8) & 7;
+
          if (isrising) {
             FastFillH1(rec.fRisingRotat, fine % 256);
-            if (!rec.hasrotation)
+            if (!rec.hasrotation) {
                rec.all_rising_stat++;
-            else
-               fine = fine % 420;
+               rec.iqcal.set_and_update(0, itime, atan);
+            } else {
+               fine = rec.iqcal(0, itime, atan);
+            }
          } else {
             FastFillH1(rec.fFallingRotat, fine % 256);
-            if (!rec.hasrotation)
+            if (!rec.hasrotation) {
                rec.all_falling_stat++;
-            else
-               fine = fine % 400;
+               rec.iqcal.set_and_update(1, itime, atan);
+            } else {
+               fine = rec.iqcal(1, itime, atan);
+            }
          }
       }
 
@@ -4298,16 +4303,22 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
          rec.calibr_quality_rising = rec.calibr_quality_falling = -1.;
       }
 
+      printf("Calibrate roation for chanel %u flags %d %d %d\n", ch, fDogma, IsVersion5(), rec.hasrotation);
+
       if (rec.docalibr && fDogma && IsVersion5() && !rec.hasrotation) {
          rec.check_calibr = false; // reset flag, used in auto calibration
-         // printf("Calibrate roation for chanel %u\n", ch);
+         printf("Calibrate roation for chanel %u\n", ch);
 
          // if necessary statistic provided - made calibration
          if ((!DoRisingEdge() || (rec.all_rising_stat > 100)) &&
              (!DoFallingEdge() || (rec.all_falling_stat > 100))) {
             // fake calibration
-            rec.rising_rotation_limit = 10;
-            rec.falling_rotation_limit = 10;
+            rec.rising_rotation_limit = 0;
+            rec.falling_rotation_limit = 0;
+
+            for (auto pair : rec.iqcal.gaps)
+               printf("   center %d rotation %d\n", pair.first, pair.second);
+
             rec.hasrotation = true;
          }
 
