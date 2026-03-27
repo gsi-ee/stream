@@ -22,7 +22,12 @@ base::Processor::Processor(const char* name, unsigned brdid) :
 {
    if (brdid != DummyBrdId) {
       char sbuf[100];
-      unsigned mask = strstr(name, "%06X") ? 0xffffff : 0xffff;
+      unsigned mask = 0xffff;
+      if (strstr(name, "%06X"))
+         mask = 0xffffff;
+      else if (strstr(name, "%08X"))
+         mask = 0xffffffff;
+
       snprintf(sbuf, sizeof(sbuf), name, brdid & mask);
       fName = sbuf;
       fID = brdid;

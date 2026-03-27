@@ -6,6 +6,7 @@
 #include "hadaq/TdcMessage.h"
 #include "hadaq/TdcIterator.h"
 #include "hadaq/TdcSubEvent.h"
+#include "dogma/iq.h"
 
 #include <vector>
 #include <cmath>
@@ -44,6 +45,8 @@ namespace hadaq {
             unsigned doublereftdc;         ///<! tdc of double reference channel
             unsigned refch_tmds;           ///<! reference channel for TMDS messages
             bool docalibr;                 ///<! if false, simple calibration will be used
+            bool has_iqcal = false;        ///<! if iqcal correct
+            iqtdc::calib iqcal;            ///<! calibration for tdc5
             bool hascalibr = false;        ///<! indicate if channel has valid calibration (not simple linear)
             bool check_calibr;             ///<! flag used to indicate that calibration was checked
             base::H1handle fRisingFine;    ///<! histogram of all fine counters
@@ -85,8 +88,8 @@ namespace hadaq {
             std::vector<uint32_t> tot0d_hist;  ///<! histogram used for TOT calibration, allocated only when required
             float tot_shift;                ///<! calibrated tot shift
             float tot_dev;                  ///<! tot shift deviation after calibration
-            float time_shift_per_grad;      ///<! delay in channel (ns/C), caused by temperature change
-            float trig0d_coef;              ///<! scaling coefficient, applied when build calibration from 0xD trigger (reserved)
+            float calibr_dummy1;            ///<! unused value in calibration file
+            float calibr_dummy2;            ///<! unused value in calibration file
             int rising_cond_prnt;           ///<! rising condition print
             float calibr_quality_rising;    ///<! quality of last calibration 0. is nothing
             float calibr_quality_falling;    ///<! quality of last calibration 0. is nothing
@@ -143,8 +146,8 @@ namespace hadaq {
                tot0d_hist(),
                tot_shift(0.),
                tot_dev(0.),
-               time_shift_per_grad(0.),
-               trig0d_coef(0.),
+               calibr_dummy1(0.),
+               calibr_dummy2(0.),
                rising_cond_prnt(-1),
                calibr_quality_rising(-1.),
                calibr_quality_falling(-1.),
@@ -215,7 +218,6 @@ namespace hadaq {
             void ReleaseToTHist()
             {
                tot0d_hist.clear();
-
             }
          };
 
@@ -272,9 +274,8 @@ namespace hadaq {
          unsigned                 fNumChannels;       ///<! number of channels
          unsigned                 fNumFineBins;       ///<! number of fine-counter bins
          std::vector<ChannelRec>  fCh;                ///<! full description for each channels
-         float                    fCalibrTemp;        ///<! temperature when calibration was performed
-         float                    fCalibrTempCoef;    ///<! coefficient to scale calibration curve (real value -1)
-         bool                     fCalibrUseTemp;     ///<! when true, use temperature adjustment for calibration
+         float                    fCalibrDummy1;      ///<! dummy1 value in calibration table, to be used later
+         float                    fCalibrDummy2;      ///<! dummy2 value in calibration table, to be used later
          unsigned                 fCalibrTriggerMask; ///<! mask with enabled for trigger events ids, default all
 
          bool                     fToTdflt;        ///<! indicate if default setting used, which can be adjusted after seeing first event
@@ -296,12 +297,7 @@ namespace hadaq {
                                       //  0.7..0.8  - accumulating (blue color)
                                       //  0.8..1.0  - ok (green color)
 
-         float                    fTempCorrection; ///<! correction for temperature sensor
-         float                    fCurrentTemp;    ///<! current measured temperature
          unsigned                 fDesignId;       ///<! design ID, taken from status message
-         double                   fCalibrTempSum0; ///<! sum0 used to check temperature during calibration
-         double                   fCalibrTempSum1; ///<! sum1 used to check temperature during calibration
-         double                   fCalibrTempSum2; ///<! sum2 used to check temperature during calibration
 
 
          std::vector<hadaq::TdcMessageExt>  fDummyVect; ///<! dummy empty vector
@@ -422,10 +418,8 @@ namespace hadaq {
 
          void ClearChannelStat(unsigned ch);
 
-         float ExtractCalibr(const std::vector<float> &func, unsigned bin);
-
          /** extract calibration value */
-         inline float ExtractCalibrDirect(const std::vector<float> &func, unsigned bin)
+         inline float ExtractCalibr(const std::vector<float> &func, unsigned bin)
          {
             if ((func.size() > 100) || (func.size() == fNumFineBins))
                return func[bin];
@@ -661,20 +655,17 @@ namespace hadaq {
          void SetCalibrTriggerMask(unsigned trigmask)
          {
             fCalibrTriggerMask = trigmask & 0x3FFF;
-            fCalibrUseTemp = (trigmask & 0x80000000) != 0;
          }
 
-         /** Set temperature coefficient, which is applied to calibration curves
+         /** DEPRECATED Set temperature coefficient, which is applied to calibration curves
           * Typical value is about 0.0044 */
-         void SetCalibrTempCoef(float coef)
+         void SetCalibrTempCoef(float)
          {
-            fCalibrTempCoef = coef;
          }
 
-         /** Set shift for the channel time stamp, which is added with temperature change */
-         void SetChannelTempShift(unsigned ch, float shift_per_grad)
+         /** DEPRECATED Set shift for the channel time stamp, which is added with temperature change */
+         void SetChannelTempShift(unsigned /* ch */, float /* shift_per_grad */)
          {
-            if (ch < fCh.size()) fCh[ch].time_shift_per_grad = shift_per_grad;
          }
 
          /** Set channel TOT shift in nano-seconds, typical value is around 30 ns */
@@ -812,18 +803,17 @@ namespace hadaq {
 
          void ProduceCalibration(bool clear_stat = true, bool use_linear = false, bool dummy = false, bool preliminary = false);
 
-         /** Access value of temperature during calibration.
-          * Used to adjust all kind of calibrations afterwards */
-         float GetCalibrTemp() const { return fCalibrTemp; }
+         /** DEPRECATED Access value of temperature during calibration. */
+         float GetCalibrTemp() const { return 0.; }
 
-         /** Set temperature used for calibration */
-         void SetCalibrTemp(float v) { fCalibrTemp = v; }
+         /** DEPRECATED Set temperature used for calibration */
+         void SetCalibrTemp(float /* v */ ) { }
 
          void StoreCalibration(const std::string& fname, unsigned fileid = 0);
 
          float GetCalibrFunc(unsigned ch, bool isrising, unsigned bin)
          {
-            return ExtractCalibrDirect(isrising ? fCh[ch].rising_calibr : fCh[ch].falling_calibr, bin);
+            return ExtractCalibr(isrising ? fCh[ch].rising_calibr : fCh[ch].falling_calibr, bin);
          }
 
          void Store(base::Event*) override;

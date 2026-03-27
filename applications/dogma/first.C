@@ -14,22 +14,36 @@ void first()
    base::ProcMgr::instance()->SetHistFilling(4);
 
    // this limits used for liner calibrations when nothing else is available
-   hadaq::TdcMessage::SetFineLimits(31, 491);
+   hadaq::TdcMessage::SetFineLimits(80, 1190);
+
+   hadaq::TdcProcessor::SetTriggerDWindow(-10, 90);
+
+   // default number of fine bins
+   hadaq::TdcProcessor::SetDefaults(1250);
 
    // default channel numbers and edges mask
    // 1 - use only rising edge, falling edge is ignore
    // 2   - falling edge enabled and fully independent from rising edge
    // 3   - falling edge enabled and uses calibration from rising edge
    // 4   - falling edge enabled and common statistic is used for calibration
-   hadaq::TrbProcessor::SetDefaults(33, 2);
+   hadaq::TrbProcessor::SetDefaults(8, 2);
 
    // [min..max] range for TDC ids
-   hadaq::TrbProcessor::SetTDCRange(0x1000, 0x7FFF);
+   // not used now while IDs are very wide range
+   // hadaq::TrbProcessor::SetTDCRange(0x1000, 0x7FFF);
 
    // true indicates that dogma data are expected
    auto proc = new hadaq::TrbProcessor(0, nullptr, 4, true);
 
-   proc->CreateTDC(0x101e, 0x601e);
+   auto vect = proc->CreateTDC5(0x0a7b00de);
+
+   // enable handling 0xD trigger signals for references
+   hadaq::TdcProcessor::SetUseDTrigForRef(true);
+
+   for (auto tdc : vect) {
+      for (int nch = 1; nch < 8; nch++)
+         tdc->SetRefChannel(nch, nch - 1, tdc->GetID(), 2000,  -10., 10.);
+   }
 
    // first parameter if filename  prefix for calibration files
    //     and calibration mode (empty string - no file I/O)
@@ -44,7 +58,7 @@ void first()
    //   (1 << 0xD) - special 0XD trigger with internal pulser, used also for TOT calibration
    //    0x3FFF - all kinds of trigger types will be used for calibration (excluding 0xE and 0xF)
    //   0x80000000 in mask enables usage of temperature correction
-   proc->ConfigureCalibration("dogmacal", 100000, 0x3fff);
+   proc->ConfigureCalibration("tdc5cal", 50000, 0x3fff);
 
    // only accept trigger type 0x1 when storing file
    // new hadaq::HldFilter(0x1);
@@ -58,32 +72,3 @@ void first()
    // 3 - std::vector<hadaq::MessageDouble> - compact form, with channel 0, absolute time stamp as double
    base::ProcMgr::instance()->SetStoreKind(0);
 }
-
-// extern "C" required by DABC to find function from compiled code
-
-extern "C" void after_create(hadaq::HldProcessor* hld)
-{
-   printf("Called after all sub-components are created\n");
-
-   if (hld==0) return;
-
-   for (unsigned k=0;k<hld->NumberOfTRB();k++) {
-      hadaq::TrbProcessor* trb = hld->GetTRB(k);
-      if (trb==0) continue;
-      printf("Configure %s!\n", trb->GetName());
-      trb->SetPrintErrors(10);
-   }
-
-   for (unsigned k=0;k<hld->NumberOfTDC();k++) {
-      hadaq::TdcProcessor* tdc = hld->GetTDC(k);
-      if (tdc==0) continue;
-
-      printf("Configure %s!\n", tdc->GetName());
-
-      // tdc->SetUseLastHit(true);
-      for (unsigned nch=2;nch<tdc->NumChannels();nch++)
-        tdc->SetRefChannel(nch, 1, 0xffff, 2000,  -10., 10.);
-   }
-}
-
-

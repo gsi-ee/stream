@@ -11,12 +11,14 @@
 #include "base/ProcMgr.h"
 
 #include "dogma/defines.h"
-#include "dogma/tdc5.h"
+#include "dogma/ur-unpacker.h"
 
 #include "hadaq/TrbProcessor.h"
 #include "hadaq/HldProcessor.h"
 #include "hadaq/TdcSubEvent.h"
 #include <iostream>
+#include <fstream>
+
 
 #ifdef STREAM_WINDOWS
 #define RAWPRINT()
@@ -211,7 +213,7 @@ void hadaq::TdcProcessor::SetTimeRefKind(int kind)
 /// \param dogma - if used in DOGMA readout, IDs are 6 digits
 
 hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned numchannels, unsigned edge_mask, unsigned ver, bool dogma) :
-   SubProcessor(trb, dogma ? "TDC_%06X" : "TDC_%04X", tdcid),
+   SubProcessor(trb, dogma ? "TDC_%08X" : "TDC_%04X", tdcid),
    fVersion((ver == (unsigned) true) || (ver == 4) ? 4 : (ver > 4 ? 5 : 2)),
    fDogma(dogma),
    fIter1(),
@@ -219,20 +221,14 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fNumChannels(numchannels),
    fNumFineBins(gNumFineBins),
    fCh(),
-   fCalibrTemp(30.),
-   fCalibrTempCoef(0.004432),
-   fCalibrUseTemp(false),
+   fCalibrDummy1(0.),
+   fCalibrDummy2(0),
    fCalibrTriggerMask(0xFFFF),
    fCalibrAmount(0),
    fCalibrProgress(0),
    fCalibrStatus("NoCalibr"),
    fCalibrQuality(0.),
-   fTempCorrection(0.),
-   fCurrentTemp(-1.),
    fDesignId(0),
-   fCalibrTempSum0(0),
-   fCalibrTempSum1(0),
-   fCalibrTempSum2(0),
    fDummyVect(),
    pStoreVect(nullptr),
    fDummyFloat(),
@@ -572,9 +568,11 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
 
 void hadaq::TdcProcessor::DisableCalibrationFor(unsigned firstch, unsigned lastch)
 {
-   if (lastch<=firstch) lastch = firstch+1;
-   if (lastch>=NumChannels()) lastch = NumChannels();
-   for (unsigned n=firstch;n<lastch;n++)
+   if (lastch <= firstch)
+      lastch = firstch+1;
+   if (lastch >= NumChannels())
+      lastch = NumChannels();
+   for (unsigned n = firstch; n < lastch; n++)
       fCh[n].docalibr = false;
 }
 
@@ -624,7 +622,8 @@ void hadaq::TdcProcessor::ConfigureToTByHwType(unsigned hwtype)
 void hadaq::TdcProcessor::UserPostLoop()
 {
    if (!fWriteCalibr.empty() && !fWriteEveryTime) {
-      if (fCalibrCounts==0) ProduceCalibration(true, fUseLinear);
+      if (fCalibrCounts == 0)
+         ProduceCalibration(true, fUseLinear);
       StoreCalibration(fWriteCalibr);
    }
 }
@@ -672,21 +671,16 @@ void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned re
       return;
 
    if (fDogma) {
-      if (((reftdc == 0xffffff) || (reftdc > 0xfffffff)) && ((reftdc & 0xf000000) != 0x7000000))
+      if (((reftdc == 0xffffffff) || (reftdc > 0xffffffff)) && ((reftdc & 0xf0000000) != 0x70000000))
          reftdc = GetID();
 
       // ignore invalid settings
-      if ((ch == refch) && ((reftdc & 0xffffff) == GetID()))
+      if ((ch == refch) && ((reftdc & 0xffffffff) == GetID()))
          return;
-
-      if ((refch == 0) && (ch != 0) && ((reftdc & 0xffffff) != GetID())) {
-         printf("%s cannot set reference to zero channel from other TDC\n", GetName());
-         return;
-      }
 
       fCh[ch].refch = refch;
-      fCh[ch].reftdc = reftdc & 0xffffff;
-      fCh[ch].refabs = (reftdc & 0xf000000) == 0x7000000;
+      fCh[ch].reftdc = reftdc & 0xffffffff;
+      fCh[ch].refabs = (reftdc & 0xf0000000) == 0x70000000;
 
    } else {
 
@@ -1021,7 +1015,8 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
    }
 
    fCalibrProgress = TestCanCalibrate(false);
-   if ((fCalibrProgress>=1.) && fAutoCalibr) PerformAutoCalibrate();
+   if ((fCalibrProgress>=1.) && fAutoCalibr)
+      PerformAutoCalibrate();
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -1030,17 +1025,20 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
 long hadaq::TdcProcessor::CheckChannelStat(unsigned ch)
 {
    ChannelRec &rec = fCh[ch];
-   if (!rec.docalibr) return 0;
+   if (!rec.docalibr)
+      return 0;
 
    if (fEdgeMask == edge_CommonStatistic)
       return rec.all_rising_stat + rec.all_falling_stat;
 
    long stat = 0;
 
-   if (DoRisingEdge() && (rec.all_rising_stat>0)) stat = rec.all_rising_stat;
+   if (DoRisingEdge() && (rec.all_rising_stat > 0))
+      stat = rec.all_rising_stat;
 
    if (DoFallingEdge() && (rec.all_falling_stat>0) && (fEdgeMask == edge_BothIndepend))
-      if ((stat == 0) || (rec.all_falling_stat < stat)) stat = rec.all_falling_stat;
+      if ((stat == 0) || (rec.all_falling_stat < stat))
+         stat = rec.all_falling_stat;
 
    return stat;
 }
@@ -1050,7 +1048,8 @@ long hadaq::TdcProcessor::CheckChannelStat(unsigned ch)
 
 double hadaq::TdcProcessor::TestCanCalibrate(bool fillhist, std::string *status)
 {
-   if (fCalibrCounts <= 0) return 0.;
+   if (fCalibrCounts <= 0)
+      return 0.;
 
    bool isany = false;
    long min = 1000000000L, max = 0;
@@ -1068,7 +1067,8 @@ double hadaq::TdcProcessor::TestCanCalibrate(bool fillhist, std::string *status)
          }
 
       }
-      if (fillhist && fCalHitsPerBrd) SetH2Content(*fCalHitsPerBrd, fSeqeunceId, ch, stat);
+      if (fillhist && fCalHitsPerBrd)
+         SetH2Content(*fCalHitsPerBrd, fSeqeunceId, ch, stat);
    }
 
    double min_progress = isany ? 1.*min/fCalibrCounts : 0.,
@@ -1160,33 +1160,6 @@ void hadaq::TdcProcessor::FindFMinMax(const std::vector<float> &func, int nbin, 
       fmin = (int) func[1];
       fmax = (int) func[3];
    }
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////
-/// Extract calibration value
-
-float hadaq::TdcProcessor::ExtractCalibr(const std::vector<float> &func, unsigned bin)
-{
-   if (!fCalibrUseTemp || (fCalibrTemp <= 0) || (fCurrentTemp <= 0) || (fCalibrTempCoef<=0))
-      return ExtractCalibrDirect(func, bin);
-
-   // TODO: if using temperature, also extrapolate linear approximation
-   float temp = fCurrentTemp + fTempCorrection;
-
-   float val = func[bin] * (1+fCalibrTempCoef*(temp-fCalibrTemp));
-
-   double coarse_unit = GetTdcCoarseUnit();
-
-   if ((temp < fCalibrTemp) && (func[bin] >= coarse_unit*0.9999)) {
-      // special case - lower temperature and bin which was not observed during calibration
-      // just take linear extrapolation, using points bin-30 and bin-80
-
-      float val0 = func[bin-30] + (func[bin-30] - func[bin-80]) / 50 * 30;
-
-      val = val0 * (1+fCalibrTempCoef*(temp-fCalibrTemp));
-   }
-
-   return val < coarse_unit ? val : coarse_unit;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -1301,8 +1274,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
          errcnt++;
       }
 
-      // ignore temperature compensation
-      corr = hard_failure ? 0. : ExtractCalibrDirect(isrising ? rec.rising_calibr : rec.falling_calibr, fine);
+      corr = hard_failure ? 0. : ExtractCalibr(isrising ? rec.rising_calibr : rec.falling_calibr, fine);
 
       // corr = hard_failure ? 0. : (isrising ? rec.rising_calibr[fine] : rec.falling_calibr[fine]);
 
@@ -1494,12 +1466,6 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
    if (hitcnt && fHitsPerBrd) FastFillH1(*fHitsPerBrd, fSeqeunceId, hitcnt);
    if (errcnt && fErrPerBrd) FastFillH1(*fErrPerBrd, fSeqeunceId, errcnt);
 
-   if ((hitcnt>0) && use_in_calibr && (fCurrentTemp>0)) {
-      fCalibrTempSum0 += 1.;
-      fCalibrTempSum1 += fCurrentTemp;
-      fCalibrTempSum2 += fCurrentTemp*fCurrentTemp;
-   }
-
    if (fAllCalibrMode > 0) {
       // detect 0xD trigger ourself
       if (!is_0d_trig && (nrising == nfalling) && (nrising+1 == NumChannels())) is_0d_trig = true;
@@ -1546,7 +1512,8 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
          fAllTotMode = 1; // now can start accumulate ToT values
       }
 
-      if ((fCalibrProgress>=1.) && fAutoCalibr) PerformAutoCalibrate();
+      if ((fCalibrProgress>=1.) && fAutoCalibr)
+         PerformAutoCalibrate();
    }
 
    return tgt ? (tgtindx - tgtindx0) : cnt;
@@ -1860,9 +1827,6 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    // if data could be used for TOT calibration
    bool do_tot = (use_for_calibr > 0) && ((buf_kind == 0xD) || gUseAsDTrig) && DoFallingEdge();
 
-   // use temperature compensation only when temperature available
-   bool do_temp_comp = fCalibrUseTemp && (fCurrentTemp > 0) && (fCalibrTemp > 0) && (fabs(fCurrentTemp - fCalibrTemp) < 30.);
-
    unsigned cnt = 0, hitcnt = 0;
 
    bool iserr = false, isfirstepoch = false, rawprint = false, missinghit = false, dostore = false;
@@ -2105,9 +2069,6 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
                // apply TOT shift for falling edge (should it be also temp dependent)?
                if (!isrising) corr += rec.tot_shift*1e-9;
-
-               // negative while value should be add to the stamp
-               if (do_temp_comp) corr -= (fCurrentTemp + fTempCorrection - fCalibrTemp) * rec.time_shift_per_grad * 1e-9;
             }
          }
 
@@ -2482,22 +2443,15 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       }
 
       if ((temp != 0) && (temp < 2400)) {
-         fCurrentTemp = temp/16.;
+         float realTemp = temp/16.;
 
          if ((HistFillLevel() > 1) && !fTempDistr)  {
-            printf("%s FirstTemp:%5.2f CalibrTemp:%5.2f UseTemp:%d\n", GetName(), fCurrentTemp, fCalibrTemp, fCalibrUseTemp);
-
-            int mid = round(fCurrentTemp);
+            printf("%s First measure temperature:%5.2f\n", GetName(), realTemp);
+            int mid = round(realTemp);
             SetSubPrefix2();
             fTempDistr = MakeH1("Temperature", "Temperature distribution", 600, mid-30, mid+30, "C");
          }
-         FillH1(fTempDistr, fCurrentTemp);
-      }
-
-      if ((hitcnt>0) && (use_for_calibr>0) && (fCurrentTemp>0)) {
-         fCalibrTempSum0 += 1.;
-         fCalibrTempSum1 += fCurrentTemp;
-         fCalibrTempSum2 += fCurrentTemp*fCurrentTemp;
+         FillH1(fTempDistr, realTemp);
       }
 
       // if we use trigger as time marker
@@ -2561,6 +2515,24 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    return !iserr;
 }
 
+ur_config tdc5_cfg_2051;
+
+std::unordered_map<int, ur_config> tdc5_cfgs;
+
+void _init_ur_config()
+{
+   if (tdc5_cfgs.size() != 0)
+      return;
+
+   tdc5_cfg_2051.coarsetime_len = 18;
+   tdc5_cfg_2051.finetime_len = 11;
+   tdc5_cfg_2051.tdc_type = 3;
+   tdc5_cfg_2051.freq = 150;
+   tdc5_cfg_2051.has_edge_type = true;
+   tdc5_cfg_2051.triggerDlen = 20.345;
+
+   tdc5_cfgs[2051] = tdc5_cfg_2051;
+}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Scan all messages, find reference signals
@@ -2585,12 +2557,15 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
 
    // disable taking last hit for trigger DD
    if ((use_for_calibr > 0) && ((buf_kind == 0xD) || gUseAsDTrig)) {
-      if (IsTriggeredAnalysis() &&  (gTrigDWindowLow < gTrigDWindowHigh)) use_for_calibr = 3; // accept time stamps only for inside window
+      if (IsTriggeredAnalysis() && (gTrigDWindowLow < gTrigDWindowHigh))
+         use_for_calibr = 3; // accept time stamps only for inside window
       // use_for_calibr = 2; // always use only last hit
    }
 
    // if data could be used for TOT calibration
    bool do_tot = (use_for_calibr > 0) && ((buf_kind == 0xD) || gUseAsDTrig) && DoFallingEdge();
+
+   // printf("do tot %d use_for_calibr %d\n", do_tot, use_for_calibr);
 
    unsigned cnt = 0, hitcnt = 0;
 
@@ -2625,12 +2600,30 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
 
    auto tu = (dogma::DogmaTu *) buf.ptr();
 
-   tdc5_header tdc5_h;
-   tdc5_parse_it tdc5_it;
-   tdc5_time tdc5_tm;
-   const char *tdc5_buf = (const char *) tu;
-   int tdc5_pktlen = (int) tu->GetTdc5PaketLength();
-   tdc5_parse_header(&tdc5_h, &tdc5_it, tdc5_buf, tdc5_pktlen);
+   ur_context tdc5_it;
+   ur_header tdc5_h;
+   ur_time tdc5_tm;
+
+   unsigned devid = tu->GetDeviceId();
+
+   _init_ur_config();
+
+   auto entry = tdc5_cfgs.find(devid);
+
+   ur_config *cfg = entry != tdc5_cfgs.end() ? &entry->second : &tdc5_cfg_2051;
+   ur_set_config(&tdc5_it, cfg);
+
+   if (!fIsCustomMhz)
+      SetCustomMhz(cfg->freq);
+
+   if (fToTdflt) {
+      double hmin = (int) (cfg->triggerDlen - TotBins/100);
+      SetToTRange(cfg->triggerDlen, hmin, hmin + TotBins/50);
+   }
+
+   const char *tu_buf = (const char *) tu->RawHeader();
+   int tu_pktlen = tu->GetRawPacketSize();
+   ur_parse_header(&tdc5_h, &tdc5_it, tu_buf, tu_pktlen);
 
    double coarse_unit = GetTdcCoarseUnit();
 
@@ -2646,7 +2639,7 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
    // TODO: configure ToT based on TDC5 information
    // ConfigureToTByHwType(msg.getHeaderHwType());
 
-   while (tdc5_parse_next(&tdc5_tm, &tdc5_it, tdc5_buf, tdc5_pktlen) == 1) {
+   while (ur_parse_next(&tdc5_tm, &tdc5_it, tu_buf, tu_pktlen) == 1) {
 
       cnt++;
 
@@ -2654,7 +2647,9 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
       unsigned fine = tdc5_tm.fine;
       unsigned coarse = tdc5_tm.coarse;
       bool isrising = !tdc5_tm.is_falling;
-      unsigned bad_fine = 0x3FF;
+      unsigned bad_fine = 0x3FFFFF;
+
+      // printf("chid %u fine %u\n", chid, fine);
 
       localtm = -coarse_unit * coarse;
 
@@ -2679,6 +2674,28 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
 
       ChannelRec& rec = fCh[chid];
 
+      unsigned atan = fine & 255;
+      unsigned itime = (fine >> 8) & 7;
+
+      if (rec.has_iqcal) {
+         // just produce normal fine counter value
+         fine = rec.iqcal(isrising ? 0 : 1, itime, atan);
+      } else {
+         // accumulate statistic first
+         if (first_scan) {
+            if (rec.iqcal.empty())
+               rec.iqcal.resize(256, 8, 2); // two channels - rising and falling edge
+            if (isrising) {
+               rec.all_rising_stat++;
+               rec.iqcal.set_and_update(0, itime, atan);
+            } else {
+               rec.all_falling_stat++;
+               rec.iqcal.set_and_update(1, itime, atan);
+            }
+         }
+         continue;
+      }
+
       double corr = 0.;
       bool raw_hit = true;
 
@@ -2698,7 +2715,8 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
          corr = ExtractCalibr(isrising ? rec.rising_calibr : rec.falling_calibr, fine);
 
          // apply TOT shift for falling edge (should it be also temp dependent)?
-         if (!isrising) corr += rec.tot_shift * 1e-9;
+         if (!isrising)
+            corr += rec.tot_shift * 1e-9;
       }
 
       // apply correction
@@ -2752,7 +2770,8 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
                }
             }
 
-            if (raw_hit) FastFillH1(rec.fRisingFine, fine);
+            if (raw_hit)
+               FastFillH1(rec.fRisingFine, fine);
 
             rec.rising_cnt++;
 
@@ -2782,7 +2801,8 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
                }
             }
 
-            if (raw_hit) FastFillH1(rec.fFallingFine, fine);
+            if (raw_hit)
+               FastFillH1(rec.fFallingFine, fine);
 
             rec.falling_cnt++;
 
@@ -2829,7 +2849,8 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
                   }
 
                // use only raw hit
-               if (raw_hit && do_tot) rec.last_tot = tot + rec.tot_shift;
+               if (raw_hit && do_tot)
+                  rec.last_tot = tot + rec.tot_shift;
             }
          }
 
@@ -3017,9 +3038,6 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
    bool do_tot = (use_for_calibr > 0) && ((buf_kind == 0xD) || gUseAsDTrig) && DoFallingEdge();
 
    // printf("Name %s ToT %d\n", GetName(), (int) do_tot);
-
-   // use temperature compensation only when temperature available
-   bool do_temp_comp = fCalibrUseTemp && (fCurrentTemp > 0) && (fCalibrTemp > 0) && (fabs(fCurrentTemp - fCalibrTemp) < 30.);
 
    unsigned cnt = 0, hitcnt = 0;
 
@@ -3285,9 +3303,6 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
 
             // apply TOT shift for falling edge (should it be also temp dependent)?
             if (!isrising) corr += rec.tot_shift*1e-9;
-
-            // negative while value should be add to the stamp
-            if (do_temp_comp) corr -= (fCurrentTemp + fTempCorrection - fCalibrTemp) * rec.time_shift_per_grad * 1e-9;
          }
 
          // apply correction
@@ -3561,28 +3576,6 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
 
          fDesignId = id;
       }
-
-      /*
-      if ((temp != 0) && (temp < 2400)) {
-         fCurrentTemp = temp/16.;
-
-         if ((HistFillLevel() > 1) && (fTempDistr == 0))  {
-            printf("%s FirstTemp:%5.2f CalibrTemp:%5.2f UseTemp:%d\n", GetName(), fCurrentTemp, fCalibrTemp, fCalibrUseTemp);
-
-            int mid = round(fCurrentTemp);
-            SetSubPrefix2();
-            fTempDistr = MakeH1("Temperature", "Temperature distribution", 600, mid-30, mid+30, "C");
-         }
-         FillH1(fTempDistr, fCurrentTemp);
-      }
-
-      if ((hitcnt>0) && (use_for_calibr>0) && (fCurrentTemp>0)) {
-         fCalibrTempSum0 += 1.;
-         fCalibrTempSum1 += fCurrentTemp;
-         fCalibrTempSum2 += fCurrentTemp*fCurrentTemp;
-      }
-
-      */
 
       // if we use trigger as time marker
       if (fUseNativeTrigger && (ch0time != 0)) {
@@ -3943,22 +3936,26 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, bool rising, const st
    std::string name_prefix = std::string(GetName()) + (rising ? "_rch" : "_fch") + std::to_string(nch);
    std::string err_log;
 
-   if (!preliminary && (finemin > 50)) {
+   unsigned finemaxlimit = fIsCustomMhz ? 200 : (fDogma ? 350 : 400);
+   unsigned fineminlimit = 50;
+   if (IsVersion4()) {
+      finemaxlimit = 300;
+   } else if (IsVersion5()) {
+      fineminlimit = 150;
+      finemaxlimit = 800;
+   }
+
+
+   if (!preliminary && (finemin > fineminlimit)) {
       std::string log_finemin = std::string("_BadFineMin_") + std::to_string(finemin);
       err_log.append(log_finemin);
+
       if (quality > 0.4)
          quality = 0.4;
       if (fCalibrQuality > 0.4) {
          fCalibrStatus = name_prefix + log_finemin;
          fCalibrQuality = 0.4;
       }
-   }
-
-   unsigned finemaxlimit = fIsCustomMhz ? 200 : (fDogma ? 350 : 400);
-   if (IsVersion4()) {
-      finemaxlimit = 300;
-   } else if (IsVersion5()) {
-      finemaxlimit = 400;
    }
 
    // if range for fine bins very small - require that at least 0.7 of range covered
@@ -3968,6 +3965,7 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, bool rising, const st
    if (!preliminary && (finemax < finemaxlimit)) {
       std::string log_finemax = std::string("_BadFineMax_") + std::to_string(finemax);
       err_log.append(log_finemax);
+
       if (quality > 0.4)
          quality = 0.4;
       if (fCalibrQuality > 0.4) {
@@ -3980,7 +3978,8 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, bool rising, const st
 
    if (sum <= limits) {
 
-      if (quality > 0.15) quality = 0.15;
+      if (quality > 0.15)
+         quality = 0.15;
       err_log.append("_LowStat");
 
       if ((fCalibrQuality > 0.15) && !preliminary)  {
@@ -4050,7 +4049,7 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, bool rising, const st
             segm = std::ceil((fine - calibr[1]) / (calibr[pnt] - calibr[1]) * (calibr[0] - 1)); // segment in linear approx
             pnt = 1 + segm*2; // first segment should have pnt = 3, second segment pnt = 5 and so on
          }
-         printf("%s fine %d nsegm = %d pnt %d value %g\n", GetName(), fine, segm, pnt, ExtractCalibrDirect(calibr, fine));
+         printf("%s fine %d nsegm = %d pnt %d value %g\n", GetName(), fine, segm, pnt, ExtractCalibr(calibr, fine));
       }
 */
 
@@ -4060,14 +4059,17 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, bool rising, const st
       double sum1 = 0., sum2 = 0., linear = 0, exact = 0.;
 
       // exclude some cases when several wrong finecounter values measured, which confuses algorithm
-      while ((finemax > finemin) && (integral[finemax] > 0.999*sum)) finemax--;
+      while ((finemax > finemin) && (integral[finemax] > 0.999*sum))
+         finemax--;
 
       double scale_value = (integral[finemax] - statistic[finemax]/2) / sum;
 
       if (!preliminary && (finemax < finemaxlimit*0.875)) {
          std::string log_finemax = std::string("_BadFineMax_") + std::to_string(finemax);
+
          err_log.append(log_finemax);
-         if (quality > 0.4) quality = 0.4;
+         if (quality > 0.4)
+            quality = 0.4;
          if (fCalibrQuality > 0.4) {
             fCalibrStatus = name_prefix + log_finemax;
             fCalibrQuality = 0.4;
@@ -4237,8 +4239,8 @@ void hadaq::TdcProcessor::CopyCalibration(const std::vector<float> &calibr, base
    ClearH1(hcalibr);
 
    for (unsigned n=0;n<fNumFineBins;n++) {
-      SetH1Content(hcalibr, n, ExtractCalibrDirect(calibr, n)*1e12);
-      SetH2Content(h2calibr, ch, n, ExtractCalibrDirect(calibr,n)*1e12);
+      SetH1Content(hcalibr, n, ExtractCalibr(calibr, n)*1e12);
+      SetH2Content(h2calibr, ch, n, ExtractCalibr(calibr,n)*1e12);
    }
 }
 
@@ -4279,18 +4281,6 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
    if (!preliminary)
       printf("%s produce %s calibrations \n", GetName(), (use_linear ? "linear" : "normal"));
 
-   if (fCalibrTempSum0 > 5) {
-      double mean = fCalibrTempSum1/fCalibrTempSum0;
-      double rms = fCalibrTempSum2 / fCalibrTempSum0 - mean*mean;
-      if (rms>0) rms = sqrt(rms); else rms = (rms >=-1e-8) ? 0 : -1;
-      printf("   temp %5.2f +- %3.2f during calibration\n", mean, rms);
-      if ((rms>0) && (rms<3)) fCalibrTemp = mean;
-   }
-
-   fCalibrTempSum0 = 0;
-   fCalibrTempSum1 = 0;
-   fCalibrTempSum2 = 0;
-
    if (!preliminary) {
       ClearH2(fRisingCalibr);
       ClearH2(fFallingCalibr);
@@ -4300,7 +4290,7 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
    std::vector<float> rising_pcalibr, falling_pcalibr;
 
 
-   for (unsigned ch=0;ch<NumChannels();ch++) {
+   for (unsigned ch = 0; ch < NumChannels(); ch++) {
 
       ChannelRec &rec = fCh[ch];
 
@@ -4323,14 +4313,33 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
          rec.calibr_quality_rising = rec.calibr_quality_falling = -1.;
       }
 
-      if (rec.docalibr) {
+      if (rec.docalibr && fDogma && IsVersion5() && !rec.has_iqcal) {
+         rec.check_calibr = false; // reset flag, used in auto calibration
+         // printf("Calibrate roation for chanel %u\n", ch);
+
+         // if necessary statistic provided - approve iqcal calibration
+         if ((!DoRisingEdge() || (rec.all_rising_stat > 100)) &&
+             (!DoFallingEdge() || (rec.all_falling_stat > 100))) {
+               // printout calibration
+               printf("%s:%u Create IQCAL ", GetName(), ch);
+
+               for (auto & pair : rec.iqcal.gaps)
+                  printf(" %d:%d", pair.first, pair.second);
+               printf("\n");
+               rec.has_iqcal = true;
+            }
+
+         rec.all_rising_stat = rec.all_falling_stat = 0;
+
+      } else if (rec.docalibr) {
 
          rec.check_calibr = false; // reset flag, used in auto calibration
 
          // special case - use common statistic
          if (fEdgeMask == edge_CommonStatistic) {
             rec.all_rising_stat += rec.all_falling_stat;
-            if (fCalHitsPerBrd) DefFillH2(*fCalHitsPerBrd, fSeqeunceId, ch, rec.all_falling_stat); // add all falling edges
+            if (fCalHitsPerBrd)
+               DefFillH2(*fCalHitsPerBrd, fSeqeunceId, ch, rec.all_falling_stat); // add all falling edges
             rec.all_falling_stat = 0;
             for (unsigned n = 0; n < fNumFineBins; n++) {
                rec.rising_stat[n] += rec.falling_stat[n];
@@ -4355,7 +4364,8 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
          if (DoFallingEdge() && (rec.all_falling_stat > 0) && (fEdgeMask == edge_BothIndepend)) {
             rec.calibr_quality_falling = CalibrateChannel(ch, false, rec.falling_stat, *falling_calibr, use_linear, preliminary);
             rec.calibr_stat_falling = rec.all_falling_stat;
-            if (rec.calibr_quality_falling <= 0.5) res = false;
+            if (rec.calibr_quality_falling <= 0.5)
+              res = false;
          }
 
          printf("%s:%u Calibr quality rising: %5.3f falling: %5.3f res = %d\n", GetName(), ch, rec.calibr_quality_rising, rec.calibr_quality_falling, (int) res);
@@ -4429,10 +4439,8 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
          }
 
          DefFillH1(fTotShifts, ch, rec.tot_shift);
-       }
-    }
-
-
+      }
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -4469,11 +4477,16 @@ void hadaq::TdcProcessor::ClearChannelStat(unsigned ch)
 
 void hadaq::TdcProcessor::StoreCalibration(const std::string& fprefix, unsigned fileid)
 {
-   if (fprefix.empty()) return;
+   if (fprefix.empty())
+      return;
 
-   if (fileid == 0) fileid = GetID();
+   if (fileid == 0)
+      fileid = GetID();
    char fname[1024];
-   snprintf(fname, sizeof(fname), "%s%04x.cal", fprefix.c_str(), fileid);
+   if (fDogma)
+      snprintf(fname, sizeof(fname), "%s%08x.cal", fprefix.c_str(), fileid);
+   else
+      snprintf(fname, sizeof(fname), "%s%04x.cal", fprefix.c_str(), fileid);
 
    FILE* f = fopen(fname,"w");
    if (!f) {
@@ -4486,24 +4499,24 @@ void hadaq::TdcProcessor::StoreCalibration(const std::string& fprefix, unsigned 
    fwrite(&num, sizeof(num), 1, f);
 
    // calibration curves
-   for (unsigned ch=0;ch<NumChannels();ch++) {
+   for (unsigned ch = 0; ch < NumChannels();ch++) {
       fwrite(fCh[ch].rising_calibr.data(), sizeof(float)*fCh[ch].rising_calibr.size(), 1, f);
       fwrite(fCh[ch].falling_calibr.data(), sizeof(float)*fCh[ch].falling_calibr.size(), 1, f);
    }
 
    // tot shifts
-   for (unsigned ch=0;ch<NumChannels();ch++) {
+   for (unsigned ch = 0; ch < NumChannels(); ch++) {
       fwrite(&(fCh[ch].tot_shift), sizeof(fCh[ch].tot_shift), 1, f);
    }
 
    // temperature
-   fwrite(&fCalibrTemp, sizeof(fCalibrTemp), 1, f);
-   fwrite(&fCalibrTempCoef, sizeof(fCalibrTempCoef), 1, f);
+   fwrite(&fCalibrDummy1, sizeof(fCalibrDummy1), 1, f);
+   fwrite(&fCalibrDummy2, sizeof(fCalibrDummy2), 1, f);
 
-   for (unsigned ch=0;ch<NumChannels();ch++) {
+   for (unsigned ch = 0; ch < NumChannels(); ch++) {
       ChannelRec &rec = fCh[ch];
-      fwrite(&rec.time_shift_per_grad, sizeof(rec.time_shift_per_grad), 1, f);
-      fwrite(&rec.trig0d_coef, sizeof(rec.trig0d_coef), 1, f);
+      fwrite(&rec.calibr_dummy1, sizeof(rec.calibr_dummy1), 1, f);
+      fwrite(&rec.calibr_dummy2, sizeof(rec.calibr_dummy2), 1, f);
       fwrite(&rec.calibr_quality_rising, sizeof(rec.calibr_quality_rising), 1, f);
       fwrite(&rec.calibr_quality_falling, sizeof(rec.calibr_quality_falling), 1, f);
    }
@@ -4512,7 +4525,25 @@ void hadaq::TdcProcessor::StoreCalibration(const std::string& fprefix, unsigned 
 
    printf("%s storing calibration in %s\n", GetName(), fname);
 
-   snprintf(fname, sizeof(fname), "%s%04x.cal.info", fprefix.c_str(), fileid);
+   if (fDogma && IsVersion5()) {
+      snprintf(fname, sizeof(fname), "%s%08x.iqcal", fprefix.c_str(), fileid);
+      f = fopen(fname,"w");
+      if (f) {
+         for (unsigned ch = 0; ch < NumChannels(); ch++) {
+            ChannelRec &rec = fCh[ch];
+            fprintf(f,"# iqcal calibration for channel %u - rising and falling\n", ch);
+            for (auto &pair : rec.iqcal.gaps)
+               fprintf(f, "  %3d   %1d\n", pair.first, pair.second);
+         }
+         fclose(f);
+      }
+   }
+
+   if (fDogma)
+      snprintf(fname, sizeof(fname), "%s%08x.cal.info", fprefix.c_str(), fileid);
+   else
+      snprintf(fname, sizeof(fname), "%s%04x.cal.info", fprefix.c_str(), fileid);
+
    f = fopen(fname,"w");
 
    if (!f) {
@@ -4520,7 +4551,7 @@ void hadaq::TdcProcessor::StoreCalibration(const std::string& fprefix, unsigned 
       return;
    }
    fprintf(f,"ch qrising    stat  fmin  fmax   qfalling  stat  fmin  fmax   ToTshift   Dev\n");
-   for (unsigned ch=0;ch<NumChannels();ch++) {
+   for (unsigned ch = 0; ch < NumChannels(); ch++) {
       ChannelRec &rec = fCh[ch];
       int fmin1 = 10, fmax1 = 400, fmin2 = 10, fmax2 = 400;
       FindFMinMax(rec.rising_calibr, fNumFineBins, fmin1, fmax1);
@@ -4710,7 +4741,12 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
 
    char fname[1024];
 
-   snprintf(fname, sizeof(fname), "%s%04x.cal", fprefix.c_str(), GetID());
+
+   if (fDogma)
+      snprintf(fname, sizeof(fname), "%s%08x.cal", fprefix.c_str(), GetID());
+   else
+      snprintf(fname, sizeof(fname), "%s%04x.cal", fprefix.c_str(), GetID());
+
 
    FILE* f = fopen(fname,"r");
    if (!f) {
@@ -4733,7 +4769,7 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
       printf("%s in file %s mismatch of channels number in calibrations  %u and in processor %u\n", GetName(), fname, (unsigned) num, NumChannels());
    }
 
-   for (unsigned ch=0;ch<num;ch++) {
+   for (unsigned ch = 0; ch < num; ch++) {
       fCh[ch].hascalibr = false;
 
       if (ch >= NumChannels()) {
@@ -4778,7 +4814,7 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
    }
 
    if (!feof(f)) {
-      for (unsigned ch=0;ch<num;ch++) {
+      for (unsigned ch = 0; ch < num; ch++) {
          if (ch >= NumChannels())
             fseek(f, sizeof(fCh[0].tot_shift), SEEK_CUR);
          else if (fread(&(fCh[ch].tot_shift), sizeof(fCh[ch].tot_shift), 1, f) != 1)
@@ -4788,25 +4824,27 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
       }
 
       if (!feof(f)) {
-         auto res1 = fread(&fCalibrTemp, sizeof(fCalibrTemp), 1, f);
-         auto res2 = fread(&fCalibrTempCoef, sizeof(fCalibrTempCoef), 1, f);
+         auto res1 = fread(&fCalibrDummy1, sizeof(fCalibrDummy1), 1, f);
+         auto res2 = fread(&fCalibrDummy2, sizeof(fCalibrDummy2), 1, f);
          (void) res1;
          (void) res2;
 
          for (unsigned ch = 0; ch < NumChannels(); ch++)
             if (!feof(f)) {
-               auto res3 = fread(&(fCh[ch].time_shift_per_grad), sizeof(fCh[ch].time_shift_per_grad), 1, f);
-               auto res4 = fread(&(fCh[ch].trig0d_coef), sizeof(fCh[ch].trig0d_coef), 1, f);
-               auto res5 = fread(&(fCh[ch].calibr_quality_rising), sizeof(fCh[ch].calibr_quality_rising), 1, f);
-               auto res6 = fread(&(fCh[ch].calibr_quality_falling), sizeof(fCh[ch].calibr_quality_falling), 1, f);
+               auto &rec = fCh[ch];
+               auto res3 = fread(&(rec.calibr_dummy1), sizeof(rec.calibr_dummy1), 1, f);
+               auto res4 = fread(&(rec.calibr_dummy2), sizeof(rec.calibr_dummy2), 1, f);
+               auto res5 = fread(&(rec.calibr_quality_rising), sizeof(rec.calibr_quality_rising), 1, f);
+               auto res6 = fread(&(rec.calibr_quality_falling), sizeof(rec.calibr_quality_falling), 1, f);
+
                (void) res3;
                (void) res4;
                (void) res5;
                (void) res6;
 
                // old files with bubble coefficients
-               if ((fabs(fCh[ch].calibr_quality_rising-20.)<0.01) && (fabs(fCh[ch].calibr_quality_falling-1.06)<0.01)) {
-                  fCh[ch].calibr_quality_rising = fCh[ch].calibr_quality_falling = 1.;
+               if ((fabs(rec.calibr_quality_rising-20.)<0.01) && (fabs(rec.calibr_quality_falling-1.06)<0.01)) {
+                  rec.calibr_quality_rising = rec.calibr_quality_falling = 1.;
                }
             }
       }
@@ -4815,8 +4853,41 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
    fclose(f);
 
    char msg[2000];
-   snprintf(msg, sizeof(msg), "%s reading calibration from %s, tcorr:%5.1f uset:%d done", GetName(), fname, fTempCorrection, fCalibrUseTemp);
+   snprintf(msg, sizeof(msg), "%s reading calibration from %s done", GetName(), fname);
    mgr()->PrintLog(msg);
+
+   if (fDogma && IsVersion5()) {
+      snprintf(fname, sizeof(fname), "%s%08x.iqcal", fprefix.c_str(), GetID());
+      std::ifstream f(fname);
+      std::string str;
+      bool fail = false;
+      if (f) {
+         for (unsigned ch = 0; ch < NumChannels(); ch++) {
+            // printf("Reading channel %u\n", ch);
+            ChannelRec &rec = fCh[ch];
+            if (rec.iqcal.empty())
+               rec.iqcal.resize(256, 8, 2); // two channels - rising and falling edge
+            std::getline(f, str); // read line with comments
+            for (auto &pair : rec.iqcal.gaps) {
+               pair.first = pair.second = 0;
+               std::getline(f, str);
+               if (sscanf(str.data(), "%d %d", &pair.first, &pair.second) != 2)
+                  fail = true;
+               if ((pair.first <= 0) && (pair.second <= 0))
+                  fail = true;
+               // printf("Read %d %d from %s\n", pair.first, pair.second, str.data());
+            }
+         }
+      } else {
+         fail = true;
+      }
+      snprintf(msg, sizeof(msg), "%s reading iqcal from %s %s", GetName(), fname, fail ? "FAILED!" : "Ok");
+      mgr()->PrintLog(msg);
+
+      for (unsigned ch = 0; ch < NumChannels(); ch++)
+         fCh[ch].has_iqcal = !fail;
+   }
+
 
    fCalibrStatus = "CalibrFile";
 
