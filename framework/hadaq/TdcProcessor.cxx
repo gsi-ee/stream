@@ -2679,10 +2679,14 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
             FastFillH1(rec.fRisingRotat, fine % 256);
             if (!rec.hasrotation)
                rec.all_rising_stat++;
+            else
+               fine = fine % 420;
          } else {
             FastFillH1(rec.fFallingRotat, fine % 256);
             if (!rec.hasrotation)
                rec.all_falling_stat++;
+            else
+               fine = fine % 400;
          }
       }
 
@@ -4296,7 +4300,16 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
 
       if (rec.docalibr && fDogma && IsVersion5() && !rec.hasrotation) {
          rec.check_calibr = false; // reset flag, used in auto calibration
-         // printf("Calibrate roation for chaneel %u\n", ch);
+         // printf("Calibrate roation for chanel %u\n", ch);
+
+         // if necessary statistic provided - made calibration
+         if ((!DoRisingEdge() || (rec.all_rising_stat > 100)) &&
+             (!DoFallingEdge() || (rec.all_falling_stat > 100))) {
+            // fake calibration
+            rec.rising_rotation_limit = 10;
+            rec.falling_rotation_limit = 10;
+            rec.hasrotation = true;
+         }
 
       } else if (rec.docalibr) {
 
@@ -4769,18 +4782,23 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
 
          for (unsigned ch = 0; ch < NumChannels(); ch++)
             if (!feof(f)) {
-               auto res3 = fread(&(fCh[ch].rising_rotation_limit), sizeof(fCh[ch].rising_rotation_limit), 1, f);
-               auto res4 = fread(&(fCh[ch].falling_rotation_limit), sizeof(fCh[ch].falling_rotation_limit), 1, f);
-               auto res5 = fread(&(fCh[ch].calibr_quality_rising), sizeof(fCh[ch].calibr_quality_rising), 1, f);
-               auto res6 = fread(&(fCh[ch].calibr_quality_falling), sizeof(fCh[ch].calibr_quality_falling), 1, f);
+               auto &rec = fCh[ch];
+               auto res3 = fread(&(rec.rising_rotation_limit), sizeof(rec.rising_rotation_limit), 1, f);
+               auto res4 = fread(&(rec.falling_rotation_limit), sizeof(rec.falling_rotation_limit), 1, f);
+               auto res5 = fread(&(rec.calibr_quality_rising), sizeof(rec.calibr_quality_rising), 1, f);
+               auto res6 = fread(&(rec.calibr_quality_falling), sizeof(rec.calibr_quality_falling), 1, f);
+
+               rec.hasrotation = (!DoRisingEdge() || (rec.rising_rotation_limit > 0)) &&
+                                 (!DoFallingEdge() || (rec.falling_rotation_limit > 0));
+
                (void) res3;
                (void) res4;
                (void) res5;
                (void) res6;
 
                // old files with bubble coefficients
-               if ((fabs(fCh[ch].calibr_quality_rising-20.)<0.01) && (fabs(fCh[ch].calibr_quality_falling-1.06)<0.01)) {
-                  fCh[ch].calibr_quality_rising = fCh[ch].calibr_quality_falling = 1.;
+               if ((fabs(rec.calibr_quality_rising-20.)<0.01) && (fabs(rec.calibr_quality_falling-1.06)<0.01)) {
+                  rec.calibr_quality_rising = rec.calibr_quality_falling = 1.;
                }
             }
       }
