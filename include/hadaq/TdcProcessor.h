@@ -49,7 +49,6 @@ namespace hadaq {
             iqtdc::calib iqcal;            ///<! calibration for tdc5
             bool hascalibr = false;        ///<! indicate if channel has valid calibration (not simple linear)
             bool check_calibr;             ///<! flag used to indicate that calibration was checked
-            base::H1handle fRisingRotat;   ///<! histogram of all fine counters
             base::H1handle fRisingFine;    ///<! histogram of all fine counters
             base::H1handle fRisingMult;    ///<! number of hits per event
             base::H1handle fRisingRef;     ///<! histogram of time diff to ref channel
@@ -60,7 +59,6 @@ namespace hadaq {
             base::H1handle fRisingRefRef;  ///<! difference of two ref times, connected with double ref
             base::H2handle fRisingDoubleRef; ///<! correlation with diff time from other channel
             base::H1handle fRisingTmdsRef; ///<! histogram of time diff to ref channel for TMDS message
-            base::H1handle fFallingRotat;  ///<! histogram of all fine counters
             base::H1handle fFallingFine;   ///<! histogram of all fine counters
             base::H1handle fFallingMult;   ///<! number of hits per event
             base::H1handle fTot;           ///<! histogram of time-over-threshold measurement
@@ -109,7 +107,6 @@ namespace hadaq {
                docalibr(true),
                hascalibr(false),
                check_calibr(false),
-               fRisingRotat(nullptr),
                fRisingFine(nullptr),
                fRisingMult(nullptr),
                fRisingRef(nullptr),
@@ -120,7 +117,6 @@ namespace hadaq {
                fRisingRefRef(nullptr),
                fRisingDoubleRef(nullptr),
                fRisingTmdsRef(nullptr),
-               fFallingRotat(nullptr),
                fFallingFine(nullptr),
                fFallingMult(nullptr),
                fTot(nullptr),
