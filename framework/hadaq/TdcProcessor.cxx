@@ -17,6 +17,8 @@
 #include "hadaq/HldProcessor.h"
 #include "hadaq/TdcSubEvent.h"
 #include <iostream>
+#include <fstream>
+
 
 #ifdef STREAM_WINDOWS
 #define RAWPRINT()
@@ -2678,7 +2680,7 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
 
          if (isrising) {
             FastFillH1(rec.fRisingRotat, fine % 256);
-            if (!rec.hasrotation) {
+            if (!rec.has_iqcal) {
                rec.all_rising_stat++;
                rec.iqcal.set_and_update(0, itime, atan);
             } else {
@@ -2686,7 +2688,7 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
             }
          } else {
             FastFillH1(rec.fFallingRotat, fine % 256);
-            if (!rec.hasrotation) {
+            if (!rec.has_iqcal) {
                rec.all_falling_stat++;
                rec.iqcal.set_and_update(1, itime, atan);
             } else {
@@ -2695,7 +2697,7 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
          }
       }
 
-      if (!rec.hasrotation) {
+      if (!rec.has_iqcal) {
          continue;
       }
 
@@ -4303,21 +4305,21 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
          rec.calibr_quality_rising = rec.calibr_quality_falling = -1.;
       }
 
-      printf("Calibrate roation for chanel %u flags %d %d %d\n", ch, fDogma, IsVersion5(), rec.hasrotation);
-
-      if (rec.docalibr && fDogma && IsVersion5() && !rec.hasrotation) {
+      if (rec.docalibr && fDogma && IsVersion5() && !rec.has_iqcal) {
          rec.check_calibr = false; // reset flag, used in auto calibration
-         printf("Calibrate roation for chanel %u\n", ch);
+         // printf("Calibrate roation for chanel %u\n", ch);
 
          // if necessary statistic provided - made calibration
          if ((!DoRisingEdge() || (rec.all_rising_stat > 100)) &&
              (!DoFallingEdge() || (rec.all_falling_stat > 100))) {
                // printout calibration
-               for (auto pair : rec.iqcal.gaps)
-                  printf("   center %d rotation %d\n", pair.first, pair.second);
+               printf("%s:%u Create IQCAL ", GetName(), ch);
 
-            rec.hasrotation = true;
-         }
+               for (auto pair : rec.iqcal.gaps)
+                  printf(" %d:%d", pair.first, pair.second);
+               printf("\n");
+               rec.has_iqcal = true;
+            }
 
       } else if (rec.docalibr) {
 
@@ -4464,11 +4466,16 @@ void hadaq::TdcProcessor::ClearChannelStat(unsigned ch)
 
 void hadaq::TdcProcessor::StoreCalibration(const std::string& fprefix, unsigned fileid)
 {
-   if (fprefix.empty()) return;
+   if (fprefix.empty())
+      return;
 
-   if (fileid == 0) fileid = GetID();
+   if (fileid == 0)
+      fileid = GetID();
    char fname[1024];
-   snprintf(fname, sizeof(fname), "%s%04x.cal", fprefix.c_str(), fileid);
+   if (fDogma)
+      snprintf(fname, sizeof(fname), "%s%08x.cal", fprefix.c_str(), fileid);
+   else
+      snprintf(fname, sizeof(fname), "%s%04x.cal", fprefix.c_str(), fileid);
 
    FILE* f = fopen(fname,"w");
    if (!f) {
@@ -4507,7 +4514,25 @@ void hadaq::TdcProcessor::StoreCalibration(const std::string& fprefix, unsigned 
 
    printf("%s storing calibration in %s\n", GetName(), fname);
 
-   snprintf(fname, sizeof(fname), "%s%04x.cal.info", fprefix.c_str(), fileid);
+   if (fDogma && IsVersion5()) {
+      snprintf(fname, sizeof(fname), "%s%08x.iqcal", fprefix.c_str(), fileid);
+      f = fopen(fname,"w");
+      if (f) {
+         for (unsigned ch = 0; ch < NumChannels(); ch++) {
+            ChannelRec &rec = fCh[ch];
+            fprintf(f,"# iqcal calibration for channel %u - rising and falling\n", ch);
+            for (auto &pair : rec.iqcal.gaps)
+               fprintf(f, "  %3d   %1d\n", pair.first, pair.second);
+         }
+         fclose(f);
+      }
+   }
+
+   if (fDogma)
+      snprintf(fname, sizeof(fname), "%s%08x.cal.info", fprefix.c_str(), fileid);
+   else
+      snprintf(fname, sizeof(fname), "%s%04x.cal.info", fprefix.c_str(), fileid);
+
    f = fopen(fname,"w");
 
    if (!f) {
@@ -4515,7 +4540,7 @@ void hadaq::TdcProcessor::StoreCalibration(const std::string& fprefix, unsigned 
       return;
    }
    fprintf(f,"ch qrising    stat  fmin  fmax   qfalling  stat  fmin  fmax   ToTshift   Dev\n");
-   for (unsigned ch=0;ch<NumChannels();ch++) {
+   for (unsigned ch = 0; ch < NumChannels(); ch++) {
       ChannelRec &rec = fCh[ch];
       int fmin1 = 10, fmax1 = 400, fmin2 = 10, fmax2 = 400;
       FindFMinMax(rec.rising_calibr, fNumFineBins, fmin1, fmax1);
@@ -4705,7 +4730,12 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
 
    char fname[1024];
 
-   snprintf(fname, sizeof(fname), "%s%04x.cal", fprefix.c_str(), GetID());
+
+   if (fDogma)
+      snprintf(fname, sizeof(fname), "%s%08x.cal", fprefix.c_str(), GetID());
+   else
+      snprintf(fname, sizeof(fname), "%s%04x.cal", fprefix.c_str(), GetID());
+
 
    FILE* f = fopen(fname,"r");
    if (!f) {
@@ -4728,7 +4758,7 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
       printf("%s in file %s mismatch of channels number in calibrations  %u and in processor %u\n", GetName(), fname, (unsigned) num, NumChannels());
    }
 
-   for (unsigned ch=0;ch<num;ch++) {
+   for (unsigned ch = 0; ch < num; ch++) {
       fCh[ch].hascalibr = false;
 
       if (ch >= NumChannels()) {
@@ -4796,8 +4826,6 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
                auto res5 = fread(&(rec.calibr_quality_rising), sizeof(rec.calibr_quality_rising), 1, f);
                auto res6 = fread(&(rec.calibr_quality_falling), sizeof(rec.calibr_quality_falling), 1, f);
 
-               rec.hasrotation = false;
-
                (void) res3;
                (void) res4;
                (void) res5;
@@ -4816,6 +4844,39 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
    char msg[2000];
    snprintf(msg, sizeof(msg), "%s reading calibration from %s done", GetName(), fname);
    mgr()->PrintLog(msg);
+
+   if (fDogma && IsVersion5()) {
+      snprintf(fname, sizeof(fname), "%s%08x.iqcal", fprefix.c_str(), GetID());
+      std::ifstream f(fname);
+      std::string str;
+      bool fail = false;
+      if (f) {
+         for (unsigned ch = 0; ch < NumChannels(); ch++) {
+            // printf("Reading channel %u\n", ch);
+            ChannelRec &rec = fCh[ch];
+            if (rec.iqcal.empty())
+               rec.iqcal.resize(256, 8, 2); // two channels - rising and falling edge
+            std::getline(f, str); // read line with comments
+            for (auto &pair : rec.iqcal.gaps) {
+               pair.first = pair.second = 0;
+               std::getline(f, str);
+               if (sscanf(str.data(), "%d %d", &pair.first, &pair.second) != 2)
+                  fail = true;
+               if ((pair.first <= 0) && (pair.second <= 0))
+                  fail = true;
+               // printf("Read %d %d from %s\n", pair.first, pair.second, str.data());
+            }
+         }
+      } else {
+         fail = true;
+      }
+      snprintf(msg, sizeof(msg), "%s reading iqcal from %s %s", GetName(), fname, fail ? "FAILED!" : "Ok");
+      mgr()->PrintLog(msg);
+
+      for (unsigned ch = 0; ch < NumChannels(); ch++)
+         fCh[ch].has_iqcal = !fail;
+   }
+
 
    fCalibrStatus = "CalibrFile";
 
