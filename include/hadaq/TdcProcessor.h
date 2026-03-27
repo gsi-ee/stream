@@ -88,8 +88,8 @@ namespace hadaq {
             std::vector<uint32_t> tot0d_hist;  ///<! histogram used for TOT calibration, allocated only when required
             float tot_shift;                ///<! calibrated tot shift
             float tot_dev;                  ///<! tot shift deviation after calibration
-            float time_shift_per_grad;      ///<! delay in channel (ns/C), caused by temperature change
-            float trig0d_coef;              ///<! scaling coefficient, applied when build calibration from 0xD trigger (reserved)
+            float rising_rotation_limit;    ///<! value produced by rotation generation
+            float falling_rotation_limit;   ///<! value produced by rotation generation
             int rising_cond_prnt;           ///<! rising condition print
             float calibr_quality_rising;    ///<! quality of last calibration 0. is nothing
             float calibr_quality_falling;    ///<! quality of last calibration 0. is nothing
@@ -148,8 +148,8 @@ namespace hadaq {
                tot0d_hist(),
                tot_shift(0.),
                tot_dev(0.),
-               time_shift_per_grad(0.),
-               trig0d_coef(0.),
+               rising_rotation_limit(0.),
+               falling_rotation_limit(0.),
                rising_cond_prnt(-1),
                calibr_quality_rising(-1.),
                calibr_quality_falling(-1.),
@@ -665,10 +665,9 @@ namespace hadaq {
          {
          }
 
-         /** Set shift for the channel time stamp, which is added with temperature change */
-         void SetChannelTempShift(unsigned ch, float shift_per_grad)
+         /** DEPRECATED Set shift for the channel time stamp, which is added with temperature change */
+         void SetChannelTempShift(unsigned /* ch */, float /* shift_per_grad */)
          {
-            if (ch < fCh.size()) fCh[ch].time_shift_per_grad = shift_per_grad;
          }
 
          /** Set channel TOT shift in nano-seconds, typical value is around 30 ns */

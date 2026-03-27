@@ -4460,13 +4460,13 @@ void hadaq::TdcProcessor::StoreCalibration(const std::string& fprefix, unsigned 
    fwrite(&num, sizeof(num), 1, f);
 
    // calibration curves
-   for (unsigned ch=0;ch<NumChannels();ch++) {
+   for (unsigned ch = 0; ch < NumChannels();ch++) {
       fwrite(fCh[ch].rising_calibr.data(), sizeof(float)*fCh[ch].rising_calibr.size(), 1, f);
       fwrite(fCh[ch].falling_calibr.data(), sizeof(float)*fCh[ch].falling_calibr.size(), 1, f);
    }
 
    // tot shifts
-   for (unsigned ch=0;ch<NumChannels();ch++) {
+   for (unsigned ch = 0; ch < NumChannels(); ch++) {
       fwrite(&(fCh[ch].tot_shift), sizeof(fCh[ch].tot_shift), 1, f);
    }
 
@@ -4474,10 +4474,10 @@ void hadaq::TdcProcessor::StoreCalibration(const std::string& fprefix, unsigned 
    fwrite(&fCalibrDummy1, sizeof(fCalibrDummy1), 1, f);
    fwrite(&fCalibrDummy2, sizeof(fCalibrDummy2), 1, f);
 
-   for (unsigned ch=0;ch<NumChannels();ch++) {
+   for (unsigned ch = 0; ch < NumChannels(); ch++) {
       ChannelRec &rec = fCh[ch];
-      fwrite(&rec.time_shift_per_grad, sizeof(rec.time_shift_per_grad), 1, f);
-      fwrite(&rec.trig0d_coef, sizeof(rec.trig0d_coef), 1, f);
+      fwrite(&rec.rising_rotation_limit, sizeof(rec.rising_rotation_limit), 1, f);
+      fwrite(&rec.falling_rotation_limit, sizeof(rec.falling_rotation_limit), 1, f);
       fwrite(&rec.calibr_quality_rising, sizeof(rec.calibr_quality_rising), 1, f);
       fwrite(&rec.calibr_quality_falling, sizeof(rec.calibr_quality_falling), 1, f);
    }
@@ -4752,7 +4752,7 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
    }
 
    if (!feof(f)) {
-      for (unsigned ch=0;ch<num;ch++) {
+      for (unsigned ch = 0; ch < num; ch++) {
          if (ch >= NumChannels())
             fseek(f, sizeof(fCh[0].tot_shift), SEEK_CUR);
          else if (fread(&(fCh[ch].tot_shift), sizeof(fCh[ch].tot_shift), 1, f) != 1)
@@ -4769,8 +4769,8 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
 
          for (unsigned ch = 0; ch < NumChannels(); ch++)
             if (!feof(f)) {
-               auto res3 = fread(&(fCh[ch].time_shift_per_grad), sizeof(fCh[ch].time_shift_per_grad), 1, f);
-               auto res4 = fread(&(fCh[ch].trig0d_coef), sizeof(fCh[ch].trig0d_coef), 1, f);
+               auto res3 = fread(&(fCh[ch].rising_rotation_limit), sizeof(fCh[ch].rising_rotation_limit), 1, f);
+               auto res4 = fread(&(fCh[ch].falling_rotation_limit), sizeof(fCh[ch].falling_rotation_limit), 1, f);
                auto res5 = fread(&(fCh[ch].calibr_quality_rising), sizeof(fCh[ch].calibr_quality_rising), 1, f);
                auto res6 = fread(&(fCh[ch].calibr_quality_falling), sizeof(fCh[ch].calibr_quality_falling), 1, f);
                (void) res3;
