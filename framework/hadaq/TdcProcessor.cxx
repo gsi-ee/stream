@@ -2529,6 +2529,7 @@ void _init_ur_config()
    tdc5_cfg_2051.tdc_type = 3;
    tdc5_cfg_2051.freq = 150;
    tdc5_cfg_2051.has_edge_type = true;
+   tdc5_cfg_2051.triggerDlen = 20.345;
 
    tdc5_cfgs[2051] = tdc5_cfg_2051;
 }
@@ -2556,12 +2557,15 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
 
    // disable taking last hit for trigger DD
    if ((use_for_calibr > 0) && ((buf_kind == 0xD) || gUseAsDTrig)) {
-      if (IsTriggeredAnalysis() &&  (gTrigDWindowLow < gTrigDWindowHigh)) use_for_calibr = 3; // accept time stamps only for inside window
+      if (IsTriggeredAnalysis() && (gTrigDWindowLow < gTrigDWindowHigh))
+         use_for_calibr = 3; // accept time stamps only for inside window
       // use_for_calibr = 2; // always use only last hit
    }
 
    // if data could be used for TOT calibration
    bool do_tot = (use_for_calibr > 0) && ((buf_kind == 0xD) || gUseAsDTrig) && DoFallingEdge();
+
+   // printf("do tot %d use_for_calibr %d\n", do_tot, use_for_calibr);
 
    unsigned cnt = 0, hitcnt = 0;
 
@@ -2612,7 +2616,7 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
    if (!fIsCustomMhz)
       SetCustomMhz(cfg->freq);
 
-   if (!fToTdflt) {
+   if (fToTdflt) {
       double hmin = (int) (cfg->triggerDlen - TotBins/100);
       SetToTRange(cfg->triggerDlen, hmin, hmin + TotBins/50);
    }
@@ -2673,11 +2677,11 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
       unsigned atan = fine & 255;
       unsigned itime = (fine >> 8) & 7;
 
-
       if (rec.has_iqcal) {
-         // just recode fine counter to real value
+         // just produce normal fine counter value
          fine = rec.iqcal(isrising ? 0 : 1, itime, atan);
       } else {
+         // accumulate statistic first
          if (first_scan) {
             if (rec.iqcal.empty())
                rec.iqcal.resize(256, 8, 2); // two channels - rising and falling edge
@@ -2711,7 +2715,8 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
          corr = ExtractCalibr(isrising ? rec.rising_calibr : rec.falling_calibr, fine);
 
          // apply TOT shift for falling edge (should it be also temp dependent)?
-         if (!isrising) corr += rec.tot_shift * 1e-9;
+         if (!isrising)
+            corr += rec.tot_shift * 1e-9;
       }
 
       // apply correction
@@ -2844,7 +2849,8 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
                   }
 
                // use only raw hit
-               if (raw_hit && do_tot) rec.last_tot = tot + rec.tot_shift;
+               if (raw_hit && do_tot)
+                  rec.last_tot = tot + rec.tot_shift;
             }
          }
 
@@ -3930,22 +3936,26 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, bool rising, const st
    std::string name_prefix = std::string(GetName()) + (rising ? "_rch" : "_fch") + std::to_string(nch);
    std::string err_log;
 
-   if (!preliminary && (finemin > 50)) {
+   unsigned finemaxlimit = fIsCustomMhz ? 200 : (fDogma ? 350 : 400);
+   unsigned fineminlimit = 50;
+   if (IsVersion4()) {
+      finemaxlimit = 300;
+   } else if (IsVersion5()) {
+      fineminlimit = 150;
+      finemaxlimit = 800;
+   }
+
+
+   if (!preliminary && (finemin > fineminlimit)) {
       std::string log_finemin = std::string("_BadFineMin_") + std::to_string(finemin);
       err_log.append(log_finemin);
+
       if (quality > 0.4)
          quality = 0.4;
       if (fCalibrQuality > 0.4) {
          fCalibrStatus = name_prefix + log_finemin;
          fCalibrQuality = 0.4;
       }
-   }
-
-   unsigned finemaxlimit = fIsCustomMhz ? 200 : (fDogma ? 350 : 400);
-   if (IsVersion4()) {
-      finemaxlimit = 300;
-   } else if (IsVersion5()) {
-      finemaxlimit = 400;
    }
 
    // if range for fine bins very small - require that at least 0.7 of range covered
@@ -3955,6 +3965,7 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, bool rising, const st
    if (!preliminary && (finemax < finemaxlimit)) {
       std::string log_finemax = std::string("_BadFineMax_") + std::to_string(finemax);
       err_log.append(log_finemax);
+
       if (quality > 0.4)
          quality = 0.4;
       if (fCalibrQuality > 0.4) {
@@ -3967,7 +3978,8 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, bool rising, const st
 
    if (sum <= limits) {
 
-      if (quality > 0.15) quality = 0.15;
+      if (quality > 0.15)
+         quality = 0.15;
       err_log.append("_LowStat");
 
       if ((fCalibrQuality > 0.15) && !preliminary)  {
@@ -4047,14 +4059,17 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, bool rising, const st
       double sum1 = 0., sum2 = 0., linear = 0, exact = 0.;
 
       // exclude some cases when several wrong finecounter values measured, which confuses algorithm
-      while ((finemax > finemin) && (integral[finemax] > 0.999*sum)) finemax--;
+      while ((finemax > finemin) && (integral[finemax] > 0.999*sum))
+         finemax--;
 
       double scale_value = (integral[finemax] - statistic[finemax]/2) / sum;
 
       if (!preliminary && (finemax < finemaxlimit*0.875)) {
          std::string log_finemax = std::string("_BadFineMax_") + std::to_string(finemax);
+
          err_log.append(log_finemax);
-         if (quality > 0.4) quality = 0.4;
+         if (quality > 0.4)
+            quality = 0.4;
          if (fCalibrQuality > 0.4) {
             fCalibrStatus = name_prefix + log_finemax;
             fCalibrQuality = 0.4;
@@ -4349,7 +4364,8 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
          if (DoFallingEdge() && (rec.all_falling_stat > 0) && (fEdgeMask == edge_BothIndepend)) {
             rec.calibr_quality_falling = CalibrateChannel(ch, false, rec.falling_stat, *falling_calibr, use_linear, preliminary);
             rec.calibr_stat_falling = rec.all_falling_stat;
-            if (rec.calibr_quality_falling <= 0.5) res = false;
+            if (rec.calibr_quality_falling <= 0.5)
+              res = false;
          }
 
          printf("%s:%u Calibr quality rising: %5.3f falling: %5.3f res = %d\n", GetName(), ch, rec.calibr_quality_rising, rec.calibr_quality_falling, (int) res);

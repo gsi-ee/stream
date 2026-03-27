@@ -16,6 +16,8 @@ void first()
    // this limits used for liner calibrations when nothing else is available
    hadaq::TdcMessage::SetFineLimits(80, 1190);
 
+   hadaq::TdcProcessor::SetTriggerDWindow(-10, 90);
+
    // default number of fine bins
    hadaq::TdcProcessor::SetDefaults(1250);
 
@@ -56,7 +58,7 @@ void first()
    //   (1 << 0xD) - special 0XD trigger with internal pulser, used also for TOT calibration
    //    0x3FFF - all kinds of trigger types will be used for calibration (excluding 0xE and 0xF)
    //   0x80000000 in mask enables usage of temperature correction
-   proc->ConfigureCalibration("tdc5cal", -1, 0x3fff);
+   proc->ConfigureCalibration("tdc5cal", 50000, 0x3fff);
 
    // only accept trigger type 0x1 when storing file
    // new hadaq::HldFilter(0x1);
