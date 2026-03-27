@@ -1170,14 +1170,6 @@ void hadaq::TdcProcessor::FindFMinMax(const std::vector<float> &func, int nbin, 
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
-/// Extract calibration value
-
-float hadaq::TdcProcessor::ExtractCalibr(const std::vector<float> &func, unsigned bin)
-{
-   return ExtractCalibrDirect(func, bin);
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////
 /// Method transform TDC data, if output specified, use it otherwise change original data
 
 unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_t *rawdata, unsigned indx, unsigned datalen, hadaqs::RawSubevent* tgt, unsigned tgtindx)
@@ -1289,8 +1281,7 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
          errcnt++;
       }
 
-      // ignore temperature compensation
-      corr = hard_failure ? 0. : ExtractCalibrDirect(isrising ? rec.rising_calibr : rec.falling_calibr, fine);
+      corr = hard_failure ? 0. : ExtractCalibr(isrising ? rec.rising_calibr : rec.falling_calibr, fine);
 
       // corr = hard_failure ? 0. : (isrising ? rec.rising_calibr[fine] : rec.falling_calibr[fine]);
 
@@ -4042,7 +4033,7 @@ double hadaq::TdcProcessor::CalibrateChannel(unsigned nch, bool rising, const st
             segm = std::ceil((fine - calibr[1]) / (calibr[pnt] - calibr[1]) * (calibr[0] - 1)); // segment in linear approx
             pnt = 1 + segm*2; // first segment should have pnt = 3, second segment pnt = 5 and so on
          }
-         printf("%s fine %d nsegm = %d pnt %d value %g\n", GetName(), fine, segm, pnt, ExtractCalibrDirect(calibr, fine));
+         printf("%s fine %d nsegm = %d pnt %d value %g\n", GetName(), fine, segm, pnt, ExtractCalibr(calibr, fine));
       }
 */
 
@@ -4229,8 +4220,8 @@ void hadaq::TdcProcessor::CopyCalibration(const std::vector<float> &calibr, base
    ClearH1(hcalibr);
 
    for (unsigned n=0;n<fNumFineBins;n++) {
-      SetH1Content(hcalibr, n, ExtractCalibrDirect(calibr, n)*1e12);
-      SetH2Content(h2calibr, ch, n, ExtractCalibrDirect(calibr,n)*1e12);
+      SetH1Content(hcalibr, n, ExtractCalibr(calibr, n)*1e12);
+      SetH2Content(h2calibr, ch, n, ExtractCalibr(calibr,n)*1e12);
    }
 }
 

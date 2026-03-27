@@ -420,10 +420,8 @@ namespace hadaq {
 
          void ClearChannelStat(unsigned ch);
 
-         float ExtractCalibr(const std::vector<float> &func, unsigned bin);
-
          /** extract calibration value */
-         inline float ExtractCalibrDirect(const std::vector<float> &func, unsigned bin)
+         inline float ExtractCalibr(const std::vector<float> &func, unsigned bin)
          {
             if ((func.size() > 100) || (func.size() == fNumFineBins))
                return func[bin];
@@ -808,8 +806,7 @@ namespace hadaq {
 
          void ProduceCalibration(bool clear_stat = true, bool use_linear = false, bool dummy = false, bool preliminary = false);
 
-         /** Access value of temperature during calibration.
-          * Used to adjust all kind of calibrations afterwards */
+         /** DEPRECATED Access value of temperature during calibration. */
          float GetCalibrTemp() const { return 0.; }
 
          /** DEPRECATED Set temperature used for calibration */
@@ -819,7 +816,7 @@ namespace hadaq {
 
          float GetCalibrFunc(unsigned ch, bool isrising, unsigned bin)
          {
-            return ExtractCalibrDirect(isrising ? fCh[ch].rising_calibr : fCh[ch].falling_calibr, bin);
+            return ExtractCalibr(isrising ? fCh[ch].rising_calibr : fCh[ch].falling_calibr, bin);
          }
 
          void Store(base::Event*) override;
