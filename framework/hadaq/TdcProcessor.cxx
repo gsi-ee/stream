@@ -530,8 +530,6 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
       return false;
 
    if (need_rising) {
-      if (fDogma)
-         fCh[ch].fRisingRotat = MakeH1("RisingRotat", "Rising rotation histogram", 256, 0, 256, "rotat");
       fCh[ch].fRisingFine = MakeH1("RisingFine", "Rising fine counter", fNumFineBins, 0, fNumFineBins, "fine");
       fCh[ch].fRisingCalibr = MakeH1("RisingCalibr", "Rising calibration function", fNumFineBins, 0, fNumFineBins, "fine;kind:F");
       // copy calibration only when histogram created
@@ -545,8 +543,6 @@ bool hadaq::TdcProcessor::CreateChannelHistograms(unsigned ch)
    }
 
    if (need_falling) {
-      if (fDogma)
-         fCh[ch].fFallingRotat = MakeH1("FallingRotat", "Falling rotation histogram", 256, 0, 256, "rotat");
       fCh[ch].fFallingFine = MakeH1("FallingFine", "Falling fine counter", fNumFineBins, 0, fNumFineBins, "fine");
       fCh[ch].fFallingCalibr = MakeH1("FallingCalibr", "Falling calibration function", fNumFineBins, 0, fNumFineBins, "fine;kind:F");
       fCh[ch].fTot = MakeH1("Tot", "Time over threshold", gTotRange*GetBinsPerNS(), 0, gTotRange, "ns");
@@ -2674,37 +2670,25 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
 
       ChannelRec& rec = fCh[chid];
 
+      unsigned atan = fine & 255;
+      unsigned itime = (fine >> 8) & 7;
 
-      // fill rotation histogram only during first scan
-      if (first_scan) {
-         if ((HistFillLevel() > 2) && !rec.fRisingRotat)
-            CreateChannelHistograms(chid);
-         if (rec.iqcal.empty())
-            rec.iqcal.resize(256, 8, 2); // two channels - rising and falling edge
 
-         unsigned atan = fine & 255;
-         unsigned itime = (fine >> 8) & 7;
-
-         if (isrising) {
-            FastFillH1(rec.fRisingRotat, fine % 256);
-            if (!rec.has_iqcal) {
+      if (rec.has_iqcal) {
+         // just recode fine counter to real value
+         fine = rec.iqcal(isrising ? 0 : 1, itime, atan);
+      } else {
+         if (first_scan) {
+            if (rec.iqcal.empty())
+               rec.iqcal.resize(256, 8, 2); // two channels - rising and falling edge
+            if (isrising) {
                rec.all_rising_stat++;
                rec.iqcal.set_and_update(0, itime, atan);
             } else {
-               fine = rec.iqcal(0, itime, atan);
-            }
-         } else {
-            FastFillH1(rec.fFallingRotat, fine % 256);
-            if (!rec.has_iqcal) {
                rec.all_falling_stat++;
                rec.iqcal.set_and_update(1, itime, atan);
-            } else {
-               fine = rec.iqcal(1, itime, atan);
             }
          }
-      }
-
-      if (!rec.has_iqcal) {
          continue;
       }
 
@@ -2781,7 +2765,8 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
                }
             }
 
-            if (raw_hit) FastFillH1(rec.fRisingFine, fine);
+            if (raw_hit)
+               FastFillH1(rec.fRisingFine, fine);
 
             rec.rising_cnt++;
 
@@ -2811,7 +2796,8 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
                }
             }
 
-            if (raw_hit) FastFillH1(rec.fFallingFine, fine);
+            if (raw_hit)
+               FastFillH1(rec.fFallingFine, fine);
 
             rec.falling_cnt++;
 
