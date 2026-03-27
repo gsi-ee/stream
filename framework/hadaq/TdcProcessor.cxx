@@ -219,20 +219,14 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
    fNumChannels(numchannels),
    fNumFineBins(gNumFineBins),
    fCh(),
-   fCalibrTemp(30.),
-   fCalibrTempCoef(0.004432),
-   fCalibrUseTemp(false),
+   fCalibrDummy1(0.),
+   fCalibrDummy2(0),
    fCalibrTriggerMask(0xFFFF),
    fCalibrAmount(0),
    fCalibrProgress(0),
    fCalibrStatus("NoCalibr"),
    fCalibrQuality(0.),
-   fTempCorrection(0.),
-   fCurrentTemp(-1.),
    fDesignId(0),
-   fCalibrTempSum0(0),
-   fCalibrTempSum1(0),
-   fCalibrTempSum2(0),
    fDummyVect(),
    pStoreVect(nullptr),
    fDummyFloat(),
@@ -1180,26 +1174,7 @@ void hadaq::TdcProcessor::FindFMinMax(const std::vector<float> &func, int nbin, 
 
 float hadaq::TdcProcessor::ExtractCalibr(const std::vector<float> &func, unsigned bin)
 {
-   if (!fCalibrUseTemp || (fCalibrTemp <= 0) || (fCurrentTemp <= 0) || (fCalibrTempCoef<=0))
-      return ExtractCalibrDirect(func, bin);
-
-   // TODO: if using temperature, also extrapolate linear approximation
-   float temp = fCurrentTemp + fTempCorrection;
-
-   float val = func[bin] * (1+fCalibrTempCoef*(temp-fCalibrTemp));
-
-   double coarse_unit = GetTdcCoarseUnit();
-
-   if ((temp < fCalibrTemp) && (func[bin] >= coarse_unit*0.9999)) {
-      // special case - lower temperature and bin which was not observed during calibration
-      // just take linear extrapolation, using points bin-30 and bin-80
-
-      float val0 = func[bin-30] + (func[bin-30] - func[bin-80]) / 50 * 30;
-
-      val = val0 * (1+fCalibrTempCoef*(temp-fCalibrTemp));
-   }
-
-   return val < coarse_unit ? val : coarse_unit;
+   return ExtractCalibrDirect(func, bin);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -1506,12 +1481,6 @@ unsigned hadaq::TdcProcessor::TransformTdcData(hadaqs::RawSubevent* sub, uint32_
    // fill number of "good" hits
    if (hitcnt && fHitsPerBrd) FastFillH1(*fHitsPerBrd, fSeqeunceId, hitcnt);
    if (errcnt && fErrPerBrd) FastFillH1(*fErrPerBrd, fSeqeunceId, errcnt);
-
-   if ((hitcnt>0) && use_in_calibr && (fCurrentTemp>0)) {
-      fCalibrTempSum0 += 1.;
-      fCalibrTempSum1 += fCurrentTemp;
-      fCalibrTempSum2 += fCurrentTemp*fCurrentTemp;
-   }
 
    if (fAllCalibrMode > 0) {
       // detect 0xD trigger ourself
@@ -1874,9 +1843,6 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    // if data could be used for TOT calibration
    bool do_tot = (use_for_calibr > 0) && ((buf_kind == 0xD) || gUseAsDTrig) && DoFallingEdge();
 
-   // use temperature compensation only when temperature available
-   bool do_temp_comp = fCalibrUseTemp && (fCurrentTemp > 0) && (fCalibrTemp > 0) && (fabs(fCurrentTemp - fCalibrTemp) < 30.);
-
    unsigned cnt = 0, hitcnt = 0;
 
    bool iserr = false, isfirstepoch = false, rawprint = false, missinghit = false, dostore = false;
@@ -2119,9 +2085,6 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
 
                // apply TOT shift for falling edge (should it be also temp dependent)?
                if (!isrising) corr += rec.tot_shift*1e-9;
-
-               // negative while value should be add to the stamp
-               if (do_temp_comp) corr -= (fCurrentTemp + fTempCorrection - fCalibrTemp) * rec.time_shift_per_grad * 1e-9;
             }
          }
 
@@ -2496,22 +2459,15 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
       }
 
       if ((temp != 0) && (temp < 2400)) {
-         fCurrentTemp = temp/16.;
+         float realTemp = temp/16.;
 
          if ((HistFillLevel() > 1) && !fTempDistr)  {
-            printf("%s FirstTemp:%5.2f CalibrTemp:%5.2f UseTemp:%d\n", GetName(), fCurrentTemp, fCalibrTemp, fCalibrUseTemp);
-
-            int mid = round(fCurrentTemp);
+            printf("%s First measure temperature:%5.2f\n", GetName(), realTemp);
+            int mid = round(realTemp);
             SetSubPrefix2();
             fTempDistr = MakeH1("Temperature", "Temperature distribution", 600, mid-30, mid+30, "C");
          }
-         FillH1(fTempDistr, fCurrentTemp);
-      }
-
-      if ((hitcnt>0) && (use_for_calibr>0) && (fCurrentTemp>0)) {
-         fCalibrTempSum0 += 1.;
-         fCalibrTempSum1 += fCurrentTemp;
-         fCalibrTempSum2 += fCurrentTemp*fCurrentTemp;
+         FillH1(fTempDistr, realTemp);
       }
 
       // if we use trigger as time marker
@@ -3082,9 +3038,6 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
 
    // printf("Name %s ToT %d\n", GetName(), (int) do_tot);
 
-   // use temperature compensation only when temperature available
-   bool do_temp_comp = fCalibrUseTemp && (fCurrentTemp > 0) && (fCalibrTemp > 0) && (fabs(fCurrentTemp - fCalibrTemp) < 30.);
-
    unsigned cnt = 0, hitcnt = 0;
 
    bool iserr = false, isfirstepoch = false, rawprint = false, missinghit = false, dostore = false;
@@ -3349,9 +3302,6 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
 
             // apply TOT shift for falling edge (should it be also temp dependent)?
             if (!isrising) corr += rec.tot_shift*1e-9;
-
-            // negative while value should be add to the stamp
-            if (do_temp_comp) corr -= (fCurrentTemp + fTempCorrection - fCalibrTemp) * rec.time_shift_per_grad * 1e-9;
          }
 
          // apply correction
@@ -3625,28 +3575,6 @@ bool hadaq::TdcProcessor::DoBuffer4Scan(const base::Buffer& buf, bool first_scan
 
          fDesignId = id;
       }
-
-      /*
-      if ((temp != 0) && (temp < 2400)) {
-         fCurrentTemp = temp/16.;
-
-         if ((HistFillLevel() > 1) && (fTempDistr == 0))  {
-            printf("%s FirstTemp:%5.2f CalibrTemp:%5.2f UseTemp:%d\n", GetName(), fCurrentTemp, fCalibrTemp, fCalibrUseTemp);
-
-            int mid = round(fCurrentTemp);
-            SetSubPrefix2();
-            fTempDistr = MakeH1("Temperature", "Temperature distribution", 600, mid-30, mid+30, "C");
-         }
-         FillH1(fTempDistr, fCurrentTemp);
-      }
-
-      if ((hitcnt>0) && (use_for_calibr>0) && (fCurrentTemp>0)) {
-         fCalibrTempSum0 += 1.;
-         fCalibrTempSum1 += fCurrentTemp;
-         fCalibrTempSum2 += fCurrentTemp*fCurrentTemp;
-      }
-
-      */
 
       // if we use trigger as time marker
       if (fUseNativeTrigger && (ch0time != 0)) {
@@ -4343,18 +4271,6 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
    if (!preliminary)
       printf("%s produce %s calibrations \n", GetName(), (use_linear ? "linear" : "normal"));
 
-   if (fCalibrTempSum0 > 5) {
-      double mean = fCalibrTempSum1/fCalibrTempSum0;
-      double rms = fCalibrTempSum2 / fCalibrTempSum0 - mean*mean;
-      if (rms>0) rms = sqrt(rms); else rms = (rms >=-1e-8) ? 0 : -1;
-      printf("   temp %5.2f +- %3.2f during calibration\n", mean, rms);
-      if ((rms>0) && (rms<3)) fCalibrTemp = mean;
-   }
-
-   fCalibrTempSum0 = 0;
-   fCalibrTempSum1 = 0;
-   fCalibrTempSum2 = 0;
-
    if (!preliminary) {
       ClearH2(fRisingCalibr);
       ClearH2(fFallingCalibr);
@@ -4564,8 +4480,8 @@ void hadaq::TdcProcessor::StoreCalibration(const std::string& fprefix, unsigned 
    }
 
    // temperature
-   fwrite(&fCalibrTemp, sizeof(fCalibrTemp), 1, f);
-   fwrite(&fCalibrTempCoef, sizeof(fCalibrTempCoef), 1, f);
+   fwrite(&fCalibrDummy1, sizeof(fCalibrDummy1), 1, f);
+   fwrite(&fCalibrDummy2, sizeof(fCalibrDummy2), 1, f);
 
    for (unsigned ch=0;ch<NumChannels();ch++) {
       ChannelRec &rec = fCh[ch];
@@ -4855,8 +4771,8 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
       }
 
       if (!feof(f)) {
-         auto res1 = fread(&fCalibrTemp, sizeof(fCalibrTemp), 1, f);
-         auto res2 = fread(&fCalibrTempCoef, sizeof(fCalibrTempCoef), 1, f);
+         auto res1 = fread(&fCalibrDummy1, sizeof(fCalibrDummy1), 1, f);
+         auto res2 = fread(&fCalibrDummy2, sizeof(fCalibrDummy2), 1, f);
          (void) res1;
          (void) res2;
 
@@ -4882,7 +4798,7 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
    fclose(f);
 
    char msg[2000];
-   snprintf(msg, sizeof(msg), "%s reading calibration from %s, tcorr:%5.1f uset:%d done", GetName(), fname, fTempCorrection, fCalibrUseTemp);
+   snprintf(msg, sizeof(msg), "%s reading calibration from %s done", GetName(), fname);
    mgr()->PrintLog(msg);
 
    fCalibrStatus = "CalibrFile";
