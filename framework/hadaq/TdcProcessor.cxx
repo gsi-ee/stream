@@ -4312,12 +4312,9 @@ void hadaq::TdcProcessor::ProduceCalibration(bool clear_stat, bool use_linear, b
          // if necessary statistic provided - made calibration
          if ((!DoRisingEdge() || (rec.all_rising_stat > 100)) &&
              (!DoFallingEdge() || (rec.all_falling_stat > 100))) {
-            // fake calibration
-            rec.rising_rotation_limit = 0;
-            rec.falling_rotation_limit = 0;
-
-            for (auto pair : rec.iqcal.gaps)
-               printf("   center %d rotation %d\n", pair.first, pair.second);
+               // printout calibration
+               for (auto pair : rec.iqcal.gaps)
+                  printf("   center %d rotation %d\n", pair.first, pair.second);
 
             rec.hasrotation = true;
          }
@@ -4500,8 +4497,8 @@ void hadaq::TdcProcessor::StoreCalibration(const std::string& fprefix, unsigned 
 
    for (unsigned ch = 0; ch < NumChannels(); ch++) {
       ChannelRec &rec = fCh[ch];
-      fwrite(&rec.rising_rotation_limit, sizeof(rec.rising_rotation_limit), 1, f);
-      fwrite(&rec.falling_rotation_limit, sizeof(rec.falling_rotation_limit), 1, f);
+      fwrite(&rec.calibr_dummy1, sizeof(rec.calibr_dummy1), 1, f);
+      fwrite(&rec.calibr_dummy2, sizeof(rec.calibr_dummy2), 1, f);
       fwrite(&rec.calibr_quality_rising, sizeof(rec.calibr_quality_rising), 1, f);
       fwrite(&rec.calibr_quality_falling, sizeof(rec.calibr_quality_falling), 1, f);
    }
@@ -4794,13 +4791,12 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
          for (unsigned ch = 0; ch < NumChannels(); ch++)
             if (!feof(f)) {
                auto &rec = fCh[ch];
-               auto res3 = fread(&(rec.rising_rotation_limit), sizeof(rec.rising_rotation_limit), 1, f);
-               auto res4 = fread(&(rec.falling_rotation_limit), sizeof(rec.falling_rotation_limit), 1, f);
+               auto res3 = fread(&(rec.calibr_dummy1), sizeof(rec.calibr_dummy1), 1, f);
+               auto res4 = fread(&(rec.calibr_dummy2), sizeof(rec.calibr_dummy2), 1, f);
                auto res5 = fread(&(rec.calibr_quality_rising), sizeof(rec.calibr_quality_rising), 1, f);
                auto res6 = fread(&(rec.calibr_quality_falling), sizeof(rec.calibr_quality_falling), 1, f);
 
-               rec.hasrotation = (!DoRisingEdge() || (rec.rising_rotation_limit > 0)) &&
-                                 (!DoFallingEdge() || (rec.falling_rotation_limit > 0));
+               rec.hasrotation = false;
 
                (void) res3;
                (void) res4;
