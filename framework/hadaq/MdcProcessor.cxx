@@ -9,11 +9,11 @@ hadaq::MdcProcessor::MdcProcessor(TrbProcessor* trb, unsigned subid) :
    if (HistFillLevel() > 1) {
       alldeltaT = MakeH1("alldeltaT", "", 6000, -2099.8, 300.2);
       allToT = MakeH1("allToT", "", 1650, 0.2, 1100.2);
-      Errors = MakeH1("Errors", "", TDCCHANNELS, -0.5, TDCCHANNELS-0.5);
+      Errors = MakeH1("Errors", "", TDCCHANNELS, -0.5, (int) TDCCHANNELS - 0.5);
       ToT = MakeH2("ToT", "", TDCCHANNELS, 0, TDCCHANNELS, 550, 0.2, 1100.2);
       deltaT = MakeH2("deltaT", "", TDCCHANNELS, 0, TDCCHANNELS, 600, -2099.8, 300.2);
       deltaT_ToT = MakeH2("deltaT_ToT", "", 600, -2099.8, 300.2, 550, 0.2, 1100.2);
-      
+
       Hits[0] = MakeH2("Hit0","", 600, -2099.8, 300.2, 550, 0.2, 1100.2);
       Hits[1] = MakeH2("Hit1","", 600, -2099.8, 300.2, 550, 0.2, 1100.2);
 //      Hits[2] = MakeH2("Hit2","", 600, -2099.8, 300.2, 550, 0.2, 1100.2);
@@ -104,21 +104,21 @@ bool hadaq::MdcProcessor::FirstBufferScan(const base::Buffer &buf)
    signed reference = data0 & 0x1FFF;
 
    int numhits = 0, numerrs = 0;
-   
+
    int hitsperchannel[TDCCHANNELS] = {0};
 //   float last_timeToT = 0;
 //   float last_timeDiff = 0;
 //   float last_timeDiff1 = 0;
-   
+
 //   int numlongtot = 0;
 //   int haslongtot[TDCCHANNELS] = {0};
-   
+
    for (unsigned n = 1; n < len; n++) {
       uint32_t data = arr[n];
       unsigned channel = data >> 27;
 
       hitsperchannel[channel]++;
-      
+
       if ((data >> 26) & 1) {
          numerrs++;
          FillH1(Errors, channel);
@@ -172,24 +172,24 @@ bool hadaq::MdcProcessor::FirstBufferScan(const base::Buffer &buf)
          // FillH1(allToT, timeToT);
          // FillH2(deltaT_ToT, timeDiff, timeToT);
          // FillH2(T0_T1, timeDiff, timeDiff1);
-         // 
+         //
          // if (hChToTHld)
          //    SetH2Content(*hChToTHld, fHldId, channel, timeToT);
-         // 
+         //
          // if (hChDeltaTHld)
          //    SetH2Content(*hChDeltaTHld, fHldId, channel, timeDiff);
-         // 
+         //
          // if (HistFillLevel() > 2) {
          //    FillH1(tot_h[channel], timeToT);
          //    FillH2(potato_h[channel], timeDiff, timeToT);
          //    FillH1(t1_h[channel], timeDiff);
          // }
       }
-//    if(channel==6) {  
+//    if(channel==6) {
 //      if(hitsperchannel[channel] < 5) {
          // if(hitsperchannel[channel]==1 || haslongtot[channel])
 //            FillH2(Hits[hitsperchannel[channel]-1], timeDiff, timeToT);
-//         }      
+//         }
 /*      if(hitsperchannel[channel] == 1) {
          FillH2(Hits[0], timeDiff, timeToT);
          }
@@ -198,30 +198,30 @@ bool hadaq::MdcProcessor::FirstBufferScan(const base::Buffer &buf)
          }
       if(channel>=2 && hitsperchannel[channel-2] == 0 && hitsperchannel[channel-1] == 0 && hitsperchannel[channel] == 1 && (arr[n+1] >> 27) != channel+1 && (arr[n+1] >> 27) != channel+2) {
          FillH2(Hits[2], timeDiff, timeToT);
-         }      
+         }
       if(channel>=1 && hitsperchannel[channel-1] == 0 && hitsperchannel[channel] == 1 && (arr[n+1] >> 27) != channel+1) {
          FillH2(Hits[3], timeDiff, timeToT);
-         } */     
-//    } 
+         } */
+//    }
       // if(channel==13 && channel>=1 && (hitsperchannel[channel-1] >= 1) && hitsperchannel[channel] == 1) {
       //    FillH2(ToTToT[0], last_timeToT, timeToT);
       //    FillH2(ToTToT[1], last_timeDiff, timeDiff);
       //    FillH2(ToTToT[2], last_timeDiff1, timeDiff1);
       //    FillH2(ToTToT[3], timeDiff-last_timeDiff, timeDiff1-last_timeDiff1);
       //    }
-         
+
 //      if(timeToT > 150) {
 //         numlongtot++;
 //         haslongtot[channel]++;
 //         }
-         
-//      last_timeToT = timeToT;  
+
+//      last_timeToT = timeToT;
 //      last_timeDiff = timeDiff;
 //      last_timeDiff1 = timeDiff1;
    }
 
 //   FillH1(longToT,numlongtot);
-   
+
    if (hHitsHld)
       DefFillH1(*hHitsHld, fHldId, numhits);
 
