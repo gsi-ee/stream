@@ -64,6 +64,7 @@ STREAM_INSTALL_HEADERS(hadaq ${hadaq_hdrs})
 set(dogma_hdrs
    dogma/DogmaFile.h
    dogma/defines.h
+   dogma/iq.h
 )
 
 STREAM_INSTALL_HEADERS(dogma ${dogma_hdrs})

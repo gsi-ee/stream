@@ -1,3 +1,7 @@
+#ifndef DOGMA_IQ_H
+#define DOGMA_IQ_H
+
+
 #include <cstdint>
 #include <utility>
 #include <vector>
@@ -95,3 +99,5 @@ struct calib {
 };
 
 } // namespace iqtdc
+
+#endif
