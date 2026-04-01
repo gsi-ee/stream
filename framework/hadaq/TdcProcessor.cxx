@@ -4868,15 +4868,19 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
             if (rec.iqcal.empty())
                rec.iqcal.resize(256, 8, 2); // two channels - rising and falling edge
             std::getline(f, str); // read line with comments
+            if (str.empty())
+               fail = true;
+            bool is_empty = true;
             for (auto &pair : rec.iqcal.gaps) {
                pair.first = pair.second = 0;
                std::getline(f, str);
                if (sscanf(str.data(), "%d %d", &pair.first, &pair.second) != 2)
                   fail = true;
-               if ((pair.first <= 0) && (pair.second <= 0))
-                  fail = true;
+               if ((pair.first > 0) || (pair.second > 0))
+                  is_empty = false;
                // printf("Read %d %d from %s\n", pair.first, pair.second, str.data());
             }
+            rec.has_iqcal = !is_empty;
          }
       } else {
          fail = true;
@@ -4884,8 +4888,12 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
       snprintf(msg, sizeof(msg), "%s reading iqcal from %s %s", GetName(), fname, fail ? "FAILED!" : "Ok");
       mgr()->PrintLog(msg);
 
-      for (unsigned ch = 0; ch < NumChannels(); ch++)
-         fCh[ch].has_iqcal = !fail;
+      if (fail)
+         for (unsigned ch = 0; ch < NumChannels(); ch++) {
+            fCh[ch].has_iqcal = false;
+            fCh[ch].iqcal.resize(); // first delete buffers
+            fCh[ch].iqcal.resize(256, 8, 2); // allocate again
+         }
    }
 
 
