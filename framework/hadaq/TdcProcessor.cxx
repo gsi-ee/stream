@@ -410,6 +410,20 @@ hadaq::TdcProcessor::~TdcProcessor()
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+/// returns tdc name used for historgams and folders
+
+std::string hadaq::TdcProcessor::GetTdcStr(unsigned tdcid)
+{
+   char sbuf[100];
+   if (fDogma)
+      snprintf(sbuf, sizeof(sbuf), "%u.%u.%u.%u", (tdcid >> 24) & 0xFF, (tdcid >> 16) & 0xFF, (tdcid >> 8) & 0xFF, tdcid & 0xFF);
+   else
+      snprintf(sbuf, sizeof(sbuf), "0x%04x", tdcid & 0xFFFF);
+
+   return std::string(sbuf);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////
 /// returns number of histogram bins per NS
 /// depends from numfine bins and coarse unit
 /// default for many histograms is 100
@@ -711,10 +725,8 @@ void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned re
    char sbuf[1024], saxis[1024], refname[512];
    if (fCh[ch].reftdc == GetID())
       snprintf(refname, sizeof(refname), "Ch%u", fCh[ch].refch);
-   else if (fDogma)
-      snprintf(refname, sizeof(refname), "TDC 0x%08x Ch%u", fCh[ch].reftdc, fCh[ch].refch);
    else
-      snprintf(refname, sizeof(refname), "TDC 0x%04x Ch%u", fCh[ch].reftdc, fCh[ch].refch);
+      snprintf(refname, sizeof(refname), "TDC %s Ch%u", GetTdcStr(fCh[ch].reftdc).c_str(), fCh[ch].refch);
 
    if ((left < right) && (npoints > 1) && SetChannelPrefix(ch)) {
       if (DoRisingEdge()) {

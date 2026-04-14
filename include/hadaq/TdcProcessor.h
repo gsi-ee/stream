@@ -435,6 +435,8 @@ namespace hadaq {
 
          void CreateBranch(TTree*) override;
 
+         std::string GetTdcStr(unsigned tdcid);
+
          void AddError(unsigned code, const char *args, ...);
 
       public:
