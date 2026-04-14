@@ -41,8 +41,6 @@ namespace hadaq {
             unsigned refch;                ///<! reference channel for specified
             unsigned reftdc;               ///<! tdc of reference channel
             bool refabs;                   ///<! if true, absolute difference (without channel 0) will be used
-            unsigned doublerefch;          ///<! double reference channel
-            unsigned doublereftdc;         ///<! tdc of double reference channel
             unsigned refch_tmds;           ///<! reference channel for TMDS messages
             bool docalibr;                 ///<! if false, simple calibration will be used
             bool has_iqcal = false;        ///<! if iqcal correct
@@ -55,9 +53,6 @@ namespace hadaq {
             base::C1handle fRisingRefCond; ///<! condition to print raw events
             base::H1handle fRisingCalibr;  ///<! histogram of channel calibration function
             base::H1handle fRisingPCalibr; ///<! histogram of prevented channel calibration function
-            base::H2handle fRisingRef2D;   ///<! histogram
-            base::H1handle fRisingRefRef;  ///<! difference of two ref times, connected with double ref
-            base::H2handle fRisingDoubleRef; ///<! correlation with diff time from other channel
             base::H1handle fRisingTmdsRef; ///<! histogram of time diff to ref channel for TMDS message
             base::H1handle fFallingFine;   ///<! histogram of all fine counters
             base::H1handle fFallingMult;   ///<! number of hits per event
@@ -101,8 +96,6 @@ namespace hadaq {
                refch(0xffffff),
                reftdc(0xffffffff),
                refabs(false),
-               doublerefch(0xffffff),
-               doublereftdc(0xffffff),
                refch_tmds(0xffffff),
                docalibr(true),
                hascalibr(false),
@@ -113,9 +106,6 @@ namespace hadaq {
                fRisingRefCond(nullptr),
                fRisingCalibr(nullptr),
                fRisingPCalibr(nullptr),
-               fRisingRef2D(nullptr),
-               fRisingRefRef(nullptr),
-               fRisingDoubleRef(nullptr),
                fRisingTmdsRef(nullptr),
                fFallingFine(nullptr),
                fFallingMult(nullptr),
@@ -687,9 +677,9 @@ namespace hadaq {
 
          void SetRefTmds(unsigned ch, unsigned refch, int npoints, double left, double right);
 
-         bool SetDoubleRefChannel(unsigned ch1, unsigned ch2,
-                                  int npx = 200, double xmin = -10., double xmax = 10.,
-                                  int npy = 200, double ymin = -10., double ymax = 10.);
+         bool SetDoubleRefChannel(unsigned, unsigned,
+                                  int = 200, double = -10., double = 10.,
+                                  int = 200, double = -10., double = 10.);
 
          void CreateRateHisto(int np = 1000, double xmin = 0., double xmax = 1e5);
 

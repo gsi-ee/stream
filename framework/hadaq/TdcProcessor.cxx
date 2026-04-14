@@ -665,7 +665,7 @@ void hadaq::TdcProcessor::CreateHistograms(int *arr)
 /// - coarse_counter/4 (shift -2 ns)
 
 void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned reftdc,
-                                        int npoints, double left, double right, bool twodim)
+                                        int npoints, double left, double right, bool)
 {
    if ((ch >= NumChannels()) || (HistFillLevel() < 4))
       return;
@@ -724,12 +724,6 @@ void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned re
             snprintf(saxis, sizeof(saxis), "Ch%u - %s, ns", ch, refname);
             fCh[ch].fRisingRef = MakeH1("RisingRef", sbuf, npoints, left, right, saxis);
          }
-
-         if (twodim && !fCh[ch].fRisingRef2D) {
-            snprintf(sbuf, sizeof(sbuf), "corr diff %s and fine counter", refname);
-            snprintf(saxis, sizeof(saxis), "Ch%u - %s, ns;fine counter", ch, refname);
-            fCh[ch].fRisingRef2D = MakeH2("RisingRef2D", sbuf, 500, left, right, 100, 0, 500, saxis);
-         }
       }
 
       SetSubPrefix2();
@@ -776,74 +770,13 @@ void hadaq::TdcProcessor::SetRefTmds(unsigned ch, unsigned refch, int npoints, d
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
-/// Configure double-reference histogram
-/// Required that for both channels references are specified via SetRefChannel() command.
-/// If ch2 > 1000, than channel from other TDC can be used. tdcid = (ch2 - 1000) / 1000
+/// Configure double-reference histogram - obsolete
 
-bool hadaq::TdcProcessor::SetDoubleRefChannel(unsigned ch1, unsigned ch2,
-                                              int npx, double xmin, double xmax,
-                                              int npy, double ymin, double ymax)
+bool hadaq::TdcProcessor::SetDoubleRefChannel(unsigned, unsigned,
+                                              int, double, double,
+                                              int, double, double)
 {
-   if (HistFillLevel()<4) return false;
-
-   if ((ch1>=NumChannels()) || (fCh[ch1].refch>=NumChannels()))  return false;
-
-   unsigned reftdc = 0xffff;
-   if (ch2 > 0xffff) { reftdc = ch2 >> 16; ch2 = ch2 & 0xFFFF; }
-   if (reftdc >= 0xffff) reftdc = GetID();
-
-   unsigned ch = ch1, refch = ch2;
-
-   if (reftdc == GetID()) {
-      if ((ch2>=NumChannels()) || (fCh[ch2].refch>=NumChannels()))  return false;
-      if (ch1<ch2) { ch = ch2; refch = ch1; }
-   } else {
-      //if (reftdc > GetID())
-      //   printf("WARNING - double ref channel from TDC with higher ID %u > %u\n", reftdc, GetID());
-      if (fTrb) fTrb->SetCrossProcessAll();
-   }
-
-   fCh[ch].doublerefch = refch;
-   fCh[ch].doublereftdc = reftdc;
-
-   char sbuf[1024];
-   char saxis[1024];
-
-   if (DoRisingEdge()) {
-
-      if (!fCh[ch].fRisingRefRef && (npy == 0)) {
-         if (reftdc == GetID()) {
-            snprintf(sbuf, sizeof(sbuf), "double reference with Ch%u", refch);
-            snprintf(saxis, sizeof(saxis), "(ch%u-ch%u) - (refch%u) ns", ch, fCh[ch].refch, refch);
-         } else {
-            snprintf(sbuf, sizeof(sbuf), "double reference with TDC 0x%04x Ch%u", reftdc, refch);
-            snprintf(saxis, sizeof(saxis), "(ch%u-ch%u)  - (tdc 0x%04x refch%u) ns", ch, fCh[ch].refch, reftdc, refch);
-         }
-
-         if (SetChannelPrefix(ch)) {
-            fCh[ch].fRisingRefRef = MakeH1("RisingRefRef", sbuf, npx, xmin, xmax, saxis);
-            SetSubPrefix2();
-         }
-      }
-
-
-      if (!fCh[ch].fRisingDoubleRef && (npy>0)) {
-         if (reftdc == GetID()) {
-            snprintf(sbuf, sizeof(sbuf), "double correlation to Ch%u", refch);
-            snprintf(saxis, sizeof(saxis), "ch%u-ch%u ns;ch%u-ch%u ns", ch, fCh[ch].refch, refch, fCh[refch].refch);
-         } else {
-            snprintf(sbuf, sizeof(sbuf), "double correlation to TDC 0x%04x Ch%u", reftdc, refch);
-            snprintf(saxis, sizeof(saxis), "ch%u-ch%u ns;tdc 0x%04x refch%u ns", ch, fCh[ch].refch, reftdc, refch);
-         }
-
-         if (SetChannelPrefix(ch)) {
-            fCh[ch].fRisingDoubleRef = MakeH2("RisingDoubleRef", sbuf, npx, xmin, xmax, npy, ymin, ymax, saxis);
-            SetSubPrefix2();
-         }
-      }
-   }
-
-   return true;
+   return false;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -930,7 +863,7 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
 
       unsigned reftdc = rec.reftdc;
 
-      if (reftdc >= (fDogma ? 0xffffff : 0xffff))
+      if (reftdc >= (fDogma ? 0xffffffff : 0xffff))
          reftdc = GetID();
 
       TdcProcessor* refproc = nullptr;
@@ -970,46 +903,6 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
             // when refch is 0 on same board, histogram already filled
             if ((ref > 0) || regular_ch0 || (refproc != this))
                DefFillH1(rec.fRisingRef, diff, 1.);
-
-            DefFillH2(rec.fRisingRef2D, diff, rec.rising_fine, 1.);
-            DefFillH2(rec.fRisingRef2D, (diff-1.), refproc->fCh[ref].rising_fine, 1.);
-            DefFillH2(rec.fRisingRef2D, (diff-2.), rec.rising_coarse/4, 1.);
-            RAWPRINT("Difference rising %04x:%02u\t %04x:%02u\t %12.3f\t %12.3f\t %7.3f  coarse %03x - %03x = %4d  fine %03x %03x \n",
-                  GetID(), ch, reftdc, ref,
-                  tm*1e9,  tm_ref*1e9, diff,
-                  rec.rising_coarse, refproc->fCh[ref].rising_coarse, (int) (rec.rising_coarse - refproc->fCh[ref].rising_coarse),
-                  rec.rising_fine, refproc->fCh[ref].rising_fine);
-
-            // make double reference only for local channels
-            // if ((rec.doublerefch < NumChannels()) &&
-            //    (rec.fRisingDoubleRef != 0) &&
-            //    (fCh[rec.doublerefch].rising_ref_tm != 0)) {
-            //   DefFillH1(rec.fRisingDoubleRef, diff, fCh[rec.doublerefch].rising_ref_tm*1e9);
-            // }
-         }
-      }
-
-      // fill double-reference histogram, using data from any reference TDC
-      if ((rec.doublerefch < NumChannels()) && (rec.fRisingDoubleRef || rec.fRisingRefRef)) {
-
-         ref = rec.doublerefch;
-         reftdc = rec.doublereftdc;
-         if (reftdc>=0xffff) reftdc = GetID();
-         refproc = nullptr;
-         if (reftdc == GetID()) refproc = this; else
-         if (fTrb) refproc = fTrb->FindTDC(reftdc);
-
-         if (!refproc && subprocmap) {
-            auto iter = subprocmap->find(reftdc);
-            if ((iter != subprocmap->end()) && iter->second->IsTDC())
-               refproc = (TdcProcessor*) iter->second;
-         }
-
-         if (refproc && (ref<refproc->NumChannels()) && ((ref != ch) || (refproc != this))) {
-            if ((rec.rising_ref_tm != 0) && (refproc->fCh[ref].rising_ref_tm != 0)) {
-               DefFillH1(rec.fRisingRefRef, (rec.rising_ref_tm - refproc->fCh[ref].rising_ref_tm)*1e9, 1.);
-               DefFillH2(rec.fRisingDoubleRef, rec.rising_ref_tm*1e9, refproc->fCh[ref].rising_ref_tm*1e9, 1.);
-            }
          }
       }
    }
