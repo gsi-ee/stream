@@ -712,7 +712,7 @@ void hadaq::TdcProcessor::SetRefChannel(unsigned ch, unsigned refch, unsigned re
    if (fCh[ch].reftdc == GetID())
       snprintf(refname, sizeof(refname), "Ch%u", fCh[ch].refch);
    else if (fDogma)
-      snprintf(refname, sizeof(refname), "TDC 0x%06x Ch%u", fCh[ch].reftdc, fCh[ch].refch);
+      snprintf(refname, sizeof(refname), "TDC 0x%08x Ch%u", fCh[ch].reftdc, fCh[ch].refch);
    else
       snprintf(refname, sizeof(refname), "TDC 0x%04x Ch%u", fCh[ch].reftdc, fCh[ch].refch);
 
