@@ -72,22 +72,28 @@ install(FILES ${CMAKE_BINARY_DIR}/StreamConfig.cmake
         DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
 )
 
-add_subdirectory(framework)
+option(ENABLE_FRAMEWORK "Build framework subdirectory" ON)
+option(ENABLE_GO4ENGINE "Build go4engine subdirectory" ON)
 
-if(Go4_FOUND)
-   add_subdirectory(go4engine)
+if(ENABLE_FRAMEWORK)
+  add_subdirectory(framework)
+endif()
+
+if(ENABLE_GO4ENGINE AND Go4_FOUND)
+  add_subdirectory(go4engine)
 endif()
 
 get_property(__allHeaders GLOBAL PROPERTY STREAM_HEADER_TARGETS)
 add_custom_target(move_headers ALL DEPENDS ${__allHeaders})
 
-export(
-  EXPORT ${PROJECT_NAME}Targets
-  NAMESPACE stream::
-  FILE ${PROJECT_NAME}Targets.cmake)
+if(ENABLE_FRAMEWORK)
+  export(
+    EXPORT ${PROJECT_NAME}Targets
+    NAMESPACE stream::
+    FILE ${PROJECT_NAME}Targets.cmake)
 
-install(
-  EXPORT ${PROJECT_NAME}Targets
-  NAMESPACE stream::
-  DESTINATION ${CMAKE_INSTALL_CMAKEDIR})
-
+  install(
+    EXPORT ${PROJECT_NAME}Targets
+    NAMESPACE stream::
+    DESTINATION ${CMAKE_INSTALL_CMAKEDIR})
+endif()

@@ -135,6 +135,8 @@ STREAM_LINK_LIBRARY(Stream
    LIBRARIES ${stream_libs}
 )
 
+add_library(stream::Stream ALIAS Stream)
+
 # ================== Install Stream headers ==========
 
 foreach(dir base dogma get4 hadaq mbs nx dabc)
@@ -175,4 +177,5 @@ if(ROOT_FOUND)
    install(FILES ${CMAKE_BINARY_DIR}/lib/libStreamDict.rootmap ${CMAKE_BINARY_DIR}/lib/libStreamDict_rdict.pcm
            DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
+   add_library(stream::StreamDict ALIAS StreamDict)
 endif()
