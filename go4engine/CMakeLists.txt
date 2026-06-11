@@ -28,3 +28,6 @@ install(
 
 install(FILES ${CMAKE_BINARY_DIR}/lib/libGo4UserAnalysis.rootmap ${CMAKE_BINARY_DIR}/lib/libGo4UserAnalysis_rdict.pcm
         DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+install(FILES TStreamEvent.h TUserSource.h TFirstStepProcessor.h
+        DESTINATION ${STREAM_INSTALL_INCLUDEDIR})
