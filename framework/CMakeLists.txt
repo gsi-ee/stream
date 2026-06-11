@@ -137,7 +137,7 @@ STREAM_LINK_LIBRARY(Stream
 
 # ================== Install Stream headers ==========
 
-foreach(dir base dogma get4 hadaq mbs nx)
+foreach(dir base dogma get4 hadaq mbs nx dabc)
    install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/${dir}
           DESTINATION ${STREAM_INSTALL_INCLUDEDIR})
 endforeach()
