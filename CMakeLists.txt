@@ -16,16 +16,6 @@ include(GNUInstallDirs)
 set(CMAKE_INSTALL_CMAKEDIR ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
 set(STREAM_INSTALL_INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR}/stream)
 
-export(
-  TARGETS ${PROJECT_TARGETS}
-  NAMESPACE stream::
-  FILE ${PROJECT_NAME}Targets.cmake)
-
-install(
-  EXPORT ${PROJECT_NAME}Targets
-  NAMESPACE stream::
-  DESTINATION ${CMAKE_INSTALL_CMAKEDIR})
-
 #--- Load some basic macros ---
 include(StreamMacros)
 
@@ -53,8 +43,13 @@ else()
   set(_ldvname_ LD_LIBRARY_PATH)
 endif()
 
-configure_file(${CMAKE_SOURCE_DIR}/cmake/scripts/StreamConfig.cmake.in
-               ${CMAKE_BINARY_DIR}/StreamConfig.cmake COPYONLY)
+include(CMakePackageConfigHelpers)
+
+configure_package_config_file(
+  ${CMAKE_SOURCE_DIR}/cmake/scripts/StreamConfig.cmake.in
+  ${CMAKE_BINARY_DIR}/StreamConfig.cmake
+  INSTALL_DESTINATION lib/cmake/Stream
+)
 
 set(_streamsys_ ${CMAKE_BINARY_DIR})
 set(_streaminc_ ${CMAKE_BINARY_DIR}/include)
@@ -73,6 +68,10 @@ configure_file(${CMAKE_SOURCE_DIR}/cmake/scripts/streamlogin.in
 install(PROGRAMS ${PROJECT_BINARY_DIR}/macros/streamlogin
         DESTINATION ${CMAKE_INSTALL_BINDIR})
 
+install(FILES ${CMAKE_BINARY_DIR}/StreamConfig.cmake
+        DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
+)
+
 add_subdirectory(framework)
 
 if(Go4_FOUND)
@@ -81,3 +80,14 @@ endif()
 
 get_property(__allHeaders GLOBAL PROPERTY STREAM_HEADER_TARGETS)
 add_custom_target(move_headers ALL DEPENDS ${__allHeaders})
+
+export(
+  EXPORT ${PROJECT_NAME}Targets
+  NAMESPACE stream::
+  FILE ${PROJECT_NAME}Targets.cmake)
+
+install(
+  EXPORT ${PROJECT_NAME}Targets
+  NAMESPACE stream::
+  DESTINATION ${CMAKE_INSTALL_CMAKEDIR})
+

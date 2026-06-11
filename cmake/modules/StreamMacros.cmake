@@ -70,7 +70,11 @@ function(STREAM_LINK_LIBRARY libname)
 
    # add_dependencies(${libname} move_headers ${ARG_DEPENDENCIES})
 
-   target_include_directories(${libname} PRIVATE ${CMAKE_SOURCE_DIR}/include)
+   target_include_directories(${libname}
+      PUBLIC
+         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
+         $<INSTALL_INTERFACE:${STREAM_INSTALL_INCLUDEDIR}>
+   )
 
    install(
     TARGETS ${libname}
