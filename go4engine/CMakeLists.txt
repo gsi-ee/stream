@@ -1,5 +1,9 @@
 include(${GO4_USE_FILE})
 
+if(NOT TARGET stream::Stream)
+   find_package(Stream REQUIRED PATHS $ENV{STREAMSYS})
+endif()
+
 GO4_USER_ANALYSIS(
    LINKDEF
       LinkDef.h
@@ -11,7 +15,7 @@ GO4_USER_ANALYSIS(
       TUserSource.cxx
       TFirstStepProcessor.cxx
    LIBRARIES
-      Stream StreamDict
+      stream::Stream stream::StreamDict
    INCLUDE_DIRS
       ${CMAKE_SOURCE_DIR}/include
    TARGET_DIR
