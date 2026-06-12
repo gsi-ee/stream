@@ -29,7 +29,7 @@ endif()
 
 if(ROOT_FOUND AND ROOT_CXX_STANDARD)
    set(CMAKE_CXX_STANDARD ${ROOT_CXX_STANDARD})
-   message("FOUND ROOT with c++ standard ${CMAKE_CXX_STANDARD}")
+   message(STATUS "FOUND ROOT with c++ standard ${CMAKE_CXX_STANDARD}")
 endif()
 
 if(NOT CMAKE_CXX_STANDARD)
