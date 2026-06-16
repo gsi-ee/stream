@@ -91,6 +91,8 @@ if(MSVC)
   set(stream_libs ws2_32.lib)
 elseif(APPLE)
   set(stream_defs -DSTREAM_APPLE)
+elseif(IS_RASPBERRY_PI)
+  set(stream_defs -DSTREAM_RASPBERRY_PI)
 endif()
 
 STREAM_LINK_LIBRARY(Stream

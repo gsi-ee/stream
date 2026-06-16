@@ -1,5 +1,35 @@
 set(LIBS_BASESET ${ROOT_LIBRARIES} ${ROOT_XMLIO_LIBRARY})
 
+# Detect Raspberry Pi
+function(detect_raspberry_pi)
+    set(IS_RASPBERRY_PI FALSE PARENT_SCOPE)
+
+    # Check for /proc/cpuinfo (Linux only)
+    if(EXISTS "/proc/cpuinfo")
+        file(READ "/proc/cpuinfo" CPUINFO)
+        if(CPUINFO MATCHES "Raspberry Pi" OR CPUINFO MATCHES "BCM2")
+            set(IS_RASPBERRY_PI TRUE PARENT_SCOPE)
+            return()
+        endif()
+    endif()
+
+    # Check for /sys/firmware/devicetree/base/model
+    if(EXISTS "/sys/firmware/devicetree/base/model")
+        file(READ "/sys/firmware/devicetree/base/model" DT_MODEL)
+        if(DT_MODEL MATCHES "Raspberry Pi")
+            set(IS_RASPBERRY_PI TRUE PARENT_SCOPE)
+        endif()
+    endif()
+endfunction()
+
+detect_raspberry_pi()
+
+if(IS_RASPBERRY_PI)
+    message(STATUS "Building for Raspberry Pi")
+    # Add Pi-specific flags, definitions, etc.
+endif()
+
+
 if(APPLE)
   set(libprefix ${CMAKE_SHARED_LIBRARY_PREFIX})
   if(CMAKE_PROJECT_NAME STREQUAL Stream)
