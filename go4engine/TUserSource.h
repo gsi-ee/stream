@@ -27,6 +27,9 @@ class TUserSource : public TGo4EventSource {
       /** Optional first event  */
       Int_t fuStartEvent = 0;
 
+      /** Indicate when first event is processed  */
+      Bool_t fbFirstEvent  = kTRUE;
+
       /** list of all files names */
       TList *fNames = nullptr;
 

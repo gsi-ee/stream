@@ -248,13 +248,25 @@ Bool_t TUserSource::BuildEvent(TGo4EventElement *dest)
    if (!evnt || !fxBuffer)
       return kFALSE;
 
-   if (fIsHLD)
-      return BuildHldEvent(evnt);
+   UInt_t cnt = 1;
+   if (fbFirstEvent) {
+      cnt += GetStartEvent();
+      fbFirstEvent = kFALSE;
+   }
 
-   if (fIsDOGMA)
-      return BuildDogmaEvent(evnt);
+   while (cnt-- > 0) {
+      Bool_t res = kTRUE;
+      if (fIsHLD)
+         res = BuildHldEvent(evnt);
+      else if (fIsDOGMA)
+         res = BuildDogmaEvent(evnt);
+      else
+         res = BuildDatEvent(evnt);
+      if (!res)
+         return kFALSE;
+   }
 
-   return BuildDatEvent(evnt);
+   return kTRUE;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
