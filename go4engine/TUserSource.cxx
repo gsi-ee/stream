@@ -56,7 +56,9 @@ TUserSource::TUserSource(TGo4UserSourceParameter* par) :
       SetName(par->GetName());
       SetPort(par->GetPort());
       SetArgs(par->GetExpression());
+#ifdef GO4_WITH_USER_SKIP
       SetStartEvent(par->GetStartEvent());
+#endif
       Open();
    } else {
       TGo4Log::Error("TUserSource constructor with zero parameter!");

@@ -21,7 +21,9 @@ include(StreamMacros)
 
 # looking for ROOT and Go4
 find_package(Go4 QUIET)
-if(NOT Go4_FOUND)
+if(Go4_FOUND)
+   message(STATUS "FOUND Go4 ${Go4_VERSION}")
+else()
    find_package(ROOT QUIET)
 endif()
 

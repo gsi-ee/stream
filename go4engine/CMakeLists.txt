@@ -4,6 +4,10 @@ if(NOT TARGET stream::Stream)
    find_package(Stream REQUIRED PATHS $ENV{STREAMSYS})
 endif()
 
+if(Go4_VERSION AND ${Go4_VERSION} VERSION_GREATER "6.4.5")
+   set(extra_defs "GO4_WITH_USER_SKIP")
+endif()
+
 GO4_USER_ANALYSIS(
    LINKDEF
       LinkDef.h
@@ -11,6 +15,8 @@ GO4_USER_ANALYSIS(
       TStreamEvent.h
       TUserSource.h
       TFirstStepProcessor.h
+   DEFINITIONS
+      ${extra_defs}
    SOURCES
       TUserSource.cxx
       TFirstStepProcessor.cxx
