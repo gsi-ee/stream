@@ -58,6 +58,8 @@ TUserSource::TUserSource(TGo4UserSourceParameter* par) :
       SetArgs(par->GetExpression());
 #ifdef GO4_WITH_USER_SKIP
       SetStartEvent(par->GetStartEvent());
+      if (par->GetStartEvent() > 0)
+         TGo4Log::Info("Skip %u event in user source", par->GetStartEvent());
 #endif
       Open();
    } else {
