@@ -40,7 +40,8 @@ TUserSource::TUserSource() :
 TUserSource::TUserSource(const char* name, const char* args, Int_t port) :
    TGo4EventSource(name),
    fxArgs(args),
-   fiPort(port)
+   fiPort(port),
+   fuStartEvent(0)
 {
    Open();
 }
@@ -55,6 +56,7 @@ TUserSource::TUserSource(TGo4UserSourceParameter* par) :
       SetName(par->GetName());
       SetPort(par->GetPort());
       SetArgs(par->GetExpression());
+      SetStartEvent(par->GetStartEvent());
       Open();
    } else {
       TGo4Log::Error("TUserSource constructor with zero parameter!");
@@ -240,9 +242,9 @@ Bool_t TUserSource::BuildDogmaEvent(TGo4MbsEvent *evnt)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /// build event
 
-Bool_t TUserSource::BuildEvent(TGo4EventElement* dest)
+Bool_t TUserSource::BuildEvent(TGo4EventElement *dest)
 {
-   TGo4MbsEvent* evnt = dynamic_cast<TGo4MbsEvent*> (dest);
+   auto evnt = dynamic_cast<TGo4MbsEvent*> (dest);
    if (!evnt || !fxBuffer)
       return kFALSE;
 

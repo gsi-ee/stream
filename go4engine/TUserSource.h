@@ -24,8 +24,11 @@ class TUserSource : public TGo4EventSource {
       /** Optional port number  */
       Int_t fiPort = 0;
 
+      /** Optional first event  */
+      Int_t fuStartEvent = 0;
+
       /** list of all files names */
-      TList* fNames = nullptr;
+      TList *fNames = nullptr;
 
       /** indicates if HLD file will be read */
       Bool_t fIsHLD = kTRUE;
@@ -84,12 +87,17 @@ class TUserSource : public TGo4EventSource {
       /** get args */
       const char* GetArgs() const { return fxArgs.Data(); }
       /** set args */
-      void SetArgs(const char* arg) { fxArgs=arg; }
+      void SetArgs(const char* arg) { fxArgs = arg; }
 
       /** get port */
       Int_t GetPort() const { return fiPort; }
       /** set port */
-      void SetPort(Int_t val) { fiPort=val; }
+      void SetPort(Int_t val) { fiPort = val; }
+
+      /** get first event */
+      UInt_t GetStartEvent() const { return fuStartEvent; }
+      /** set first event */
+      void SetStartEvent(UInt_t first) { fuStartEvent = first; }
 
    ClassDefOverride(TUserSource, 1)
 };
