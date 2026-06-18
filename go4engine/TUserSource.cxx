@@ -102,7 +102,7 @@ Bool_t TUserSource::CheckEventClass(TClass* cl)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /// build dat event
 
-Bool_t TUserSource::BuildDatEvent(TGo4MbsEvent* evnt)
+Bool_t TUserSource::BuildDatEvent(TGo4MbsEvent* evnt, Bool_t only_read)
 {
    char buf[100];
 
@@ -121,7 +121,10 @@ Bool_t TUserSource::BuildDatEvent(TGo4MbsEvent* evnt)
          break;
       }
 
-      if (strlen(buf) < 10) { printf("VERY SHORT LINE %s!!!\n", buf); break; }
+      if (strlen(buf) < 10) {
+         printf("VERY SHORT LINE %s!!!\n", buf);
+         break;
+      }
 
 
       unsigned value;
@@ -134,7 +137,11 @@ Bool_t TUserSource::BuildDatEvent(TGo4MbsEvent* evnt)
       arr[cnt++] = value;
    }
 
-   if (cnt == 0) return kFALSE;
+   if (cnt == 0)
+      return kFALSE;
+
+   if (only_read)
+      return kTRUE;
 
    uint32_t bufsize = cnt*sizeof(uint32_t);
 
@@ -156,7 +163,7 @@ Bool_t TUserSource::BuildDatEvent(TGo4MbsEvent* evnt)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /// build HADAQ event
 
-Bool_t TUserSource::BuildHldEvent(TGo4MbsEvent *evnt)
+Bool_t TUserSource::BuildHldEvent(TGo4MbsEvent *evnt, Bool_t only_read)
 {
    uint32_t bufsize = Trb_BUFSIZE;
 
@@ -180,6 +187,9 @@ Bool_t TUserSource::BuildHldEvent(TGo4MbsEvent *evnt)
       }
    }
 
+   if (only_read)
+      return kTRUE;
+
    TGo4SubEventHeader10 fxSubevHead;
    memset((void *) &fxSubevHead, 0, sizeof(fxSubevHead));
    fxSubevHead.fsProcid = base::proc_TRBEvent; // mark to be processed by TTrbProc
@@ -197,7 +207,7 @@ Bool_t TUserSource::BuildHldEvent(TGo4MbsEvent *evnt)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /// build DOGMA event
 
-Bool_t TUserSource::BuildDogmaEvent(TGo4MbsEvent *evnt)
+Bool_t TUserSource::BuildDogmaEvent(TGo4MbsEvent *evnt, Bool_t only_read)
 {
    uint32_t  bufsize = Trb_BUFSIZE;
 
@@ -220,6 +230,9 @@ Bool_t TUserSource::BuildDogmaEvent(TGo4MbsEvent *evnt)
          return kFALSE;
       }
    }
+
+   if (only_read)
+      return kTRUE;
 
    TGo4SubEventHeader10 fxSubevHead;
    memset((void *) &fxSubevHead, 0, sizeof(fxSubevHead));
@@ -256,19 +269,18 @@ Bool_t TUserSource::BuildEvent(TGo4EventElement *dest)
       fbFirstEvent = kFALSE;
    }
 
-   while (cnt-- > 0) {
-      Bool_t res = kTRUE;
+   Bool_t res = kTRUE;
+
+   while ((cnt-- > 0) && res) {
       if (fIsHLD)
-         res = BuildHldEvent(evnt);
+         res = BuildHldEvent(evnt, cnt > 0);
       else if (fIsDOGMA)
-         res = BuildDogmaEvent(evnt);
+         res = BuildDogmaEvent(evnt, cnt > 0);
       else
-         res = BuildDatEvent(evnt);
-      if (!res)
-         return kFALSE;
+         res = BuildDatEvent(evnt, cnt > 0);
    }
 
-   return kTRUE;
+   return res;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

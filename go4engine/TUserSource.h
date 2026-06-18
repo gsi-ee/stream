@@ -60,9 +60,9 @@ class TUserSource : public TGo4EventSource {
       /** Open the file or connection. */
       Int_t Open();
 
-      Bool_t BuildDatEvent(TGo4MbsEvent *dest);
-      Bool_t BuildHldEvent(TGo4MbsEvent *dest);
-      Bool_t BuildDogmaEvent(TGo4MbsEvent *dest);
+      Bool_t BuildDatEvent(TGo4MbsEvent *dest, Bool_t only_read = kFALSE);
+      Bool_t BuildHldEvent(TGo4MbsEvent *dest, Bool_t only_read = kFALSE);
+      Bool_t BuildDogmaEvent(TGo4MbsEvent *dest, Bool_t only_read = kFALSE);
 
    public:
 
