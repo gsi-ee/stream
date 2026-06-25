@@ -341,6 +341,9 @@ hadaq::TdcProcessor::TdcProcessor(TrbProcessor* trb, unsigned tdcid, unsigned nu
             fMsgsKind = MakeH1("MsgKind", "kind of messages", 8, 0, 8, "xbin:HDR,EPOC,TMDR,TMDT,-,-,-,-;kind");
          else
             fMsgsKind = MakeH1("MsgKind", "kind of messages", 8, 0, 8, "xbin:Trailer,Header,Debug,Epoch,Hit,-,MissEpoch,Calibr;kind");
+      } else if (DoFallingEdge()) {
+         fErrors = MakeH1("SeqErrors", "Hit sequence errors in TDC channels", numchannels, 0, numchannels, "ch");
+         fUndHits = MakeH1("MissedEdges", "Missed faliing or rising edges in TDC channels", numchannels, 0, numchannels, "ch");
       }
 
       fAllFine = MakeH2("FineTm", "fine counter value", numchannels, 0, numchannels, (fNumFineBins==1000 ? 100 : fNumFineBins), 0, fNumFineBins, "ch;fine");
@@ -860,6 +863,9 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
 
       ChannelRec &rec = fCh[ch];
 
+      if (IsVersion5() && DoFallingEdge() && (rec.rising_cnt != rec.falling_cnt))
+         DefFillH1(fUndHits, ch, 1);
+
       DefFillH1(rec.fRisingMult, rec.rising_cnt, 1.); rec.rising_cnt = 0;
       DefFillH1(rec.fFallingMult, rec.falling_cnt, 1.); rec.falling_cnt = 0;
 
@@ -905,6 +911,11 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
                tm_ref += refproc->fCh[0].rising_hit_tm; // produce again absolute time for reference channel
             }
 
+            bool same_coarse = true;
+
+            // if (refproc == this)
+            //    same_coarse = rec.rising_coarse == fCh[ref].rising_coarse;
+
             rec.rising_ref_tm = tm - tm_ref;
 
             double diff = rec.rising_ref_tm * 1e9;
@@ -913,7 +924,7 @@ void hadaq::TdcProcessor::AfterFill(SubProcMap* subprocmap)
             // printf("%s ch %u diff %f tm %12.3f tm_ref %12.3f\n", GetName(), ch, diff, tm*1e9, tm_ref*1e9);
 
             // when refch is 0 on same board, histogram already filled
-            if ((ref > 0) || regular_ch0 || (refproc != this))
+            if (((ref > 0) || regular_ch0 || (refproc != this)) && same_coarse)
                DefFillH1(rec.fRisingRef, diff, 1.);
          }
       }
@@ -2062,7 +2073,8 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
                   }
                }
 
-               if (raw_hit) FastFillH1(rec.fRisingFine, fine);
+               if (raw_hit)
+                  FastFillH1(rec.fRisingFine, fine);
 
                rec.rising_cnt++;
 
@@ -2474,7 +2486,7 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
 
    unsigned cnt = 0, hitcnt = 0;
 
-   bool iserr = false, missinghit = false, dostore = false;
+   bool iserr = false, missinghit = false, seq_error = false, dostore = false;
 
    if (first_scan && IsTriggeredAnalysis() && IsStoreEnabled() && mgr()->HasTrigEvent()) {
       dostore = true;
@@ -2544,6 +2556,8 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
    // TODO: configure ToT based on TDC5 information
    // ConfigureToTByHwType(msg.getHeaderHwType());
 
+   bool last_rising = false;
+
    while (ur_parse_next(&tdc5_tm, &tdc5_it, tu_buf, tu_pktlen) == 1) {
 
       cnt++;
@@ -2554,6 +2568,7 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
       bool isrising = !tdc5_tm.is_falling;
       unsigned bad_fine = 0x3FFFFF;
 
+
       // printf("chid %u fine %u\n", chid, fine);
 
       localtm = -coarse_unit * coarse;
@@ -2563,6 +2578,14 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
          iserr = true;
          continue;
       }
+
+      if ((last_rising == isrising) && DoFallingEdge() && !seq_error) {
+         seq_error = true;
+         if (first_scan)
+            FastFillH1(fErrors, chid);
+      }
+
+      last_rising = isrising;
 
       if (fine == bad_fine) {
          if (first_scan) {
@@ -2605,7 +2628,6 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
       bool raw_hit = true;
 
       if (fine >= fNumFineBins) {
-         FastFillH1(fErrors, chid);
          if (fChErrPerHld) DefFillH2(*fChErrPerHld, fHldId, chid, 1);
          ADDERROR(errFine, "Fine counter %u out of allowed range 0..%u in channel %u", fine, fNumFineBins, chid);
          iserr = true;
@@ -2888,7 +2910,7 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
       // number of hits per TDC in HLD
       if (fHitsPerHld) DefFillH1(*fHitsPerHld, fHldId, hitcnt);
 
-      if (iserr || missinghit) {
+      if (iserr || missinghit || seq_error) {
          if (fErrPerBrd) DefFillH1(*fErrPerBrd, fSeqeunceId, 1.);
          if (fErrPerHld) DefFillH1(*fErrPerHld, fHldId, 1.);
       }
