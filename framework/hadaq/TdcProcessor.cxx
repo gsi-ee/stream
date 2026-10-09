@@ -2432,23 +2432,30 @@ bool hadaq::TdcProcessor::DoBufferScan(const base::Buffer& buf, bool first_scan)
    return !iserr;
 }
 
-ur_config tdc5_cfg_2051;
-
 std::unordered_map<int, ur_config> tdc5_cfgs;
+ur_config default_cfg;
 
 void _init_ur_config()
 {
-   if (tdc5_cfgs.size() != 0)
+   if (!tdc5_cfgs.empty())
       return;
 
-   tdc5_cfg_2051.coarsetime_len = 18;
-   tdc5_cfg_2051.finetime_len = 11;
-   tdc5_cfg_2051.tdc_type = 3;
-   tdc5_cfg_2051.freq = 150;
-   tdc5_cfg_2051.has_edge_type = true;
-   tdc5_cfg_2051.triggerDlen = 20.345;
+   // TODO: Handle this in separate TDC configuration files
+   ur_default_config(&default_cfg);
 
-   tdc5_cfgs[2051] = tdc5_cfg_2051;
+   // TODO: Handle this in separate TDC configuration files
+   ur_config cfg_2051, cfg_2052, cfg_2053;
+
+   cfg_2053 = cfg_2052 = cfg_2051 = default_cfg;
+
+   cfg_2052.coarsetime_len = 17;
+   cfg_2052.finetime_len = 12;
+   cfg_2053.coarsetime_len = 16;
+   cfg_2053.finetime_len = 13;
+
+   tdc5_cfgs[2051] = cfg_2051;
+   tdc5_cfgs[2052] = cfg_2052;
+   tdc5_cfgs[2053] = cfg_2053;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2526,16 +2533,16 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
    _init_ur_config();
 
    auto entry = tdc5_cfgs.find(devid);
+   ur_config *cfg = entry != tdc5_cfgs.end() ? &entry->second : &default_cfg;
 
-   ur_config *cfg = entry != tdc5_cfgs.end() ? &entry->second : &tdc5_cfg_2051;
    ur_set_config(&tdc5_it, cfg);
 
    if (!fIsCustomMhz)
       SetCustomMhz(cfg->freq);
 
    if (fToTdflt) {
-      double hmin = (int) (cfg->triggerDlen - TotBins/100);
-      SetToTRange(cfg->triggerDlen, hmin, hmin + TotBins/50);
+      double hmin = (int) (cfg->trigger_d_period - TotBins/100);
+      SetToTRange(cfg->trigger_d_period, hmin, hmin + TotBins/50);
    }
 
    const char *tu_buf = (const char *) tu->RawHeader();
