@@ -2610,7 +2610,7 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
       ChannelRec& rec = fCh[chid];
 
       unsigned atan = fine & 255;
-      unsigned itime = (fine >> 8) & 7;
+      unsigned itime = fine >> 8;
 
       if (rec.has_iqcal) {
          // just produce normal fine counter value
@@ -2619,7 +2619,7 @@ bool hadaq::TdcProcessor::DoBuffer5Scan(const base::Buffer& buf, bool first_scan
          // accumulate statistic first
          if (first_scan) {
             if (rec.iqcal.empty())
-               rec.iqcal.resize(256, 8, 2); // two channels - rising and falling edge
+               rec.iqcal.resize(256, 32, 2); // two channels - rising and falling edge
             if (isrising) {
                rec.all_rising_stat++;
                rec.iqcal.set_and_update(0, itime, atan);
