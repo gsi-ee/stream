@@ -4800,7 +4800,7 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
             // printf("Reading channel %u\n", ch);
             ChannelRec &rec = fCh[ch];
             if (rec.iqcal.empty())
-               rec.iqcal.resize(256, 8, 2); // two channels - rising and falling edge
+               rec.iqcal.resize(256, 32, 2); // two channels - rising and falling edge
             std::getline(f, str); // read line with comments
             if (str.empty())
                fail = true;
@@ -4826,7 +4826,7 @@ bool hadaq::TdcProcessor::LoadCalibration(const std::string& fprefix)
          for (unsigned ch = 0; ch < NumChannels(); ch++) {
             fCh[ch].has_iqcal = false;
             fCh[ch].iqcal.resize(); // first delete buffers
-            fCh[ch].iqcal.resize(256, 8, 2); // allocate again
+            fCh[ch].iqcal.resize(256, 32, 2); // allocate again
          }
    }
 
